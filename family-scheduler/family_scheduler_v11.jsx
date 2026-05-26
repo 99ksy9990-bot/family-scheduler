@@ -140,7 +140,7 @@ function annivSubtitle(a,dday,members=[]){
     const age=calcAge(a.birthYear,tm,td2,targetYear,tm,td2);
     const member=members.find(m=>m.id===a.memberId);
     if(a.relation)return`${age}번째 생신 / 만 ${age}세`;
-    if(member?.role==="자녀")return`만 ${age}세 되는 날`;
+    if(age<19)return`만 ${age}세 되는 날`;
     return`만 ${age}세`;
   }
   if(a.type==="anniversary"&&a.startYear){
@@ -167,10 +167,10 @@ function annivSourceLabel(a){
 
 /* ─── INITIAL DATA ─────────────────────── */
 const INIT_MEMBERS=[
-  {id:1,name:"엄마",zodiac:"rabbit",color:C.rose,bg:C.roseBg,deep:C.roseDeep,isShift:true,role:"보호자"},
-  {id:2,name:"아빠",zodiac:"tiger",color:C.sky,bg:C.skyBg,deep:C.skyDeep,isShift:false,role:"보호자"},
-  {id:3,name:"수아",zodiac:"horse",color:C.violet,bg:C.violetBg,deep:C.violetDeep,isShift:false,role:"자녀",birthYear:2014},
-  {id:4,name:"민준",zodiac:"pig",color:C.mint,bg:C.mintBg,deep:C.mintDeep,isShift:false,role:"자녀",birthYear:2021},
+  {id:1,name:"엄마",zodiac:"rabbit",color:C.rose,bg:C.roseBg,deep:C.roseDeep,isShift:true},
+  {id:2,name:"아빠",zodiac:"tiger",color:C.sky,bg:C.skyBg,deep:C.skyDeep,isShift:false},
+  {id:3,name:"수아",zodiac:"horse",color:C.violet,bg:C.violetBg,deep:C.violetDeep,isShift:false,birthYear:2014},
+  {id:4,name:"민준",zodiac:"pig",color:C.mint,bg:C.mintBg,deep:C.mintDeep,isShift:false,birthYear:2021},
 ];
 const INIT_SHIFT_MAP={
   1:Object.fromEntries(Array.from({length:31},(_,i)=>{
@@ -481,7 +481,7 @@ function HomeScreen({members,events,setEvents,todos,setTodos,shiftMap,shiftTypes
     const m=members.find(x=>x.id===ev.memberId)||null;
     const ts=ev.timeS?(ev.timeE?`${ev.timeS}~${ev.timeE}`:ev.timeS):"종일";
     return(<>
-      <div style={{background:C.gray50,borderRadius:14,padding:"12px 14px",marginBottom:14}}>
+      <div style={{background:C.gray50,borderRadius:R.card,padding:"12px 14px",marginBottom:14}}>
         <p style={{margin:"0 0 4px",fontSize:15,fontWeight:800,color:C.gray800}}>{ev.title}</p>
         <p style={{margin:0,fontSize:12,color:C.gray600}}>{ts}{ev.place?` · ${ev.place}`:""}</p>
         {m&&<p style={{margin:"2px 0 0",fontSize:12,color:C.gray400}}>참여: {m.name} {getZ(m.zodiac).e}</p>}
@@ -500,27 +500,27 @@ function HomeScreen({members,events,setEvents,todos,setTodos,shiftMap,shiftTypes
   function EventEditSheet(){
     return(<>
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>제목</label>
-      <input value={editForm.title||""} onChange={e=>setEditForm(p=>({...p,title:e.target.value}))} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:14,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+      <input value={editForm.title||""} onChange={e=>setEditForm(p=>({...p,title:e.target.value}))} style={inputStyle({fontSize:14,marginBottom:10})}/>
       {sheet.data?.isRoutine&&(
         <>
           <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>루틴 기간</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
             <div>
               <span style={{display:"block",fontSize:10,fontWeight:800,color:C.gray400,marginBottom:4}}>시작일</span>
-              <input type="date" value={editForm.date||TODAY} onChange={e=>setEditForm(p=>({...p,date:e.target.value,endDate:p.endDate&&p.endDate>=e.target.value?p.endDate:e.target.value}))} style={{width:"100%",padding:"9px 8px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+              <input type="date" value={editForm.date||TODAY} onChange={e=>setEditForm(p=>({...p,date:e.target.value,endDate:p.endDate&&p.endDate>=e.target.value?p.endDate:e.target.value}))} style={inputStyle({padding:"9px 8px",fontSize:12})}/>
             </div>
             <div>
               <span style={{display:"block",fontSize:10,fontWeight:800,color:C.gray400,marginBottom:4}}>종료일</span>
-              <input type="date" value={editForm.endDate||editForm.date||TODAY} min={editForm.date||TODAY} onChange={e=>setEditForm(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"9px 8px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+              <input type="date" value={editForm.endDate||editForm.date||TODAY} min={editForm.date||TODAY} onChange={e=>setEditForm(p=>({...p,endDate:e.target.value}))} style={inputStyle({padding:"9px 8px",fontSize:12})}/>
             </div>
           </div>
         </>
       )}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-        <input type="time" value={editForm.timeS||""} onChange={e=>setEditForm(p=>({...p,timeS:e.target.value}))} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
-        <input type="time" value={editForm.timeE||""} onChange={e=>setEditForm(p=>({...p,timeE:e.target.value}))} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+        <input type="time" value={editForm.timeS||""} onChange={e=>setEditForm(p=>({...p,timeS:e.target.value}))} style={inputStyle({padding:"9px 10px",fontSize:13})}/>
+        <input type="time" value={editForm.timeE||""} onChange={e=>setEditForm(p=>({...p,timeE:e.target.value}))} style={inputStyle({padding:"9px 10px",fontSize:13})}/>
       </div>
-      <input value={editForm.place||""} onChange={e=>setEditForm(p=>({...p,place:e.target.value}))} placeholder="장소" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+      <input value={editForm.place||""} onChange={e=>setEditForm(p=>({...p,place:e.target.value}))} placeholder="장소" style={inputStyle({fontSize:13,marginBottom:10})}/>
       {sheet.data?.isRoutine&&(
         <>
           <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>루틴 요일</label>
@@ -591,9 +591,9 @@ function HomeScreen({members,events,setEvents,todos,setTodos,shiftMap,shiftTypes
   function TodoEditSheet(){
     return(<>
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>제목</label>
-      <input value={editForm.text||""} onChange={e=>setEditForm(p=>({...p,text:e.target.value}))} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:14,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+      <input value={editForm.text||""} onChange={e=>setEditForm(p=>({...p,text:e.target.value}))} style={inputStyle({fontSize:14,marginBottom:10})}/>
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>마감</label>
-      <input value={editForm.due||""} onChange={e=>setEditForm(p=>({...p,due:e.target.value}))} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+      <input value={editForm.due||""} onChange={e=>setEditForm(p=>({...p,due:e.target.value}))} style={inputStyle({fontSize:13,marginBottom:10})}/>
       <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
         {members.map(m=>{const sel=String(editForm.memberId)===String(m.id);return <button key={m.id} onClick={()=>setEditForm(p=>({...p,memberId:sel?"":m.id}))} style={{padding:"5px 10px",borderRadius:20,border:`1.5px solid ${sel?m.color:C.gray200}`,background:sel?m.bg:C.white,color:sel?m.deep:C.gray600,fontSize:11,fontWeight:700,cursor:"pointer"}}>{getZ(m.zodiac).e} {m.name}</button>;})}
       </div>
@@ -903,7 +903,7 @@ function CalendarScreen({members,events,setEvents,shiftMap,setShiftMap,shiftType
         </div>
 
         {mode==="addShift"&&(
-          <div style={{background:C.white,borderRadius:14,padding:14,marginBottom:10,boxShadow:"0 3px 14px rgba(0,0,0,0.08)",border:`1.5px solid ${C.violet}`}}>
+          <div style={{background:C.white,borderRadius:R.card,padding:14,marginBottom:10,boxShadow:SH.cardMd,border:`1.5px solid ${C.violet}`}}>
             <p style={{margin:"0 0 4px",fontSize:13,fontWeight:800,color:C.gray800}}>{getZ(shiftMem?.zodiac||"rabbit").e} {shiftMem?.name} 근무 입력</p>
             <p style={{margin:"0 0 12px",fontSize:11,color:C.gray400}}>선택 후 자동으로 다음 날 이동</p>
             {selST&&(
@@ -924,14 +924,14 @@ function CalendarScreen({members,events,setEvents,shiftMap,setShiftMap,shiftType
           </div>
         )}
         {mode==="addEvent"&&(
-          <div style={{background:C.white,borderRadius:14,padding:14,marginBottom:10,boxShadow:"0 3px 14px rgba(0,0,0,0.08)",border:`1.5px solid ${C.sky}`}}>
+          <div style={{background:C.white,borderRadius:R.card,padding:14,marginBottom:10,boxShadow:SH.cardMd,border:`1.5px solid ${C.sky}`}}>
             <p style={{margin:"0 0 10px",fontSize:13,fontWeight:800,color:C.gray800}}>일정 추가</p>
-            <input value={evForm.title} onChange={e=>setEvForm(p=>({...p,title:e.target.value}))} placeholder="일정 제목" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:8,boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <input value={evForm.title} onChange={e=>setEvForm(p=>({...p,title:e.target.value}))} placeholder="일정 제목" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:8})}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-              <div><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:3}}>시작</label><input type="time" value={evForm.timeS} onChange={e=>setEvForm(p=>({...p,timeS:e.target.value}))} style={{width:"100%",padding:"8px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:12,outline:"none",fontFamily:"inherit"}}/></div>
-              <div><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:3}}>종료 <span style={{color:C.gray400,fontWeight:400}}>(선택)</span></label><input type="time" value={evForm.timeE} onChange={e=>setEvForm(p=>({...p,timeE:e.target.value}))} style={{width:"100%",padding:"8px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:12,outline:"none",fontFamily:"inherit"}}/></div>
+              <div><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:3}}>시작</label><input type="time" value={evForm.timeS} onChange={e=>setEvForm(p=>({...p,timeS:e.target.value}))} style={inputStyle({padding:"8px 10px",fontSize:12})}/></div>
+              <div><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:3}}>종료 <span style={{color:C.gray400,fontWeight:400}}>(선택)</span></label><input type="time" value={evForm.timeE} onChange={e=>setEvForm(p=>({...p,timeE:e.target.value}))} style={inputStyle({padding:"8px 10px",fontSize:12})}/></div>
             </div>
-            <input value={evForm.place} onChange={e=>setEvForm(p=>({...p,place:e.target.value}))} placeholder="장소 (선택)" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:8,boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <input value={evForm.place} onChange={e=>setEvForm(p=>({...p,place:e.target.value}))} placeholder="장소 (선택)" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:8})}/>
             <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
               {members.map(m=>{const z=getZ(m.zodiac);const sel=evForm.memberId===String(m.id);return(<button key={m.id} onClick={()=>setEvForm(p=>({...p,memberId:sel?"":String(m.id)}))} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,border:`1.5px solid ${sel?m.color:C.gray200}`,background:sel?m.bg:C.white,color:sel?m.deep:C.gray600,fontSize:11,fontWeight:700,cursor:"pointer"}}><span>{z.e}</span>{m.name}</button>);})}
             </div>
@@ -1025,7 +1025,7 @@ function TodoScreen({members,todos,setTodos}){
   function TodoCard(t,doneView=false){
     const m=members.find(x=>x.id===t.memberId);const z=m?getZ(m.zodiac):null;
     return(
-      <div key={t.id} onClick={()=>setSheet({type:"detail",id:t.id})} style={{background:C.white,borderRadius:13,padding:"11px 13px",display:"flex",alignItems:"center",gap:10,marginBottom:7,boxShadow:SH.card,cursor:"pointer",opacity:doneView?0.62:1}}>
+      <div key={t.id} onClick={()=>setSheet({type:"detail",id:t.id})} style={{background:C.white,borderRadius:R.card,padding:"11px 13px",display:"flex",alignItems:"center",gap:10,marginBottom:7,boxShadow:SH.card,cursor:"pointer",opacity:doneView?0.62:1}}>
         <button onClick={e=>{e.stopPropagation();toggle(t.id);}} style={{width:24,height:24,borderRadius:"50%",border:doneView?"none":`2px solid ${C.gray200}`,background:doneView?C.mint:"none",color:"#fff",cursor:"pointer",flexShrink:0,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{doneView?"✓":""}</button>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:2}}>
@@ -1048,9 +1048,9 @@ function TodoScreen({members,todos,setTodos}){
     if(!todo)return null;
     const m=members.find(x=>x.id===todo.memberId);
     return(<>
-      <div style={{background:C.gray50,borderRadius:14,padding:"12px 14px",marginBottom:12}}>
+      <div style={{background:C.gray50,borderRadius:R.card,padding:"12px 14px",marginBottom:12}}>
         <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
-          <p style={{margin:0,fontSize:15,fontWeight:900,color:C.gray800}}>{todo.text}</p>
+          <p style={{margin:0,fontSize:15,fontWeight:700,color:C.gray800}}>{todo.text}</p>
         </div>
         <p style={{margin:0,fontSize:12,color:C.gray400}}>{m?`${getZ(m.zodiac).e} ${m.name}`:"담당자 없음"} · {todo.due||"마감 없음"}</p>
       </div>
@@ -1064,7 +1064,7 @@ function TodoScreen({members,todos,setTodos}){
   function EditSheet(){
     return(<>
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>제목</label>
-      <input value={editForm.text||""} onChange={e=>setEditForm(p=>({...p,text:e.target.value}))} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:14,outline:"none",marginBottom:10,fontFamily:"inherit",boxSizing:"border-box"}}/>
+      <input value={editForm.text||""} onChange={e=>setEditForm(p=>({...p,text:e.target.value}))} style={inputStyle({fontSize:14,marginBottom:10})}/>
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:6}}>담당자</label>
       <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
         <button onClick={()=>setEditForm(p=>({...p,memberId:""}))} style={{padding:"5px 10px",borderRadius:20,border:`1.5px solid ${!editForm.memberId?C.sky:C.gray200}`,background:!editForm.memberId?C.skyBg:C.white,color:!editForm.memberId?C.skyDeep:C.gray600,fontSize:11,fontWeight:800,cursor:"pointer"}}>없음</button>
@@ -1208,8 +1208,8 @@ function AnnivScreen({members,anniv,setAnniv,embedded=false,onBack}){
         ))}
       </div>
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>이름</label>
-      <input value={form.label} onChange={e=>setForm(p=>({...p,label:e.target.value}))} placeholder="예) 민준 생일" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box",fontFamily:"inherit"}}/>
-      {form.type==="relative"&&<><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>관계</label><input value={form.relation} onChange={e=>setForm(p=>({...p,relation:e.target.value}))} placeholder="예) 외할머니" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box",fontFamily:"inherit"}}/></>}
+      <input value={form.label} onChange={e=>setForm(p=>({...p,label:e.target.value}))} placeholder="예) 민준 생일" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:10})}/>
+      {form.type==="relative"&&<><label style={labelStyle}>관계</label><input value={form.relation} onChange={e=>setForm(p=>({...p,relation:e.target.value}))} placeholder="예) 외할머니" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:10})}/></>}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:C.gray50,borderRadius:12,padding:"9px 14px",marginBottom:10}}>
         <div><p style={{margin:0,fontSize:13,fontWeight:700,color:C.gray800}}>음력 날짜</p><p style={{margin:"1px 0 0",fontSize:11,color:C.gray400}}>음력 원일과 올해 양력일을 함께 표시</p></div>
         <button onClick={()=>setForm(p=>({...p,isLunar:!p.isLunar}))} style={{width:42,height:24,borderRadius:12,border:"none",background:form.isLunar?C.violet:C.gray200,cursor:"pointer",position:"relative",transition:"background 0.2s"}}>
@@ -1221,16 +1221,16 @@ function AnnivScreen({members,anniv,setAnniv,embedded=false,onBack}){
           <div key={lbl}><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:3}}>{form.isLunar?`음력 ${lbl}`:lbl}</label>
           <input type="text" inputMode="numeric" pattern="[0-9]*" value={i===0?form.month:form.day}
             onChange={e=>setForm(p=>i===0?{...p,month:e.target.value}:{...p,day:e.target.value})}
-            placeholder={i===0?"6":"1"} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",boxSizing:"border-box",fontFamily:"inherit",textAlign:"center"}}/></div>
+            placeholder={i===0?"6":"1"} style={inputStyle({padding:"9px 10px",fontSize:13,textAlign:"center"})}/></div>
         ))}
       </div>
       {(form.type==="birthday"||form.type==="relative"||form.type==="baby")&&(
         <><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>생년 (나이 계산용)</label>
-        <input type="text" inputMode="numeric" pattern="[0-9]*" value={form.birthYear} onChange={e=>setForm(p=>({...p,birthYear:e.target.value}))} placeholder="예) 2021" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box",fontFamily:"inherit",textAlign:"center"}}/></>
+        <input type="text" inputMode="numeric" pattern="[0-9]*" value={form.birthYear} onChange={e=>setForm(p=>({...p,birthYear:e.target.value}))} placeholder="예) 2021" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:10,textAlign:"center"})}/></>
       )}
       {form.type==="anniversary"&&(
         <><label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>시작 연도 (주년 계산용)</label>
-        <input type="text" inputMode="numeric" pattern="[0-9]*" value={form.startYear} onChange={e=>setForm(p=>({...p,startYear:e.target.value}))} placeholder="예) 2016" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,boxSizing:"border-box",fontFamily:"inherit",textAlign:"center"}}/></>
+        <input type="text" inputMode="numeric" pattern="[0-9]*" value={form.startYear} onChange={e=>setForm(p=>({...p,startYear:e.target.value}))} placeholder="예) 2016" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:10,textAlign:"center"})}/></>
       )}
       <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:6}}>알림</label>
       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
@@ -1241,7 +1241,7 @@ function AnnivScreen({members,anniv,setAnniv,embedded=false,onBack}){
       </div>
       <div style={{display:"flex",gap:8}}>
         <button onClick={()=>editing?setSheet({type:"detail",data:sheet.data}):setShow(false)} style={{flex:1,padding:10,borderRadius:12,background:C.gray100,border:"none",color:C.gray600,fontSize:13,fontWeight:700,cursor:"pointer"}}>취소</button>
-        <button onClick={editing?saveEdit:save} style={{flex:2,padding:10,borderRadius:12,background:(form.label&&form.month&&form.day)?"linear-gradient(135deg,#FBBF24,#FB923C)":C.gray200,border:"none",color:(form.label&&form.month&&form.day)?"#fff":C.gray400,fontSize:13,fontWeight:800,cursor:(form.label&&form.month&&form.day)?"pointer":"not-allowed"}}>{editing?"저장":"추가"}</button>
+        <button onClick={editing?saveEdit:save} style={{flex:2,padding:10,borderRadius:12,background:(form.label&&form.month&&form.day)?tabGrad("add"):C.gray200,border:"none",color:(form.label&&form.month&&form.day)?"#fff":C.gray400,fontSize:13,fontWeight:800,cursor:(form.label&&form.month&&form.day)?"pointer":"not-allowed"}}>{editing?"저장":"추가"}</button>
       </div>
     </>);
   }
@@ -1251,8 +1251,8 @@ function AnnivScreen({members,anniv,setAnniv,embedded=false,onBack}){
     const sub=annivSubtitle(latest,dd,members);
     const hidden=latest.showHome===false&&latest.showCalendar===false;
     return(<>
-      <div style={{background:C.gray50,borderRadius:14,padding:"12px 14px",marginBottom:12}}>
-        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:900,color:C.gray800}}>{latest.label}</p>
+      <div style={{background:C.gray50,borderRadius:R.card,padding:"12px 14px",marginBottom:12}}>
+        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:C.gray800}}>{latest.label}</p>
         {sub&&<p style={{margin:"0 0 2px",fontSize:12,fontWeight:700,color:C.amberDeep}}>{sub}</p>}
         {annivLunarLine(latest)&&<p style={{margin:"2px 0 0",fontSize:12,color:C.violetDeep}}>{annivLunarLine(latest)}</p>}
         <p style={{margin:"4px 0 0",fontSize:11,color:C.gray400}}>{annivSourceLabel(latest)} · 알림 {(latest.alerts||[]).join(", ")||"없음"}</p>
@@ -1287,7 +1287,7 @@ function AnnivScreen({members,anniv,setAnniv,embedded=false,onBack}){
         </div>
       </div>
       <div style={{padding:embedded?"14px 0":14}}>
-        {!show&&<button onClick={()=>setShow(true)} style={{width:"100%",padding:13,borderRadius:14,background:"linear-gradient(140deg,#FBBF24,#F97316)",border:"none",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",marginBottom:14,boxShadow:"0 4px 14px rgba(251,191,36,0.35)"}}>+ 기념일 추가</button>}
+        {!show&&<button onClick={()=>setShow(true)} style={{width:"100%",padding:13,borderRadius:R.card,background:tabGrad("add"),border:"none",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",marginBottom:14,boxShadow:SH.cardMd}}>+ 기념일 추가</button>}
         {show&&(
           <div style={{background:C.white,borderRadius:16,padding:16,marginBottom:14,boxShadow:SH.cardLg,border:`1.5px solid ${C.amber}`}}>
             <p style={{margin:"0 0 12px",fontSize:14,fontWeight:800,color:C.gray800}}>새 기념일</p>
@@ -1301,7 +1301,7 @@ function AnnivScreen({members,anniv,setAnniv,embedded=false,onBack}){
           const typeLabel=a.type==="birthday"?"생일":a.type==="anniversary"?"기념일":a.type==="baby"?"아기성장":"관계";
           const typeC=a.type==="birthday"?{c:C.roseDeep,bg:C.roseBg}:a.type==="anniversary"?{c:C.amberDeep,bg:C.amberBg}:{c:C.violetDeep,bg:C.violetBg};
           return(
-            <div key={a.id} onClick={()=>setSheet({type:"detail",data:a})} style={{background:C.white,borderRadius:14,padding:"13px 14px",marginBottom:8,boxShadow:SH.card,borderLeft:`3px solid ${urgent?C.amber:C.gray200}`,cursor:"pointer",opacity:(a.showHome===false&&a.showCalendar===false)?0.62:1}}>
+            <div key={a.id} onClick={()=>setSheet({type:"detail",data:a})} style={{background:C.white,borderRadius:R.card,padding:"13px 14px",marginBottom:8,boxShadow:SH.card,borderLeft:`3px solid ${urgent?C.amber:C.gray200}`,cursor:"pointer",opacity:(a.showHome===false&&a.showCalendar===false)?0.62:1}}>
               <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
                 <div style={{width:44,height:44,borderRadius:12,flexShrink:0,background:urgent?C.amberBg:C.gray50,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                   <span style={{fontSize:9,fontWeight:800,color:urgent?C.amberDeep:C.gray400}}>{MONTHS_KO[(a.isLunar?a.solarMonth:a.month)-1]}</span>
@@ -1423,7 +1423,7 @@ function AddScreen({members,setEvents,setTodos,anniv,setAnniv,shiftTypes,shiftMa
           {kind!=="shift"&&(
             <>
               <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>이름</label>
-              <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder={kind==="event"?"예) 가족 저녁":kind==="anniv"?"예) 결혼기념일":"예) 장보기"} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:14,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+              <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder={kind==="event"?"예) 가족 저녁":kind==="anniv"?"예) 결혼기념일":"예) 장보기"} style={inputStyle({fontSize:14,marginBottom:10})}/>
             </>
           )}
           {kind==="event"&&(
@@ -1433,31 +1433,31 @@ function AddScreen({members,setEvents,setTodos,anniv,setAnniv,shiftTypes,shiftMa
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
                   <div>
                     <span style={{display:"block",fontSize:10,fontWeight:800,color:C.gray400,marginBottom:4}}>시작일</span>
-                    <input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value,endDate:p.endDate&&p.endDate>=e.target.value?p.endDate:e.target.value}))} style={{width:"100%",padding:"10px 8px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+                    <input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value,endDate:p.endDate&&p.endDate>=e.target.value?p.endDate:e.target.value}))} style={inputStyle({padding:"10px 8px",fontSize:12})}/>
                   </div>
                   <div>
                     <span style={{display:"block",fontSize:10,fontWeight:800,color:C.gray400,marginBottom:4}}>종료일</span>
-                    <input type="date" value={form.endDate||form.date} min={form.date} onChange={e=>setForm(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"10px 8px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:12,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+                    <input type="date" value={form.endDate||form.date} min={form.date} onChange={e=>setForm(p=>({...p,endDate:e.target.value}))} style={inputStyle({padding:"10px 8px",fontSize:12})}/>
                   </div>
                 </div>
               ):(
-                <input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value,endDate:p.endDate||e.target.value}))} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+                <input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value,endDate:p.endDate||e.target.value}))} style={inputStyle({fontSize:13,marginBottom:10})}/>
               )}
             </>
           )}
           {kind==="shift"&&(
             <>
               <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>날짜</label>
-              <input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+              <input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} style={inputStyle({fontSize:13,marginBottom:10})}/>
             </>
           )}
           {kind==="event"&&(
             <>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                <input type="time" value={form.timeS} onChange={e=>setForm(p=>({...p,timeS:e.target.value}))} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
-                <input type="time" value={form.timeE} onChange={e=>setForm(p=>({...p,timeE:e.target.value}))} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+                <input type="time" value={form.timeS} onChange={e=>setForm(p=>({...p,timeS:e.target.value}))} style={inputStyle({padding:"9px 10px",fontSize:13})}/>
+                <input type="time" value={form.timeE} onChange={e=>setForm(p=>({...p,timeE:e.target.value}))} style={inputStyle({padding:"9px 10px",fontSize:13})}/>
               </div>
-              <input value={form.place} onChange={e=>setForm(p=>({...p,place:e.target.value}))} placeholder="장소" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+              <input value={form.place} onChange={e=>setForm(p=>({...p,place:e.target.value}))} placeholder="장소" style={inputStyle({fontSize:13,marginBottom:10})}/>
             </>
           )}
           {(kind==="event"||kind==="todo")&&(
@@ -1514,25 +1514,25 @@ function AddScreen({members,setEvents,setTodos,anniv,setAnniv,shiftTypes,shiftMa
 function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnniv,events,todos,shiftMap,setShiftMap,timetable,setTimetable}){
   const [subPage,setSubPage]=useState("main");
   const [editMember,setEditMember]=useState(null);
-  const [mForm,setMForm]=useState({name:"",zodiac:"rabbit",colorIdx:0,isShift:false,role:"일반 멤버",birthYear:"",birthMonth:"",birthDay:""});
+  const [mForm,setMForm]=useState({name:"",zodiac:"rabbit",colorIdx:0,isShift:false,birthYear:"",birthMonth:"",birthDay:""});
   const [shiftForm,setShiftForm]=useState(null);
   const [reorderMode,setReorderMode]=useState(false);
   const longPressRef=useRef(null);
-  const studentMembers=members.filter(m=>m.role==="자녀");
+  const studentMembers=members.filter(m=>m.birthYear||m.id===3||m.id===4);
   const [selectedStudent,setSelectedStudent]=useState(studentMembers[0]?.id||3);
   const [selectedDay,setSelectedDay]=useState("월");
 
-  function openAdd(){setEditMember(null);setMForm({name:"",zodiac:"rabbit",colorIdx:0,isShift:false,role:"일반 멤버",birthYear:"",birthMonth:"",birthDay:""});setSubPage("memberForm");}
+  function openAdd(){setEditMember(null);setMForm({name:"",zodiac:"rabbit",colorIdx:0,isShift:false,birthYear:"",birthMonth:"",birthDay:""});setSubPage("memberForm");}
   function openEdit(m){
     const ci=MEMBER_COLORS.findIndex(c=>c.color===m.color);
-    setEditMember(m.id);setMForm({name:m.name,zodiac:m.zodiac,colorIdx:ci>=0?ci:0,isShift:m.isShift||false,role:m.role||"일반 멤버",birthYear:m.birthYear||"",birthMonth:m.birthMonth||"",birthDay:m.birthDay||""});setSubPage("memberForm");
+    setEditMember(m.id);setMForm({name:m.name,zodiac:m.zodiac,colorIdx:ci>=0?ci:0,isShift:m.isShift||false,birthYear:m.birthYear||"",birthMonth:m.birthMonth||"",birthDay:m.birthDay||""});setSubPage("memberForm");
   }
   function saveMember(){
     if(!mForm.name)return;
     const mc=MEMBER_COLORS[mForm.colorIdx];
     const birth={birthYear:mForm.birthYear?+mForm.birthYear:undefined,birthMonth:mForm.birthMonth?+mForm.birthMonth:undefined,birthDay:mForm.birthDay?+mForm.birthDay:undefined};
-    if(editMember){setMembers(p=>p.map(m=>m.id===editMember?{...m,name:mForm.name,zodiac:mForm.zodiac,color:mc.color,bg:mc.bg,deep:mc.deep,isShift:mForm.isShift,role:mForm.role,...birth}:m));}
-    else{setMembers(p=>[...p,{id:Date.now(),name:mForm.name,zodiac:mForm.zodiac,color:mc.color,bg:mc.bg,deep:mc.deep,isShift:mForm.isShift,role:mForm.role,...birth}]);}
+    if(editMember){setMembers(p=>p.map(m=>m.id===editMember?{...m,name:mForm.name,zodiac:mForm.zodiac,color:mc.color,bg:mc.bg,deep:mc.deep,isShift:mForm.isShift,...birth}:m));}
+    else{setMembers(p=>[...p,{id:Date.now(),name:mForm.name,zodiac:mForm.zodiac,color:mc.color,bg:mc.bg,deep:mc.deep,isShift:mForm.isShift,...birth}]);}
     setSubPage("members");
   }
   function removeMember(id){setMembers(p=>p.filter(m=>m.id!==id));}
@@ -1646,7 +1646,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
         <BackBtn to="main"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
           <div>
-            <p style={{fontSize:18,fontWeight:900,color:C.gray800,margin:"0 0 4px"}}>위젯 미리보기</p>
+            <p style={{fontSize:18,fontWeight:800,color:C.gray800,margin:"0 0 4px"}}>위젯 미리보기</p>
             <p style={{fontSize:12,color:C.gray400,margin:0}}>홈화면에 올릴 가족 정보 4종을 미리 확인해요.</p>
           </div>
           <Tag label="4종" color={C.skyDeep} bg={C.skyBg}/>
@@ -1762,7 +1762,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
         <BackBtn to="main"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
           <div>
-            <p style={{fontSize:18,fontWeight:900,color:C.gray800,margin:"0 0 4px"}}>시간표 관리</p>
+            <p style={{fontSize:18,fontWeight:800,color:C.gray800,margin:"0 0 4px"}}>시간표 관리</p>
             <p style={{fontSize:12,color:C.gray400,margin:0}}>월~금 시간, 과목, 색상을 수정하고 배경화면용 미리보기를 확인해요.</p>
           </div>
           <Tag label="배경화면" color={C.violetDeep} bg={C.violetBg}/>
@@ -1781,12 +1781,12 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
 
         <div style={{background:C.white,borderRadius:16,padding:14,boxShadow:SH.cardMd,marginBottom:12}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <p style={{margin:0,fontSize:14,fontWeight:900,color:C.gray800}}>{student?.name} {selectedDay}요일</p>
+            <p style={{margin:0,fontSize:14,fontWeight:800,color:C.gray800}}>{student?.name} {selectedDay}요일</p>
             <button onClick={()=>addLesson(student.id,selectedDay)} style={{padding:"5px 11px",borderRadius:20,border:"none",background:C.skyBg,color:C.skyDeep,fontSize:11,fontWeight:900,cursor:"pointer"}}>+ 교시</button>
           </div>
           {lessons.map((lesson,idx)=>(
             <div key={idx} style={{display:"grid",gridTemplateColumns:"82px 1fr 28px",gap:8,alignItems:"start",marginBottom:10}}>
-              <div style={{borderRadius:13,background:lesson.color||C.skyBg,padding:"7px 7px 8px",minHeight:64,color:C.white}}>
+              <div style={{borderRadius:R.card,background:lesson.color||C.skyBg,padding:"7px 7px 8px",minHeight:64,color:C.white}}>
                 <p style={{margin:"0 0 5px",fontSize:12,fontWeight:900,lineHeight:1}}>{idx+1}교시</p>
                 <input value={lesson.time||""} onChange={e=>updateLesson(student.id,selectedDay,idx,{time:e.target.value})} placeholder="09:00~09:45" style={{width:"100%",padding:"5px 4px",borderRadius:7,border:"none",fontSize:9,outline:"none",fontFamily:"inherit",background:"rgba(255,255,255,0.9)",color:C.gray800}}/>
               </div>
@@ -1851,7 +1851,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
               {icon:"🖥",l:"위젯 미리보기",s:"홈화면 위젯 4종",to:"widget"},
               {icon:"⚙️",l:"앱 설정",s:"알림·캘린더·구독",to:"appset"},
           ].map(item=>(
-            <button key={item.to} onClick={()=>setSubPage(item.to)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"13px 16px",borderRadius:14,background:C.white,border:"none",boxShadow:SH.card,marginBottom:10,cursor:"pointer",textAlign:"left"}}>
+            <button key={item.to} onClick={()=>setSubPage(item.to)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"13px 16px",borderRadius:R.card,background:C.white,border:"none",boxShadow:SH.card,marginBottom:10,cursor:"pointer",textAlign:"left"}}>
               <span style={{fontSize:22,flexShrink:0}}>{item.icon}</span>
               <div style={{flex:1}}><p style={{margin:0,fontSize:14,fontWeight:700,color:C.gray800}}>{item.l}</p><p style={{margin:"2px 0 0",fontSize:11,color:C.gray400}}>{item.s}</p></div>
               <span style={{color:C.gray200,fontSize:16}}>›</span>
@@ -1869,8 +1869,8 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
               <button onClick={openAdd} style={{padding:"5px 14px",borderRadius:20,background:tabGrad("home"),border:"none",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>+ 추가</button>
             </div>
           </div>
-          <div style={{background:reorderMode?C.violetBg:C.skyBg,borderRadius:13,padding:"10px 12px",marginBottom:10}}>
-            <p style={{margin:0,fontSize:12,fontWeight:900,color:reorderMode?C.violetDeep:C.skyDeep}}>
+          <div style={{background:reorderMode?C.violetBg:C.skyBg,borderRadius:R.card,padding:"10px 12px",marginBottom:10}}>
+            <p style={{margin:0,fontSize:12,fontWeight:800,color:reorderMode?C.violetDeep:C.skyDeep}}>
               {reorderMode?"순서 변경 중":"멤버 카드를 꾹 누르면 순서를 바꿀 수 있어요"}
             </p>
             <p style={{margin:"2px 0 0",fontSize:11,color:reorderMode?C.violetDeep:C.skyDeep}}>
@@ -1882,14 +1882,13 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
               onPointerDown={startLongPress}
               onPointerUp={stopLongPress}
               onPointerLeave={stopLongPress}
-              style={{background:C.white,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:reorderMode?`0 0 0 2px ${C.violet}33, 0 2px 8px rgba(0,0,0,0.06)`:"0 2px 8px rgba(0,0,0,0.06)",display:"flex",alignItems:"center",gap:10,cursor:"grab",touchAction:"manipulation"}}>
+              style={{background:C.white,borderRadius:R.card,padding:"12px 14px",marginBottom:8,boxShadow:reorderMode?`0 0 0 2px ${C.violet}33, 0 2px 8px rgba(0,0,0,0.06)`:"0 2px 8px rgba(0,0,0,0.06)",display:"flex",alignItems:"center",gap:10,cursor:"grab",touchAction:"manipulation"}}>
               {reorderMode&&<div style={{color:C.gray400,fontSize:16,fontWeight:900,lineHeight:1}}>☰</div>}
               <div style={{width:42,height:42,borderRadius:"50%",background:z.bg,border:`2px solid ${z.c}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{z.e}</div>
               <div style={{flex:1}}>
                 <p style={{margin:0,fontSize:14,fontWeight:700,color:C.gray800}}>{m.name}</p>
                 <div style={{display:"flex",gap:5,alignItems:"center",marginTop:2}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:m.color}}/>
-                  <span style={{fontSize:10,color:C.gray400}}>{m.role}</span>
                   {m.isShift&&<Tag label="근무" color={C.violetDeep} bg={C.violetBg}/>}
                 </div>
               </div>
@@ -1915,7 +1914,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
           <div style={{background:C.white,borderRadius:16,padding:16,boxShadow:SH.cardLg}}>
             <p style={{margin:"0 0 14px",fontSize:14,fontWeight:800,color:C.gray800}}>{editMember?"멤버 수정":"새 멤버 추가"}</p>
             <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>이름</label>
-            <input value={mForm.name} onChange={e=>setMForm(p=>({...p,name:e.target.value}))} placeholder="이름" style={{width:"100%",padding:"10px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:14,outline:"none",marginBottom:14,boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <input value={mForm.name} onChange={e=>setMForm(p=>({...p,name:e.target.value}))} placeholder="이름" style={inputStyle({fontSize:14,marginBottom:14})}/>
             <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:6}}>12지신 캐릭터</label>
             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
               {ZODIAC.map(z=><button key={z.key} onClick={()=>setMForm(p=>({...p,zodiac:z.key}))} style={{width:40,height:40,borderRadius:"50%",border:"2.5px solid",borderColor:mForm.zodiac===z.key?z.c:"transparent",background:z.bg,cursor:"pointer",fontSize:19,boxShadow:mForm.zodiac===z.key?`0 0 0 2px ${z.c}40`:"none"}}>{z.e}</button>)}
@@ -1924,15 +1923,11 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
             <div style={{display:"flex",gap:8,marginBottom:14}}>
               {MEMBER_COLORS.map((mc,ci)=><button key={ci} onClick={()=>setMForm(p=>({...p,colorIdx:ci}))} style={{width:28,height:28,borderRadius:"50%",border:"2.5px solid",borderColor:mForm.colorIdx===ci?"#222":"transparent",background:mc.color,cursor:"pointer"}}/>)}
             </div>
-            <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:6}}>권한</label>
-            <div style={{display:"flex",gap:6,marginBottom:14}}>
-              {["보호자","일반 멤버","자녀"].map(r=><button key={r} onClick={()=>setMForm(p=>({...p,role:r}))} style={{padding:"5px 12px",borderRadius:20,border:"1.5px solid",borderColor:mForm.role===r?C.sky:C.gray200,background:mForm.role===r?C.skyBg:C.white,color:mForm.role===r?C.skyDeep:C.gray600,fontSize:11,fontWeight:700,cursor:"pointer"}}>{r}</button>)}
-            </div>
             <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:6}}>생년월일 <span style={{color:C.gray400,fontWeight:400}}>(나이 계산용)</span></label>
             <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1fr",gap:8,marginBottom:14}}>
-              <input type="number" value={mForm.birthYear} onChange={e=>setMForm(p=>({...p,birthYear:e.target.value}))} placeholder="2021" style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
-              <input type="number" value={mForm.birthMonth} onChange={e=>setMForm(p=>({...p,birthMonth:e.target.value}))} placeholder="6월" style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
-              <input type="number" value={mForm.birthDay} onChange={e=>setMForm(p=>({...p,birthDay:e.target.value}))} placeholder="1일" style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+              <input type="number" value={mForm.birthYear} onChange={e=>setMForm(p=>({...p,birthYear:e.target.value}))} placeholder="2021" style={inputStyle({padding:"9px 10px",fontSize:13})}/>
+              <input type="number" value={mForm.birthMonth} onChange={e=>setMForm(p=>({...p,birthMonth:e.target.value}))} placeholder="6월" style={inputStyle({padding:"9px 10px",fontSize:13})}/>
+              <input type="number" value={mForm.birthDay} onChange={e=>setMForm(p=>({...p,birthDay:e.target.value}))} placeholder="1일" style={inputStyle({padding:"9px 10px",fontSize:13})}/>
             </div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:C.gray50,borderRadius:12,padding:"10px 14px",marginBottom:16}}>
               <div><p style={{margin:0,fontSize:13,fontWeight:700,color:C.gray800}}>근무</p><p style={{margin:"1px 0 0",fontSize:11,color:C.gray400}}>달력 근무 입력 활성화</p></div>
@@ -1959,13 +1954,13 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
             <div style={{background:C.white,borderRadius:16,padding:16,marginBottom:12,boxShadow:SH.cardLg,border:`1.5px solid ${C.sky}`}}>
               <p style={{margin:"0 0 12px",fontSize:14,fontWeight:800,color:C.gray800}}>{shiftForm.key?"근무 유형 수정":"근무 유형 추가"}</p>
               <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>유형명</label>
-              <input value={shiftForm.full} onChange={e=>setShiftForm(p=>({...p,full:e.target.value,label:p.label||firstWord(e.target.value)}))} placeholder="예) 오전 근무, 마감조" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+              <input value={shiftForm.full} onChange={e=>setShiftForm(p=>({...p,full:e.target.value,label:p.label||firstWord(e.target.value)}))} placeholder="예) 오전 근무, 마감조" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:10})}/>
               <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>달력 표시명</label>
-              <input value={shiftForm.label} onChange={e=>setShiftForm(p=>({...p,label:e.target.value}))} placeholder="예) 오전, 마감, D" style={{width:"100%",padding:"9px 12px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",marginBottom:10,fontFamily:"inherit"}}/>
+              <input value={shiftForm.label} onChange={e=>setShiftForm(p=>({...p,label:e.target.value}))} placeholder="예) 오전, 마감, D" style={inputStyle({padding:"9px 12px",fontSize:13,marginBottom:10})}/>
               <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:4}}>시간</label>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                <input type="time" value={shiftForm.start||""} onChange={e=>setShiftForm(p=>({...p,start:e.target.value}))} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
-                <input type="time" value={shiftForm.end||""} onChange={e=>setShiftForm(p=>({...p,end:e.target.value}))} style={{width:"100%",padding:"9px 10px",borderRadius:10,border:`1.5px solid ${C.gray200}`,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+                <input type="time" value={shiftForm.start||""} onChange={e=>setShiftForm(p=>({...p,start:e.target.value}))} style={inputStyle({padding:"9px 10px",fontSize:13})}/>
+                <input type="time" value={shiftForm.end||""} onChange={e=>setShiftForm(p=>({...p,end:e.target.value}))} style={inputStyle({padding:"9px 10px",fontSize:13})}/>
               </div>
               <button onClick={()=>setShiftForm(p=>({...p,nextDay:!p.nextDay}))} style={{width:"100%",padding:"9px 12px",borderRadius:12,border:"1.5px solid",borderColor:shiftForm.nextDay?C.teal:C.gray200,background:shiftForm.nextDay?C.tealBg:C.gray50,color:shiftForm.nextDay?C.tealDeep:C.gray600,fontSize:12,fontWeight:800,cursor:"pointer",marginBottom:10,textAlign:"left"}}>다음날 종료 {shiftForm.nextDay?"ON":"OFF"}</button>
               <label style={{fontSize:11,fontWeight:700,color:C.gray600,display:"block",marginBottom:6}}>색상</label>
@@ -1981,7 +1976,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
             </div>
           )}
           {Object.entries(shiftTypes).map(([k,v])=>(
-            <div key={k} style={{background:C.white,borderRadius:14,padding:"14px 16px",marginBottom:8,boxShadow:SH.card,display:"flex",alignItems:"center",gap:14,borderLeft:`4px solid ${v.enabled===false?C.gray200:v.color}`,opacity:v.enabled===false?0.5:1}}>
+            <div key={k} style={{background:C.white,borderRadius:R.card,padding:"14px 16px",marginBottom:8,boxShadow:SH.card,display:"flex",alignItems:"center",gap:14,borderLeft:`4px solid ${v.enabled===false?C.gray200:v.color}`,opacity:v.enabled===false?0.5:1}}>
               <div style={{width:44,height:44,borderRadius:12,background:v.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:18,fontWeight:900,color:v.color}}>{shiftLabel(v)}</span></div>
               <div style={{flex:1}}><p style={{margin:0,fontSize:14,fontWeight:800,color:C.gray800}}>{v.full}</p>{shiftTime(v)&&<p style={{margin:"3px 0 0",fontSize:12,color:C.gray400}}>{shiftTime(v)}</p>}</div>
               <button onClick={()=>openShiftForm(k)} style={{background:"none",border:"none",color:C.sky,fontSize:12,fontWeight:700,cursor:"pointer"}}>수정</button>
@@ -2015,7 +2010,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
               <div style={{background:C.gray50,borderRadius:12,padding:14,textAlign:"center",fontSize:12,color:C.gray400,fontWeight:700}}>입력된 근무가 없습니다.</div>
             )}
           </div>
-          <div style={{background:C.skyBg,borderRadius:14,padding:"12px 16px",marginTop:4}}>
+          <div style={{background:C.skyBg,borderRadius:R.card,padding:"12px 16px",marginTop:4}}>
             <p style={{margin:"0 0 4px",fontSize:12,fontWeight:800,color:C.skyDeep}}>📅 근무 입력 방법</p>
             <p style={{margin:0,fontSize:12,color:C.skyDeep,lineHeight:1.6}}>달력 탭 → 날짜 선택 → 근무 버튼 탭 → 가족이 만든 근무 유형 선택 → 자동 다음 날 이동. 잘못 입력한 근무는 같은 화면 또는 입력된 근무 관리에서 삭제할 수 있어요.</p>
           </div>
@@ -2029,7 +2024,7 @@ function FamilyScreen({members,setMembers,shiftTypes,setShiftTypes,anniv,setAnni
       {subPage==="appset"&&(
         <div style={{padding:14,paddingTop:18}}>
           <BackBtn to="main"/>
-          <div style={{background:C.gray50,borderRadius:14,padding:20,textAlign:"center",color:C.gray400}}>
+          <div style={{background:C.gray50,borderRadius:R.card,padding:20,textAlign:"center",color:C.gray400}}>
             <p style={{fontSize:24,marginBottom:8}}>⚙️</p>
             <p style={{fontSize:14,fontWeight:700,color:C.gray600,margin:0}}>
               앱 설정
