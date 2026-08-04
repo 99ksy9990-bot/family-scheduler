@@ -137,15 +137,17 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
       <div className="event-time">{event.time}</div>
+      <Avatar memberId={event.member} small />
       <div className="event-copy">
         <strong>{event.title}</strong>
-        <span>{event.location}</span>
+        <div className="event-detail-row">
+          <span>{event.location}</span>
+          {hasActions && <div className="event-actions">
+            <button onClick={onEdit} aria-label={`${event.title} 수정`} title="일정 수정"><Pencil /></button>
+            <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>
+          </div>}
+        </div>
       </div>
-      {hasActions && <div className="event-actions">
-        <button onClick={onEdit} aria-label={`${event.title} 수정`} title="일정 수정"><Pencil /></button>
-        <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>
-      </div>}
-      <Avatar memberId={event.member} small />
     </article>
   )
 }
@@ -385,7 +387,7 @@ function TasksView({ tasks, setTasks, openModal }) {
   )
 }
 
-function SchedulesView() {
+function SchedulesView({ setView }) {
   const [season, setSeason] = useState('학기')
   const [shift, setShift] = useState('evening')
   return (
@@ -408,8 +410,8 @@ function SchedulesView() {
       <section className="active-schedules">
         <div className="section-heading"><div><span className="eyebrow">현재 적용 중</span><h2>적용된 일정</h2></div></div>
         <div className="schedule-list">
-          <article className="active-schedule card"><Avatar memberId="emma" /><span><strong>엄마</strong><small>오후 근무 로테이션</small></span><div className="schedule-meta"><Clock3 /> 다음: 오후 3:00 – 오후 11:00</div><button className="icon-button"><MoreHorizontal /></button></article>
-          <article className="active-schedule card"><Avatar memberId="leo" /><span><strong>레오</strong><small>{season} 학원 일정</small></span><div className="schedule-meta"><GraduationCap /> 피아노 · 축구</div><button className="icon-button"><MoreHorizontal /></button></article>
+          <article className="active-schedule card"><Avatar memberId="emma" /><span><strong>엄마</strong><small>오후 근무 로테이션</small></span><div className="schedule-meta"><Clock3 /> 다음: 오후 3:00 – 오후 11:00</div><button className="icon-button" onClick={() => setView('calendar')} aria-label="엄마 일정 캘린더에서 보기" title="캘린더에서 보기"><MoreHorizontal /></button></article>
+          <article className="active-schedule card"><Avatar memberId="leo" /><span><strong>레오</strong><small>{season} 학원 일정</small></span><div className="schedule-meta"><GraduationCap /> 피아노 · 축구</div><button className="icon-button" onClick={() => setView('calendar')} aria-label="레오 일정 캘린더에서 보기" title="캘린더에서 보기"><MoreHorizontal /></button></article>
         </div>
       </section>
     </div>
@@ -483,7 +485,7 @@ export default function App() {
         {view === 'home' && <HomeView events={events} setView={setView} openModal={openModal} />}
         {view === 'calendar' && <CalendarView events={events} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} />}
-        {view === 'schedules' && <SchedulesView />}
+        {view === 'schedules' && <SchedulesView setView={setView} />}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={setView} /></div>
       {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} />}
