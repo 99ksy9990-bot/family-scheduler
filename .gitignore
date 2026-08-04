@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+.vercel
+.npm-cache
+*.log
+output
+.playwright-cli
+_1
+_2
+_3
+_4
+_5
+lumina_family_calendar
