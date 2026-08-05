@@ -112,6 +112,12 @@ const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
   weekday: 'long', month: 'long', day: 'numeric',
 }).format(date)
 const formatSolarDate = (date) => date ? `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.` : '변환 가능한 날짜 없음'
+const familyGreeting = (date = new Date()) => {
+  const hour = date.getHours()
+  if (hour < 12) return '좋은 아침이에요'
+  if (hour < 18) return '좋은 오후예요'
+  return '좋은 저녁이에요'
+}
 
 const validSolarDate = (year, month, day) => {
   const date = new Date(year, month - 1, day)
@@ -164,7 +170,8 @@ const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap(
     title: anniversaryTitle(anniversary),
     time: '종일',
     end: '',
-    location: milestoneLabel ? `${sourceLabel} · ${milestoneLabel}` : sourceLabel,
+    location: sourceLabel,
+    milestoneLabel,
     member: 'anniversary',
     type: 'anniversary',
     recurring: true,
@@ -366,14 +373,17 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
       <div className="event-time">{event.time}</div>
       <Avatar memberId={event.member} small />
       <div className="event-copy">
-        <strong>{event.title}</strong>
-        <div className="event-detail-row">
-          <span>{event.location}{event.pickupBy ? ` · ${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
-          {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
+        <div className="event-title-row">
+          <strong>{event.title}</strong>
           {hasActions && <div className="event-actions">
             {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
             {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
           </div>}
+        </div>
+        <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
+          <span>{event.location}{event.milestoneLabel ? ' ·' : ''}{event.pickupBy ? ` · ${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
+          {event.milestoneLabel && <span className="event-milestone">{event.milestoneLabel}</span>}
+          {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
         </div>
       </div>
     </article>
@@ -381,6 +391,7 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
 }
 
 function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, setView, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo }) {
+  const [greeting, setGreeting] = useState(() => familyGreeting())
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const conflicts = overlappingEventIds(rawTodayEvents)
   const todayEvents = rawTodayEvents.map((event) => ({ ...event, conflict: conflicts.has(event.id) }))
@@ -388,6 +399,11 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
   const dueTasks = tasks.filter((task) => !task.done && task.dueDate && task.dueDate <= iso(today))
   const todayShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
   const shiftOption = SHIFT_OPTIONS.find((option) => option.id === todayShift?.shift)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setGreeting(familyGreeting()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const removeTodayEvent = (event) => {
     if (event.recurring && !event.anniversary) {
       openRecurringActions(event)
@@ -406,7 +422,7 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
     <div className="page home-page">
       <section className="hero-intro">
         <span className="eyebrow">{formatLongDate(today)}</span>
-        <h1>좋은 아침이에요, 우리 가족.</h1>
+        <h1>{greeting}, 우리 가족.</h1>
         <p>우리 가족의 오늘 하루를 한눈에 확인하세요.</p>
       </section>
 
