@@ -799,14 +799,16 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
                       <span className="task-copy">
                         <span className="task-title-row">
                           <strong>{task.title}</strong>
-                          {canEdit && <span className="event-actions">
-                            <button onClick={() => openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
-                            <button className="delete" onClick={() => deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
-                          </span>}
                         </span>
                         {detail && <small>{detail}</small>}
                       </span>
-                      <Avatar memberId={task.assignee} small />
+                      <span className="task-card-actions">
+                        {canEdit && <span className="event-actions">
+                          <button onClick={() => openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
+                          <button className="delete" onClick={() => deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
+                        </span>}
+                        <Avatar memberId={task.assignee} small />
+                      </span>
                     </article>
                   )
                 })}

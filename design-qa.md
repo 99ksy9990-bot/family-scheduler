@@ -125,4 +125,34 @@
 - Browser console: zero errors and zero warnings.
 - React quality review: static filter data and holiday caches are module-scoped; state is derived during render; no new effects or global listeners were added.
 
+## Latest action alignment and responsive-form verification
+
+- Source visual truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_oEmjAI/스크린샷 2026-08-05 오후 3.10.35.png` (770 × 928), `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/CBEF8831-5F44-4AA6-A223-B03BD775E25B/1-사진-1.jpg`, `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_K13ZZ6/스크린샷 2026-08-05 오후 3.21.00.png` (2246 × 296), and `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_gIt2if/스크린샷 2026-08-05 오후 3.22.48.png` (2246 × 296).
+- Browser-rendered implementation: `qa-task-actions-mobile.png` (402 × 874), `qa-period-mobile.png` (393 × 852), `qa-child-form-mobile.png` (393 × 852), and `qa-child-form-desktop.png` (1280 × 720), all captured from the local Vite app.
+- Full and focused comparison evidence: `qa-latest-comparison.png` (1580 × 780). The relevant source and implementation regions are contained in equal-width panels; unrelated page chrome and crop differences are excluded from alignment judgments.
+- Viewports and density: 1280 × 720 CSS px desktop and 402 × 874 / 393 × 852 CSS px mobile at device scale factor 1. The 770 × 928 task source is a focused crop, while the two 2246 × 296 sources are high-density desktop crops; implementation regions were proportionally contained rather than stretched.
+- State: editable task card assigned to 아빠; empty 학기 child-schedule list; mobile 학기·방학 form; desktop 학기 child-schedule form.
+- Primary interactions tested: open task edit, cancel it, switch between 학기·방학 and 자녀 일정, inspect all controls at 402 px and 393 px, and verify desktop/mobile responsive placement.
+- Browser console: zero errors and zero warnings.
+
+### Latest comparison history
+
+| Severity | Earlier finding | Fix | Post-fix evidence |
+| --- | --- | --- | --- |
+| P2 | Task edit/delete icons sat above the assignee avatar's visual center. | Moved edit/delete and avatar into one right-aligned flex action cluster. | Both 28 px buttons and the 38 px avatar report the same 859.6 px center line at 402 px. |
+| P1 | Focused sub-16 px schedule controls could trigger iPhone Safari zoom, leaving a white strip and horizontally shifted page. | Set all mobile inputs/selects/textareas to 16 px and clipped root-level accidental horizontal overflow. | At 402 px and 393 px, visual viewport scale is 1 and root/body scroll width equals viewport width. |
+| P2 | Mobile period dates were centered and all four controls stacked vertically. | Left-aligned native date values and changed the mobile form to two equal columns. | `자녀·구분` and `시작일·종료일` each share one row; both dates are 16 px and `text-align: left`. |
+| P2 | The period description extended beyond the right edge while being kept to one line. | Added hidden overflow with an ellipsis to the existing single-line rule. | The 330 px line has `overflow: hidden`, `text-overflow: ellipsis`, and no document overflow. |
+| P2 | The child-schedule add action occupied a separate oversized row. | Expanded the desktop form to six tracks and assigned location, pickup, and actions two tracks each. | Location, pickup, and the 164.6 px action button share the same 801.9–864.9 px row; mobile intentionally retains a safe full-width action row. |
+| P2 | `위 입력란에서 학교나 학원 일정을 추가하세요.` wrapped into two lines. | Removed the generic empty-copy width cap for this list and kept the sentence on one line. | The sentence measures 250 px at the 393 px viewport with equal client/scroll width and no horizontal overflow. |
+
+### Required fidelity surfaces
+
+- Fonts and typography: A2Z/KIMM roles and weights are unchanged; mobile form controls now use the iOS-safe 16 px size without changing headings or empty-state hierarchy.
+- Spacing and layout rhythm: action buttons align with the assignee avatar; period controls use balanced two-column rows; the desktop schedule action follows location and pickup on the same baseline.
+- Colors and visual tokens: existing sage, teal, surface, border, radius, shadow, and semantic action colors are unchanged.
+- Image and icon fidelity: existing Lucide pencil, trash, family, calendar, and graduation-cap assets are preserved with no substitute artwork.
+- Copy and content: requested empty-state and explanatory copy remain unchanged; only wrapping/truncation behavior was corrected.
+- Responsive result: 402 px and 393 px document/body scroll widths exactly equal their viewports. No persistent control is clipped.
+
 final result: passed
