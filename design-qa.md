@@ -1,47 +1,43 @@
-**Comparison Target**
+# Design QA — mobile layout corrections
 
-- Source visual truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_KcwEFH/스크린샷 2026-08-05 오전 10.51.55.png`
-- Implementation: local Family Scheduler at `http://127.0.0.1:4173/`, 일정 관리 화면
-- Source pixels: 2442 × 1058
-- Implementation capture: 1905 × 893 pixels at a 1920 × 900 CSS viewport, device pixel ratio 1
-- State: 기념일 2건 등록, 데스크톱 레이아웃
+## Source truth
 
-**Full-view Comparison Evidence**
+- User references: six iPhone Safari captures at 588 × 1280 px in `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/46E1388C-148F-4929-BC58-60F93C16B4A7/`.
+- Additional source truth: in-browser annotations for the anniversary card actions and anniversary form row grouping.
+- Implementation: local Vite app at `http://127.0.0.1:4173/`.
+- Primary QA viewport: 402 × 874 CSS px (iPhone 16 Pro/17 responsive target).
+- Stress viewport: 320 × 844 CSS px.
 
-- The source and implementation were each opened and visually inspected.
-- The implementation places all anniversary inputs in one horizontal row and renders saved anniversaries in a two-column grid beneath it.
-- A combined side-by-side browser artifact could not be generated because the browser security policy blocked the local comparison document. This prevents a formal same-input visual comparison.
+## States and interactions tested
 
-**Focused Region Evidence**
+- Home: hero greeting and supporting copy.
+- Tasks: open the add-task modal, inspect the deadline field and sticky action row, then cancel the modal.
+- Schedule management / anniversaries: inspect the input form, saved anniversary rows, full milestone text, and edit/delete placement.
+- Schedule management / periods: inspect the term/vacation form and stacked date fields.
+- Browser console: errors and warnings.
 
-- Anniversary form computed as a CSS grid; all controls align on the same control row.
-- Anniversary list computed as two 528px columns at the desktop viewport, with both cards sharing the same top position.
-- Calendar month center and calendar-card center differ by 0 rounded pixels.
-- At 600px viewport, the anniversary list becomes one column and no horizontal overflow occurs.
+## Comparison history
 
-**Findings**
+| Severity | Source mismatch | Correction | Result |
+| --- | --- | --- | --- |
+| P1 | Deadline input extended outside the task modal on mobile. | Constrained form controls and date inputs to the modal width. | Passed |
+| P1 | Cancel and add-task actions were clipped below the visible modal. | Added a scroll-safe modal backdrop and a sticky, safe-area-aware action row. | Passed |
+| P1 | Term/vacation start and end dates overlapped. | Stacked date controls at mobile widths and constrained each input to 100%. | Passed |
+| P2 | Anniversary details were truncated with an ellipsis. | Removed mobile ellipsis and allowed the full milestone detail to wrap. | Passed |
+| P2 | Anniversary edit/delete actions reduced the detail width and sat between title and metadata. | Moved both actions into the anniversary title row; metadata now uses the full content width below. | Passed |
+| P2 | Anniversary name/type and year/month/day consumed unnecessary vertical space. | Grouped name/type on one row and year/month/day on one row at mobile widths. | Passed |
+| P2 | Home greeting and explanatory copy wrapped unnecessarily. | Shortened supporting copy and used responsive single-line mobile typography. | Passed |
+| P2 | Regular Safari browsing retained the bottom address bar. | Added a standalone web-app manifest and Apple web-app metadata. Safari chrome is removed when launched from the Home Screen; a normal web page cannot hide browser chrome. | Passed with platform constraint |
+| P2 | 320 px stress testing exposed the old fixed body minimum width. | Removed the fixed body minimum width and verified no horizontal overflow. | Passed |
 
-- No P0/P1/P2 functional or responsive issue was found in the rendered implementation.
-- Formal visual-fidelity approval remains blocked because the required combined comparison artifact could not be produced in the selected browser.
+## Surface audit
 
-**Primary Interactions Tested**
+- Typography: existing A2Z/KIMM family rules preserved; mobile hero size reduced responsively without changing hierarchy.
+- Spacing and geometry: controls remain inside their cards and modals at 402 px and 320 px widths; no horizontal overflow was found.
+- Color and assets: existing palette, icon library, avatars, borders, and shadows preserved.
+- Copy: mobile helper and empty-state messages are concise and constrained to one line where requested.
+- Interaction: task modal opens and cancels; navigation and schedule-management tabs remain interactive.
+- Console: zero errors and zero warnings during the verified flows.
+- Build checks: ESLint passed, Vite production build passed, manifest JSON parsed successfully.
 
-- Calendar navigation and 일반/근무표 tabs.
-- Shift selection, automatic next-day movement, and persistence after reload.
-- Anniversary creation for two people and two-column list rendering.
-- Empty states after legacy sample data removal.
-- Desktop and mobile responsive layouts.
-- Browser console errors and warnings: 0.
-
-**Implementation Checklist**
-
-- [x] Use A2Z for the shift and today-schedule typography.
-- [x] Remove 가족 공유 캘린더 copy.
-- [x] Center the month title over the calendar.
-- [x] Rename 교대근무 tab to 근무표.
-- [x] Move the anniversary form into one horizontal row.
-- [x] Render saved anniversaries two per row on desktop.
-- [x] Preserve saved shifts and remove legacy sample records.
-- [x] Verify lint and production build.
-
-final result: blocked
+final result: passed

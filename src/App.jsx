@@ -446,7 +446,7 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
             onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
             onDelete={canEdit ? () => removeTodayEvent(event) : undefined}
           />)}
-          {!todayEvents.length && <p className="empty-copy">비어 있는 하루예요. 필요할 때 일정을 추가하세요.</p>}
+          {!todayEvents.length && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
         </div>
         {todayEvents.length > 6 && <button className="more-events-button" onClick={() => setView('calendar')}>+{todayEvents.length - 6}개 일정 더보기</button>}
       </section>
@@ -607,7 +607,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
               <Avatar memberId="emma" />
               <div><span className="eyebrow">엄마 근무표</span><h2>{formatLongDate(selected)}</h2></div>
             </div>
-            <p className="shift-help">{isMonthEnd ? '이번 달 마지막 날입니다. 저장해도 이 날짜에 머뭅니다.' : '근무를 선택하면 저장 후 자동으로 다음 날짜로 이동합니다.'}</p>
+            <p className="shift-help">{isMonthEnd ? '월말에는 다음 달로 넘어가지 않습니다.' : '근무 선택 후 다음 날짜로 자동 이동합니다.'}</p>
             <div className="shift-editor-grid">
               {SHIFT_OPTIONS.map(({ id, code, label: optionLabel, time, icon: Icon, color }) => (
                 <button key={id} className={`${color} ${selectedShift?.shift === id ? 'active' : ''}`} aria-pressed={selectedShift?.shift === id} disabled={!canEdit} onClick={() => setSelectedShift(id)}>
@@ -908,13 +908,13 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   return (
     <div className="page schedules-page">
       <section className="page-title-row">
-        <div><span className="eyebrow">반복 일정과 기념일</span><h1>가족 일정 관리</h1><p>학교·학원 일정과 가족 기념일을 등록하면 가족 달력에 자동 반영됩니다.</p></div>
+        <div><span className="eyebrow">반복 일정과 기념일</span><h1>가족 일정 관리</h1><p>학교·학원과 기념일을 등록하면 달력에 바로 반영됩니다.</p></div>
         <button className="secondary-button" onClick={() => openCalendar('일반')}><CalendarDays size={18} /> 달력 보기</button>
       </section>
 
       <section className="schedule-guide card">
         <CalendarRange />
-        <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong> 캘린더의 ‘근무표’ 탭에서 D·E·N 또는 휴무를 선택하세요.</span>
+        <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong><small>근무표에서 D·E·N·휴무를 선택하세요.</small></span>
         <button className="text-button" onClick={() => openCalendar('근무표')}>근무표 열기 <ChevronRight size={16} /></button>
       </section>
 
@@ -929,11 +929,11 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       {!canEdit && <div className="readonly-notice"><UserRoundCheck /> 자녀 계정은 일정을 볼 수 있습니다. 수정은 가족 대표가 권한을 허용한 뒤 가능합니다.</div>}
 
       {managementSection === 'anniversaries' && <section className={`anniversary-card card ${!canEdit ? 'readonly-section' : ''}`}>
-        <div className="section-heading"><div><span className="eyebrow">매년 달력에 자동 표시</span><h2>가족 기념일 관리</h2><p>부모님 생일도 이름을 직접 입력하고 양력 또는 음력으로 등록할 수 있습니다.</p></div><CalendarDays /></div>
+        <div className="section-heading"><div><span className="eyebrow">매년 달력에 자동 표시</span><h2>가족 기념일 관리</h2><p>양력·음력 가족 기념일을 등록하세요.</p></div><CalendarDays /></div>
         <div className="anniversary-layout">
           <form className="anniversary-form" onSubmit={submitAnniversary}>
             <label className="anniversary-name-field">대상·이름<input value={anniversaryForm.name} onChange={(event) => changeAnniversaryField('name', event.target.value)} placeholder="예: 어머니, 부모님" required /></label>
-            <label>기념일 종류<select value={anniversaryForm.kind} onChange={(event) => changeAnniversaryField('kind', event.target.value)}><option>생일</option><option>결혼기념일</option><option>기념일</option></select></label>
+            <label className="anniversary-kind-field">기념일 종류<select value={anniversaryForm.kind} onChange={(event) => changeAnniversaryField('kind', event.target.value)}><option>생일</option><option>결혼기념일</option><option>기념일</option></select></label>
             <fieldset className="anniversary-calendar-field">
               <legend>날짜 기준</legend>
               <div className="segmented anniversary-calendar-tabs">
@@ -942,8 +942,8 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
               {anniversaryForm.calendarType === 'lunar' && <button className={`leap-month-toggle ${anniversaryForm.leapMonth ? 'active' : ''}`} type="button" aria-pressed={anniversaryForm.leapMonth} onClick={() => changeAnniversaryField('leapMonth', !anniversaryForm.leapMonth)}><Check /> 윤달</button>}
             </fieldset>
             <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
-            <label>월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
-            <label>일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
+            <label className="anniversary-month-field">월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
+            <label className="anniversary-day-field">일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
             <div className="anniversary-preview"><span>{anniversaryForm.calendarType === 'lunar' ? '음력 → 양력 변환' : '다음 기념일'}</span><strong>{formatSolarDate(anniversaryPreview)}</strong></div>
             <div className="anniversary-form-actions">
               {anniversaryEditingId && <button className="secondary-button" type="button" onClick={cancelAnniversaryEdit}>취소</button>}
@@ -958,10 +958,17 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
               const milestoneLabel = anniversaryMilestoneLabel(anniversary, nextOccurrence)
               return <article className="anniversary-row" key={anniversary.id}>
                 <Avatar memberId="anniversary" />
-                <div className="anniversary-copy"><span><em>{anniversary.calendarType === 'lunar' ? `음력${anniversary.leapMonth ? ' 윤달' : ''}` : '양력'}</em>{anniversary.kind}</span><strong>{anniversaryTitle(anniversary)}</strong><small>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)} · {milestoneLabel || '연도 미입력'}</small>{!milestoneLabel && canEdit && <button className="year-inline-button" onClick={() => editAnniversary(anniversary)}>{anniversary.kind === '생일' ? '출생 연도 추가' : '시작 연도 추가'}</button>}</div>
-                <div className="event-actions">
-                  {canEdit && <button onClick={() => editAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 수정`}><Pencil /></button>}
-                  {canEdit && <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>}
+                <div className="anniversary-copy">
+                  <span><em>{anniversary.calendarType === 'lunar' ? `음력${anniversary.leapMonth ? ' 윤달' : ''}` : '양력'}</em>{anniversary.kind}</span>
+                  <div className="anniversary-title-row">
+                    <strong>{anniversaryTitle(anniversary)}</strong>
+                    <div className="event-actions">
+                      {canEdit && <button onClick={() => editAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 수정`}><Pencil /></button>}
+                      {canEdit && <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>}
+                    </div>
+                  </div>
+                  <small>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)} · {milestoneLabel || '연도 미입력'}</small>
+                  {!milestoneLabel && canEdit && <button className="year-inline-button" onClick={() => editAnniversary(anniversary)}>{anniversary.kind === '생일' ? '출생 연도 추가' : '시작 연도 추가'}</button>}
                 </div>
               </article>
             })}
@@ -973,7 +980,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       {managementSection === 'periods' && <div className={`schedule-management-grid single ${!canEdit ? 'readonly-section' : ''}`}>
         <section className="period-card card">
           <div className="section-heading"><div><span className="eyebrow">언제 적용할지</span><h2>학기·방학 적용 기간</h2></div><CalendarRange /></div>
-          <p>기간이 겹치면 시작일이 더 최근인 일정이 우선 적용됩니다.</p>
+          <p>기간이 겹치면 최근 시작 일정이 우선입니다.</p>
           <form className="period-form" onSubmit={submitPeriod}>
             <label>구분<select value={periodForm.season} onChange={(event) => setPeriodForm((current) => ({ ...current, season: event.target.value }))}><option>학기</option><option>방학</option></select></label>
             <label>시작일<input type="date" value={periodForm.start} onChange={(event) => setPeriodForm((current) => ({ ...current, start: event.target.value }))} /></label>
