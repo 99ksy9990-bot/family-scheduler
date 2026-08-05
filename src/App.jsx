@@ -32,48 +32,19 @@ const addDays = (base, amount) => {
 const today = new Date()
 today.setHours(0, 0, 0, 0)
 
-const defaultEvents = [
-  { id: 1, title: '치과 예약', date: iso(today), time: '오전 9:00', end: '오전 10:00', member: 'emma', location: '스마일 치과', type: 'family' },
-  { id: 4, title: '가족 저녁 식사', date: iso(today), time: '오후 6:30', end: '오후 8:00', member: 'emma', location: '우리 집', type: 'family' },
-  { id: 6, title: '야간 근무', date: iso(addDays(today, 3)), time: '오후 4:00', end: '자정', member: 'david', location: '시립 병원', type: 'work' },
-  { id: 7, title: '연두 생일', date: iso(addDays(today, 6)), time: '오후 2:00', end: '오후 5:00', member: 'mia', location: '우리 집', type: 'family' },
-]
-
-const defaultChildSchedules = [
-  { id: 'leo-term-soccer', member: 'leo', season: '학기', kind: '학원', title: '축구 연습', weekday: 3, time: '오후 4:00', end: '오후 5:30', location: '강변 운동장' },
-  { id: 'leo-term-piano', member: 'leo', season: '학기', kind: '학원', title: '피아노 레슨', weekday: 5, time: '오후 5:00', end: '오후 6:00', location: '음악실' },
-  { id: 'mia-term-art', member: 'mia', season: '학기', kind: '학원', title: '미술 수업', weekday: 3, time: '오후 3:30', end: '오후 5:00', location: '커뮤니티 센터' },
-  { id: 'leo-vacation-swim', member: 'leo', season: '방학', kind: '학원', title: '수영 수업', weekday: 2, time: '오전 10:00', end: '오전 11:30', location: '시민 수영장' },
-  { id: 'mia-vacation-art', member: 'mia', season: '방학', kind: '학원', title: '미술 캠프', weekday: 4, time: '오후 2:00', end: '오후 4:00', location: '커뮤니티 센터' },
-]
-
-const defaultSchedulePeriods = [
-  { id: 'term-first-2026', season: '학기', start: '2026-03-02', end: '2026-07-17' },
-  { id: 'vacation-summer-2026', season: '방학', start: '2026-07-18', end: '2026-08-16' },
-  { id: 'term-second-2026', season: '학기', start: '2026-08-17', end: '2026-12-23' },
-]
-
+const defaultEvents = []
+const defaultChildSchedules = []
+const defaultSchedulePeriods = []
 const defaultAnniversaries = []
+const defaultTasks = []
+const defaultShifts = []
 
-const defaultTasks = [
-  { id: 1, title: '전기 요금 납부', category: '긴급', assignee: 'emma', done: false, meta: '오늘까지' },
-  { id: 2, title: '싱크대 수리공 부르기', category: '긴급', assignee: 'david', done: false, meta: '주방 싱크대' },
-  { id: 3, title: '거실과 계단 청소기 돌리기', category: '집안일', assignee: 'leo', done: false, meta: '오늘 저녁' },
-  { id: 4, title: '식기세척기 비우기', category: '집안일', assignee: 'mia', done: true, meta: '완료됨' },
-  { id: 5, title: '오트밀크 2팩', category: '장보기', assignee: 'david', done: false, meta: '마트' },
-  { id: 6, title: '신선한 시금치', category: '장보기', assignee: 'emma', done: false, meta: '마트' },
-  { id: 7, title: '사과', category: '장보기', assignee: 'leo', done: true, meta: '구매 완료' },
-]
-
-const defaultShifts = [
-  { id: 1, date: iso(today), member: 'emma', shift: 'evening' },
-  { id: 2, date: iso(addDays(today, 1)), member: 'emma', shift: 'evening' },
-  { id: 3, date: iso(addDays(today, 2)), member: 'emma', shift: 'night' },
-  { id: 4, date: iso(addDays(today, 3)), member: 'emma', shift: 'night' },
-  { id: 5, date: iso(addDays(today, 4)), member: 'emma', shift: 'off' },
-  { id: 6, date: iso(addDays(today, 5)), member: 'emma', shift: 'off' },
-  { id: 7, date: iso(addDays(today, 6)), member: 'emma', shift: 'day' },
-]
+const LEGACY_EVENT_IDS = new Set([1, 4, 6, 7])
+const LEGACY_TASK_IDS = new Set([1, 2, 3, 4, 5, 6, 7])
+const LEGACY_CHILD_SCHEDULE_IDS = new Set([
+  'leo-term-soccer', 'leo-term-piano', 'mia-term-art', 'leo-vacation-swim', 'mia-vacation-art',
+])
+const LEGACY_PERIOD_IDS = new Set(['term-first-2026', 'vacation-summer-2026', 'term-second-2026'])
 
 const SHIFT_OPTIONS = [
   { id: 'day', code: 'D', label: '주간 근무', shortLabel: 'D', time: '오전 6:30 – 오후 3:30', endLabel: '오후 3:30 종료', icon: Sun, color: 'sage' },
@@ -90,6 +61,10 @@ const load = (key, fallback) => {
     return fallback
   }
 }
+
+const loadWithoutLegacySeeds = (key, fallback, legacyIds) => (
+  load(key, fallback).filter((item) => !legacyIds.has(item.id))
+)
 
 const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
   weekday: 'long', month: 'long', day: 'numeric',
@@ -339,7 +314,7 @@ function HomeView({ events, childSchedules, setChildSchedules, schedulePeriods, 
         <article className="status-card card">
           <div className="card-label"><span>엄마 오늘 근무</span><span className="status-pill"><i /> {shiftOption?.code || '미입력'}</span></div>
           <h2>{shiftOption?.label || '근무 미입력'}</h2>
-          <p className="large-detail"><Clock3 /> {shiftOption?.endLabel || '교대근무 달력에서 입력하세요'}</p>
+          <p className="large-detail"><Clock3 /> {shiftOption?.endLabel || '근무표에서 입력하세요'}</p>
           <div className="support-note">
             <Sparkles size={20} />
             <span><strong>가족 공유</strong>오늘 등록된 가족 일정이 {todayEvents.length}개 있습니다.</span>
@@ -435,9 +410,8 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
 
   return (
     <div className="page calendar-page">
-      <section className="calendar-toolbar card">
-        <div>
-          <span className="eyebrow">{mode === '일반' ? '가족 공유 캘린더' : '엄마 교대근무 달력'}</span>
+      <section className={`calendar-toolbar card ${mode === '근무표' ? 'shift-mode' : ''}`}>
+        <div className="calendar-title-slot">
           <div className="month-controls">
             <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>
             <h1>{label}</h1>
@@ -445,11 +419,11 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
           </div>
         </div>
         <div className="segmented">
-          {['일반', '교대근무'].map((item) => <button key={item} aria-pressed={mode === item} className={mode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
+          {['일반', '근무표'].map((item) => <button key={item} aria-pressed={mode === item} className={mode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
         </div>
       </section>
 
-      <section className={`calendar-layout ${mode === '교대근무' ? 'shift-mode' : ''}`}>
+      <section className={`calendar-layout ${mode === '근무표' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day) => <span key={day}>{day}</span>)}</div>
           <div className="calendar-grid">
@@ -461,7 +435,7 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
               const isSelected = iso(date) === iso(selected)
               const isToday = iso(date) === iso(today)
               return (
-                <button key={iso(date)} className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${mode === '교대근무' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`} onClick={() => setSelected(date)}>
+                <button key={iso(date)} className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${mode === '근무표' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`} onClick={() => setSelected(date)}>
                   <span>{day}</span>
                   {mode === '일반' ? <>
                     <div className="day-dots">
@@ -478,7 +452,7 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
           </div>
         </div>
 
-        <aside className={`day-panel card ${mode === '교대근무' ? 'shift-day-panel' : ''}`}>
+        <aside className={`day-panel card ${mode === '근무표' ? 'shift-day-panel' : ''}`}>
           {mode === '일반' ? <>
             <div className="section-heading">
               <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selected)}</h2></div>
@@ -498,7 +472,7 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
           </> : <>
             <div className="shift-editor-heading">
               <Avatar memberId="emma" />
-              <div><span className="eyebrow">엄마 교대근무</span><h2>{formatLongDate(selected)}</h2></div>
+              <div><span className="eyebrow">엄마 근무표</span><h2>{formatLongDate(selected)}</h2></div>
             </div>
             <p className="shift-help">{isMonthEnd ? '이번 달 마지막 날입니다. 저장해도 이 날짜에 머뭅니다.' : '근무를 선택하면 저장 후 자동으로 다음 날짜로 이동합니다.'}</p>
             <div className="shift-editor-grid">
@@ -742,8 +716,8 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
 
       <section className="schedule-guide card">
         <CalendarRange />
-        <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong> 캘린더의 ‘교대근무’ 탭에서 D·E·N 또는 휴무를 선택하세요.</span>
-        <button className="text-button" onClick={() => openCalendar('교대근무')}>교대근무 달력 열기 <ChevronRight size={16} /></button>
+        <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong> 캘린더의 ‘근무표’ 탭에서 D·E·N 또는 휴무를 선택하세요.</span>
+        <button className="text-button" onClick={() => openCalendar('근무표')}>근무표 열기 <ChevronRight size={16} /></button>
       </section>
 
       <section className="anniversary-card card">
@@ -912,13 +886,13 @@ function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteE
 
 export default function App() {
   const [view, setView] = useState('home')
-  const [events, setEvents] = useState(() => load('family-scheduler-events', defaultEvents).map((event) => (
+  const [events, setEvents] = useState(() => loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
     event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
   )))
-  const [tasks, setTasks] = useState(() => load('family-scheduler-tasks', defaultTasks))
+  const [tasks, setTasks] = useState(() => loadWithoutLegacySeeds('family-scheduler-tasks', defaultTasks, LEGACY_TASK_IDS))
   const [shifts, setShifts] = useState(() => load('family-scheduler-shifts', defaultShifts))
-  const [childSchedules, setChildSchedules] = useState(() => load('family-scheduler-child-schedules-v1', defaultChildSchedules))
-  const [schedulePeriods, setSchedulePeriods] = useState(() => load('family-scheduler-periods-v1', defaultSchedulePeriods))
+  const [childSchedules, setChildSchedules] = useState(() => loadWithoutLegacySeeds('family-scheduler-child-schedules-v1', defaultChildSchedules, LEGACY_CHILD_SCHEDULE_IDS))
+  const [schedulePeriods, setSchedulePeriods] = useState(() => loadWithoutLegacySeeds('family-scheduler-periods-v1', defaultSchedulePeriods, LEGACY_PERIOD_IDS))
   const [anniversaries, setAnniversaries] = useState(() => load('family-scheduler-anniversaries-v1', defaultAnniversaries))
   const [modal, setModal] = useState(null)
   const [focusMode, setFocusMode] = useState(false)

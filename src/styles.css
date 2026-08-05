@@ -102,6 +102,10 @@ select {
 h1, h2, h3, p { margin: 0; }
 h1, h2, h3 { letter-spacing: -0.035em; }
 h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
+.status-card h2,
+.today-card .section-heading h2,
+.today-card .event-time,
+.today-card .event-copy strong { font-family: 'A2Z', sans-serif; }
 
 .app { min-height: 100vh; }
 .app main { min-height: calc(100vh - 76px); }
@@ -343,7 +347,17 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
 .floating-add:hover { transform: translateY(-3px) rotate(2deg); background: var(--primary-dark); }
 
 .calendar-page { width: min(1240px, calc(100% - 48px)); }
-.calendar-toolbar { padding: 24px 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.calendar-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, .75fr);
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 22px;
+  padding: 24px 0;
+}
+.calendar-toolbar.shift-mode { grid-template-columns: minmax(0, 1.45fr) minmax(390px, .85fr); }
+.calendar-title-slot { display: flex; justify-content: center; }
+.calendar-toolbar > .segmented { justify-self: end; margin-right: 28px; }
 .month-controls { display: flex; align-items: center; gap: 8px; }
 .month-controls h1 { min-width: 245px; text-align: center; font-size: 31px; }
 .segmented { display: flex; gap: 4px; padding: 5px; border-radius: 14px; background: var(--lavender); }
@@ -477,22 +491,30 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
 .anniversary-card .section-heading > svg { color: #b68932; }
 .anniversary-card .section-heading h2 { font-size: 24px; }
 .anniversary-card .section-heading p { margin-top: 5px; color: var(--muted); font-size: 13px; }
-.anniversary-layout { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(330px, .92fr); gap: 24px; margin-top: 22px; }
-.anniversary-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; padding: 20px; border-radius: 18px; background: #fffaf0; }
+.anniversary-layout { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 22px; }
+.anniversary-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.5fr) minmax(118px, .8fr) minmax(170px, 1.25fr) minmax(86px, .65fr) minmax(86px, .65fr) minmax(145px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #fffaf0;
+}
 .anniversary-form label, .anniversary-form fieldset { min-width: 0; display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; color: #4c575d; border: 0; font-size: 12px; font-weight: 700; }
 .anniversary-form legend { margin-bottom: 6px; padding: 0; }
 .anniversary-form input, .anniversary-form select { width: 100%; height: 43px; padding: 0 12px; color: var(--ink); border: 1px solid #dfd7c4; border-radius: 12px; outline: none; background-color: white; }
 .anniversary-form input:focus, .anniversary-form select:focus { border-color: #b68932; box-shadow: 0 0 0 3px rgba(182, 137, 50, .12); }
-.anniversary-name-field, .anniversary-calendar-field { grid-column: span 2; }
+.anniversary-name-field, .anniversary-calendar-field { grid-column: auto; }
 .anniversary-calendar-tabs { height: 43px; padding: 4px; }
 .anniversary-calendar-tabs button { min-width: 0; flex: 1; padding: 7px 10px; }
-.anniversary-preview { grid-column: span 2; min-height: 55px; display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 9px 12px; color: #775c26; border: 1px solid #ead8ab; border-radius: 12px; background: #fff5d9; }
+.anniversary-preview { min-height: 43px; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 7px 11px; color: #775c26; border: 1px solid #ead8ab; border-radius: 12px; background: #fff5d9; }
 .anniversary-preview span { font-size: 11px; font-weight: 700; }
 .anniversary-preview strong { color: var(--ink); font-size: 15px; }
-.anniversary-form-actions { grid-column: span 2; display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; }
+.anniversary-form-actions { display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; }
 .anniversary-form-actions .primary-button, .anniversary-form-actions .secondary-button { min-height: 43px; }
 .anniversary-form-error { grid-column: 1 / -1; }
-.anniversary-list { display: grid; align-content: start; gap: 9px; }
+.anniversary-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 10px; }
 .anniversary-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid #efe5ca; border-radius: 16px; background: #fffdf8; }
 .anniversary-row .avatar { width: 42px; height: 42px; border-radius: 14px; }
 .anniversary-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -501,7 +523,7 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
 .anniversary-copy strong { font-size: 16px; }
 .anniversary-copy small { overflow: hidden; color: var(--muted); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .anniversary-row .event-actions button { width: 32px; height: 32px; border-radius: 9px; }
-.anniversary-empty { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #8b8170; border: 1px dashed #dfd2b4; border-radius: 18px; background: #fffdf8; text-align: center; }
+.anniversary-empty { grid-column: 1 / -1; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #8b8170; border: 1px dashed #dfd2b4; border-radius: 18px; background: #fffdf8; text-align: center; }
 .anniversary-empty svg { margin-bottom: 3px; color: #b68932; }
 .anniversary-empty span { font-size: 12px; }
 .schedule-management-grid { display: grid; grid-template-columns: minmax(330px, .78fr) minmax(0, 1.42fr); gap: 22px; align-items: start; }
@@ -580,6 +602,7 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
   .header-inner { width: min(100% - 32px, 680px); grid-template-columns: 1fr auto; }
   .app-header .main-nav { display: none; }
   .overview-grid, .calendar-layout, .calendar-layout.shift-mode, .schedule-management-grid, .anniversary-layout { grid-template-columns: 1fr; }
+  .calendar-toolbar, .calendar-toolbar.shift-mode { grid-template-columns: minmax(0, 1fr) auto; }
   .calendar-layout { gap: 16px; }
   .day-panel { position: static; }
   .task-columns { grid-template-columns: 1fr 1fr; }
@@ -588,6 +611,8 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
   .schedule-guide { grid-template-columns: auto 1fr; }
   .schedule-guide .text-button { grid-column: 2; justify-self: start; }
   .child-schedule-list { grid-template-columns: 1fr; }
+  .anniversary-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .anniversary-name-field, .anniversary-calendar-field, .anniversary-preview, .anniversary-form-actions { grid-column: span 2; }
   .mobile-nav {
     position: fixed;
     left: 0;
@@ -626,7 +651,8 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
   .task-columns { grid-template-columns: 1fr; gap: 28px; }
   .task-group.groceries { grid-column: auto; }
   .task-group.groceries .task-list { grid-template-columns: 1fr; }
-  .calendar-toolbar { align-items: stretch; flex-direction: column; padding: 20px; }
+  .calendar-toolbar, .calendar-toolbar.shift-mode { grid-template-columns: 1fr; align-items: stretch; padding: 20px; }
+  .calendar-toolbar > .segmented { width: 100%; justify-self: stretch; margin-right: 0; }
   .month-controls { justify-content: space-between; }
   .month-controls h1 { min-width: 0; font-size: 24px; }
   .segmented button { flex: 1; }
@@ -647,6 +673,7 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
   .anniversary-card { padding: 21px; }
   .anniversary-form { grid-template-columns: 1fr 1fr; padding: 16px; }
   .anniversary-name-field, .anniversary-calendar-field, .anniversary-preview, .anniversary-form-actions { grid-column: 1 / -1; }
+  .anniversary-list { grid-template-columns: 1fr; }
   .child-schedule-form { grid-template-columns: 1fr 1fr; }
   .schedule-title-field, .schedule-location-field, .schedule-form-actions { grid-column: 1 / -1; }
   .child-schedule-list { grid-template-columns: 1fr; }
