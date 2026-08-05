@@ -498,6 +498,10 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
 function TasksView({ tasks, setTasks, openModal }) {
   const categories = ['긴급', '집안일', '장보기']
   const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
+  const deleteTask = (task) => {
+    if (!window.confirm(`‘${task.title}’ 할 일을 삭제할까요?`)) return
+    setTasks((current) => current.filter((item) => item.id !== task.id))
+  }
   const remaining = tasks.filter((task) => !task.done).length
 
   return (
@@ -520,7 +524,13 @@ function TasksView({ tasks, setTasks, openModal }) {
                   <article key={task.id} className={`task-card ${task.done ? 'done' : ''}`}>
                     <button className="checkbox" onClick={() => toggleTask(task.id)} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button>
                     <span className="task-copy"><strong>{task.title}</strong><small>{task.meta}</small></span>
-                    <Avatar memberId={task.assignee} small />
+                    <div className="task-card-end">
+                      <Avatar memberId={task.assignee} small />
+                      <div className="event-actions">
+                        <button onClick={() => openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
+                        <button className="delete" onClick={() => deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
+                      </div>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -837,34 +847,37 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   )
 }
 
-function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask }) {
+function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask }) {
   const isTask = type === 'task'
-  const isEditing = !isTask && Boolean(item)
+  const isEditing = Boolean(item)
   const [title, setTitle] = useState(item?.title || '')
   const [eventDate, setEventDate] = useState(item?.date || date || iso(today))
   const [time, setTime] = useState(item?.time || '오전 9:00')
   const [end, setEnd] = useState(item?.end || '오전 10:00')
   const [location, setLocation] = useState(item?.location || '우리 집')
   const [member, setMember] = useState(item?.member || 'emma')
-  const [category, setCategory] = useState('집안일')
+  const [category, setCategory] = useState(item?.category || '집안일')
   const submit = (event) => {
     event.preventDefault()
     if (!title.trim()) return
-    if (isTask) onAddTask({ title: title.trim(), category, assignee: member, meta: '새로 추가됨' })
+    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member })
+    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, meta: '새로 추가됨' })
     else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: eventDate, time, end, location, member })
     else onAddEvent({ title: title.trim(), date: eventDate, time, end, location, member, type: 'family' })
     onClose()
   }
-  const removeEvent = () => {
-    if (window.confirm(`‘${item.title}’ 일정을 삭제할까요?`)) {
-      onDeleteEvent(item.id)
+  const removeItem = () => {
+    const itemType = isTask ? '할 일' : '일정'
+    if (window.confirm(`‘${item.title}’ ${itemType}을 삭제할까요?`)) {
+      if (isTask) onDeleteTask(item.id)
+      else onDeleteEvent(item.id)
       onClose()
     }
   }
   return (
     <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <form className="modal" onSubmit={submit}>
-        <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2>{isTask ? '할 일 추가' : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
+        <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2>{isTask ? (isEditing ? '할 일 수정' : '할 일 추가') : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
         <label>제목<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isTask ? '무엇을 해야 하나요?' : '어떤 일정인가요?'} /></label>
         {!isTask && <label>날짜<input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} /></label>}
         {!isTask && <div className="modal-time-row">
@@ -875,9 +888,9 @@ function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteE
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>집안일</option><option>장보기</option></select></label>}
         <fieldset><legend>담당자</legend><div className="member-picker">{MEMBERS.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
         <div className="modal-actions">
-          {isEditing && <button type="button" className="danger-button" onClick={removeEvent}><Trash2 size={17} /> 일정 삭제</button>}
+          {isEditing && <button type="button" className="danger-button" onClick={removeItem}><Trash2 size={17} /> {isTask ? '할 일 삭제' : '일정 삭제'}</button>}
           <button type="button" className="secondary-button" onClick={onClose}>취소</button>
-          <button className="primary-button" type="submit">{isEditing ? <Check size={18} /> : <Plus size={18} />} {isTask ? '할 일 추가' : isEditing ? '수정 완료' : '일정 추가'}</button>
+          <button className="primary-button" type="submit">{isEditing ? <Check size={18} /> : <Plus size={18} />} {isEditing ? '수정 완료' : isTask ? '할 일 추가' : '일정 추가'}</button>
         </div>
       </form>
     </div>
@@ -909,6 +922,8 @@ export default function App() {
   const updateEvent = (updatedEvent) => setEvents((current) => current.map((event) => event.id === updatedEvent.id ? updatedEvent : event))
   const deleteEvent = (eventId) => setEvents((current) => current.filter((event) => event.id !== eventId))
   const addTask = (task) => setTasks((current) => [...current, { ...task, id: Date.now(), done: false }])
+  const updateTask = (updatedTask) => setTasks((current) => current.map((task) => task.id === updatedTask.id ? updatedTask : task))
+  const deleteTask = (taskId) => setTasks((current) => current.filter((task) => task.id !== taskId))
   const openModal = (type, date, item) => setModal({ type, date, item })
   const openCalendar = (mode = '일반') => {
     setCalendarMode(mode)
@@ -925,7 +940,7 @@ export default function App() {
         {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} openCalendar={openCalendar} />}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={setView} /></div>
-      {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} />}
+      {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}
     </div>
   )
 }

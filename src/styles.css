@@ -103,6 +103,8 @@ h1, h2, h3, p { margin: 0; }
 h1, h2, h3 { letter-spacing: -0.035em; }
 h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
 .status-card h2,
+.children-card h2,
+.children-card .child-row strong,
 .today-card .section-heading h2,
 .today-card .event-time,
 .today-card .event-copy strong { font-family: 'A2Z', sans-serif; }
@@ -476,6 +478,11 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
 .task-copy { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
 .task-copy strong { font-size: 16px; line-height: 1.35; }
 .task-copy small { color: var(--muted); }
+.task-card-end { display: flex; align-items: center; gap: 9px; }
+.task-card-end .event-actions { opacity: 0; transition: opacity .18s ease; }
+.task-card:hover .task-card-end .event-actions,
+.task-card:focus-within .task-card-end .event-actions { opacity: 1; }
+.task-card-end .event-actions button { width: 30px; height: 30px; border-radius: 9px; }
 .task-card.done { opacity: .55; }
 .task-card.done .checkbox { border-color: var(--primary); background: var(--primary); }
 .task-card.done strong { text-decoration: line-through; }
@@ -611,6 +618,7 @@ h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
   .schedule-guide { grid-template-columns: auto 1fr; }
   .schedule-guide .text-button { grid-column: 2; justify-self: start; }
   .child-schedule-list { grid-template-columns: 1fr; }
+  .task-card-end .event-actions { opacity: 1; }
   .anniversary-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .anniversary-name-field, .anniversary-calendar-field, .anniversary-preview, .anniversary-form-actions { grid-column: span 2; }
   .mobile-nav {
