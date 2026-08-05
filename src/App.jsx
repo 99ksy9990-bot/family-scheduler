@@ -430,10 +430,10 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
           <div className="card-label"><span>엄마 오늘 근무</span><span className="status-pill"><i /> {shiftOption?.code || '미입력'}</span></div>
           <h2>{shiftOption?.label || '근무 미입력'}</h2>
           <p className="large-detail"><Clock3 /> {shiftOption?.endLabel || '근무표에서 입력하세요'}</p>
-          <div className="support-note">
+          <button className="support-note" type="button" aria-controls="today-schedule" onClick={() => document.getElementById('today-schedule')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
             <Sparkles size={20} />
             <span><strong>{isShared ? '가족 동기화' : '오늘 요약'}</strong>오늘 일정 {todayEvents.length}개{dueTasks.length ? ` · 마감 할 일 ${dueTasks.length}개` : ''}</span>
-          </div>
+          </button>
         </article>
 
         <article className="children-card card">
@@ -449,7 +449,7 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
         </article>
       </section>
 
-      <section className="today-card card">
+      <section className="today-card card" id="today-schedule">
         <div className="section-heading">
           <div><span className="eyebrow">오늘 한눈에 보기</span><h2>오늘의 일정</h2></div>
           <button className="text-button" onClick={() => setView('calendar')}>캘린더 보기 <ChevronRight size={16} /></button>

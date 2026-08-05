@@ -256,14 +256,19 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .large-detail { display: flex; align-items: center; gap: 10px; margin: 10px 0 24px; color: #49545a; font-size: 20px; }
 
 .support-note {
+  width: 100%;
   display: flex;
+  align-items: center;
   gap: 13px;
   padding: 16px;
   color: #4e6025;
   border: 1px solid #cbd9ac;
   border-radius: 16px;
   background: #f5f8ec;
+  text-align: left;
+  transition: .18s ease;
 }
+.support-note:hover { border-color: #aabd80; background: #f0f5e3; transform: translateY(-1px); }
 .support-note span { display: flex; flex-direction: column; line-height: 1.45; }
 
 .section-heading h2 { font-size: 26px; }
@@ -849,7 +854,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .child-schedule-list { grid-template-columns: 1fr; }
   .modal-backdrop { place-items: start center; padding: max(14px, env(safe-area-inset-top)) 14px max(100px, env(safe-area-inset-bottom)); }
   .modal { width: 100%; margin: auto 0; padding: 22px; border-radius: 22px; }
-  .modal input[type="date"] { display: block; min-width: 0; width: 100%; -webkit-appearance: none; appearance: none; }
+  .modal input[type="date"] { display: block; min-width: 0; width: 100%; -webkit-appearance: none; appearance: none; text-align: left; }
+  .modal input[type="date"]::-webkit-date-and-time-value { min-height: 1.2em; text-align: left; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
   .modal-time-row { grid-template-columns: 1fr; gap: 0; }
   .member-picker { grid-template-columns: 1fr 1fr; }

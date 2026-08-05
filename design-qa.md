@@ -22,6 +22,7 @@
 | --- | --- | --- | --- |
 | P1 | Deadline input extended outside the task modal on mobile. | Constrained form controls and date inputs to the modal width. | Passed |
 | P1 | Cancel and add-task actions were clipped below the visible modal. | Added a scroll-safe modal backdrop and a sticky, safe-area-aware action row. | Passed |
+| P2 | The mobile deadline value was centered while the title and category values were left aligned. | Left-aligned the iOS date value while preserving vertical centering and the 48 px control height. | Passed |
 | P1 | Term/vacation start and end dates overlapped. | Stacked date controls at mobile widths and constrained each input to 100%. | Passed |
 | P2 | Anniversary details were truncated with an ellipsis. | Removed mobile ellipsis and allowed the full milestone detail to wrap. | Passed |
 | P2 | Anniversary edit/delete actions reduced the detail width and sat between title and metadata. | Moved both actions into the anniversary title row; metadata now uses the full content width below. | Passed |
@@ -31,6 +32,7 @@
 | P2 | Birthday/anniversary milestone and missing-year copy wrapped at arbitrary words. | Put both the milestone phrase and `연도 미입력` on a deliberate second line below the solar-date line. | Passed |
 | P2 | Home anniversary edit/delete actions shared the metadata line, and the date/milestone copy still wrapped. | Moved actions to the title line and rendered the full date/milestone copy on one uninterrupted line below. | Passed |
 | P2 | The home greeting always said morning. | Made the greeting switch automatically between morning, afternoon, and evening, refreshing once per minute. | Passed |
+| P2 | The `오늘 요약` card looked actionable but did not navigate. | Converted it to an accessible button that smoothly moves to `오늘의 일정`. | Passed |
 | P2 | Home greeting and explanatory copy wrapped unnecessarily. | Shortened supporting copy and used responsive single-line mobile typography. | Passed |
 | P2 | Regular Safari browsing retained the bottom address bar. | Added a standalone web-app manifest and Apple web-app metadata. Safari chrome is removed when launched from the Home Screen; a normal web page cannot hide browser chrome. | Passed with platform constraint |
 | P2 | 320 px stress testing exposed the old fixed body minimum width. | Removed the fixed body minimum width and verified no horizontal overflow. | Passed |
@@ -42,6 +44,7 @@
 - Color and assets: existing palette, icon library, avatars, borders, and shadows preserved.
 - Copy: mobile helper and empty-state messages are concise and constrained to one line where requested.
 - Interaction: task modal opens and cancels; navigation and schedule-management tabs remain interactive.
+- Added interaction checks: the deadline computes `text-align: left` with a 48 px height, and activating `오늘 요약` changes scroll position toward the `today-schedule` target.
 - Focused mobile measurements: calendar date numerals 14 px (previously 16 px); anniversary preview and action share the same top coordinate; milestone and missing-year labels compute as separate block lines.
 - Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.
 - Console: zero errors and zero warnings during the verified flows.
