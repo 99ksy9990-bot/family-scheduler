@@ -4,7 +4,10 @@
 
 - User references: six iPhone Safari captures at 588 × 1280 px in `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/46E1388C-148F-4929-BC58-60F93C16B4A7/`.
 - Additional source truth: in-browser annotations for the anniversary card actions and anniversary form row grouping.
+- Current source truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/EC2A7CB7-0A3C-44AA-AC15-EF697AE11FE2/1-사진-1.jpg` (588 × 1280 px iPhone Safari capture).
 - Implementation: local Vite app at `http://127.0.0.1:4173/`.
+- Current implementation capture: `/tmp/family-scheduler-qa-mobile-due-date.png` (387 × 841 px browser-rendered capture at the 402 × 874 CSS viewport).
+- Current normalized comparison: `/tmp/family-scheduler-due-date-comparison.png`; the 588 × 1280 source was proportionally resized to 386 × 841 and placed beside the 387 × 841 implementation capture. Browser/device chrome differences were excluded from the focused alignment judgment.
 - Primary QA viewport: 402 × 874 CSS px (iPhone 16 Pro/17 responsive target).
 - Stress viewport: 320 × 844 CSS px.
 
@@ -15,6 +18,7 @@
 - Schedule management / anniversaries: inspect the input form, saved anniversary rows, full milestone text, and edit/delete placement.
 - Schedule management / periods: inspect the term/vacation form and stacked date fields.
 - Browser console: errors and warnings.
+- Task modal: enter `2026-08-05`, visually compare the deadline field with the supplied iPhone reference, and verify left/vertical alignment without saving.
 
 ## Comparison history
 
@@ -34,6 +38,7 @@
 | P2 | The home greeting always said morning. | Made the greeting switch automatically between morning, afternoon, and evening, refreshing once per minute. | Passed |
 | P2 | The `오늘 요약` card looked actionable but did not navigate. | Converted it to an accessible button that smoothly moves to `오늘의 일정`. | Passed |
 | P1 | A selected calendar-event date could appear to disappear in mobile Safari because the native date control appearance was disabled. | Restored the native date appearance and set explicit text color, fill color, opacity, and width bounds. | Passed |
+| P2 | The task deadline value sat against the top of its 48 px mobile input instead of being vertically centered like the other controls. | Kept native date rendering and assigned the input/value area a 46 px line box with zero vertical padding and centered value height. | Passed |
 | P2 | The shift-entry footer only reported the selected day status, so the monthly D/E/N/OFF balance was not visible. | Replaced it with the entered-day total plus live D, E, N, and OFF counts for the displayed month. | Passed |
 | P2 | Home greeting and explanatory copy wrapped unnecessarily. | Shortened supporting copy and used responsive single-line mobile typography. | Passed |
 | P2 | Regular Safari browsing retained the bottom address bar. | Added a standalone web-app manifest and Apple web-app metadata. Safari chrome is removed when launched from the Home Screen; a normal web page cannot hide browser chrome. | Passed with platform constraint |
@@ -48,6 +53,7 @@
 - Interaction: task modal opens and cancels; navigation and schedule-management tabs remain interactive.
 - Added interaction checks: the deadline computes `text-align: left` with a 48 px height, and activating `오늘 요약` changes scroll position toward the `today-schedule` target.
 - Calendar-event date verification: after selecting `2026-08-06` and moving focus to another field, the value remained visible with native appearance and no horizontal overflow at 402 px.
+- Focused deadline comparison: the supplied reference and revised implementation were normalized side by side; `2026-08-05` is left aligned and visually centered inside the 48 px control. Computed input line-height is 46 px with zero vertical padding; no horizontal overflow was found.
 - Shift-summary verification: the August footer rendered `1/31일 입력 · D 1 · E 0 · N 0 · OFF 0` from the persisted data with no horizontal overflow at 402 px.
 - Focused mobile measurements: calendar date numerals 14 px (previously 16 px); anniversary preview and action share the same top coordinate; milestone and missing-year labels compute as separate block lines.
 - Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.

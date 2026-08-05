@@ -861,8 +861,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .child-schedule-list { grid-template-columns: 1fr; }
   .modal-backdrop { place-items: start center; padding: max(14px, env(safe-area-inset-top)) 14px max(100px, env(safe-area-inset-bottom)); }
   .modal { width: 100%; margin: auto 0; padding: 22px; border-radius: 22px; }
-  .modal input[type="date"] { display: block; min-width: 0; width: 100%; max-width: 100%; -webkit-appearance: auto; appearance: auto; color: var(--ink); background-color: #fff; -webkit-text-fill-color: var(--ink); opacity: 1; text-align: left; }
-  .modal input[type="date"]::-webkit-date-and-time-value { display: block; width: 100%; min-height: 1.2em; color: var(--ink); text-align: left; }
+  .modal input[type="date"] { display: block; min-width: 0; width: 100%; max-width: 100%; -webkit-appearance: auto; appearance: auto; color: var(--ink); background-color: #fff; -webkit-text-fill-color: var(--ink); opacity: 1; line-height: 46px; text-align: left; }
+  .modal input[type="date"]::-webkit-date-and-time-value { display: flex; width: 100%; height: 100%; min-height: 46px; align-items: center; padding: 0; color: var(--ink); line-height: normal; text-align: left; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
   .modal-time-row { grid-template-columns: 1fr; gap: 0; }
   .member-picker { grid-template-columns: 1fr 1fr; }
