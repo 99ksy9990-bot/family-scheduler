@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Holidays from 'date-holidays'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
@@ -199,11 +199,27 @@ const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
   weekday: 'long', month: 'long', day: 'numeric',
 }).format(date)
 const formatSolarDate = (date) => date ? `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.` : '변환 가능한 날짜 없음'
-const familyGreeting = (date = new Date()) => {
+const FAMILY_GREETINGS = {
+  morning: ['좋은 아침이에요', '반가운 아침이에요', '힘찬 아침이에요', '상쾌한 아침이에요'],
+  afternoon: ['좋은 오후예요', '반가운 오후예요', '즐거운 오후예요', '여유로운 오후예요'],
+  evening: ['좋은 저녁이에요', '편안한 저녁이에요', '따뜻한 저녁이에요', '수고한 하루예요'],
+}
+const GREETING_SEQUENCE = (() => {
+  if (typeof window === 'undefined') return 0
+  const storageKey = 'family-scheduler-greeting-sequence'
+  const next = (Number(window.sessionStorage.getItem(storageKey) || -1) + 1) % 4
+  window.sessionStorage.setItem(storageKey, String(next))
+  return next
+})()
+const greetingOptions = (date = new Date()) => {
   const hour = date.getHours()
-  if (hour < 12) return '좋은 아침이에요'
-  if (hour < 18) return '좋은 오후예요'
-  return '좋은 저녁이에요'
+  if (hour < 12) return FAMILY_GREETINGS.morning
+  if (hour < 18) return FAMILY_GREETINGS.afternoon
+  return FAMILY_GREETINGS.evening
+}
+const familyGreeting = (date = new Date()) => {
+  const options = greetingOptions(date)
+  return options[GREETING_SEQUENCE % options.length]
 }
 
 const validSolarDate = (year, month, day) => {
@@ -489,7 +505,10 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
   const shiftOption = SHIFT_OPTIONS.find((option) => option.id === todayShift?.shift)
 
   useEffect(() => {
-    const timer = window.setInterval(() => setGreeting(familyGreeting()), 60_000)
+    const timer = window.setInterval(() => setGreeting((current) => {
+      const options = greetingOptions()
+      return options.includes(current) ? current : familyGreeting()
+    }), 60_000)
     return () => window.clearInterval(timer)
   }, [])
   const removeTodayEvent = (event) => {
@@ -578,6 +597,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
   const [lastShiftChange, setLastShiftChange] = useState(null)
+  const dayPanelRef = useRef(null)
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
   const selectedEventsRaw = eventsForDate(selected, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const selectedConflicts = overlappingEventIds(selectedEventsRaw)
@@ -599,6 +619,13 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const moveMonth = (amount) => {
     const next = new Date(cursor.getFullYear(), cursor.getMonth() + amount, 1)
     setCursor(next)
+  }
+
+  const selectCalendarDate = (date) => {
+    setSelected(date)
+    if (mode === '일반' && window.matchMedia('(max-width: 900px)').matches) {
+      window.requestAnimationFrame(() => dayPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    }
   }
 
   const setSelectedShift = (shiftId) => {
@@ -683,7 +710,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
                   data-date={iso(date)}
                   data-holiday={dayHoliday?.title || undefined}
                   aria-label={`${formatLongDate(date)}${dayHoliday ? `, ${dayHoliday.title}` : ''}`}
-                  onClick={() => setSelected(date)}
+                  onClick={() => selectCalendarDate(date)}
                 >
                   <span>{day}</span>
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
@@ -705,7 +732,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
           </div>
         </div>
 
-        <aside className={`day-panel card ${mode === '근무표' ? 'shift-day-panel' : ''}`}>
+        <aside ref={dayPanelRef} className={`day-panel card ${mode === '근무표' ? 'shift-day-panel' : ''}`}>
           {mode === '일반' ? <>
             <div className="section-heading">
               <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selected)}</h2></div>
@@ -837,7 +864,7 @@ const emptyAnniversaryForm = {
   name: '', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: today.getMonth() + 1, day: today.getDate(),
 }
 
-function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, openCalendar, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled }) {
+function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled }) {
   const requestedSchedule = childSchedules.find((item) => item.id === scheduleEditRequest)
   const [managementSection, setManagementSection] = useState(requestedSchedule ? 'children' : 'anniversaries')
   const [season, setSeason] = useState(() => requestedSchedule?.season || activeSeasonForDate(today, schedulePeriods) || '학기')
@@ -1048,13 +1075,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
     <div className="page schedules-page">
       <section className="page-title-row">
         <div><span className="eyebrow">반복 일정과 기념일</span><h1>가족 일정 관리</h1><p>학교·학원과 기념일을 등록하면 달력에 바로 반영됩니다.</p></div>
-        <button className="secondary-button" onClick={() => openCalendar('일반')}><CalendarDays size={18} /> 달력 보기</button>
-      </section>
-
-      <section className="schedule-guide card">
-        <CalendarRange />
-        <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong><small>근무표에서 D·E·N·휴무를 선택하세요.</small></span>
-        <button className="text-button" onClick={() => openCalendar('근무표')}>근무표 열기 <ChevronRight size={16} /></button>
       </section>
 
       <nav className="management-tabs card" aria-label="일정 관리 구분">
@@ -1101,9 +1121,11 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
               return <article className="anniversary-row" key={anniversary.id}>
                 <Avatar memberId="anniversary" />
                 <div className="anniversary-copy">
-                  <span><em>{anniversary.calendarType === 'lunar' ? `음력${anniversary.leapMonth ? ' 윤달' : ''}` : '양력'}</em>{anniversary.kind}</span>
                   <div className="anniversary-title-row">
-                    <strong>{anniversaryTitle(anniversary)}</strong>
+                    <div className="anniversary-title-copy">
+                      <strong>{anniversaryTitle(anniversary)}</strong>
+                      <em>{anniversary.calendarType === 'lunar' ? `음력${anniversary.leapMonth ? ' 윤달' : ''}` : '양력'}</em>
+                    </div>
                     <div className="event-actions">
                       {canEdit && <button onClick={() => editAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 수정`}><Pencil /></button>}
                       {canEdit && <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>}
@@ -1424,11 +1446,6 @@ export default function App() {
     }
     setFocusMode(!focusMode)
   }
-  const openCalendar = (mode = '일반') => {
-    setCalendarMode(mode)
-    changeView('calendar')
-  }
-
   const skipRecurringDate = (event) => {
     const exception = { id: `skip-${event.scheduleId}-${event.date}`, scheduleId: event.scheduleId, date: event.date, type: 'skip' }
     setScheduleExceptions((current) => current.some((item) => item.id === exception.id) ? current : [...current, exception])
@@ -1502,7 +1519,7 @@ export default function App() {
         {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} setView={changeView} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} />}
         {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} notificationPermission={notificationPermission} onEnableNotifications={enableNotifications} />}
-        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} openCalendar={openCalendar} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} />}
+        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} />}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={changeView} /></div>
       {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}

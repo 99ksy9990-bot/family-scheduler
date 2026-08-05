@@ -200,4 +200,70 @@
 | P2 | New schedules defaulted to 엄마 and prefilled `우리 집`. | Changed new-item defaults to 아빠 and an empty location; edit state still reads the saved item first. | The new modal reports the 아빠 button as active and the location value as an empty string. |
 | P2 | Holiday/event text competed with calendar dates on the mobile grid. | Hid all calendar-cell text below 660 px while preserving semantic dots and selected-day details. | Zero visible holiday/event labels, visible dots, and the full selected-day detail panel below the grid. |
 
+## Latest calendar, anniversary, and date-row verification
+
+- Source visual truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/FE49DEC4-EDBB-424C-B02E-AE6EC5010C98/1-사진-1.jpg` through `4-사진-4.jpg` (588 × 1280 iPhone Safari captures).
+- Browser-rendered implementation: `qa-calendar-current-month-colors.png`, `qa-anniversary-chip-mobile.png`, `qa-shift-calendar-mobile-clean.png`, and `qa-event-date-row-mobile.png`, captured at the 393 × 852 CSS viewport.
+- Full comparison evidence: `qa-mobile-calendar-anniversary-comparison.png`; each source and implementation pair is proportionally contained in equal-width panels without stretching.
+- Calendar color scope: current-month Saturday/Sunday values compute blue/red; previous/next-month weekend values compute neutral gray (`rgb(174, 182, 187)`).
+- Shift calendar: non-selected shift cells compute white while D/E/N/OFF chips retain their semantic colors; the selected-day highlight remains visible.
+- Anniversary cards: the solar/lunar basis remains a yellow chip immediately after the title, the duplicate kind label is absent, and edit/delete controls measure exactly 33 × 33 px.
+- Event modal: start and end date controls share the same top coordinate in two 149 px tracks with an 8 px gap; both inputs remain within the modal and root scroll width equals client width.
+- Primary interactions tested: 일반/근무표 switching, date selection, 일정 관리 navigation, anniversary-card inspection, event modal open/close, and mobile date-input layout.
+- Browser console: zero errors and zero warnings.
+
+### Latest comparison history
+
+| Severity | Earlier finding | Fix | Post-fix evidence |
+| --- | --- | --- | --- |
+| P2 | Previous/next-month Saturday and Sunday dates inherited the active-month blue/red colors. | Added higher-specificity outside-month weekend/holiday neutral coloring. | July 26 and September 5 both compute neutral gray; August weekends retain red/blue. |
+| P2 | Shift type colors filled entire calendar cells, reducing contrast for the dark N chip. | Removed shift-specific cell backgrounds while retaining all shift-chip color classes. | A non-selected saved shift cell computes white and its chip remains colored. |
+| P2 | Anniversary cards repeated the kind beside the solar/lunar badge and placed the badge above the title. | Moved the retained basis chip directly after the title and removed the duplicate kind label. | Title and basis chip share one line; no `.anniversary-copy > span` duplicate remains. |
+| P2 | Anniversary actions were larger than the other schedule-management actions. | Standardized both anniversary actions to 33 × 33 px. | Browser computed width and height are 33 px for edit and delete. |
+| P2 | Start and end dates were stacked despite the requested compact mobile layout. | Changed the mobile event-date grid to two bounded columns. | Both labels share the same top coordinate with no document overflow. |
+
+### Required fidelity surfaces
+
+- Typography: existing A2Z/KIMM hierarchy, date-control 16 px iOS-safe typography, and anniversary title weight are preserved.
+- Spacing/layout: anniversary title/chip/action alignment and the two-column date row fit the 393 px target without horizontal overflow.
+- Colors/tokens: current-month weekend colors and all existing shift-chip tokens are preserved; only outside-month and shift-cell backgrounds were neutralized.
+- Assets: existing Lucide pencil, trash, calendar, and shift icons are unchanged; no replacement assets were introduced.
+- Copy/content: the duplicate anniversary-kind label is removed while the meaningful title, basis chip, date, and milestone remain.
+
+## Latest home greeting and mobile navigation verification
+
+- Browser-rendered implementation: `qa-home-greeting-mobile.png` and `qa-anniversary-add-wide-mobile.png`, captured at the 393 × 852 CSS viewport.
+- Home greeting: mobile computed size is 25.152 px inside a 350 px container; root client and scroll widths are both 378 px.
+- Refresh variation: five consecutive reloads rendered `반가운 오후예요`, `즐거운 오후예요`, `여유로운 오후예요`, `좋은 오후예요`, then `반가운 오후예요`; every adjacent refresh changed while remaining in the afternoon phrase set.
+- Calendar interaction: clicking August 15 changed the selected day, scrolled from y=0 to y=319.5, and exposed the `광복절` detail in the panel below.
+- Anniversary action width: the date row, action wrapper, and add button share the exact x=52–326 px bounds; no horizontal overflow is present.
+- Browser console: zero errors and zero warnings after the greeting, calendar-scroll, and form-width interactions.
+
+### Latest comparison history
+
+| Severity | Earlier finding | Fix | Post-fix evidence |
+| --- | --- | --- | --- |
+| P2 | The mobile home greeting felt undersized and reused one phrase per time period. | Increased the responsive type scale and added four sequential phrases per morning/afternoon/evening period. | Computed mobile size is 25.152 px, all five refresh samples changed adjacently, and document overflow is false. |
+| P2 | Tapping a mobile calendar date changed selection but left the detail panel below the fold. | Added mobile-only smooth scrolling to the general calendar's selected-day panel. | August 15 selection moved the viewport 319.5 px and showed its holiday detail below. |
+| P2 | The anniversary add action was narrower than the year/month/day row. | Stretched the mobile action group and its primary button across the full form track. | Button and date-row left/right coordinates match exactly at 52 px and 326 px. |
+
+## Latest schedule-management simplification verification
+
+- Source visual truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/1FA0736F-F6F9-487F-B58B-630B6EEDF049/1-사진-1.jpg` (588 × 1280 iPhone Safari capture).
+- Browser-rendered implementation: `qa-schedule-management-simplified-mobile.png` and `qa-child-schedule-add-button-mobile.png`, captured at a 393 × 852 CSS viewport.
+- Side-by-side comparison: `qa-schedule-management-simplified-comparison.png`; the source and final period-management views are proportionally contained in equal-width panels without stretching.
+- Removed controls: the schedule-management view contains zero `달력 보기` buttons and zero `.schedule-guide` elements, so the management tabs now follow the page heading directly.
+- Period guidance: the full `자녀별 기간을 따로 등록할 수 있으며, 같은 자녀의 기간이 겹치면 최근 시작 일정이 우선입니다.` copy is visible with normal wrapping, visible overflow, and no ellipsis.
+- Child schedule action: the add button and the 종료 시간 fieldset share the exact 36–342 px horizontal bounds at mobile width.
+- Responsive containment: document scroll width never exceeds the 393 px viewport in either the period or child-schedule form.
+- Browser console: zero errors and zero warnings; only Vite debug and React DevTools informational messages were present.
+
+### Latest comparison history
+
+| Severity | Earlier finding | Fix | Post-fix evidence |
+| --- | --- | --- | --- |
+| P2 | `달력 보기` and the mother-shift guide consumed two redundant mobile cells above the management tabs. | Removed both controls and their unused callback/CSS paths. | Browser query reports zero matching buttons and zero guide elements. |
+| P2 | The child-specific period-priority explanation was forced into one clipped line. | Restored normal wrapping and removed overflow/ellipsis clipping for the period copy. | Full text is visible in a 32 px-tall two-line block with matching client and scroll dimensions. |
+| P2 | `+ 학기 일정 추가` occupied only the right half of the mobile form row. | Stretched the sole primary action to the full mobile action track. | The add button aligns pixel-for-pixel with the 종료 시간 picker group from its first meridiem cell to its last minute cell. |
+
 final result: passed
