@@ -33,6 +33,8 @@
 | P2 | Home anniversary edit/delete actions shared the metadata line, and the date/milestone copy still wrapped. | Moved actions to the title line and rendered the full date/milestone copy on one uninterrupted line below. | Passed |
 | P2 | The home greeting always said morning. | Made the greeting switch automatically between morning, afternoon, and evening, refreshing once per minute. | Passed |
 | P2 | The `오늘 요약` card looked actionable but did not navigate. | Converted it to an accessible button that smoothly moves to `오늘의 일정`. | Passed |
+| P1 | A selected calendar-event date could appear to disappear in mobile Safari because the native date control appearance was disabled. | Restored the native date appearance and set explicit text color, fill color, opacity, and width bounds. | Passed |
+| P2 | The shift-entry footer only reported the selected day status, so the monthly D/E/N/OFF balance was not visible. | Replaced it with the entered-day total plus live D, E, N, and OFF counts for the displayed month. | Passed |
 | P2 | Home greeting and explanatory copy wrapped unnecessarily. | Shortened supporting copy and used responsive single-line mobile typography. | Passed |
 | P2 | Regular Safari browsing retained the bottom address bar. | Added a standalone web-app manifest and Apple web-app metadata. Safari chrome is removed when launched from the Home Screen; a normal web page cannot hide browser chrome. | Passed with platform constraint |
 | P2 | 320 px stress testing exposed the old fixed body minimum width. | Removed the fixed body minimum width and verified no horizontal overflow. | Passed |
@@ -45,6 +47,8 @@
 - Copy: mobile helper and empty-state messages are concise and constrained to one line where requested.
 - Interaction: task modal opens and cancels; navigation and schedule-management tabs remain interactive.
 - Added interaction checks: the deadline computes `text-align: left` with a 48 px height, and activating `오늘 요약` changes scroll position toward the `today-schedule` target.
+- Calendar-event date verification: after selecting `2026-08-06` and moving focus to another field, the value remained visible with native appearance and no horizontal overflow at 402 px.
+- Shift-summary verification: the August footer rendered `1/31일 입력 · D 1 · E 0 · N 0 · OFF 0` from the persisted data with no horizontal overflow at 402 px.
 - Focused mobile measurements: calendar date numerals 14 px (previously 16 px); anniversary preview and action share the same top coordinate; milestone and missing-year labels compute as separate block lines.
 - Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.
 - Console: zero errors and zero warnings during the verified flows.

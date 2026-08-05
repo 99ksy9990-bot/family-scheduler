@@ -470,6 +470,11 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .shift-editor-grid .navy .shift-check { color: #343b5b; background: white; }
 .shift-editor-footer { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .shift-editor-footer > div { display: flex; gap: 6px; }
+.shift-count-summary { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 9px; }
+.shift-count-summary > strong { color: var(--ink); font-size: 12px; white-space: nowrap; }
+.shift-count-summary > span { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.shift-count-summary i { padding: 4px 6px; border-radius: 7px; background: #f4f7f8; font-style: normal; line-height: 1; white-space: nowrap; }
+.shift-count-summary b { color: var(--primary); }
 .shift-editor-footer button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; padding: 7px 10px; color: #9c4239; border: 0; border-radius: 9px; background: #fff0ed; font-size: 12px; font-weight: 700; }
 .shift-editor-footer button svg { width: 13px; height: 13px; }
 
@@ -809,6 +814,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .calendar-event-labels { display: none; }
   .shift-chip { min-height: 22px; padding: 3px; font-size: 9px; }
   .shift-chip svg { display: none; }
+  .shift-editor-footer { align-items: flex-start; flex-direction: column; }
+  .shift-count-summary { width: 100%; }
   .day-panel { padding: 21px; }
   .event-card { grid-template-columns: 88px 1fr auto; gap: 9px; padding: 12px 13px; }
   .event-time { font-size: 14px; }
@@ -854,8 +861,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .child-schedule-list { grid-template-columns: 1fr; }
   .modal-backdrop { place-items: start center; padding: max(14px, env(safe-area-inset-top)) 14px max(100px, env(safe-area-inset-bottom)); }
   .modal { width: 100%; margin: auto 0; padding: 22px; border-radius: 22px; }
-  .modal input[type="date"] { display: block; min-width: 0; width: 100%; -webkit-appearance: none; appearance: none; text-align: left; }
-  .modal input[type="date"]::-webkit-date-and-time-value { min-height: 1.2em; text-align: left; }
+  .modal input[type="date"] { display: block; min-width: 0; width: 100%; max-width: 100%; -webkit-appearance: auto; appearance: auto; color: var(--ink); background-color: #fff; -webkit-text-fill-color: var(--ink); opacity: 1; text-align: left; }
+  .modal input[type="date"]::-webkit-date-and-time-value { display: block; width: 100%; min-height: 1.2em; color: var(--ink); text-align: left; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
   .modal-time-row { grid-template-columns: 1fr; gap: 0; }
   .member-picker { grid-template-columns: 1fr 1fr; }

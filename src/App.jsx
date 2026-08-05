@@ -496,10 +496,15 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const selectedShift = shifts.find((shift) => shift.date === iso(selected) && shift.member === 'emma')
   const isMonthEnd = selected.getDate() === new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
   const label = new Intl.DateTimeFormat('ko-KR', { month: 'long', year: 'numeric' }).format(cursor)
-  const monthShiftCount = shifts.filter((shift) => {
+  const cursorMonthShifts = shifts.filter((shift) => {
     const date = new Date(`${shift.date}T00:00:00`)
     return shift.member === 'emma' && date.getFullYear() === cursor.getFullYear() && date.getMonth() === cursor.getMonth()
-  }).length
+  })
+  const monthShiftCount = cursorMonthShifts.length
+  const monthShiftCounts = SHIFT_OPTIONS.reduce((counts, option) => ({
+    ...counts,
+    [option.id]: cursorMonthShifts.filter((shift) => shift.shift === option.id).length,
+  }), {})
   const daysInCursorMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()
 
   const moveMonth = (amount) => {
@@ -633,7 +638,10 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
               ))}
             </div>
             <div className="shift-editor-footer">
-              <span>{monthShiftCount}/{daysInCursorMonth}일 입력 · {selectedShift ? `${SHIFT_OPTIONS.find((option) => option.id === selectedShift.shift)?.code} 저장됨` : '선택 날짜 미입력'}</span>
+              <span className="shift-count-summary">
+                <strong>{monthShiftCount}/{daysInCursorMonth}일 입력</strong>
+                <span aria-label="이번 달 근무 개수">{SHIFT_OPTIONS.map((option) => <i key={option.id}><b>{option.code}</b> {monthShiftCounts[option.id]}</i>)}</span>
+              </span>
               <div>{lastShiftChange && canEdit && <button onClick={undoLastShift}><RotateCcw /> 직전 입력 취소</button>}{selectedShift && canEdit && <button onClick={clearSelectedShift}>지정 해제</button>}</div>
             </div>
           </>}
