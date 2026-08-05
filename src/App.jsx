@@ -381,8 +381,7 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
           </div>}
         </div>
         <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
-          <span>{event.location}{event.milestoneLabel ? ' ·' : ''}{event.pickupBy ? ` · ${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
-          {event.milestoneLabel && <span className="event-milestone">{event.milestoneLabel}</span>}
+          <span>{event.location}{event.milestoneLabel ? ` · ${event.milestoneLabel}` : ''}{event.pickupBy ? ` · ${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
           {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
         </div>
       </div>

@@ -29,7 +29,7 @@
 | P2 | Mobile calendar date numerals felt oversized in the annotated 320 px reference. | Reduced only date numerals from 16 px to 14 px; weekday and event type remain unchanged. | Passed |
 | P2 | The next-anniversary preview and add action occupied two separate rows. | Reduced the preview and aligned it with the add action on one row. | Passed |
 | P2 | Birthday/anniversary milestone and missing-year copy wrapped at arbitrary words. | Put both the milestone phrase and `연도 미입력` on a deliberate second line below the solar-date line. | Passed |
-| P2 | Home anniversary edit/delete actions shared the metadata line, reducing its usable width. | Moved actions to the title line and gave the two-line date/milestone copy the full width below, retaining the middle-dot continuation cue. | Passed |
+| P2 | Home anniversary edit/delete actions shared the metadata line, and the date/milestone copy still wrapped. | Moved actions to the title line and rendered the full date/milestone copy on one uninterrupted line below. | Passed |
 | P2 | The home greeting always said morning. | Made the greeting switch automatically between morning, afternoon, and evening, refreshing once per minute. | Passed |
 | P2 | Home greeting and explanatory copy wrapped unnecessarily. | Shortened supporting copy and used responsive single-line mobile typography. | Passed |
 | P2 | Regular Safari browsing retained the bottom address bar. | Added a standalone web-app manifest and Apple web-app metadata. Safari chrome is removed when launched from the Home Screen; a normal web page cannot hide browser chrome. | Passed with platform constraint |
@@ -43,7 +43,7 @@
 - Copy: mobile helper and empty-state messages are concise and constrained to one line where requested.
 - Interaction: task modal opens and cancels; navigation and schedule-management tabs remain interactive.
 - Focused mobile measurements: calendar date numerals 14 px (previously 16 px); anniversary preview and action share the same top coordinate; milestone and missing-year labels compute as separate block lines.
-- Home anniversary measurements: title and edit/delete controls share one row; both detail lines extend to the event-copy right edge. Verified copy includes `매년 양력 8월 5일 ·` and `다음 기념일에 26주년`.
+- Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.
 - Console: zero errors and zero warnings during the verified flows.
 - Build checks: ESLint passed, Vite production build passed, manifest JSON parsed successfully.
 
