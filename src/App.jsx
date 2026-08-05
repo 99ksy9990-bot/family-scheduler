@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare, ChevronLeft,
   ChevronRight, Clock3, GraduationCap, Home, Moon, Pencil, Plus, Search,
@@ -13,10 +14,13 @@ const MEMBERS = [
 ]
 
 const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
+const ANNIVERSARY_MEMBER = { id: 'anniversary', name: '기념일', initials: '기', color: '#e0b866', tone: '#fff8e6' }
 const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
 const WEEKDAY_SHORT = ['일', '월', '화', '수', '목', '금', '토']
 const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
 const TIME_MINUTES = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
+const CALENDAR_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1)
+const CALENDAR_DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
 
 const pad = (value) => String(value).padStart(2, '0')
 const iso = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
@@ -48,6 +52,8 @@ const defaultSchedulePeriods = [
   { id: 'vacation-summer-2026', season: '방학', start: '2026-07-18', end: '2026-08-16' },
   { id: 'term-second-2026', season: '학기', start: '2026-08-17', end: '2026-12-23' },
 ]
+
+const defaultAnniversaries = []
 
 const defaultTasks = [
   { id: 1, title: '전기 요금 납부', category: '긴급', assignee: 'emma', done: false, meta: '오늘까지' },
@@ -88,6 +94,58 @@ const load = (key, fallback) => {
 const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
   weekday: 'long', month: 'long', day: 'numeric',
 }).format(date)
+const formatSolarDate = (date) => date ? `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.` : '변환 가능한 날짜 없음'
+
+const validSolarDate = (year, month, day) => {
+  const date = new Date(year, month - 1, day)
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null
+}
+
+const anniversarySolarOccurrences = (anniversary, solarYear) => {
+  if (anniversary.calendarType === 'solar') {
+    const date = validSolarDate(solarYear, Number(anniversary.month), Number(anniversary.day))
+    return date ? [date] : []
+  }
+
+  return [solarYear - 1, solarYear].flatMap((lunarYear) => {
+    const calendar = new KoreanLunarCalendar()
+    if (!calendar.setLunarDate(lunarYear, Number(anniversary.month), Number(anniversary.day), false)) return []
+    const converted = calendar.getSolarCalendar()
+    if (converted.year !== solarYear) return []
+    return [new Date(converted.year, converted.month - 1, converted.day)]
+  })
+}
+
+const nextAnniversaryOccurrence = (anniversary, from = today) => {
+  for (let year = from.getFullYear(); year <= Math.min(from.getFullYear() + 3, 2050); year += 1) {
+    const occurrence = anniversarySolarOccurrences(anniversary, year).find((date) => date >= from)
+    if (occurrence) return occurrence
+  }
+  return null
+}
+
+const anniversaryTitle = (anniversary) => anniversary.kind === '기념일' ? anniversary.name : `${anniversary.name} ${anniversary.kind}`
+
+const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap((anniversary) => {
+  const matched = anniversarySolarOccurrences(anniversary, date.getFullYear()).find((occurrence) => iso(occurrence) === iso(date))
+  if (!matched) return []
+  const sourceLabel = anniversary.calendarType === 'lunar'
+    ? `음력 ${anniversary.month}월 ${anniversary.day}일 → 양력 ${matched.getMonth() + 1}월 ${matched.getDate()}일`
+    : `매년 양력 ${anniversary.month}월 ${anniversary.day}일`
+  return [{
+    id: `anniversary-${anniversary.id}-${iso(date)}`,
+    anniversaryId: anniversary.id,
+    date: iso(date),
+    title: anniversaryTitle(anniversary),
+    time: '종일',
+    end: '',
+    location: sourceLabel,
+    member: 'anniversary',
+    type: 'anniversary',
+    recurring: true,
+    anniversary: true,
+  }]
+})
 
 const activeSeasonForDate = (date, periods) => {
   const dateValue = iso(date)
@@ -130,11 +188,12 @@ const childEventsForDate = (date, childSchedules, schedulePeriods) => {
     }))
 }
 
-const eventsForDate = (date, events, childSchedules, schedulePeriods) => {
+const eventsForDate = (date, events, childSchedules, schedulePeriods, anniversaries = []) => {
   const dateValue = iso(date)
   const merged = [
     ...events.filter((event) => event.date === dateValue),
     ...childEventsForDate(date, childSchedules, schedulePeriods),
+    ...anniversaryEventsForDate(date, anniversaries),
   ]
   const seen = new Set()
   return merged.filter((event) => {
@@ -146,7 +205,7 @@ const eventsForDate = (date, events, childSchedules, schedulePeriods) => {
 }
 
 function Avatar({ memberId, small = false }) {
-  const member = MEMBERS.find((person) => person.id === memberId) || MEMBERS[0]
+  const member = memberId === ANNIVERSARY_MEMBER.id ? ANNIVERSARY_MEMBER : MEMBERS.find((person) => person.id === memberId) || MEMBERS[0]
   return (
     <span className={`avatar ${small ? 'avatar-small' : ''}`} style={{ '--member': member.color, '--member-tone': member.tone }} title={member.name}>
       {member.initials}
@@ -226,7 +285,7 @@ function Header({ active, onChange, focusMode, setFocusMode }) {
 function MemberLegend() {
   return (
     <div className="member-legend">
-      {MEMBERS.map((member) => (
+      {[...MEMBERS, ANNIVERSARY_MEMBER].map((member) => (
         <span key={member.id}><i style={{ background: member.color }} />{member.name}</span>
       ))}
     </div>
@@ -234,8 +293,10 @@ function MemberLegend() {
 }
 
 function EventCard({ event, compact = false, onEdit, onDelete }) {
-  const member = MEMBERS.find((item) => item.id === event.member) || MEMBERS[0]
+  const member = event.member === ANNIVERSARY_MEMBER.id ? ANNIVERSARY_MEMBER : MEMBERS.find((item) => item.id === event.member) || MEMBERS[0]
   const hasActions = Boolean(onEdit || onDelete)
+  const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
+  const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
       <div className="event-time">{event.time}</div>
@@ -245,7 +306,7 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
         <div className="event-detail-row">
           <span>{event.location}</span>
           {hasActions && <div className="event-actions">
-            {onEdit && <button onClick={onEdit} aria-label={event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`} title={event.recurring ? '반복 일정 관리' : '일정 수정'}><Pencil /></button>}
+            {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
             {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
           </div>}
         </div>
@@ -254,14 +315,15 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
   )
 }
 
-function HomeView({ events, childSchedules, setChildSchedules, schedulePeriods, shifts, setView, openModal, deleteEvent }) {
-  const todayEvents = eventsForDate(today, events, childSchedules, schedulePeriods)
+function HomeView({ events, childSchedules, setChildSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, setView, openModal, deleteEvent }) {
+  const todayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries)
   const childEvents = todayEvents.filter((event) => ['leo', 'mia'].includes(event.member))
   const todayShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
   const shiftOption = SHIFT_OPTIONS.find((option) => option.id === todayShift?.shift)
   const removeTodayEvent = (event) => {
     if (!window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
-    if (event.recurring) setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
+    if (event.anniversary) setAnniversaries((current) => current.filter((anniversary) => anniversary.id !== event.anniversaryId))
+    else if (event.recurring) setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
     else deleteEvent(event.id)
   }
 
@@ -332,11 +394,11 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function CalendarView({ events, childSchedules, setChildSchedules, schedulePeriods, shifts, setShifts, openModal, deleteEvent, setView, mode, setMode }) {
+function CalendarView({ events, childSchedules, setChildSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, setShifts, openModal, deleteEvent, setView, mode, setMode }) {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
-  const selectedEvents = eventsForDate(selected, events, childSchedules, schedulePeriods)
+  const selectedEvents = eventsForDate(selected, events, childSchedules, schedulePeriods, anniversaries)
   const selectedShift = shifts.find((shift) => shift.date === iso(selected) && shift.member === 'emma')
   const isMonthEnd = selected.getDate() === new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
   const label = new Intl.DateTimeFormat('ko-KR', { month: 'long', year: 'numeric' }).format(cursor)
@@ -366,7 +428,8 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
 
   const removeSelectedEvent = (event) => {
     if (!window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
-    if (event.recurring) setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
+    if (event.anniversary) setAnniversaries((current) => current.filter((anniversary) => anniversary.id !== event.anniversaryId))
+    else if (event.recurring) setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
     else deleteEvent(event.id)
   }
 
@@ -391,7 +454,7 @@ function CalendarView({ events, childSchedules, setChildSchedules, schedulePerio
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day) => <span key={day}>{day}</span>)}</div>
           <div className="calendar-grid">
             {monthDays.map(({ day, date, outside }) => {
-              const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods)
+              const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries)
               const dayShift = shifts.find((shift) => shift.date === iso(date) && shift.member === 'emma')
               const shiftOption = SHIFT_OPTIONS.find((option) => option.id === dayShift?.shift)
               const ShiftIcon = shiftOption?.icon
@@ -500,7 +563,11 @@ const emptyScheduleForm = {
   time: '오후 4:00', end: '오후 5:00', location: '',
 }
 
-function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, openCalendar }) {
+const emptyAnniversaryForm = {
+  name: '', kind: '생일', calendarType: 'solar', month: today.getMonth() + 1, day: today.getDate(),
+}
+
+function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, openCalendar }) {
   const [season, setSeason] = useState(() => activeSeasonForDate(today, schedulePeriods) || '학기')
   const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm)
   const [editingId, setEditingId] = useState(null)
@@ -508,10 +575,18 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   const [periodForm, setPeriodForm] = useState({ season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
   const [periodEditingId, setPeriodEditingId] = useState(null)
   const [periodError, setPeriodError] = useState('')
+  const [anniversaryForm, setAnniversaryForm] = useState(emptyAnniversaryForm)
+  const [anniversaryEditingId, setAnniversaryEditingId] = useState(null)
+  const [anniversaryError, setAnniversaryError] = useState('')
 
   const visibleSchedules = [...childSchedules]
     .filter((schedule) => schedule.season === season)
     .sort((a, b) => `${a.member}-${scheduleWeekdays(a)[0]}-${a.time}`.localeCompare(`${b.member}-${scheduleWeekdays(b)[0]}-${b.time}`))
+  const sortedAnniversaries = [...anniversaries].sort((a, b) => {
+    const first = nextAnniversaryOccurrence(a)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    const second = nextAnniversaryOccurrence(b)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    return first - second
+  })
 
   const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
   const toggleWeekday = (weekday) => {
@@ -606,10 +681,62 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
     if (periodEditingId === period.id) cancelPeriodEdit()
   }
 
+  const changeAnniversaryField = (field, value) => {
+    setAnniversaryForm((current) => ({ ...current, [field]: value }))
+    setAnniversaryError('')
+  }
+
+  const submitAnniversary = (event) => {
+    event.preventDefault()
+    const name = anniversaryForm.name.trim()
+    if (!name) {
+      setAnniversaryError('기념일 대상이나 이름을 입력해 주세요.')
+      return
+    }
+    const candidate = { ...anniversaryForm, name, month: Number(anniversaryForm.month), day: Number(anniversaryForm.day) }
+    if (!nextAnniversaryOccurrence(candidate)) {
+      setAnniversaryError('선택한 날짜를 양력으로 변환할 수 없습니다. 월과 일을 확인해 주세요.')
+      return
+    }
+    const nextAnniversary = { ...candidate, id: anniversaryEditingId || `anniversary-${Date.now()}` }
+    setAnniversaries((current) => anniversaryEditingId
+      ? current.map((anniversary) => anniversary.id === anniversaryEditingId ? nextAnniversary : anniversary)
+      : [...current, nextAnniversary])
+    setAnniversaryForm(emptyAnniversaryForm)
+    setAnniversaryEditingId(null)
+    setAnniversaryError('')
+  }
+
+  const editAnniversary = (anniversary) => {
+    setAnniversaryForm({
+      name: anniversary.name,
+      kind: anniversary.kind,
+      calendarType: anniversary.calendarType,
+      month: Number(anniversary.month),
+      day: Number(anniversary.day),
+    })
+    setAnniversaryEditingId(anniversary.id)
+    setAnniversaryError('')
+  }
+
+  const cancelAnniversaryEdit = () => {
+    setAnniversaryForm(emptyAnniversaryForm)
+    setAnniversaryEditingId(null)
+    setAnniversaryError('')
+  }
+
+  const deleteAnniversary = (anniversary) => {
+    if (!window.confirm(`‘${anniversaryTitle(anniversary)}’ 기념일을 삭제할까요?`)) return
+    setAnniversaries((current) => current.filter((item) => item.id !== anniversary.id))
+    if (anniversaryEditingId === anniversary.id) cancelAnniversaryEdit()
+  }
+
+  const anniversaryPreview = nextAnniversaryOccurrence(anniversaryForm)
+
   return (
     <div className="page schedules-page">
       <section className="page-title-row">
-        <div><span className="eyebrow">자녀 반복 일정</span><h1>학교·학원 일정 관리</h1><p>학기와 방학별 과목·요일·시간을 입력하면 가족 달력에 자동 반영됩니다.</p></div>
+        <div><span className="eyebrow">반복 일정과 기념일</span><h1>가족 일정 관리</h1><p>학교·학원 일정과 가족 기념일을 등록하면 가족 달력에 자동 반영됩니다.</p></div>
         <button className="secondary-button" onClick={() => openCalendar('일반')}><CalendarDays size={18} /> 달력 보기</button>
       </section>
 
@@ -617,6 +744,45 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
         <CalendarRange />
         <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong> 캘린더의 ‘교대근무’ 탭에서 D·E·N 또는 휴무를 선택하세요.</span>
         <button className="text-button" onClick={() => openCalendar('교대근무')}>교대근무 달력 열기 <ChevronRight size={16} /></button>
+      </section>
+
+      <section className="anniversary-card card">
+        <div className="section-heading"><div><span className="eyebrow">매년 달력에 자동 표시</span><h2>가족 기념일 관리</h2><p>부모님 생일도 이름을 직접 입력하고 양력 또는 음력으로 등록할 수 있습니다.</p></div><CalendarDays /></div>
+        <div className="anniversary-layout">
+          <form className="anniversary-form" onSubmit={submitAnniversary}>
+            <label className="anniversary-name-field">대상·이름<input value={anniversaryForm.name} onChange={(event) => changeAnniversaryField('name', event.target.value)} placeholder="예: 어머니, 부모님" required /></label>
+            <label>기념일 종류<select value={anniversaryForm.kind} onChange={(event) => changeAnniversaryField('kind', event.target.value)}><option>생일</option><option>결혼기념일</option><option>기념일</option></select></label>
+            <fieldset className="anniversary-calendar-field">
+              <legend>날짜 기준</legend>
+              <div className="segmented anniversary-calendar-tabs">
+                {[['solar', '양력'], ['lunar', '음력']].map(([value, label]) => <button key={value} type="button" aria-pressed={anniversaryForm.calendarType === value} className={anniversaryForm.calendarType === value ? 'active' : ''} onClick={() => changeAnniversaryField('calendarType', value)}>{label}</button>)}
+              </div>
+            </fieldset>
+            <label>월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
+            <label>일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
+            <div className="anniversary-preview"><span>{anniversaryForm.calendarType === 'lunar' ? '음력 → 양력 변환' : '다음 기념일'}</span><strong>{formatSolarDate(anniversaryPreview)}</strong></div>
+            <div className="anniversary-form-actions">
+              {anniversaryEditingId && <button className="secondary-button" type="button" onClick={cancelAnniversaryEdit}>취소</button>}
+              <button className="primary-button" type="submit">{anniversaryEditingId ? <Check size={17} /> : <Plus size={17} />}{anniversaryEditingId ? '수정 완료' : '기념일 추가'}</button>
+            </div>
+            {anniversaryError && <p className="form-error anniversary-form-error" role="alert">{anniversaryError}</p>}
+          </form>
+
+          <div className="anniversary-list">
+            {sortedAnniversaries.map((anniversary) => {
+              const nextOccurrence = nextAnniversaryOccurrence(anniversary)
+              return <article className="anniversary-row" key={anniversary.id}>
+                <Avatar memberId="anniversary" />
+                <div className="anniversary-copy"><span><em>{anniversary.calendarType === 'lunar' ? '음력' : '양력'}</em>{anniversary.kind}</span><strong>{anniversaryTitle(anniversary)}</strong><small>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)}</small></div>
+                <div className="event-actions">
+                  <button onClick={() => editAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 수정`}><Pencil /></button>
+                  <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>
+                </div>
+              </article>
+            })}
+            {!sortedAnniversaries.length && <div className="anniversary-empty"><CalendarDays /><strong>등록된 기념일이 없습니다</strong><span>양력이나 음력으로 가족 기념일을 추가하세요.</span></div>}
+          </div>
+        </div>
       </section>
 
       <div className="schedule-management-grid">
@@ -753,6 +919,7 @@ export default function App() {
   const [shifts, setShifts] = useState(() => load('family-scheduler-shifts', defaultShifts))
   const [childSchedules, setChildSchedules] = useState(() => load('family-scheduler-child-schedules-v1', defaultChildSchedules))
   const [schedulePeriods, setSchedulePeriods] = useState(() => load('family-scheduler-periods-v1', defaultSchedulePeriods))
+  const [anniversaries, setAnniversaries] = useState(() => load('family-scheduler-anniversaries-v1', defaultAnniversaries))
   const [modal, setModal] = useState(null)
   const [focusMode, setFocusMode] = useState(false)
   const [calendarMode, setCalendarMode] = useState('일반')
@@ -762,6 +929,7 @@ export default function App() {
   useEffect(() => localStorage.setItem('family-scheduler-shifts', JSON.stringify(shifts)), [shifts])
   useEffect(() => localStorage.setItem('family-scheduler-child-schedules-v1', JSON.stringify(childSchedules)), [childSchedules])
   useEffect(() => localStorage.setItem('family-scheduler-periods-v1', JSON.stringify(schedulePeriods)), [schedulePeriods])
+  useEffect(() => localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify(anniversaries)), [anniversaries])
 
   const addEvent = (event) => setEvents((current) => [...current, { ...event, id: Date.now() }])
   const updateEvent = (updatedEvent) => setEvents((current) => current.map((event) => event.id === updatedEvent.id ? updatedEvent : event))
@@ -777,10 +945,10 @@ export default function App() {
     <div className={`app ${focusMode ? 'focus-mode' : ''}`}>
       <Header active={view} onChange={setView} focusMode={focusMode} setFocusMode={setFocusMode} />
       <main>
-        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setView={setView} openModal={openModal} deleteEvent={deleteEvent} />}
-        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} setView={setView} mode={calendarMode} setMode={setCalendarMode} />}
+        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setView={setView} openModal={openModal} deleteEvent={deleteEvent} />}
+        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} setView={setView} mode={calendarMode} setMode={setCalendarMode} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} />}
-        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} openCalendar={openCalendar} />}
+        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} openCalendar={openCalendar} />}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={setView} /></div>
       {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} />}
