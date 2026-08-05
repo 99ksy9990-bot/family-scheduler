@@ -13,3 +13,4 @@ _4
 _5
 lumina_family_calendar
 .env*
+!.env.example
