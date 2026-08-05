@@ -468,11 +468,38 @@ function MemberLegend() {
   )
 }
 
-function EventCard({ event, compact = false, onEdit, onDelete }) {
+function EventCard({ event, compact = false, calendarSummary = false, onEdit, onDelete }) {
   const member = memberForId(event.member)
   const hasActions = Boolean(onEdit || onDelete)
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
+  const actions = hasActions && <div className="event-actions">
+    {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
+    {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
+  </div>
+
+  if (calendarSummary) {
+    return (
+      <article className={`event-card calendar-summary ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
+        <div className="event-copy">
+          <div className="event-meta-row">
+            <Avatar memberId={event.member} small />
+            <span className="event-time">{event.time || '종일'}</span>
+            {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
+          </div>
+          <div className="event-title-row">
+            <strong>{event.title}</strong>
+            {actions}
+          </div>
+          {(event.milestoneLabel || event.pickupBy || event.conflict) && <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
+            <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
+            {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
+          </div>}
+        </div>
+      </article>
+    )
+  }
+
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
       <div className="event-time">{event.time || '종일'}</div>
@@ -480,10 +507,7 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
       <div className="event-copy">
         <div className="event-title-row">
           <strong>{event.title}</strong>
-          {hasActions && <div className="event-actions">
-            {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
-            {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
-          </div>}
+          {actions}
         </div>
         <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
           <span>{event.location}{event.milestoneLabel ? ` · ${event.milestoneLabel}` : ''}{event.pickupBy ? ` · ${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
@@ -743,6 +767,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
                 key={event.id}
                 event={event}
                 compact
+                calendarSummary
                 onEdit={canEdit && !event.holiday ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
                 onDelete={canEdit && !event.holiday ? () => removeSelectedEvent(event) : undefined}
               />)}

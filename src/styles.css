@@ -451,6 +451,14 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .event-copy strong { font-size: 17px; }
 .day-panel .event-actions { flex: 0 0 auto; }
 .day-panel .event-actions button { width: 30px; height: 30px; border-radius: 9px; }
+.day-panel .calendar-summary { display: block; }
+.day-panel .calendar-summary .event-copy { display: flex; gap: 7px; }
+.day-panel .calendar-summary .event-meta-row { min-width: 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.day-panel .calendar-summary .event-meta-row .avatar { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px; }
+.day-panel .calendar-summary .event-meta-row .event-time { color: var(--primary); font-size: 13px; white-space: nowrap; }
+.day-panel .calendar-summary .event-meta-row i { font-style: normal; }
+.day-panel .calendar-summary .event-location { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.day-panel .calendar-summary .event-title-row { min-height: 30px; }
 .day-panel .empty-state span { max-width: none; white-space: nowrap; }
 .empty-state { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); text-align: center; }
 .empty-state svg { margin-bottom: 5px; }
