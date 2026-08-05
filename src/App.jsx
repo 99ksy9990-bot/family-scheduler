@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Bell, CalendarDays, Check, CheckSquare, ChevronLeft, ChevronRight,
-  Clock3, GraduationCap, HeartPulse, Home, Moon, MoreHorizontal, Pencil, Plus,
-  Search, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2, X,
+  Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare, ChevronLeft,
+  ChevronRight, Clock3, GraduationCap, Home, Moon, Pencil, Plus, Search,
+  Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2, X,
 } from 'lucide-react'
 
 const MEMBERS = [
@@ -11,6 +11,9 @@ const MEMBERS = [
   { id: 'leo', name: '레오', role: '아들', initials: '레', color: '#7fc7e3', tone: '#ecf8fc' },
   { id: 'mia', name: '미아', role: '딸', initials: '미', color: '#c9df84', tone: '#f6fae9' },
 ]
+
+const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
+const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
 
 const pad = (value) => String(value).padStart(2, '0')
 const iso = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
@@ -24,12 +27,23 @@ today.setHours(0, 0, 0, 0)
 
 const defaultEvents = [
   { id: 1, title: '치과 예약', date: iso(today), time: '오전 9:00', end: '오전 10:00', member: 'emma', location: '스마일 치과', type: 'family' },
-  { id: 2, title: '축구 연습', date: iso(today), time: '오후 4:00', end: '오후 5:30', member: 'leo', location: '강변 운동장', type: 'school' },
-  { id: 3, title: '미술 수업', date: iso(today), time: '오후 3:30', end: '오후 5:00', member: 'mia', location: '커뮤니티 센터', type: 'school' },
   { id: 4, title: '가족 저녁 식사', date: iso(today), time: '오후 6:30', end: '오후 8:00', member: 'emma', location: '우리 집', type: 'family' },
-  { id: 5, title: '피아노 레슨', date: iso(addDays(today, 2)), time: '오후 5:00', end: '오후 6:00', member: 'leo', location: '음악실', type: 'school' },
   { id: 6, title: '야간 근무', date: iso(addDays(today, 3)), time: '오후 4:00', end: '자정', member: 'david', location: '시립 병원', type: 'work' },
   { id: 7, title: '미아 생일', date: iso(addDays(today, 6)), time: '오후 2:00', end: '오후 5:00', member: 'mia', location: '우리 집', type: 'family' },
+]
+
+const defaultChildSchedules = [
+  { id: 'leo-term-soccer', member: 'leo', season: '학기', kind: '학원', title: '축구 연습', weekday: 3, time: '오후 4:00', end: '오후 5:30', location: '강변 운동장' },
+  { id: 'leo-term-piano', member: 'leo', season: '학기', kind: '학원', title: '피아노 레슨', weekday: 5, time: '오후 5:00', end: '오후 6:00', location: '음악실' },
+  { id: 'mia-term-art', member: 'mia', season: '학기', kind: '학원', title: '미술 수업', weekday: 3, time: '오후 3:30', end: '오후 5:00', location: '커뮤니티 센터' },
+  { id: 'leo-vacation-swim', member: 'leo', season: '방학', kind: '학원', title: '수영 수업', weekday: 2, time: '오전 10:00', end: '오전 11:30', location: '시민 수영장' },
+  { id: 'mia-vacation-art', member: 'mia', season: '방학', kind: '학원', title: '미술 캠프', weekday: 4, time: '오후 2:00', end: '오후 4:00', location: '커뮤니티 센터' },
+]
+
+const defaultSchedulePeriods = [
+  { id: 'term-first-2026', season: '학기', start: '2026-03-02', end: '2026-07-17' },
+  { id: 'vacation-summer-2026', season: '방학', start: '2026-07-18', end: '2026-08-16' },
+  { id: 'term-second-2026', season: '학기', start: '2026-08-17', end: '2026-12-23' },
 ]
 
 const defaultTasks = [
@@ -52,6 +66,13 @@ const defaultShifts = [
   { id: 7, date: iso(addDays(today, 6)), member: 'emma', shift: 'day' },
 ]
 
+const SHIFT_OPTIONS = [
+  { id: 'day', code: 'D', label: '주간 근무', shortLabel: 'D', time: '오전 7:30 – 오후 4:00', endLabel: '오후 4:00 종료', icon: Sun, color: 'sage' },
+  { id: 'evening', code: 'E', label: '오후 근무', shortLabel: 'E', time: '오후 3:00 – 오후 11:00', endLabel: '오후 11:00 종료', icon: Sunset, color: 'blue' },
+  { id: 'night', code: 'N', label: '야간 근무', shortLabel: 'N', time: '오후 11:00 – 오전 8:30', endLabel: '다음 날 오전 8:30 종료', icon: Moon, color: 'navy' },
+  { id: 'off', code: 'OFF', label: '휴무', shortLabel: 'OFF', time: '근무 없음', endLabel: '오늘은 휴무입니다', icon: CalendarDays, color: 'lavender' },
+]
+
 const load = (key, fallback) => {
   try {
     const saved = localStorage.getItem(key)
@@ -64,6 +85,44 @@ const load = (key, fallback) => {
 const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
   weekday: 'long', month: 'long', day: 'numeric',
 }).format(date)
+
+const activeSeasonForDate = (date, periods) => {
+  const dateValue = iso(date)
+  return periods
+    .filter((period) => period.start <= dateValue && dateValue <= period.end)
+    .sort((a, b) => b.start.localeCompare(a.start))[0]?.season
+}
+
+const childEventsForDate = (date, childSchedules, schedulePeriods) => {
+  const dateValue = iso(date)
+  const season = activeSeasonForDate(date, schedulePeriods)
+  if (!season) return []
+  return childSchedules
+    .filter((schedule) => schedule.season === season && Number(schedule.weekday) === date.getDay())
+    .map((schedule) => ({
+      ...schedule,
+      id: `recurring-${schedule.id}-${dateValue}`,
+      scheduleId: schedule.id,
+      date: dateValue,
+      type: 'school',
+      recurring: true,
+    }))
+}
+
+const eventsForDate = (date, events, childSchedules, schedulePeriods) => {
+  const dateValue = iso(date)
+  const merged = [
+    ...events.filter((event) => event.date === dateValue),
+    ...childEventsForDate(date, childSchedules, schedulePeriods),
+  ]
+  const seen = new Set()
+  return merged.filter((event) => {
+    const key = `${event.member}-${event.title}-${event.date}-${event.time}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 
 function Avatar({ memberId, small = false }) {
   const member = MEMBERS.find((person) => person.id === memberId) || MEMBERS[0]
@@ -143,8 +202,8 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
         <div className="event-detail-row">
           <span>{event.location}</span>
           {hasActions && <div className="event-actions">
-            <button onClick={onEdit} aria-label={`${event.title} 수정`} title="일정 수정"><Pencil /></button>
-            <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>
+            {onEdit && <button onClick={onEdit} aria-label={event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`} title={event.recurring ? '반복 일정 관리' : '일정 수정'}><Pencil /></button>}
+            {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
           </div>}
         </div>
       </div>
@@ -152,27 +211,28 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
   )
 }
 
-function HomeView({ events, setView, openModal }) {
-  const todayEvents = events.filter((event) => event.date === iso(today))
+function HomeView({ events, childSchedules, schedulePeriods, shifts, setView, openModal }) {
+  const todayEvents = eventsForDate(today, events, childSchedules, schedulePeriods)
   const childEvents = todayEvents.filter((event) => ['leo', 'mia'].includes(event.member))
-  const next = todayEvents[0] || events[0]
+  const todayShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
+  const shiftOption = SHIFT_OPTIONS.find((option) => option.id === todayShift?.shift)
 
   return (
     <div className="page home-page">
       <section className="hero-intro">
         <span className="eyebrow">{formatLongDate(today)}</span>
-        <h1>좋은 아침이에요, 엄마.</h1>
+        <h1>좋은 아침이에요, 우리 가족.</h1>
         <p>우리 가족의 오늘 하루를 한눈에 확인하세요.</p>
       </section>
 
       <section className="overview-grid">
         <article className="status-card card">
-          <div className="card-label"><span>현재 상태</span><span className="status-pill"><i /> 근무 중</span></div>
-          <h2>{next ? '오후 근무' : '휴무'}</h2>
-          <p className="large-detail"><Clock3 /> 오후 6:00 종료</p>
+          <div className="card-label"><span>엄마 오늘 근무</span><span className="status-pill"><i /> {shiftOption?.code || '미입력'}</span></div>
+          <h2>{shiftOption?.label || '근무 미입력'}</h2>
+          <p className="large-detail"><Clock3 /> {shiftOption?.endLabel || '교대근무 달력에서 입력하세요'}</p>
           <div className="support-note">
             <Sparkles size={20} />
-            <span><strong>백업 지원</strong>오늘 오후 픽업은 아빠가 담당합니다.</span>
+            <span><strong>가족 공유</strong>오늘 등록된 가족 일정이 {todayEvents.length}개 있습니다.</span>
           </div>
         </article>
 
@@ -195,7 +255,7 @@ function HomeView({ events, setView, openModal }) {
           <button className="text-button" onClick={() => setView('calendar')}>캘린더 보기 <ChevronRight size={16} /></button>
         </div>
         <div className="timeline">
-          {todayEvents.slice(0, 4).map((event) => <EventCard key={event.id} event={event} />)}
+          {todayEvents.slice(0, 6).map((event) => <EventCard key={event.id} event={event} />)}
           {!todayEvents.length && <p className="empty-copy">비어 있는 하루예요. 필요할 때 일정을 추가하세요.</p>}
         </div>
       </section>
@@ -204,13 +264,6 @@ function HomeView({ events, setView, openModal }) {
     </div>
   )
 }
-
-const SHIFT_OPTIONS = [
-  { id: 'day', label: '주간 근무', shortLabel: '주간', time: '오전 7:00 – 오후 3:00', icon: Sun, color: 'sage' },
-  { id: 'evening', label: '오후 근무', shortLabel: '오후', time: '오후 3:00 – 오후 11:00', icon: Sunset, color: 'blue' },
-  { id: 'night', label: '야간 근무', shortLabel: '야간', time: '오후 11:00 – 오전 7:00', icon: Moon, color: 'navy' },
-  { id: 'off', label: '휴무', shortLabel: '휴무', time: '근무 없음', icon: CalendarDays, color: 'lavender' },
-]
 
 function buildCalendarDays(cursor) {
   const year = cursor.getFullYear()
@@ -226,12 +279,11 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
+function CalendarView({ events, childSchedules, schedulePeriods, shifts, setShifts, openModal, deleteEvent, setView, mode, setMode }) {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
-  const [mode, setMode] = useState('일반')
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
-  const selectedEvents = events.filter((event) => event.date === iso(selected))
+  const selectedEvents = eventsForDate(selected, events, childSchedules, schedulePeriods)
   const selectedShift = shifts.find((shift) => shift.date === iso(selected) && shift.member === 'emma')
   const isMonthEnd = selected.getDate() === new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
   const label = new Intl.DateTimeFormat('ko-KR', { month: 'long', year: 'numeric' }).format(cursor)
@@ -243,12 +295,11 @@ function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
 
   const setSelectedShift = (shiftId) => {
     const selectedDate = iso(selected)
-    const existing = shifts.find((shift) => shift.date === selectedDate && shift.member === 'emma')
-    if (existing) {
-      setShifts(shifts.map((shift) => shift.id === existing.id ? { ...shift, shift: shiftId } : shift))
-    } else {
-      setShifts([...shifts, { id: `emma-${selectedDate}`, date: selectedDate, member: 'emma', shift: shiftId }])
-    }
+    setShifts((currentShifts) => {
+      const existing = currentShifts.find((shift) => shift.date === selectedDate && shift.member === 'emma')
+      if (existing) return currentShifts.map((shift) => shift.id === existing.id ? { ...shift, shift: shiftId } : shift)
+      return [...currentShifts, { id: `emma-${selectedDate}`, date: selectedDate, member: 'emma', shift: shiftId }]
+    })
     const nextDate = addDays(selected, 1)
     if (nextDate.getMonth() === selected.getMonth() && nextDate.getFullYear() === selected.getFullYear()) {
       setSelected(nextDate)
@@ -257,7 +308,7 @@ function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
 
   const clearSelectedShift = () => {
     const selectedDate = iso(selected)
-    setShifts(shifts.filter((shift) => !(shift.date === selectedDate && shift.member === 'emma')))
+    setShifts((currentShifts) => currentShifts.filter((shift) => !(shift.date === selectedDate && shift.member === 'emma')))
   }
 
   return (
@@ -281,7 +332,7 @@ function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day) => <span key={day}>{day}</span>)}</div>
           <div className="calendar-grid">
             {monthDays.map(({ day, date, outside }) => {
-              const dayEvents = events.filter((event) => event.date === iso(date))
+              const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods)
               const dayShift = shifts.find((shift) => shift.date === iso(date) && shift.member === 'emma')
               const shiftOption = SHIFT_OPTIONS.find((option) => option.id === dayShift?.shift)
               const ShiftIcon = shiftOption?.icon
@@ -316,8 +367,8 @@ function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
                 key={event.id}
                 event={event}
                 compact
-                onEdit={() => openModal('event', event.date, event)}
-                onDelete={() => {
+                onEdit={event.recurring ? () => setView('schedules') : () => openModal('event', event.date, event)}
+                onDelete={event.recurring ? undefined : () => {
                   if (window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) deleteEvent(event.id)
                 }}
               />)}
@@ -331,16 +382,16 @@ function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
             </div>
             <p className="shift-help">{isMonthEnd ? '이번 달 마지막 날입니다. 저장해도 이 날짜에 머뭅니다.' : '근무를 선택하면 저장 후 자동으로 다음 날짜로 이동합니다.'}</p>
             <div className="shift-editor-grid">
-              {SHIFT_OPTIONS.map(({ id, label: optionLabel, time, icon: Icon, color }) => (
+              {SHIFT_OPTIONS.map(({ id, code, label: optionLabel, time, icon: Icon, color }) => (
                 <button key={id} className={`${color} ${selectedShift?.shift === id ? 'active' : ''}`} aria-pressed={selectedShift?.shift === id} onClick={() => setSelectedShift(id)}>
                   <Icon />
-                  <span><strong>{optionLabel}</strong><small>{time}</small></span>
+                  <span><strong>{code} · {optionLabel}</strong><small>{time}</small></span>
                   {selectedShift?.shift === id && <Check className="shift-check" />}
                 </button>
               ))}
             </div>
             <div className="shift-editor-footer">
-              <span>{selectedShift ? `${SHIFT_OPTIONS.find((option) => option.id === selectedShift.shift)?.label}로 저장됨` : '아직 근무가 지정되지 않았습니다.'}</span>
+              <span>{selectedShift ? `${SHIFT_OPTIONS.find((option) => option.id === selectedShift.shift)?.code} · ${SHIFT_OPTIONS.find((option) => option.id === selectedShift.shift)?.label}로 저장됨` : '아직 근무가 지정되지 않았습니다.'}</span>
               {selectedShift && <button onClick={clearSelectedShift}>지정 해제</button>}
             </div>
           </>}
@@ -352,7 +403,7 @@ function CalendarView({ events, shifts, setShifts, openModal, deleteEvent }) {
 
 function TasksView({ tasks, setTasks, openModal }) {
   const categories = ['긴급', '집안일', '장보기']
-  const toggleTask = (id) => setTasks(tasks.map((task) => task.id === id ? { ...task, done: !task.done } : task))
+  const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
   const remaining = tasks.filter((task) => !task.done).length
 
   return (
@@ -387,31 +438,156 @@ function TasksView({ tasks, setTasks, openModal }) {
   )
 }
 
-function SchedulesView({ setView }) {
-  const [season, setSeason] = useState('학기')
-  const [shift, setShift] = useState('evening')
+const emptyScheduleForm = {
+  member: 'leo', kind: '학원', title: '', weekday: 1,
+  time: '오후 4:00', end: '오후 5:00', location: '',
+}
+
+function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, openCalendar }) {
+  const [season, setSeason] = useState(() => activeSeasonForDate(today, schedulePeriods) || '학기')
+  const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm)
+  const [editingId, setEditingId] = useState(null)
+  const [periodForm, setPeriodForm] = useState({ season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+  const [periodError, setPeriodError] = useState('')
+
+  const visibleSchedules = [...childSchedules]
+    .filter((schedule) => schedule.season === season)
+    .sort((a, b) => `${a.member}-${a.weekday}-${a.time}`.localeCompare(`${b.member}-${b.weekday}-${b.time}`))
+
+  const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
+
+  const submitSchedule = (event) => {
+    event.preventDefault()
+    if (!scheduleForm.title.trim()) return
+    const nextSchedule = {
+      ...scheduleForm,
+      id: editingId || `child-${Date.now()}`,
+      season,
+      title: scheduleForm.title.trim(),
+      location: scheduleForm.location.trim() || '장소 미정',
+      weekday: Number(scheduleForm.weekday),
+    }
+    setChildSchedules((current) => editingId
+      ? current.map((schedule) => schedule.id === editingId ? nextSchedule : schedule)
+      : [...current, nextSchedule])
+    setScheduleForm(emptyScheduleForm)
+    setEditingId(null)
+  }
+
+  const editSchedule = (schedule) => {
+    setSeason(schedule.season)
+    setScheduleForm({
+      member: schedule.member,
+      kind: schedule.kind,
+      title: schedule.title,
+      weekday: schedule.weekday,
+      time: schedule.time,
+      end: schedule.end,
+      location: schedule.location,
+    })
+    setEditingId(schedule.id)
+  }
+
+  const cancelScheduleEdit = () => {
+    setScheduleForm(emptyScheduleForm)
+    setEditingId(null)
+  }
+
+  const deleteSchedule = (schedule) => {
+    if (!window.confirm(`‘${schedule.title}’ 반복 일정을 삭제할까요?`)) return
+    setChildSchedules((current) => current.filter((item) => item.id !== schedule.id))
+    if (editingId === schedule.id) cancelScheduleEdit()
+  }
+
+  const submitPeriod = (event) => {
+    event.preventDefault()
+    if (!periodForm.start || !periodForm.end || periodForm.start > periodForm.end) {
+      setPeriodError('시작일과 종료일을 올바르게 입력해 주세요.')
+      return
+    }
+    setSchedulePeriods((current) => [...current, { ...periodForm, id: `period-${Date.now()}` }])
+    setPeriodError('')
+    setPeriodForm((current) => ({ ...current, start: iso(today), end: iso(addDays(today, 30)) }))
+  }
+
+  const deletePeriod = (period) => {
+    if (!window.confirm(`${period.season} 적용 기간을 삭제할까요?`)) return
+    setSchedulePeriods((current) => current.filter((item) => item.id !== period.id))
+  }
+
   return (
     <div className="page schedules-page">
-      <section className="page-title-row"><div><span className="eyebrow">반복 일정과 루틴</span><h1>일정 관리</h1><p>시즌별 계획을 전환하고 반복 일정을 빠르게 적용하세요.</p></div></section>
-      <div className="template-grid">
-        <article className="template-card card">
-          <div className="template-icon peach"><GraduationCap /></div>
-          <div><h2>자녀 학원 스케줄</h2><p>정규 학기 수업과 방학 캠프 일정을 전환하세요.</p></div>
-          <div className="segmented wide">{['학기', '방학'].map((item) => <button key={item} className={season === item ? 'active' : ''} onClick={() => setSeason(item)}>{item}</button>)}</div>
-        </article>
-        <article className="template-card card">
-          <div className="template-icon blue"><HeartPulse /></div>
-          <div><h2>의료 교대근무 템플릿</h2><p>다가오는 교대근무를 한 번에 적용하세요.</p></div>
-          <div className="shift-options">
-            {SHIFT_OPTIONS.map(({ id, label, icon: Icon, color }) => <button key={id} className={`${color} ${shift === id ? 'active' : ''}`} onClick={() => setShift(id)}><Icon /><span>{label}</span></button>)}
+      <section className="page-title-row">
+        <div><span className="eyebrow">자녀 반복 일정</span><h1>학교·학원 일정 관리</h1><p>학기와 방학별 과목·요일·시간을 입력하면 가족 달력에 자동 반영됩니다.</p></div>
+        <button className="secondary-button" onClick={() => openCalendar('일반')}><CalendarDays size={18} /> 달력 보기</button>
+      </section>
+
+      <section className="schedule-guide card">
+        <CalendarRange />
+        <span><strong>엄마 근무는 날짜마다 직접 입력합니다.</strong> 캘린더의 ‘교대근무’ 탭에서 D·E·N 또는 휴무를 선택하세요.</span>
+        <button className="text-button" onClick={() => openCalendar('교대근무')}>교대근무 달력 열기 <ChevronRight size={16} /></button>
+      </section>
+
+      <div className="schedule-management-grid">
+        <section className="period-card card">
+          <div className="section-heading"><div><span className="eyebrow">언제 적용할지</span><h2>학기·방학 적용 기간</h2></div><CalendarRange /></div>
+          <p>기간이 겹치면 시작일이 더 최근인 일정이 우선 적용됩니다.</p>
+          <form className="period-form" onSubmit={submitPeriod}>
+            <label>구분<select value={periodForm.season} onChange={(event) => setPeriodForm((current) => ({ ...current, season: event.target.value }))}><option>학기</option><option>방학</option></select></label>
+            <label>시작일<input type="date" value={periodForm.start} onChange={(event) => setPeriodForm((current) => ({ ...current, start: event.target.value }))} /></label>
+            <label>종료일<input type="date" value={periodForm.end} onChange={(event) => setPeriodForm((current) => ({ ...current, end: event.target.value }))} /></label>
+            <button className="primary-button" type="submit"><Plus size={17} /> 기간 추가</button>
+          </form>
+          {periodError && <p className="form-error" role="alert">{periodError}</p>}
+          <div className="period-list">
+            {[...schedulePeriods].sort((a, b) => a.start.localeCompare(b.start)).map((period) => (
+              <div className="period-row" key={period.id}>
+                <span className={`season-badge ${period.season === '방학' ? 'vacation' : ''}`}>{period.season}</span>
+                <span><strong>{period.start}</strong><small>~ {period.end}</small></span>
+                <button className="row-delete" onClick={() => deletePeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 삭제`}><Trash2 /></button>
+              </div>
+            ))}
           </div>
-        </article>
+        </section>
+
+        <section className="schedule-editor-card card">
+          <div className="section-heading"><div><span className="eyebrow">무엇을 언제 할지</span><h2>자녀 학교·학원 일정</h2></div><BookOpen /></div>
+          <div className="segmented wide schedule-season-tabs">
+            {['학기', '방학'].map((item) => <button key={item} type="button" aria-pressed={season === item} className={season === item ? 'active' : ''} onClick={() => { setSeason(item); cancelScheduleEdit() }}>{item}</button>)}
+          </div>
+          <form className="child-schedule-form" onSubmit={submitSchedule}>
+            <label>자녀<select value={scheduleForm.member} onChange={(event) => changeScheduleField('member', event.target.value)}>{CHILDREN.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
+            <label>구분<select value={scheduleForm.kind} onChange={(event) => changeScheduleField('kind', event.target.value)}><option>학교</option><option>학원</option></select></label>
+            <label className="schedule-title-field">과목·일정명<input value={scheduleForm.title} onChange={(event) => changeScheduleField('title', event.target.value)} placeholder="예: 피아노 레슨" required /></label>
+            <label>요일<select value={scheduleForm.weekday} onChange={(event) => changeScheduleField('weekday', event.target.value)}>{WEEKDAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
+            <label>시작 시간<input value={scheduleForm.time} onChange={(event) => changeScheduleField('time', event.target.value)} placeholder="오후 4:00" /></label>
+            <label>종료 시간<input value={scheduleForm.end} onChange={(event) => changeScheduleField('end', event.target.value)} placeholder="오후 5:00" /></label>
+            <label className="schedule-location-field">장소<input value={scheduleForm.location} onChange={(event) => changeScheduleField('location', event.target.value)} placeholder="예: 음악실" /></label>
+            <div className="schedule-form-actions">
+              {editingId && <button className="secondary-button" type="button" onClick={cancelScheduleEdit}>취소</button>}
+              <button className="primary-button" type="submit">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? '수정 완료' : `${season} 일정 추가`}</button>
+            </div>
+          </form>
+        </section>
       </div>
-      <section className="active-schedules">
-        <div className="section-heading"><div><span className="eyebrow">현재 적용 중</span><h2>적용된 일정</h2></div></div>
-        <div className="schedule-list">
-          <article className="active-schedule card"><Avatar memberId="emma" /><span><strong>엄마</strong><small>오후 근무 로테이션</small></span><div className="schedule-meta"><Clock3 /> 다음: 오후 3:00 – 오후 11:00</div><button className="icon-button" onClick={() => setView('calendar')} aria-label="엄마 일정 캘린더에서 보기" title="캘린더에서 보기"><MoreHorizontal /></button></article>
-          <article className="active-schedule card"><Avatar memberId="leo" /><span><strong>레오</strong><small>{season} 학원 일정</small></span><div className="schedule-meta"><GraduationCap /> 피아노 · 축구</div><button className="icon-button" onClick={() => setView('calendar')} aria-label="레오 일정 캘린더에서 보기" title="캘린더에서 보기"><MoreHorizontal /></button></article>
+
+      <section className="saved-child-schedules">
+        <div className="section-heading"><div><span className="eyebrow">달력에 반복 반영</span><h2>{season} 등록 일정</h2></div><span className="count-badge">{visibleSchedules.length}</span></div>
+        <div className="child-schedule-list">
+          {visibleSchedules.map((schedule) => {
+            const child = CHILDREN.find((item) => item.id === schedule.member)
+            return (
+              <article className="child-schedule-card card" key={schedule.id}>
+                <Avatar memberId={schedule.member} />
+                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong><small>{WEEKDAYS[schedule.weekday]} · {schedule.time}~{schedule.end} · {schedule.location}</small></div>
+                <div className="event-actions">
+                  <button onClick={() => editSchedule(schedule)} aria-label={`${schedule.title} 수정`}><Pencil /></button>
+                  <button className="delete" onClick={() => deleteSchedule(schedule)} aria-label={`${schedule.title} 삭제`}><Trash2 /></button>
+                </div>
+              </article>
+            )
+          })}
+          {!visibleSchedules.length && <div className="empty-state card"><GraduationCap /><strong>{season} 일정이 없습니다</strong><span>위 입력란에서 학교나 학원 일정을 추가하세요.</span></div>}
         </div>
       </section>
     </div>
@@ -465,27 +641,36 @@ export default function App() {
   const [events, setEvents] = useState(() => load('family-scheduler-events', defaultEvents))
   const [tasks, setTasks] = useState(() => load('family-scheduler-tasks', defaultTasks))
   const [shifts, setShifts] = useState(() => load('family-scheduler-shifts', defaultShifts))
+  const [childSchedules, setChildSchedules] = useState(() => load('family-scheduler-child-schedules-v1', defaultChildSchedules))
+  const [schedulePeriods, setSchedulePeriods] = useState(() => load('family-scheduler-periods-v1', defaultSchedulePeriods))
   const [modal, setModal] = useState(null)
   const [focusMode, setFocusMode] = useState(false)
+  const [calendarMode, setCalendarMode] = useState('일반')
 
   useEffect(() => localStorage.setItem('family-scheduler-events', JSON.stringify(events)), [events])
   useEffect(() => localStorage.setItem('family-scheduler-tasks', JSON.stringify(tasks)), [tasks])
   useEffect(() => localStorage.setItem('family-scheduler-shifts', JSON.stringify(shifts)), [shifts])
+  useEffect(() => localStorage.setItem('family-scheduler-child-schedules-v1', JSON.stringify(childSchedules)), [childSchedules])
+  useEffect(() => localStorage.setItem('family-scheduler-periods-v1', JSON.stringify(schedulePeriods)), [schedulePeriods])
 
-  const addEvent = (event) => setEvents([...events, { ...event, id: Date.now() }])
-  const updateEvent = (updatedEvent) => setEvents(events.map((event) => event.id === updatedEvent.id ? updatedEvent : event))
-  const deleteEvent = (eventId) => setEvents(events.filter((event) => event.id !== eventId))
-  const addTask = (task) => setTasks([...tasks, { ...task, id: Date.now(), done: false }])
+  const addEvent = (event) => setEvents((current) => [...current, { ...event, id: Date.now() }])
+  const updateEvent = (updatedEvent) => setEvents((current) => current.map((event) => event.id === updatedEvent.id ? updatedEvent : event))
+  const deleteEvent = (eventId) => setEvents((current) => current.filter((event) => event.id !== eventId))
+  const addTask = (task) => setTasks((current) => [...current, { ...task, id: Date.now(), done: false }])
   const openModal = (type, date, item) => setModal({ type, date, item })
+  const openCalendar = (mode = '일반') => {
+    setCalendarMode(mode)
+    setView('calendar')
+  }
 
   return (
     <div className={`app ${focusMode ? 'focus-mode' : ''}`}>
       <Header active={view} onChange={setView} focusMode={focusMode} setFocusMode={setFocusMode} />
       <main>
-        {view === 'home' && <HomeView events={events} setView={setView} openModal={openModal} />}
-        {view === 'calendar' && <CalendarView events={events} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} />}
+        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setView={setView} openModal={openModal} />}
+        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} setView={setView} mode={calendarMode} setMode={setCalendarMode} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} />}
-        {view === 'schedules' && <SchedulesView setView={setView} />}
+        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} openCalendar={openCalendar} />}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={setView} /></div>
       {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} />}
