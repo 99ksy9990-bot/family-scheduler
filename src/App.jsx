@@ -31,6 +31,7 @@ const addDays = (base, amount) => {
 }
 const today = new Date()
 today.setHours(0, 0, 0, 0)
+const ANNIVERSARY_YEARS = Array.from({ length: today.getFullYear() - 1899 }, (_, index) => today.getFullYear() - index)
 
 const defaultEvents = []
 const defaultChildSchedules = []
@@ -101,12 +102,20 @@ const nextAnniversaryOccurrence = (anniversary, from = today) => {
 
 const anniversaryTitle = (anniversary) => anniversary.kind === '기념일' ? anniversary.name : `${anniversary.name} ${anniversary.kind}`
 
+const anniversaryMilestoneLabel = (anniversary, occurrence) => {
+  const baseYear = Number(anniversary.baseYear)
+  if (!occurrence || !Number.isInteger(baseYear) || baseYear < 1900 || baseYear > occurrence.getFullYear()) return ''
+  const elapsedYears = occurrence.getFullYear() - baseYear
+  return anniversary.kind === '생일' ? `${elapsedYears}세` : `${elapsedYears}주년`
+}
+
 const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap((anniversary) => {
   const matched = anniversarySolarOccurrences(anniversary, date.getFullYear()).find((occurrence) => iso(occurrence) === iso(date))
   if (!matched) return []
   const sourceLabel = anniversary.calendarType === 'lunar'
     ? `음력 ${anniversary.month}월 ${anniversary.day}일 → 양력 ${matched.getMonth() + 1}월 ${matched.getDate()}일`
     : `매년 양력 ${anniversary.month}월 ${anniversary.day}일`
+  const milestoneLabel = anniversaryMilestoneLabel(anniversary, matched)
   return [{
     id: `anniversary-${anniversary.id}-${iso(date)}`,
     anniversaryId: anniversary.id,
@@ -114,7 +123,7 @@ const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap(
     title: anniversaryTitle(anniversary),
     time: '종일',
     end: '',
-    location: sourceLabel,
+    location: milestoneLabel ? `${sourceLabel} · ${milestoneLabel}` : sourceLabel,
     member: 'anniversary',
     type: 'anniversary',
     recurring: true,
@@ -548,7 +557,7 @@ const emptyScheduleForm = {
 }
 
 const emptyAnniversaryForm = {
-  name: '', kind: '생일', calendarType: 'solar', month: today.getMonth() + 1, day: today.getDate(),
+  name: '', kind: '생일', calendarType: 'solar', baseYear: '', month: today.getMonth() + 1, day: today.getDate(),
 }
 
 function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, openCalendar }) {
@@ -677,7 +686,13 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       setAnniversaryError('기념일 대상이나 이름을 입력해 주세요.')
       return
     }
-    const candidate = { ...anniversaryForm, name, month: Number(anniversaryForm.month), day: Number(anniversaryForm.day) }
+    const candidate = {
+      ...anniversaryForm,
+      name,
+      baseYear: anniversaryForm.baseYear ? Number(anniversaryForm.baseYear) : '',
+      month: Number(anniversaryForm.month),
+      day: Number(anniversaryForm.day),
+    }
     if (!nextAnniversaryOccurrence(candidate)) {
       setAnniversaryError('선택한 날짜를 양력으로 변환할 수 없습니다. 월과 일을 확인해 주세요.')
       return
@@ -696,6 +711,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       name: anniversary.name,
       kind: anniversary.kind,
       calendarType: anniversary.calendarType,
+      baseYear: anniversary.baseYear || '',
       month: Number(anniversary.month),
       day: Number(anniversary.day),
     })
@@ -742,6 +758,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
                 {[['solar', '양력'], ['lunar', '음력']].map(([value, label]) => <button key={value} type="button" aria-pressed={anniversaryForm.calendarType === value} className={anniversaryForm.calendarType === value ? 'active' : ''} onClick={() => changeAnniversaryField('calendarType', value)}>{label}</button>)}
               </div>
             </fieldset>
+            <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
             <label>월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
             <label>일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
             <div className="anniversary-preview"><span>{anniversaryForm.calendarType === 'lunar' ? '음력 → 양력 변환' : '다음 기념일'}</span><strong>{formatSolarDate(anniversaryPreview)}</strong></div>
@@ -755,9 +772,10 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
           <div className="anniversary-list">
             {sortedAnniversaries.map((anniversary) => {
               const nextOccurrence = nextAnniversaryOccurrence(anniversary)
+              const milestoneLabel = anniversaryMilestoneLabel(anniversary, nextOccurrence)
               return <article className="anniversary-row" key={anniversary.id}>
                 <Avatar memberId="anniversary" />
-                <div className="anniversary-copy"><span><em>{anniversary.calendarType === 'lunar' ? '음력' : '양력'}</em>{anniversary.kind}</span><strong>{anniversaryTitle(anniversary)}</strong><small>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)}</small></div>
+                <div className="anniversary-copy"><span><em>{anniversary.calendarType === 'lunar' ? '음력' : '양력'}</em>{anniversary.kind}</span><strong>{anniversaryTitle(anniversary)}</strong><small>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)} · {milestoneLabel || '연도 미입력'}</small></div>
                 <div className="event-actions">
                   <button onClick={() => editAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 수정`}><Pencil /></button>
                   <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>
