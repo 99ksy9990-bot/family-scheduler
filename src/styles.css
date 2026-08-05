@@ -572,6 +572,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .anniversary-title-row strong { min-width: 0; font-size: 16px; }
 .anniversary-title-row .event-actions { flex: 0 0 auto; }
 .anniversary-copy small { overflow: hidden; color: var(--muted); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.anniversary-copy small > span + span::before { content: ' · '; }
 .year-inline-button { align-self: flex-start; padding: 4px 7px; color: #795e25; border: 0; border-radius: 7px; background: #faedc8; font-size: 10px; font-weight: 800; }
 .anniversary-row .event-actions button { width: 32px; height: 32px; border-radius: 9px; }
 .anniversary-empty { grid-column: 1 / -1; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #8b8170; border: 1px dashed #dfd2b4; border-radius: 18px; background: #fffdf8; text-align: center; }
@@ -793,6 +794,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .segmented button { flex: 1; }
   .calendar-card { padding: 9px; border-radius: 18px; }
   .calendar-grid button { height: 70px; padding: 6px; }
+  .calendar-grid button > span:first-child { font-size: 14px; }
   .calendar-grid button small { display: none; }
   .calendar-event-labels { display: none; }
   .shift-chip { min-height: 22px; padding: 3px; font-size: 9px; }
@@ -825,10 +827,17 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .anniversary-year-field { grid-column: 1 / 3; }
   .anniversary-month-field { grid-column: 3 / 5; }
   .anniversary-day-field { grid-column: 5 / 7; }
+  .anniversary-preview { grid-column: 1 / 4; min-height: 43px; padding: 6px 9px; }
+  .anniversary-preview span { font-size: 10px; }
+  .anniversary-preview strong { font-size: 14px; }
+  .anniversary-form-actions { grid-column: 4 / 7; }
+  .anniversary-form-actions .primary-button, .anniversary-form-actions .secondary-button { min-width: 0; width: 100%; padding-inline: 8px; white-space: nowrap; }
   .anniversary-kind-field select, .anniversary-year-field select, .anniversary-month-field select, .anniversary-day-field select { padding-right: 26px !important; background-position: right 8px center; font-size: 11px; }
   .leap-month-toggle { grid-column: 1 / -1; }
   .anniversary-list { grid-template-columns: 1fr; }
   .anniversary-copy small { overflow: visible; line-height: 1.35; white-space: normal; text-overflow: clip; }
+  .anniversary-copy small .anniversary-milestone, .anniversary-copy small .anniversary-missing-year { display: block; }
+  .anniversary-copy small .anniversary-milestone::before, .anniversary-copy small .anniversary-missing-year::before { content: none; }
   .child-schedule-form { grid-template-columns: 1fr 1fr; }
   .schedule-title-field, .schedule-location-field, .schedule-form-actions { grid-column: 1 / -1; }
   .schedule-pickup-field { grid-column: 1 / -1; }

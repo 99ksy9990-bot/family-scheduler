@@ -967,7 +967,10 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
                       {canEdit && <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>}
                     </div>
                   </div>
-                  <small>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)} · {milestoneLabel || '연도 미입력'}</small>
+                  <small>
+                    <span>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)}</span>
+                    <span className={milestoneLabel ? 'anniversary-milestone' : 'anniversary-missing-year'}>{milestoneLabel || '연도 미입력'}</span>
+                  </small>
                   {!milestoneLabel && canEdit && <button className="year-inline-button" onClick={() => editAnniversary(anniversary)}>{anniversary.kind === '생일' ? '출생 연도 추가' : '시작 연도 추가'}</button>}
                 </div>
               </article>
