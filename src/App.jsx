@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Holidays from 'date-holidays'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare,
@@ -19,12 +20,20 @@ const MEMBERS = [
 
 const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
 const ANNIVERSARY_MEMBER = { id: 'anniversary', name: '기념일', initials: '기', color: '#e0b866', tone: '#fff8e6' }
+const HOLIDAY_MEMBER = { id: 'holiday', name: '공휴일', initials: '휴', color: '#e06b65', tone: '#fff1ef' }
 const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
 const WEEKDAY_SHORT = ['일', '월', '화', '수', '목', '금', '토']
 const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
 const TIME_MINUTES = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
 const CALENDAR_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1)
 const CALENDAR_DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
+const TASK_PERIOD_FILTERS = [
+  { id: 'all', label: '전체' },
+  { id: 'today', label: '오늘' },
+  { id: 'week', label: '이번 주' },
+  { id: 'month', label: '이번 달' },
+  { id: 'none', label: '기한 없음' },
+]
 
 const pad = (value) => String(value).padStart(2, '0')
 const iso = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
@@ -36,6 +45,73 @@ const addDays = (base, amount) => {
 const today = new Date()
 today.setHours(0, 0, 0, 0)
 const ANNIVERSARY_YEARS = Array.from({ length: today.getFullYear() - 1899 }, (_, index) => today.getFullYear() - index)
+const holidayCalendar = new Holidays('KR')
+holidayCalendar.setLanguages('ko')
+const holidayYearCache = new Map()
+
+const memberForId = (memberId) => {
+  if (memberId === ANNIVERSARY_MEMBER.id) return ANNIVERSARY_MEMBER
+  if (memberId === HOLIDAY_MEMBER.id) return HOLIDAY_MEMBER
+  return MEMBERS.find((member) => member.id === memberId) || MEMBERS[0]
+}
+
+const normalizeHolidayName = (name) => name.replace('석가탄신일', '부처님오신날')
+
+const holidaysForYear = (year) => {
+  if (holidayYearCache.has(year)) return holidayYearCache.get(year)
+
+  const holidayMap = new Map()
+  const addHoliday = (dateValue, name, substitute = false) => {
+    const list = holidayMap.get(dateValue) || []
+    if (!list.some((holiday) => holiday.name === name)) list.push({ name, substitute })
+    holidayMap.set(dateValue, list)
+  }
+
+  holidayCalendar.getHolidays(year)
+    .filter((holiday) => holiday.type === 'public')
+    .filter((holiday) => !holiday.name.startsWith('설날') && !holiday.name.startsWith('추석'))
+    .forEach((holiday) => addHoliday(holiday.date.slice(0, 10), normalizeHolidayName(holiday.name), Boolean(holiday.substitute)))
+
+  const addLunarFestival = (lunarMonth, lunarDay, name) => {
+    const calendar = new KoreanLunarCalendar()
+    if (!calendar.setLunarDate(year, lunarMonth, lunarDay, false)) return
+    const solar = calendar.getSolarCalendar()
+    const center = new Date(solar.year, solar.month - 1, solar.day)
+    const festivalDates = [-1, 0, 1].map((offset) => addDays(center, offset))
+    festivalDates.forEach((date, index) => addHoliday(iso(date), index === 1 ? name : `${name} 연휴`))
+
+    const festivalNames = new Set([name, `${name} 연휴`])
+    const needsSubstitute = festivalDates.some((date) => (
+      date.getDay() === 0 || (holidayMap.get(iso(date)) || []).some((holiday) => !festivalNames.has(holiday.name))
+    ))
+    if (!needsSubstitute) return
+    let substituteDate = addDays(festivalDates[2], 1)
+    while (substituteDate.getDay() === 0 || substituteDate.getDay() === 6 || holidayMap.has(iso(substituteDate))) {
+      substituteDate = addDays(substituteDate, 1)
+    }
+    addHoliday(iso(substituteDate), `${name} (대체공휴일)`, true)
+  }
+
+  addLunarFestival(1, 1, '설날')
+  addLunarFestival(8, 15, '추석')
+  if (year >= 2026) addHoliday(`${year}-05-01`, '노동절')
+  if (year === 2026) addHoliday('2026-06-03', '전국동시지방선거일')
+
+  holidayYearCache.set(year, holidayMap)
+  return holidayMap
+}
+
+const holidayEventsForDate = (date) => (holidaysForYear(date.getFullYear()).get(iso(date)) || []).map((holiday, index) => ({
+  id: `holiday-${iso(date)}-${index}`,
+  date: iso(date),
+  title: holiday.name,
+  time: '종일',
+  end: '',
+  location: holiday.substitute ? '대한민국 대체공휴일' : '대한민국 공휴일',
+  member: HOLIDAY_MEMBER.id,
+  type: 'holiday',
+  holiday: true,
+}))
 
 const DATA_RECOVERY_VERSION = 1
 const RECOVERED_SHIFTS = [
@@ -233,6 +309,7 @@ const eventsForDate = (date, events, childSchedules, schedulePeriods, anniversar
     ...events.filter((event) => event.date <= dateValue && dateValue <= (event.endDate || event.date)),
     ...childEventsForDate(date, childSchedules, schedulePeriods, scheduleExceptions),
     ...anniversaryEventsForDate(date, anniversaries),
+    ...holidayEventsForDate(date),
   ]
   const seen = new Set()
   return merged.filter((event) => {
@@ -265,7 +342,7 @@ const overlappingEventIds = (events) => {
 }
 
 function Avatar({ memberId, small = false }) {
-  const member = memberId === ANNIVERSARY_MEMBER.id ? ANNIVERSARY_MEMBER : MEMBERS.find((person) => person.id === memberId) || MEMBERS[0]
+  const member = memberForId(memberId)
   return (
     <span className={`avatar ${small ? 'avatar-small' : ''}`} style={{ '--member': member.color, '--member-tone': member.tone }} title={member.name}>
       {member.initials}
@@ -362,7 +439,7 @@ function FocusModeBanner({ shiftOption, eventCount, onClose }) {
 function MemberLegend() {
   return (
     <div className="member-legend">
-      {[...MEMBERS, ANNIVERSARY_MEMBER].map((member) => (
+      {[...MEMBERS, ANNIVERSARY_MEMBER, HOLIDAY_MEMBER].map((member) => (
         <span key={member.id}><i style={{ background: member.color }} />{member.name}</span>
       ))}
     </div>
@@ -370,7 +447,7 @@ function MemberLegend() {
 }
 
 function EventCard({ event, compact = false, onEdit, onDelete }) {
-  const member = event.member === ANNIVERSARY_MEMBER.id ? ANNIVERSARY_MEMBER : MEMBERS.find((item) => item.id === event.member) || MEMBERS[0]
+  const member = memberForId(event.member)
   const hasActions = Boolean(onEdit || onDelete)
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
@@ -464,8 +541,8 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
           {todayEvents.slice(0, 6).map((event) => <EventCard
             key={event.id}
             event={event}
-            onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
-            onDelete={canEdit ? () => removeTodayEvent(event) : undefined}
+            onEdit={canEdit && !event.holiday ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
+            onDelete={canEdit && !event.holiday ? () => removeTodayEvent(event) : undefined}
           />)}
           {!todayEvents.length && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
         </div>
@@ -581,7 +658,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
 
       <section className={`calendar-layout ${mode === '근무표' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
-          <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day) => <span key={day}>{day}</span>)}</div>
+          <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
             {monthDays.map(({ day, date, outside }) => {
               const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
@@ -590,19 +667,30 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
               const ShiftIcon = shiftOption?.icon
               const isSelected = iso(date) === iso(selected)
               const isToday = iso(date) === iso(today)
+              const dayHoliday = dayEvents.find((event) => event.holiday)
+              const scheduledDayEvents = dayEvents.filter((event) => !event.holiday)
+              const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
               return (
-                <button key={iso(date)} className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${mode === '근무표' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`} onClick={() => setSelected(date)}>
+                <button
+                  key={iso(date)}
+                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${mode === '근무표' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`}
+                  data-date={iso(date)}
+                  data-holiday={dayHoliday?.title || undefined}
+                  aria-label={`${formatLongDate(date)}${dayHoliday ? `, ${dayHoliday.title}` : ''}`}
+                  onClick={() => setSelected(date)}
+                >
                   <span>{day}</span>
+                  {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
                   {mode === '일반' ? <>
                     <div className="day-dots">
                       {dayEvents.slice(0, 3).map((event) => {
-                        const member = MEMBERS.find((person) => person.id === event.member)
-                        return <i key={event.id} style={{ background: member?.color }} />
+                        const member = memberForId(event.member)
+                        return <i key={event.id} style={{ background: member.color }} />
                       })}
                     </div>
                     <div className="calendar-event-labels">
-                      {dayEvents.slice(0, 2).map((event) => <small key={event.id}>{event.title}</small>)}
-                      {dayEvents.length > 2 && <small className="more-count">+{dayEvents.length - 2}</small>}
+                      {scheduledDayEvents.slice(0, 2).map((event) => <small key={event.id}>{event.title}</small>)}
+                      {scheduledDayEvents.length > 2 && <small className="more-count">+{scheduledDayEvents.length - 2}</small>}
                     </div>
                   </> : shiftOption && <span className={`shift-chip ${shiftOption.color}`}>{ShiftIcon && <ShiftIcon />}{shiftOption.shortLabel}</span>}
                 </button>
@@ -622,10 +710,10 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
                 key={event.id}
                 event={event}
                 compact
-                onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
-                onDelete={canEdit ? () => removeSelectedEvent(event) : undefined}
+                onEdit={canEdit && !event.holiday ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
+                onDelete={canEdit && !event.holiday ? () => removeSelectedEvent(event) : undefined}
               />)}
-              {!selectedEvents.length && <div className="empty-state"><CalendarDays /><strong>등록된 일정이 없습니다</strong><span>여유롭게 쉬거나 새 일정을 추가하세요.</span></div>}
+              {!selectedEvents.length && <div className="empty-state"><CalendarDays /><strong>등록된 일정이 없습니다</strong><span>쉬거나 새 일정을 추가하세요.</span></div>}
             </div>
             <MemberLegend />
           </> : <>
@@ -658,7 +746,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
 }
 
 function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificationPermission, onEnableNotifications }) {
-  const [assigneeFilter, setAssigneeFilter] = useState('all')
+  const [periodFilter, setPeriodFilter] = useState('all')
   const categories = ['긴급', '집안일', '장보기']
   const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
   const deleteTask = (task) => {
@@ -667,7 +755,17 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
     notifyUndo?.(`‘${task.title}’ 할 일을 삭제했습니다.`, () => setTasks((current) => [...current, task]))
   }
   const remaining = tasks.filter((task) => !task.done).length
-  const visibleTasks = assigneeFilter === 'all' ? tasks : tasks.filter((task) => task.assignee === assigneeFilter)
+  const weekStart = addDays(today, -today.getDay())
+  const weekEnd = addDays(weekStart, 6)
+  const visibleTasks = tasks.filter((task) => {
+    if (periodFilter === 'all') return true
+    if (periodFilter === 'none') return !task.dueDate
+    if (!task.dueDate) return false
+    if (periodFilter === 'today') return task.dueDate === iso(today)
+    if (periodFilter === 'week') return iso(weekStart) <= task.dueDate && task.dueDate <= iso(weekEnd)
+    if (periodFilter === 'month') return task.dueDate.startsWith(`${today.getFullYear()}-${pad(today.getMonth() + 1)}`)
+    return true
+  })
 
   return (
     <div className="page tasks-page">
@@ -678,9 +776,8 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
           {canEdit && <button className="primary-button" onClick={() => openModal('task')}><Plus size={19} /> 새 할 일</button>}
         </div>
       </section>
-      <div className="task-filter-bar" aria-label="담당자 필터">
-        <button className={assigneeFilter === 'all' ? 'active' : ''} aria-pressed={assigneeFilter === 'all'} onClick={() => setAssigneeFilter('all')}>전체</button>
-        {MEMBERS.map((member) => <button key={member.id} className={assigneeFilter === member.id ? 'active' : ''} aria-pressed={assigneeFilter === member.id} onClick={() => setAssigneeFilter(member.id)}>{member.name}</button>)}
+      <div className="task-filter-bar" aria-label="할 일 기간 필터">
+        {TASK_PERIOD_FILTERS.map((filter) => <button key={filter.id} className={periodFilter === filter.id ? 'active' : ''} aria-pressed={periodFilter === filter.id} onClick={() => setPeriodFilter(filter.id)}>{filter.label}</button>)}
       </div>
       <div className="task-columns">
         {categories.map((category) => {

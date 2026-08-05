@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.112.0",
     "@vitejs/plugin-react": "latest",
+    "date-holidays": "^3.34.1",
     "korean-lunar-calendar": "^0.4.0",
     "lucide-react": "latest",
     "react": "latest",

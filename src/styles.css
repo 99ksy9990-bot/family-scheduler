@@ -397,6 +397,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .weekday-row, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .weekday-row { color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; }
 .weekday-row span { padding: 9px 3px 13px; }
+.weekday-row .sunday { color: #d4514b; }
+.weekday-row .saturday { color: #376fc3; }
 .calendar-grid { gap: 1px; overflow: hidden; border: 1px solid #dfe8e9; border-radius: 17px; background: #dfe8e9; }
 .calendar-grid button {
   min-width: 0;
@@ -415,7 +417,11 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .calendar-grid button.outside { color: #aeb6bb; background: #f8f8f5; }
 .calendar-grid button.selected { background: #e4f3f8; box-shadow: inset 0 0 0 2px var(--primary); }
 .calendar-grid button.today > span { min-width: 27px; height: 27px; display: inline-flex; align-items: center; justify-content: center; color: white; border-radius: 9px; background: var(--primary); }
+.calendar-grid button.sunday > span:first-child, .calendar-grid button.holiday > span:first-child { color: #d4514b; }
+.calendar-grid button.saturday:not(.holiday) > span:first-child { color: #376fc3; }
+.calendar-grid button.today > span:first-child { color: white; }
 .calendar-grid button small { width: 100%; overflow: hidden; color: #4e5a60; font-size: 10px; white-space: nowrap; text-overflow: ellipsis; }
+.calendar-grid button .calendar-holiday-name { display: block; margin-top: 4px; color: #bd403b; font-size: 9px; font-weight: 800; }
 .calendar-event-labels { width: 100%; display: grid; gap: 2px; margin-top: auto; }
 .calendar-event-labels .more-count { width: auto; justify-self: start; padding: 2px 5px; color: var(--primary); border-radius: 6px; background: #e6f3f7; font-weight: 800; }
 .calendar-grid button.has-shift.shift-sage { background: #f1f7e4; }
@@ -442,6 +448,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .event-copy strong { font-size: 17px; }
 .day-panel .event-actions { flex: 0 0 auto; }
 .day-panel .event-actions button { width: 30px; height: 30px; border-radius: 9px; }
+.day-panel .empty-state span { max-width: none; white-space: nowrap; }
 .empty-state { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); text-align: center; }
 .empty-state svg { margin-bottom: 5px; }
 .empty-state span { max-width: 210px; font-size: 13px; line-height: 1.5; }
@@ -803,7 +810,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .page-title-row .secondary-button { align-self: flex-start; }
   .page-title-actions { width: 100%; flex-wrap: wrap; }
   .page-title-actions .primary-button, .page-title-actions .secondary-button { flex: 1; }
-  .task-filter-bar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: -10px; overflow: visible; padding-bottom: 0; }
+  .task-filter-bar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: -10px; overflow: visible; padding-bottom: 0; }
   .task-filter-bar button { min-width: 0; min-height: 36px; padding: 0 3px; font-size: 10px; white-space: nowrap; }
   .task-columns { grid-template-columns: 1fr; gap: 28px; }
   .task-group.groceries { grid-column: auto; }
@@ -817,6 +824,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .calendar-grid button { height: 70px; padding: 6px; }
   .calendar-grid button > span:first-child { font-size: 14px; }
   .calendar-grid button small { display: none; }
+  .calendar-grid button .calendar-holiday-name { display: block; font-size: 7px; letter-spacing: -.04em; }
   .calendar-event-labels { display: none; }
   .shift-chip { min-height: 22px; padding: 3px; font-size: 9px; }
   .shift-chip svg { display: none; }

@@ -31,11 +31,12 @@
 - PWA icon: verify Apple touch and manifest PNG assets, 64 px legibility, and non-white full-bleed corner pixels.
 - Task-card flow: add `황도 픽업`, assign it to 아빠, verify metadata/actions/avatar placement, open edit, and delete the temporary task afterward.
 - Family-connect input: type into the email field and verify its computed 16 px font size and all panel controls remain within the 402 px viewport.
-- Assignee filter: verify all six filters fit without horizontal scrolling at both 402 × 874 and 320 × 844.
+- Period filter: verify `전체·오늘·이번 주·이번 달·기한 없음` fit without horizontal scrolling at 402 × 874 and that person filters are absent.
 - Multi-day event: register `QA 연속 휴가` for 2026-08-10 through 2026-08-12, confirm the same event appears on all three calendar dates, open it from August 11, confirm both saved boundary dates, and delete it once to remove all three occurrences.
 - Child-specific periods: register a vacation period for 초롱 and a term period for 연두 over the same dates, then register one matching Wednesday schedule per child. The August 5 calendar cell displayed both `QA 초롱 방학` and `QA 연두 학기`, proving the period lookup is child-specific. All QA records were deleted afterward.
 - Period form: verify `자녀 · 구분 · 시작일 · 종료일 · 기간 추가` share one desktop row and the document has no horizontal overflow.
 - Anniversary form: verify the `다음 기념일` preview is absent and the add action remains aligned with the other form controls.
+- Calendar holidays: verify Saturday blue, Sunday red, public-holiday red, holiday names, and substitute-holiday details in both 일반 and 근무표 modes.
 
 ## Comparison history
 
@@ -76,6 +77,8 @@
 | P1 | Period date values could remain at the old defaults when the browser emitted an input event without a change event. | Bound both input and change events, read controlled values, added required/min constraints, and verified 2026-08-20 and 2026-08-31 persisted exactly. | Passed |
 | P1 | A family vacation required separate daily events. | Added start/end dates with same-day defaults and range-aware calendar lookup; one saved event now renders on every inclusive date and deletes as one record. | Passed |
 | P2 | The yellow `다음 기념일` preview consumed form space after the user no longer wanted it. | Removed the preview component and its layout tracks/styles; the anniversary add action now follows the date fields directly. | Passed |
+| P2 | The task page used member filters even though long-running lists need time-based narrowing. | Replaced member filters with `전체·오늘·이번 주·이번 달·기한 없음`; the five-button mobile grid has no horizontal overflow. | Passed |
+| P2 | Calendar dates did not distinguish weekends or identify public and substitute holidays. | Added semantic Saturday/Sunday colors plus Korean public-holiday, lunar-holiday, election-day, and substitute-holiday labels and detail cards. | Passed |
 
 ## Surface audit
 
@@ -106,5 +109,20 @@
 - Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.
 - Console: zero errors and zero warnings during the verified flows.
 - Build checks: ESLint passed, Vite production build passed, manifest JSON parsed successfully.
+
+## Latest period-filter and holiday verification
+
+- Source visual truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_iV5Rsd/스크린샷 2026-08-05 오후 2.41.25.png` at 2334 × 1308 px (2× density).
+- Browser-rendered implementation: `/Users/santak/Downloads/stitch_/qa-tasks-period-filter-exact.png` at 1167 × 654 px, matching the source's normalized CSS viewport at device scale factor 1.
+- Full-view comparison: `/Users/santak/Downloads/stitch_/qa-tasks-comparison-exact.png`.
+- Focused filter comparison: `/Users/santak/Downloads/stitch_/qa-tasks-filter-focus-exact.png`; the current app intentionally retains its existing fixed header and has an empty task data state, while the compared title/action/filter/category geometry and visual tokens are preserved.
+- Mobile calendar evidence: `/Users/santak/Downloads/stitch_/qa-calendar-mobile.png`, captured at the 402 × 874 CSS viewport. The calendar measured 357 px client/scroll width with no horizontal overflow.
+- Primary interactions tested: all five task period buttons; member-filter absence; 일반/근무표 tabs; August 15 public holiday; August 17 substitute holiday; September 24–26 Chuseok span; selected-day holiday details; empty-day helper copy.
+- Holiday evidence: August 8 computed blue (`rgb(55, 111, 195)`); August 16 computed red (`rgb(212, 81, 75)`); August 15 and 17 rendered `광복절` and `광복절 (대체공휴일)` in red. The substitute-holiday detail card exposes no edit/delete actions.
+- Responsive evidence: at 402 × 874 the five period-filter buttons measured 359 px client/scroll width, and `쉬거나 새 일정을 추가하세요.` rendered as one 159 px line with `white-space: nowrap`.
+- Required fidelity surfaces: A2Z/KIMM typography and hierarchy were preserved; spacing/radii/shadows remain on the existing tokens; only semantic weekend/holiday colors were added; Lucide assets remain unchanged; copy now reflects period filtering and concise empty guidance.
+- Comparison history: the initial member-filter state was replaced with the requested period filter; post-fix browser captures found no remaining P0/P1/P2 layout or interaction findings.
+- Browser console: zero errors and zero warnings.
+- React quality review: static filter data and holiday caches are module-scoped; state is derived during render; no new effects or global listeners were added.
 
 final result: passed
