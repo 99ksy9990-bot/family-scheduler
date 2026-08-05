@@ -271,10 +271,12 @@ h1, h2, h3 { letter-spacing: -0.035em; }
 .text-button:hover { text-decoration: underline; }
 .timeline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
 .timeline > .empty-copy { grid-column: 1 / -1; }
-.today-card .event-card { min-height: 70px; grid-template-columns: 82px minmax(0, 1fr) auto; gap: 11px; padding: 11px 13px 11px 16px; }
-.today-card .event-time { font-size: 14px; }
-.today-card .event-copy strong { font-size: 16px; }
-.today-card .event-detail-row > span { font-size: 12px; }
+.today-card .event-card { min-height: 92px; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 11px 13px; }
+.today-card .event-time { grid-column: 1; grid-row: 1; font-size: 12px; color: var(--primary); }
+.today-card .event-card > .avatar { grid-column: 2; grid-row: 1; width: 32px; height: 32px; border-radius: 11px; }
+.today-card .event-copy { grid-column: 1 / -1; grid-row: 2; gap: 1px; }
+.today-card .event-copy strong { font-size: 17px; }
+.today-card .event-detail-row > span { font-size: 13px; }
 
 .event-card {
   --event: var(--sky);
@@ -572,7 +574,7 @@ h1, h2, h3 { letter-spacing: -0.035em; }
   .event-time { font-size: 14px; }
   .event-copy strong { font-size: 16px; }
   .timeline { grid-template-columns: 1fr; }
-  .today-card .event-card { grid-template-columns: 80px minmax(0, 1fr) auto; }
+  .today-card .event-card { grid-template-columns: 1fr auto; }
   .schedule-guide { grid-template-columns: auto 1fr; align-items: start; }
   .schedule-guide .text-button { grid-column: 1 / -1; }
   .period-card, .schedule-editor-card { padding: 21px; }
