@@ -155,4 +155,30 @@
 - Copy and content: requested empty-state and explanatory copy remain unchanged; only wrapping/truncation behavior was corrected.
 - Responsive result: 402 px and 393 px document/body scroll widths exactly equal their viewports. No persistent control is clipped.
 
+## Latest schedule-action simplification verification
+
+- Source visual truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_J7GmX9/스크린샷 2026-08-05 오후 3.31.22.png`.
+- Browser-rendered implementation: `qa-schedule-action-right.png` (1265 × 712 at the 1280 × 720 CSS viewport, device scale factor 1).
+- Focused side-by-side comparison: `qa-schedule-action-comparison.png` (1580 × 320). Both rows were proportionally contained in equal-width panels; the source intentionally shows the fields requested for removal.
+- State: editable 학기 child-schedule form with default start/end times and no saved schedule.
+- Interaction checks: switched to 자녀 일정, confirmed the revised fields, verified the add action geometry, and confirmed the task page initially selects `이번 달`.
+- Responsive check: at 393 × 852 CSS px the start/end controls and action stack safely; document scroll width equals the 393 px viewport.
+- Browser console: zero errors and zero warnings.
+
+### Comparison history
+
+| Severity | Earlier finding | Fix | Post-fix evidence |
+| --- | --- | --- | --- |
+| P2 | 장소 and 픽업 담당 occupied a separate row even though they were no longer needed. | Removed both fields from create/edit state and suppressed legacy location/pickup metadata in generated child events and saved-schedule cards. | The form contains zero location and pickup controls. |
+| P2 | The add action sat below the time controls. | Changed the desktop form to eight tracks: start time 3, end time 3, action 2. | Both time fieldsets and the action wrapper share the exact 727.4–790.4 px row; the button sits immediately to the right of 종료 시간. |
+| P2 | 가족 할 일 initially opened with the broad 전체 filter. | Changed the initial filter state to `이번 달`. | `이번 달` reports `aria-pressed=true` and the active class immediately after navigation. |
+
+### Required fidelity surfaces
+
+- Typography: existing A2Z/KIMM roles, label hierarchy, and 43 px control typography are unchanged.
+- Spacing/layout: the desktop row now reads 시작 시간 → 종료 시간 → 추가 with balanced 3:3:2 tracks and no horizontal overflow.
+- Colors/tokens: existing teal primary action, borders, radii, surfaces, and shadows are preserved.
+- Image/icon fidelity: the existing Lucide plus icon and all select chevrons remain unchanged.
+- Copy/content: only the explicitly removed 장소 and 픽업 담당 fields/metadata were deleted; the schedule title and time copy remain intact.
+
 final result: passed

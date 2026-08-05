@@ -295,6 +295,8 @@ const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExcep
     .filter((schedule) => !scheduleExceptions.some((exception) => exception.scheduleId === schedule.id && exception.date === dateValue && exception.type === 'skip'))
     .map((schedule) => ({
       ...schedule,
+      location: '',
+      pickupBy: '',
       id: `recurring-${schedule.id}-${dateValue}`,
       scheduleId: schedule.id,
       date: dateValue,
@@ -746,7 +748,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
 }
 
 function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificationPermission, onEnableNotifications }) {
-  const [periodFilter, setPeriodFilter] = useState('all')
+  const [periodFilter, setPeriodFilter] = useState('month')
   const categories = ['긴급', '집안일', '장보기']
   const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
   const deleteTask = (task) => {
@@ -824,7 +826,7 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
 
 const emptyScheduleForm = {
   member: 'leo', kind: '학원', title: '', weekdays: [1],
-  time: '오후 4:00', end: '오후 5:00', location: '', pickupBy: '',
+  time: '오후 4:00', end: '오후 5:00',
 }
 
 const emptyAnniversaryForm = {
@@ -842,8 +844,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
     weekdays: scheduleWeekdays(requestedSchedule),
     time: requestedSchedule.time,
     end: requestedSchedule.end,
-    location: requestedSchedule.location,
-    pickupBy: requestedSchedule.pickupBy || '',
   } : emptyScheduleForm)
   const [editingId, setEditingId] = useState(requestedSchedule?.id || null)
   const [scheduleError, setScheduleError] = useState('')
@@ -890,7 +890,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       id: editingId || `child-${Date.now()}`,
       season,
       title: scheduleForm.title.trim(),
-      location: scheduleForm.location.trim() || '장소 미정',
       weekdays: [...scheduleForm.weekdays],
       weekday: scheduleForm.weekdays[0],
     }
@@ -923,8 +922,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       weekdays: scheduleWeekdays(schedule),
       time: schedule.time,
       end: schedule.end,
-      location: schedule.location,
-      pickupBy: schedule.pickupBy || '',
     })
     setEditingId(schedule.id)
     setScheduleError('')
@@ -1168,8 +1165,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             </fieldset>
             <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={scheduleForm.time} fallback="오후 4:00" onChange={(value) => changeScheduleField('time', value)} /></fieldset>
             <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={scheduleForm.end} fallback="오후 5:00" onChange={(value) => changeScheduleField('end', value)} /></fieldset>
-            <label className="schedule-location-field">장소<input value={scheduleForm.location} onChange={(event) => changeScheduleField('location', event.target.value)} placeholder="예: 음악실" /></label>
-            <label className="schedule-pickup-field">픽업 담당<select value={scheduleForm.pickupBy} onChange={(event) => changeScheduleField('pickupBy', event.target.value)}><option value="">미정</option>{MEMBERS.filter((member) => ['david', 'emma'].includes(member.id)).map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
             <div className="schedule-form-actions">
               {editingId && <button className="secondary-button" type="button" onClick={cancelScheduleEdit}>취소</button>}
               <button className="primary-button" type="submit">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? '수정 완료' : `${season} 일정 추가`}</button>
@@ -1187,7 +1182,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             return (
               <article className="child-schedule-card card" key={schedule.id}>
                 <Avatar memberId={schedule.member} />
-                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong><small>{formatScheduleWeekdays(schedule)} · {schedule.time}~{schedule.end} · {schedule.location}{schedule.pickupBy ? ` · ${MEMBERS.find((member) => member.id === schedule.pickupBy)?.name} 픽업` : ''}</small></div>
+                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong><small>{formatScheduleWeekdays(schedule)} · {schedule.time}~{schedule.end}</small></div>
                 <div className="event-actions">
                   {canEdit && <button onClick={() => editSchedule(schedule)} aria-label={`${schedule.title} 수정`}><Pencil /></button>}
                   {canEdit && <button className="delete" onClick={() => deleteSchedule(schedule)} aria-label={`${schedule.title} 삭제`}><Trash2 /></button>}

@@ -627,8 +627,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .season-badge.vacation { color: #6e5522; background: #f5ebcc; }
 .period-row .event-actions button { width: 32px; height: 32px; border-radius: 9px; }
 .schedule-season-tabs { margin: 20px 0 18px; }
-.child-schedule-form { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 11px; }
-.schedule-title-field { grid-column: span 4; }
+.child-schedule-form { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 11px; }
+.schedule-title-field { grid-column: span 6; }
 .child-schedule-form fieldset { min-width: 0; margin: 0; padding: 0; color: #4c575d; border: 0; font-size: 12px; font-weight: 700; }
 .child-schedule-form legend { margin-bottom: 6px; padding: 0; }
 .weekday-field { grid-column: 1 / -1; }
@@ -639,8 +639,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .time-field { grid-column: span 3; }
 .time-picker { display: grid; grid-template-columns: 1.1fr .9fr .9fr; gap: 7px; }
 .time-picker select { min-width: 0; }
-.schedule-location-field { grid-column: span 2; }
-.schedule-pickup-field { grid-column: span 2; }
 .schedule-form-actions { grid-column: span 2; display: flex; align-items: flex-end; justify-content: flex-end; gap: 8px; }
 .schedule-form-actions .primary-button, .schedule-form-actions .secondary-button { min-height: 43px; }
 .schedule-form-error { grid-column: 1 / -1; }
@@ -881,8 +879,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .anniversary-copy small .anniversary-milestone, .anniversary-copy small .anniversary-missing-year { display: block; }
   .anniversary-copy small .anniversary-milestone::before, .anniversary-copy small .anniversary-missing-year::before { content: none; }
   .child-schedule-form { grid-template-columns: 1fr 1fr; }
-  .schedule-title-field, .schedule-location-field, .schedule-form-actions { grid-column: 1 / -1; }
-  .schedule-pickup-field { grid-column: 1 / -1; }
+  .schedule-title-field, .schedule-form-actions { grid-column: 1 / -1; }
   .child-schedule-form .time-field { grid-column: 1 / -1; }
   .child-schedule-list { grid-template-columns: 1fr; }
   .modal-backdrop { place-items: start center; padding: max(14px, env(safe-area-inset-top)) 14px max(100px, env(safe-area-inset-bottom)); }
