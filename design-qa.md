@@ -10,6 +10,8 @@
 - Current implementation capture: `/tmp/family-scheduler-qa-mobile-due-date.png` (387 × 841 px browser-rendered capture at the 402 × 874 CSS viewport).
 - Current normalized comparison: `/tmp/family-scheduler-due-date-comparison.png`; the 588 × 1280 source was proportionally resized to 386 × 841 and placed beside the 387 × 841 implementation capture. Browser/device chrome differences were excluded from the focused alignment judgment.
 - Latest normalized comparisons: `/tmp/family-scheduler-calendar-compare.png`, `/tmp/family-scheduler-task-compare.png`, and `/tmp/family-scheduler-event-compare.png`. Each source/implementation pair was normalized to the same 700 px height and visually inspected side by side.
+- Task-card source truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_s4qank/스크린샷 2026-08-05 오후 2.16.28.png` (886 × 382), family-input source truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/85D7F271-0BB1-4C2E-AFA7-0ECEC869483D/1-사진-1.jpg` (588 × 1280), and filter-overflow source truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_FBeXf3/스크린샷 2026-08-05 오후 2.25.08.png` (362 × 74).
+- Revised captures: `/tmp/family-scheduler-task-card-filter-final.png` and `/tmp/family-scheduler-family-input-final.png` (both 387 × 841 at the 402 × 874 CSS viewport). Focused comparisons: `/tmp/family-scheduler-task-card-focused-compare.png`, `/tmp/family-scheduler-family-input-compare.png`, and `/tmp/family-scheduler-filter-compare.png`.
 - Primary QA viewport: 402 × 874 CSS px (iPhone 16 Pro/17 responsive target).
 - Stress viewport: 320 × 844 CSS px.
 
@@ -25,6 +27,9 @@
 - Event modal persistence: enter a date different from the selected calendar day, submit, confirm it appears only on the entered date, then delete it and verify it remains deleted after the 650 ms family-sync save window.
 - Event defaults: confirm a new event starts as `종일`, time controls appear only after `시간 지정`, and the one-row member picker offers 엄마·아빠·초롱·연두·가족.
 - PWA icon: verify Apple touch and manifest PNG assets, 64 px legibility, and non-white full-bleed corner pixels.
+- Task-card flow: add `황도 픽업`, assign it to 아빠, verify metadata/actions/avatar placement, open edit, and delete the temporary task afterward.
+- Family-connect input: type into the email field and verify its computed 16 px font size and all panel controls remain within the 402 px viewport.
+- Assignee filter: verify all six filters fit without horizontal scrolling at both 402 × 874 and 320 × 844.
 
 ## Comparison history
 
@@ -56,6 +61,10 @@
 | P2 | Empty-calendar guidance wrapped `추가하세요.` onto a second line. | Kept the concise helper sentence on one mobile line. | Passed |
 | P2 | Every new event started with arbitrary start/end times and the four-person member picker stacked into two rows. | Made `종일` the default with optional time expansion; placed five choices in one row and added a distinct family assignee. | Passed |
 | P2 | The iOS Home Screen shortcut relied on the SVG favicon and could show a white canvas. | Added full-bleed 180/192/512 PNG assets and linked them through Apple touch metadata and the web manifest. | Passed |
+| P2 | Task metadata displayed the internal `새로 추가됨` status, while assignee and edit/delete controls competed for the right edge. | Suppressed the internal status, moved edit/delete beside the task title, and placed the assignee avatar in the far-right action slot. | Passed |
+| P2 | Family-connect inputs used sub-16 px mobile text, triggering iPhone Safari focus zoom and making the panel look wider than the screen. | Set all mobile modal input/select/textarea controls to 16 px while preserving their existing control geometry. | Passed |
+| P2 | The six assignee filters used horizontal scrolling and clipped `연두` on mobile. | Replaced the mobile scroller with a six-column compact grid that fits at 402 px and the 320 px stress width. | Passed |
+| P2 | Assignee choices were not in the requested family-first order. | Reordered all assignee pickers and filters to 가족·아빠·엄마·초롱·연두, while keeping pickup choices limited to 아빠 and 엄마. | Passed |
 
 ## Surface audit
 
@@ -73,6 +82,9 @@
 - Event data flow: `2026-08-07` test event was absent from August 5, present on August 7, then absent immediately and after a 950 ms sync delay following delete; undo status remained available.
 - All-day/family flow: `가족 여행` saved as `종일` with the family avatar and remained deleted after the sync delay.
 - Member-picker stress check: at 320 × 844 all five buttons measured 42.6 px wide in one row inside the 233 px picker; modal/document horizontal overflow remained false. At 402 × 874 the task deadline and five-member row both remained inside the modal.
+- Focused task-card comparison: the saved status line is gone; `2026-08-05` is the only detail text, edit/delete share the title line, and the 아빠 avatar occupies the far-right slot. The card and document report no horizontal overflow.
+- Family-input comparison: the email field computes to 16 px, spans x=22–365 inside the x=0–387 panel, and remains unchanged after typing; the tabs also remain inside the same panel bounds.
+- Filter comparison: at 402 px all six filters end exactly at the 373 px content edge; at 320 px each is approximately 42.8 px wide and the last filter ends at 290.99 px inside the 291 px content edge. Horizontal overflow is false at both widths.
 - Shift-summary verification: the August footer rendered `1/31일 입력 · D 1 · E 0 · N 0 · OFF 0` from the persisted data with no horizontal overflow at 402 px.
 - Focused mobile measurements: calendar date numerals 14 px (previously 16 px); anniversary preview and action share the same top coordinate; milestone and missing-year labels compute as separate block lines.
 - Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.

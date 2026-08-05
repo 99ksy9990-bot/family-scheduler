@@ -10,11 +10,11 @@ import FamilySyncPanel from './components/FamilySyncPanel'
 import { useFamilySync } from './hooks/useFamilySync'
 
 const MEMBERS = [
-  { id: 'emma', name: '엄마', role: '엄마', initials: '엄', color: '#ffaaa0', tone: '#fff0ed' },
+  { id: 'family', name: '가족', role: '가족', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' },
   { id: 'david', name: '아빠', role: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8' },
+  { id: 'emma', name: '엄마', role: '엄마', initials: '엄', color: '#ffaaa0', tone: '#fff0ed' },
   { id: 'leo', name: '초롱', role: '자녀', initials: '초', color: '#7fc7e3', tone: '#ecf8fc' },
   { id: 'mia', name: '연두', role: '자녀', initials: '연', color: '#c9df84', tone: '#f6fae9' },
-  { id: 'family', name: '가족', role: '가족', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' },
 ]
 
 const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
@@ -693,19 +693,27 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
                 <h2>{category}</h2><span className="count-badge">{grouped.filter((task) => !task.done).length}</span>
               </div>
               <div className="task-list">
-                {grouped.map((task) => (
-                  <article key={task.id} className={`task-card ${task.done ? 'done' : ''}`}>
-                    <button className="checkbox" onClick={() => toggleTask(task.id)} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button>
-                    <span className="task-copy"><strong>{task.title}</strong><small>{task.meta || '메모 없음'}{task.dueDate ? ` · ${task.dueDate}${task.reminder && task.reminder !== 'none' ? ' 알림' : ''}` : ''}</small></span>
-                    <div className="task-card-end">
+                {grouped.map((task) => {
+                  const visibleMeta = task.meta && task.meta.replace(/\s/g, '') !== '새로추가됨' ? task.meta : ''
+                  const dueCopy = task.dueDate ? `${task.dueDate}${task.reminder && task.reminder !== 'none' ? ' 알림' : ''}` : ''
+                  const detail = [visibleMeta, dueCopy].filter(Boolean).join(' · ')
+                  return (
+                    <article key={task.id} className={`task-card ${task.done ? 'done' : ''}`}>
+                      <button className="checkbox" onClick={() => toggleTask(task.id)} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button>
+                      <span className="task-copy">
+                        <span className="task-title-row">
+                          <strong>{task.title}</strong>
+                          {canEdit && <span className="event-actions">
+                            <button onClick={() => openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
+                            <button className="delete" onClick={() => deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
+                          </span>}
+                        </span>
+                        {detail && <small>{detail}</small>}
+                      </span>
                       <Avatar memberId={task.assignee} small />
-                      <div className="event-actions">
-                        {canEdit && <button onClick={() => openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>}
-                        {canEdit && <button className="delete" onClick={() => deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>}
-                      </div>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  )
+                })}
                 {!grouped.length && <div className="task-empty-state"><span>{category} 할 일이 없습니다.</span>{canEdit && <button onClick={() => openModal('task', undefined, undefined, { category })}><Plus /> {category} 추가</button>}</div>}
               </div>
             </section>
@@ -1059,7 +1067,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={scheduleForm.time} fallback="오후 4:00" onChange={(value) => changeScheduleField('time', value)} /></fieldset>
             <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={scheduleForm.end} fallback="오후 5:00" onChange={(value) => changeScheduleField('end', value)} /></fieldset>
             <label className="schedule-location-field">장소<input value={scheduleForm.location} onChange={(event) => changeScheduleField('location', event.target.value)} placeholder="예: 음악실" /></label>
-            <label className="schedule-pickup-field">픽업 담당<select value={scheduleForm.pickupBy} onChange={(event) => changeScheduleField('pickupBy', event.target.value)}><option value="">미정</option>{MEMBERS.slice(0, 2).map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
+            <label className="schedule-pickup-field">픽업 담당<select value={scheduleForm.pickupBy} onChange={(event) => changeScheduleField('pickupBy', event.target.value)}><option value="">미정</option>{MEMBERS.filter((member) => ['david', 'emma'].includes(member.id)).map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
             <div className="schedule-form-actions">
               {editingId && <button className="secondary-button" type="button" onClick={cancelScheduleEdit}>취소</button>}
               <button className="primary-button" type="submit">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? '수정 완료' : `${season} 일정 추가`}</button>
@@ -1112,7 +1120,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
     const submittedEventDate = String(submitted.get('eventDate') || eventDate)
     const submittedDueDate = String(submitted.get('dueDate') || dueDate)
     if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
-    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, meta: '새로 추가됨', dueDate: submittedDueDate, reminder })
+    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
     else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member })
     else onAddEvent({ title: title.trim(), date: submittedEventDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, type: 'family' })
     onAfterSave?.()
