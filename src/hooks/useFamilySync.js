@@ -10,6 +10,7 @@ export function useFamilySync({ localState, onRemoteState }) {
   const [error, setError] = useState('')
   const localStateRef = useRef(localState)
   const remoteStateRef = useRef('')
+  const pendingLocalSaveRef = useRef(false)
   const saveTimerRef = useRef(null)
 
   useEffect(() => {
@@ -122,7 +123,15 @@ export function useFamilySync({ localState, onRemoteState }) {
       }, ({ new: changed }) => {
         if (!hasSharedState(changed?.state)) return
         const serialized = JSON.stringify(changed.state)
-        if (serialized === JSON.stringify(localStateRef.current)) return
+        const localSerialized = JSON.stringify(localStateRef.current)
+        if (serialized === localSerialized) {
+          remoteStateRef.current = serialized
+          pendingLocalSaveRef.current = false
+          setFamily((current) => current ? { ...current, version: changed.version } : current)
+          setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly')
+          return
+        }
+        if (pendingLocalSaveRef.current) return
         remoteStateRef.current = serialized
         onRemoteState(changed.state)
         setFamily((current) => current ? { ...current, version: changed.version } : current)
@@ -141,6 +150,7 @@ export function useFamilySync({ localState, onRemoteState }) {
     if (serialized === remoteStateRef.current) return undefined
 
     window.clearTimeout(saveTimerRef.current)
+    pendingLocalSaveRef.current = true
     setSyncStatus('saving')
     saveTimerRef.current = window.setTimeout(async () => {
       const { data: saved, error: saveError } = await supabase.rpc('save_household_state', {
@@ -148,13 +158,16 @@ export function useFamilySync({ localState, onRemoteState }) {
         next_state: localStateRef.current,
       }).single()
       if (saveError) {
+        pendingLocalSaveRef.current = false
         setError(saveError.message)
         setSyncStatus('error')
         return
       }
-      remoteStateRef.current = JSON.stringify(saved.state)
+      const savedSerialized = JSON.stringify(saved.state)
+      remoteStateRef.current = savedSerialized
+      pendingLocalSaveRef.current = savedSerialized !== JSON.stringify(localStateRef.current)
       setFamily((current) => current ? { ...current, version: saved.version } : current)
-      setSyncStatus('synced')
+      setSyncStatus(pendingLocalSaveRef.current ? 'saving' : 'synced')
     }, 650)
 
     return () => window.clearTimeout(saveTimerRef.current)

@@ -14,6 +14,7 @@ const MEMBERS = [
   { id: 'david', name: '아빠', role: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8' },
   { id: 'leo', name: '초롱', role: '자녀', initials: '초', color: '#7fc7e3', tone: '#ecf8fc' },
   { id: 'mia', name: '연두', role: '자녀', initials: '연', color: '#c9df84', tone: '#f6fae9' },
+  { id: 'family', name: '가족', role: '가족', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' },
 ]
 
 const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
@@ -76,6 +77,12 @@ const load = (key, fallback) => {
     return fallback
   }
 }
+
+const createId = (prefix) => (
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? `${prefix}-${crypto.randomUUID()}`
+    : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+)
 
 const loadWithoutLegacySeeds = (key, fallback, legacyIds) => (
   load(key, fallback).filter((item) => !legacyIds.has(item.id))
@@ -370,7 +377,7 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-      <div className="event-time">{event.time}</div>
+      <div className="event-time">{event.time || '종일'}</div>
       <Avatar memberId={event.member} small />
       <div className="event-copy">
         <div className="event-title-row">
@@ -1092,6 +1099,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   const [eventDate, setEventDate] = useState(item?.date || defaults.date || date || iso(today))
   const [time, setTime] = useState(item?.time || defaults.time || '오전 9:00')
   const [end, setEnd] = useState(item?.end || defaults.end || '오전 10:00')
+  const [hasTime, setHasTime] = useState(() => Boolean((item?.time || defaults.time) && (item?.time || defaults.time) !== '종일'))
   const [location, setLocation] = useState(item?.location || defaults.location || '우리 집')
   const [member, setMember] = useState(item?.member || defaults.member || 'emma')
   const [category, setCategory] = useState(item?.category || defaults.category || '집안일')
@@ -1100,10 +1108,13 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   const submit = (event) => {
     event.preventDefault()
     if (!title.trim()) return
-    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate, reminder })
-    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, meta: '새로 추가됨', dueDate, reminder })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: eventDate, time, end, location, member })
-    else onAddEvent({ title: title.trim(), date: eventDate, time, end, location, member, type: 'family' })
+    const submitted = new FormData(event.currentTarget)
+    const submittedEventDate = String(submitted.get('eventDate') || eventDate)
+    const submittedDueDate = String(submitted.get('dueDate') || dueDate)
+    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
+    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, meta: '새로 추가됨', dueDate: submittedDueDate, reminder })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, type: 'family' })
     onAfterSave?.()
     onClose()
   }
@@ -1120,14 +1131,18 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
       <form className="modal" onSubmit={submit}>
         <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2>{isTask ? (isEditing ? '할 일 수정' : '할 일 추가') : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
         <label>제목<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isTask ? '무엇을 해야 하나요?' : '어떤 일정인가요?'} /></label>
-        {!isTask && <label>날짜<input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} /></label>}
-        {!isTask && <div className="modal-time-row">
+        {!isTask && <label>날짜<input name="eventDate" type="date" value={eventDate} onInput={(event) => setEventDate(event.currentTarget.value)} onChange={(event) => setEventDate(event.currentTarget.value)} /></label>}
+        {!isTask && <fieldset className="all-day-field"><legend>시간</legend><div className="segmented event-time-mode">
+          <button type="button" className={!hasTime ? 'active' : ''} aria-pressed={!hasTime} onClick={() => setHasTime(false)}>종일</button>
+          <button type="button" className={hasTime ? 'active' : ''} aria-pressed={hasTime} onClick={() => setHasTime(true)}>시간 지정</button>
+        </div></fieldset>}
+        {!isTask && hasTime && <div className="modal-time-row">
           <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
           <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>
         </div>}
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>집안일</option><option>장보기</option></select></label>}
-        {isTask && <div className="field-row"><label>마감일<input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></label><label>알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="same-day">당일 알림</option><option value="day-before">하루 전 알림</option></select></label></div>}
+        {isTask && <div className="field-row"><label>마감일<input name="dueDate" type="date" value={dueDate} onInput={(event) => setDueDate(event.currentTarget.value)} onChange={(event) => setDueDate(event.currentTarget.value)} /></label><label>알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="same-day">당일 알림</option><option value="day-before">하루 전 알림</option></select></label></div>}
         <fieldset><legend>담당자</legend><div className="member-picker">{MEMBERS.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
         <div className="modal-actions">
           {isEditing && <button type="button" className="danger-button" onClick={removeItem}><Trash2 size={17} /> {isTask ? '할 일 삭제' : '일정 삭제'}</button>}
@@ -1251,14 +1266,14 @@ export default function App() {
 
   const notifyUndo = (message, undo) => setUndoToast({ message, undo })
 
-  const addEvent = (event) => setEvents((current) => [...current, { ...event, id: Date.now() }])
+  const addEvent = (event) => setEvents((current) => [...current, { ...event, id: createId('event') }])
   const updateEvent = (updatedEvent) => setEvents((current) => current.map((event) => event.id === updatedEvent.id ? updatedEvent : event))
   const deleteEvent = (eventId) => {
     const removed = events.find((event) => event.id === eventId)
     setEvents((current) => current.filter((event) => event.id !== eventId))
     if (removed) notifyUndo(`‘${removed.title}’ 일정을 삭제했습니다.`, () => setEvents((current) => [...current, removed]))
   }
-  const addTask = (task) => setTasks((current) => [...current, { ...task, id: Date.now(), done: false }])
+  const addTask = (task) => setTasks((current) => [...current, { ...task, id: createId('task'), done: false }])
   const updateTask = (updatedTask) => setTasks((current) => current.map((task) => task.id === updatedTask.id ? updatedTask : task))
   const deleteTask = (taskId) => {
     const removed = tasks.find((task) => task.id === taskId)
