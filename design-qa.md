@@ -181,4 +181,23 @@
 - Image/icon fidelity: the existing Lucide plus icon and all select chevrons remain unchanged.
 - Copy/content: only the explicitly removed 장소 and 픽업 담당 fields/metadata were deleted; the schedule title and time copy remain intact.
 
+## Latest mobile event and calendar verification
+
+- Source visual truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/68589172-D8F3-4BAD-9F33-87715FF377C3/1-사진-1.jpg` (588 × 1280 iPhone Safari capture).
+- Browser-rendered implementation: `qa-event-modal-mobile.png`, `qa-calendar-mobile-dots.png`, and `qa-calendar-selected-mobile.png`, captured at the 393 × 852 CSS viewport.
+- Side-by-side comparison: `qa-event-modal-comparison.png`; source and implementation are proportionally contained in equal-width panels without stretching.
+- Mobile event date fields: start/end controls are bounded to the modal width and use a measured 14 px vertical gap; document scroll width equals the 378 px client width.
+- New-event defaults: 아빠 is the active assignee and the location input is empty. Existing saved event values remain unchanged when editing.
+- Mobile calendar density: event labels and holiday names both have zero visible instances; four event/holiday dots remain visible in the August data set.
+- Selected-date behavior: clicking August 5 keeps the cell selected and renders the two saved anniversary entries in the detail panel immediately below the calendar.
+- Browser console: zero errors and zero warnings during modal open/close, calendar navigation, date selection, and detail-panel verification.
+
+### Latest comparison history
+
+| Severity | Earlier finding | Fix | Post-fix evidence |
+| --- | --- | --- | --- |
+| P2 | 시작일자 and 종료일자 were collapsed together by a mobile `gap: 0` override. | Assigned a dedicated 14 px mobile gap while retaining the bounded native date controls. | Both date fields remain inside the modal with a measured 14 px separation and no horizontal overflow. |
+| P2 | New schedules defaulted to 엄마 and prefilled `우리 집`. | Changed new-item defaults to 아빠 and an empty location; edit state still reads the saved item first. | The new modal reports the 아빠 button as active and the location value as an empty string. |
+| P2 | Holiday/event text competed with calendar dates on the mobile grid. | Hid all calendar-cell text below 660 px while preserving semantic dots and selected-day details. | Zero visible holiday/event labels, visible dots, and the full selected-day detail panel below the grid. |
+
 final result: passed
