@@ -332,7 +332,7 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function CalendarView({ events, childSchedules, schedulePeriods, shifts, setShifts, openModal, deleteEvent, setView, mode, setMode }) {
+function CalendarView({ events, childSchedules, setChildSchedules, schedulePeriods, shifts, setShifts, openModal, deleteEvent, setView, mode, setMode }) {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
@@ -362,6 +362,12 @@ function CalendarView({ events, childSchedules, schedulePeriods, shifts, setShif
   const clearSelectedShift = () => {
     const selectedDate = iso(selected)
     setShifts((currentShifts) => currentShifts.filter((shift) => !(shift.date === selectedDate && shift.member === 'emma')))
+  }
+
+  const removeSelectedEvent = (event) => {
+    if (!window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
+    if (event.recurring) setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
+    else deleteEvent(event.id)
   }
 
   return (
@@ -421,9 +427,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, shifts, setShif
                 event={event}
                 compact
                 onEdit={event.recurring ? () => setView('schedules') : () => openModal('event', event.date, event)}
-                onDelete={event.recurring ? undefined : () => {
-                  if (window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) deleteEvent(event.id)
-                }}
+                onDelete={() => removeSelectedEvent(event)}
               />)}
               {!selectedEvents.length && <div className="empty-state"><CalendarDays /><strong>등록된 일정이 없습니다</strong><span>여유롭게 쉬거나 새 일정을 추가하세요.</span></div>}
             </div>
@@ -774,7 +778,7 @@ export default function App() {
       <Header active={view} onChange={setView} focusMode={focusMode} setFocusMode={setFocusMode} />
       <main>
         {view === 'home' && <HomeView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setView={setView} openModal={openModal} deleteEvent={deleteEvent} />}
-        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} setView={setView} mode={calendarMode} setMode={setCalendarMode} />}
+        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} setView={setView} mode={calendarMode} setMode={setCalendarMode} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} />}
         {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} openCalendar={openCalendar} />}
       </main>

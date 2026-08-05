@@ -1,4 +1,12 @@
 @font-face {
+  font-family: 'KIMM';
+  src: url('/fonts/KIMM_bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'A2Z';
   src: url('/fonts/A2Z-Light.ttf') format('truetype');
   font-weight: 300;
@@ -93,6 +101,7 @@ select {
 }
 h1, h2, h3, p { margin: 0; }
 h1, h2, h3 { letter-spacing: -0.035em; }
+h1, h2, h3, strong, button { font-family: 'KIMM', 'A2Z', sans-serif; }
 
 .app { min-height: 100vh; }
 .app main { min-height: calc(100vh - 76px); }
