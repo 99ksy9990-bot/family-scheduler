@@ -578,6 +578,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .anniversary-form legend { margin-bottom: 6px; padding: 0; }
 .anniversary-form input, .anniversary-form select { width: 100%; height: 43px; padding: 0 12px; color: var(--ink); border: 1px solid #dfd7c4; border-radius: 12px; outline: none; background-color: white; }
 .anniversary-form input:focus, .anniversary-form select:focus { border-color: #b68932; box-shadow: 0 0 0 3px rgba(182, 137, 50, .12); }
+.anniversary-identity-fields, .anniversary-date-fields { display: contents; }
 .anniversary-name-field, .anniversary-calendar-field { grid-column: auto; }
 .anniversary-calendar-tabs { height: 43px; padding: 4px; }
 .anniversary-calendar-tabs button { min-width: 0; flex: 1; padding: 7px 10px; }
@@ -863,18 +864,20 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .period-card input[type="date"] { display: block; min-width: 0; min-inline-size: 0; width: 100%; max-width: 100%; max-inline-size: 100%; padding-inline: 0; -webkit-appearance: auto; appearance: auto; color: var(--ink); background-color: #fbfcfa; -webkit-text-fill-color: var(--ink); opacity: 1; line-height: 43px; text-align: left; text-indent: 11px; }
   .period-card input[type="date"]::-webkit-date-and-time-value { display: flex; width: 100%; height: 100%; min-height: 41px; align-items: center; justify-content: flex-start; padding: 0; color: var(--ink); line-height: normal; text-align: left; }
   .anniversary-card { padding: 21px; }
-  .anniversary-form { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px 8px; padding: 16px; }
-  .anniversary-name-field { grid-column: 1 / 4; }
-  .anniversary-kind-field { grid-column: 4 / 7; }
-  .anniversary-calendar-field, .anniversary-year-field, .anniversary-form-actions { grid-column: 1 / -1; }
-  .anniversary-year-field { grid-column: 1 / 3; }
-  .anniversary-month-field { grid-column: 3 / 5; }
-  .anniversary-day-field { grid-column: 5 / 7; }
-  .anniversary-form-actions { grid-column: 4 / 7; }
+  .anniversary-form { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px; }
+  .anniversary-identity-fields, .anniversary-date-fields { min-width: 0; grid-column: 1 / -1; display: grid; gap: 8px; }
+  .anniversary-identity-fields { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+  .anniversary-date-fields { grid-template-columns: minmax(112px, 1.35fr) repeat(2, minmax(58px, .75fr)); }
+  .anniversary-name-field, .anniversary-kind-field, .anniversary-year-field, .anniversary-month-field, .anniversary-day-field { grid-column: auto; }
+  .anniversary-calendar-field, .anniversary-form-actions { grid-column: 1 / -1; }
+  .anniversary-form-actions { width: min(100%, 190px); justify-self: end; }
   .anniversary-form-actions .primary-button, .anniversary-form-actions .secondary-button { min-width: 0; width: 100%; padding-inline: 8px; white-space: nowrap; }
-  .anniversary-kind-field select, .anniversary-year-field select, .anniversary-month-field select, .anniversary-day-field select { padding-right: 26px !important; background-position: right 8px center; font-size: 11px; }
+  .anniversary-name-field input { padding-inline: 10px; }
+  .anniversary-name-field input::placeholder { font-size: 14px; letter-spacing: -.04em; }
+  .anniversary-kind-field select, .anniversary-year-field select, .anniversary-month-field select, .anniversary-day-field select { padding-left: 9px; padding-right: 25px !important; background-position: right 7px center; background-size: 13px; }
   .leap-month-toggle { grid-column: 1 / -1; }
   .anniversary-list { grid-template-columns: 1fr; }
+  .anniversary-row .event-actions button { width: 44px; height: 44px; border-radius: 12px; }
   .anniversary-copy small { overflow: visible; line-height: 1.35; white-space: normal; text-overflow: clip; }
   .anniversary-copy small .anniversary-milestone, .anniversary-copy small .anniversary-missing-year { display: block; }
   .anniversary-copy small .anniversary-milestone::before, .anniversary-copy small .anniversary-missing-year::before { content: none; }

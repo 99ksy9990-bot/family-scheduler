@@ -44,7 +44,11 @@ const addDays = (base, amount) => {
 }
 const today = new Date()
 today.setHours(0, 0, 0, 0)
-const ANNIVERSARY_YEARS = Array.from({ length: today.getFullYear() - 1899 }, (_, index) => today.getFullYear() - index)
+const MIN_ANNIVERSARY_YEAR = 1950
+const ANNIVERSARY_YEARS = Array.from(
+  { length: today.getFullYear() - MIN_ANNIVERSARY_YEAR + 1 },
+  (_, index) => today.getFullYear() - index,
+)
 const holidayCalendar = new Holidays('KR')
 holidayCalendar.setLanguages('ko')
 const holidayYearCache = new Map()
@@ -1067,8 +1071,10 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
         <div className="section-heading"><div><span className="eyebrow">매년 달력에 자동 표시</span><h2>가족 기념일 관리</h2><p>양력·음력 가족 기념일을 등록하세요.</p></div><CalendarDays /></div>
         <div className="anniversary-layout">
           <form className="anniversary-form" onSubmit={submitAnniversary}>
-            <label className="anniversary-name-field">대상·이름<input value={anniversaryForm.name} onChange={(event) => changeAnniversaryField('name', event.target.value)} placeholder="예: 어머니, 부모님" required /></label>
-            <label className="anniversary-kind-field">기념일 종류<select value={anniversaryForm.kind} onChange={(event) => changeAnniversaryField('kind', event.target.value)}><option>생일</option><option>결혼기념일</option><option>기념일</option></select></label>
+            <div className="anniversary-identity-fields">
+              <label className="anniversary-name-field">대상·이름<input value={anniversaryForm.name} onChange={(event) => changeAnniversaryField('name', event.target.value)} placeholder="예: 어머니, 부모님" required /></label>
+              <label className="anniversary-kind-field">기념일 종류<select value={anniversaryForm.kind} onChange={(event) => changeAnniversaryField('kind', event.target.value)}><option>생일</option><option>결혼기념일</option><option>기념일</option></select></label>
+            </div>
             <fieldset className="anniversary-calendar-field">
               <legend>날짜 기준</legend>
               <div className="segmented anniversary-calendar-tabs">
@@ -1076,9 +1082,11 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
               </div>
               {anniversaryForm.calendarType === 'lunar' && <button className={`leap-month-toggle ${anniversaryForm.leapMonth ? 'active' : ''}`} type="button" aria-pressed={anniversaryForm.leapMonth} onClick={() => changeAnniversaryField('leapMonth', !anniversaryForm.leapMonth)}><Check /> 윤달</button>}
             </fieldset>
-            <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
-            <label className="anniversary-month-field">월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
-            <label className="anniversary-day-field">일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
+            <div className="anniversary-date-fields">
+              <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
+              <label className="anniversary-month-field">월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
+              <label className="anniversary-day-field">일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
+            </div>
             <div className="anniversary-form-actions">
               {anniversaryEditingId && <button className="secondary-button" type="button" onClick={cancelAnniversaryEdit}>취소</button>}
               <button className="primary-button" type="submit">{anniversaryEditingId ? <Check size={17} /> : <Plus size={17} />}{anniversaryEditingId ? '수정 완료' : '기념일 추가'}</button>
