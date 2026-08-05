@@ -8,12 +8,15 @@ import {
 const MEMBERS = [
   { id: 'emma', name: '엄마', role: '엄마', initials: '엄', color: '#ffaaa0', tone: '#fff0ed' },
   { id: 'david', name: '아빠', role: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8' },
-  { id: 'leo', name: '레오', role: '아들', initials: '레', color: '#7fc7e3', tone: '#ecf8fc' },
-  { id: 'mia', name: '미아', role: '딸', initials: '미', color: '#c9df84', tone: '#f6fae9' },
+  { id: 'leo', name: '초롱', role: '자녀', initials: '초', color: '#7fc7e3', tone: '#ecf8fc' },
+  { id: 'mia', name: '연두', role: '자녀', initials: '연', color: '#c9df84', tone: '#f6fae9' },
 ]
 
 const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
 const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+const WEEKDAY_SHORT = ['일', '월', '화', '수', '목', '금', '토']
+const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
+const TIME_MINUTES = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
 
 const pad = (value) => String(value).padStart(2, '0')
 const iso = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
@@ -29,7 +32,7 @@ const defaultEvents = [
   { id: 1, title: '치과 예약', date: iso(today), time: '오전 9:00', end: '오전 10:00', member: 'emma', location: '스마일 치과', type: 'family' },
   { id: 4, title: '가족 저녁 식사', date: iso(today), time: '오후 6:30', end: '오후 8:00', member: 'emma', location: '우리 집', type: 'family' },
   { id: 6, title: '야간 근무', date: iso(addDays(today, 3)), time: '오후 4:00', end: '자정', member: 'david', location: '시립 병원', type: 'work' },
-  { id: 7, title: '미아 생일', date: iso(addDays(today, 6)), time: '오후 2:00', end: '오후 5:00', member: 'mia', location: '우리 집', type: 'family' },
+  { id: 7, title: '연두 생일', date: iso(addDays(today, 6)), time: '오후 2:00', end: '오후 5:00', member: 'mia', location: '우리 집', type: 'family' },
 ]
 
 const defaultChildSchedules = [
@@ -67,9 +70,9 @@ const defaultShifts = [
 ]
 
 const SHIFT_OPTIONS = [
-  { id: 'day', code: 'D', label: '주간 근무', shortLabel: 'D', time: '오전 7:30 – 오후 4:00', endLabel: '오후 4:00 종료', icon: Sun, color: 'sage' },
-  { id: 'evening', code: 'E', label: '오후 근무', shortLabel: 'E', time: '오후 3:00 – 오후 11:00', endLabel: '오후 11:00 종료', icon: Sunset, color: 'blue' },
-  { id: 'night', code: 'N', label: '야간 근무', shortLabel: 'N', time: '오후 11:00 – 오전 8:30', endLabel: '다음 날 오전 8:30 종료', icon: Moon, color: 'navy' },
+  { id: 'day', code: 'D', label: '주간 근무', shortLabel: 'D', time: '오전 6:30 – 오후 3:30', endLabel: '오후 3:30 종료', icon: Sun, color: 'sage' },
+  { id: 'evening', code: 'E', label: '오후 근무', shortLabel: 'E', time: '오후 1:30 – 오후 10:30', endLabel: '오후 10:30 종료', icon: Sunset, color: 'blue' },
+  { id: 'night', code: 'N', label: '야간 근무', shortLabel: 'N', time: '오후 10:00 – 오전 8:00', endLabel: '다음 날 오전 8:00 종료', icon: Moon, color: 'navy' },
   { id: 'off', code: 'OFF', label: '휴무', shortLabel: 'OFF', time: '근무 없음', endLabel: '오늘은 휴무입니다', icon: CalendarDays, color: 'lavender' },
 ]
 
@@ -93,12 +96,30 @@ const activeSeasonForDate = (date, periods) => {
     .sort((a, b) => b.start.localeCompare(a.start))[0]?.season
 }
 
+const scheduleWeekdays = (schedule) => {
+  const values = Array.isArray(schedule.weekdays) ? schedule.weekdays : [schedule.weekday]
+  return [...new Set(values.map(Number).filter((day) => day >= 0 && day <= 6))].sort((a, b) => a - b)
+}
+
+const formatScheduleWeekdays = (schedule) => {
+  const weekdays = scheduleWeekdays(schedule)
+  return weekdays.length === 1 ? WEEKDAYS[weekdays[0]] : weekdays.map((day) => WEEKDAY_SHORT[day]).join('·')
+}
+
+const parseTime = (value, fallback = '오전 9:00') => {
+  const normalized = value === '자정' ? '오전 12:00' : value === '정오' ? '오후 12:00' : value
+  const match = /^(오전|오후)\s+(\d{1,2}):(\d{2})$/.exec(normalized || '')
+  if (match) return { meridiem: match[1], hour: Number(match[2]), minute: match[3] }
+  if (value === fallback) return { meridiem: '오전', hour: 9, minute: '00' }
+  return parseTime(fallback, fallback)
+}
+
 const childEventsForDate = (date, childSchedules, schedulePeriods) => {
   const dateValue = iso(date)
   const season = activeSeasonForDate(date, schedulePeriods)
   if (!season) return []
   return childSchedules
-    .filter((schedule) => schedule.season === season && Number(schedule.weekday) === date.getDay())
+    .filter((schedule) => schedule.season === season && scheduleWeekdays(schedule).includes(date.getDay()))
     .map((schedule) => ({
       ...schedule,
       id: `recurring-${schedule.id}-${dateValue}`,
@@ -130,6 +151,28 @@ function Avatar({ memberId, small = false }) {
     <span className={`avatar ${small ? 'avatar-small' : ''}`} style={{ '--member': member.color, '--member-tone': member.tone }} title={member.name}>
       {member.initials}
     </span>
+  )
+}
+
+function TimePicker({ label, value, onChange, fallback }) {
+  const selected = parseTime(value, fallback)
+  const updatePart = (part, nextValue) => {
+    const updated = { ...selected, [part]: part === 'hour' ? Number(nextValue) : nextValue }
+    onChange(`${updated.meridiem} ${updated.hour}:${updated.minute}`)
+  }
+
+  return (
+    <div className="time-picker" role="group" aria-label={label}>
+      <select aria-label={`${label} 오전 오후`} value={selected.meridiem} onChange={(event) => updatePart('meridiem', event.target.value)}>
+        <option>오전</option><option>오후</option>
+      </select>
+      <select aria-label={`${label} 시`} value={selected.hour} onChange={(event) => updatePart('hour', event.target.value)}>
+        {TIME_HOURS.map((hour) => <option key={hour} value={hour}>{hour}시</option>)}
+      </select>
+      <select aria-label={`${label} 분`} value={selected.minute} onChange={(event) => updatePart('minute', event.target.value)}>
+        {TIME_MINUTES.map((minute) => <option key={minute} value={minute}>{minute}분</option>)}
+      </select>
+    </div>
   )
 }
 
@@ -211,11 +254,16 @@ function EventCard({ event, compact = false, onEdit, onDelete }) {
   )
 }
 
-function HomeView({ events, childSchedules, schedulePeriods, shifts, setView, openModal }) {
+function HomeView({ events, childSchedules, setChildSchedules, schedulePeriods, shifts, setView, openModal, deleteEvent }) {
   const todayEvents = eventsForDate(today, events, childSchedules, schedulePeriods)
   const childEvents = todayEvents.filter((event) => ['leo', 'mia'].includes(event.member))
   const todayShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
   const shiftOption = SHIFT_OPTIONS.find((option) => option.id === todayShift?.shift)
+  const removeTodayEvent = (event) => {
+    if (!window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
+    if (event.recurring) setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
+    else deleteEvent(event.id)
+  }
 
   return (
     <div className="page home-page">
@@ -255,7 +303,12 @@ function HomeView({ events, childSchedules, schedulePeriods, shifts, setView, op
           <button className="text-button" onClick={() => setView('calendar')}>캘린더 보기 <ChevronRight size={16} /></button>
         </div>
         <div className="timeline">
-          {todayEvents.slice(0, 6).map((event) => <EventCard key={event.id} event={event} />)}
+          {todayEvents.slice(0, 6).map((event) => <EventCard
+            key={event.id}
+            event={event}
+            onEdit={event.recurring ? () => setView('schedules') : () => openModal('event', event.date, event)}
+            onDelete={() => removeTodayEvent(event)}
+          />)}
           {!todayEvents.length && <p className="empty-copy">비어 있는 하루예요. 필요할 때 일정을 추가하세요.</p>}
         </div>
       </section>
@@ -439,7 +492,7 @@ function TasksView({ tasks, setTasks, openModal }) {
 }
 
 const emptyScheduleForm = {
-  member: 'leo', kind: '학원', title: '', weekday: 1,
+  member: 'leo', kind: '학원', title: '', weekdays: [1],
   time: '오후 4:00', end: '오후 5:00', location: '',
 }
 
@@ -447,31 +500,47 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   const [season, setSeason] = useState(() => activeSeasonForDate(today, schedulePeriods) || '학기')
   const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm)
   const [editingId, setEditingId] = useState(null)
+  const [scheduleError, setScheduleError] = useState('')
   const [periodForm, setPeriodForm] = useState({ season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+  const [periodEditingId, setPeriodEditingId] = useState(null)
   const [periodError, setPeriodError] = useState('')
 
   const visibleSchedules = [...childSchedules]
     .filter((schedule) => schedule.season === season)
-    .sort((a, b) => `${a.member}-${a.weekday}-${a.time}`.localeCompare(`${b.member}-${b.weekday}-${b.time}`))
+    .sort((a, b) => `${a.member}-${scheduleWeekdays(a)[0]}-${a.time}`.localeCompare(`${b.member}-${scheduleWeekdays(b)[0]}-${b.time}`))
 
   const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
+  const toggleWeekday = (weekday) => {
+    setScheduleForm((current) => {
+      const selected = current.weekdays.includes(weekday)
+      const weekdays = selected ? current.weekdays.filter((day) => day !== weekday) : [...current.weekdays, weekday].sort((a, b) => a - b)
+      return { ...current, weekdays }
+    })
+    setScheduleError('')
+  }
 
   const submitSchedule = (event) => {
     event.preventDefault()
     if (!scheduleForm.title.trim()) return
+    if (!scheduleForm.weekdays.length) {
+      setScheduleError('적용할 요일을 한 개 이상 선택해 주세요.')
+      return
+    }
     const nextSchedule = {
       ...scheduleForm,
       id: editingId || `child-${Date.now()}`,
       season,
       title: scheduleForm.title.trim(),
       location: scheduleForm.location.trim() || '장소 미정',
-      weekday: Number(scheduleForm.weekday),
+      weekdays: [...scheduleForm.weekdays],
+      weekday: scheduleForm.weekdays[0],
     }
     setChildSchedules((current) => editingId
       ? current.map((schedule) => schedule.id === editingId ? nextSchedule : schedule)
       : [...current, nextSchedule])
     setScheduleForm(emptyScheduleForm)
     setEditingId(null)
+    setScheduleError('')
   }
 
   const editSchedule = (schedule) => {
@@ -480,17 +549,19 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       member: schedule.member,
       kind: schedule.kind,
       title: schedule.title,
-      weekday: schedule.weekday,
+      weekdays: scheduleWeekdays(schedule),
       time: schedule.time,
       end: schedule.end,
       location: schedule.location,
     })
     setEditingId(schedule.id)
+    setScheduleError('')
   }
 
   const cancelScheduleEdit = () => {
     setScheduleForm(emptyScheduleForm)
     setEditingId(null)
+    setScheduleError('')
   }
 
   const deleteSchedule = (schedule) => {
@@ -505,14 +576,30 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       setPeriodError('시작일과 종료일을 올바르게 입력해 주세요.')
       return
     }
-    setSchedulePeriods((current) => [...current, { ...periodForm, id: `period-${Date.now()}` }])
+    setSchedulePeriods((current) => periodEditingId
+      ? current.map((period) => period.id === periodEditingId ? { ...periodForm, id: periodEditingId } : period)
+      : [...current, { ...periodForm, id: `period-${Date.now()}` }])
     setPeriodError('')
     setPeriodForm((current) => ({ ...current, start: iso(today), end: iso(addDays(today, 30)) }))
+    setPeriodEditingId(null)
+  }
+
+  const editPeriod = (period) => {
+    setPeriodForm({ season: period.season, start: period.start, end: period.end })
+    setPeriodEditingId(period.id)
+    setPeriodError('')
+  }
+
+  const cancelPeriodEdit = () => {
+    setPeriodForm({ season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+    setPeriodEditingId(null)
+    setPeriodError('')
   }
 
   const deletePeriod = (period) => {
     if (!window.confirm(`${period.season} 적용 기간을 삭제할까요?`)) return
     setSchedulePeriods((current) => current.filter((item) => item.id !== period.id))
+    if (periodEditingId === period.id) cancelPeriodEdit()
   }
 
   return (
@@ -536,7 +623,10 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             <label>구분<select value={periodForm.season} onChange={(event) => setPeriodForm((current) => ({ ...current, season: event.target.value }))}><option>학기</option><option>방학</option></select></label>
             <label>시작일<input type="date" value={periodForm.start} onChange={(event) => setPeriodForm((current) => ({ ...current, start: event.target.value }))} /></label>
             <label>종료일<input type="date" value={periodForm.end} onChange={(event) => setPeriodForm((current) => ({ ...current, end: event.target.value }))} /></label>
-            <button className="primary-button" type="submit"><Plus size={17} /> 기간 추가</button>
+            <div className="period-form-actions">
+              {periodEditingId && <button className="secondary-button" type="button" onClick={cancelPeriodEdit}>취소</button>}
+              <button className="primary-button" type="submit">{periodEditingId ? <Check size={17} /> : <Plus size={17} />}{periodEditingId ? '수정 완료' : '기간 추가'}</button>
+            </div>
           </form>
           {periodError && <p className="form-error" role="alert">{periodError}</p>}
           <div className="period-list">
@@ -544,7 +634,10 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
               <div className="period-row" key={period.id}>
                 <span className={`season-badge ${period.season === '방학' ? 'vacation' : ''}`}>{period.season}</span>
                 <span><strong>{period.start}</strong><small>~ {period.end}</small></span>
-                <button className="row-delete" onClick={() => deletePeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 삭제`}><Trash2 /></button>
+                <div className="event-actions">
+                  <button onClick={() => editPeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 수정`}><Pencil /></button>
+                  <button className="delete" onClick={() => deletePeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 삭제`}><Trash2 /></button>
+                </div>
               </div>
             ))}
           </div>
@@ -559,14 +652,20 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             <label>자녀<select value={scheduleForm.member} onChange={(event) => changeScheduleField('member', event.target.value)}>{CHILDREN.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
             <label>구분<select value={scheduleForm.kind} onChange={(event) => changeScheduleField('kind', event.target.value)}><option>학교</option><option>학원</option></select></label>
             <label className="schedule-title-field">과목·일정명<input value={scheduleForm.title} onChange={(event) => changeScheduleField('title', event.target.value)} placeholder="예: 피아노 레슨" required /></label>
-            <label>요일<select value={scheduleForm.weekday} onChange={(event) => changeScheduleField('weekday', event.target.value)}>{WEEKDAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
-            <label>시작 시간<input value={scheduleForm.time} onChange={(event) => changeScheduleField('time', event.target.value)} placeholder="오후 4:00" /></label>
-            <label>종료 시간<input value={scheduleForm.end} onChange={(event) => changeScheduleField('end', event.target.value)} placeholder="오후 5:00" /></label>
+            <fieldset className="weekday-field">
+              <legend>요일</legend>
+              <div className="weekday-picker">
+                {WEEKDAY_SHORT.map((day, index) => <button key={day} type="button" className={scheduleForm.weekdays.includes(index) ? 'active' : ''} aria-pressed={scheduleForm.weekdays.includes(index)} onClick={() => toggleWeekday(index)}>{day}</button>)}
+              </div>
+            </fieldset>
+            <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={scheduleForm.time} fallback="오후 4:00" onChange={(value) => changeScheduleField('time', value)} /></fieldset>
+            <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={scheduleForm.end} fallback="오후 5:00" onChange={(value) => changeScheduleField('end', value)} /></fieldset>
             <label className="schedule-location-field">장소<input value={scheduleForm.location} onChange={(event) => changeScheduleField('location', event.target.value)} placeholder="예: 음악실" /></label>
             <div className="schedule-form-actions">
               {editingId && <button className="secondary-button" type="button" onClick={cancelScheduleEdit}>취소</button>}
               <button className="primary-button" type="submit">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? '수정 완료' : `${season} 일정 추가`}</button>
             </div>
+            {scheduleError && <p className="form-error schedule-form-error" role="alert">{scheduleError}</p>}
           </form>
         </section>
       </div>
@@ -579,7 +678,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             return (
               <article className="child-schedule-card card" key={schedule.id}>
                 <Avatar memberId={schedule.member} />
-                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong><small>{WEEKDAYS[schedule.weekday]} · {schedule.time}~{schedule.end} · {schedule.location}</small></div>
+                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong><small>{formatScheduleWeekdays(schedule)} · {schedule.time}~{schedule.end} · {schedule.location}</small></div>
                 <div className="event-actions">
                   <button onClick={() => editSchedule(schedule)} aria-label={`${schedule.title} 수정`}><Pencil /></button>
                   <button className="delete" onClick={() => deleteSchedule(schedule)} aria-label={`${schedule.title} 삭제`}><Trash2 /></button>
@@ -600,6 +699,7 @@ function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteE
   const [title, setTitle] = useState(item?.title || '')
   const [eventDate, setEventDate] = useState(item?.date || date || iso(today))
   const [time, setTime] = useState(item?.time || '오전 9:00')
+  const [end, setEnd] = useState(item?.end || '오전 10:00')
   const [location, setLocation] = useState(item?.location || '우리 집')
   const [member, setMember] = useState(item?.member || 'emma')
   const [category, setCategory] = useState('집안일')
@@ -607,8 +707,8 @@ function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteE
     event.preventDefault()
     if (!title.trim()) return
     if (isTask) onAddTask({ title: title.trim(), category, assignee: member, meta: '새로 추가됨' })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: eventDate, time, location, member })
-    else onAddEvent({ title: title.trim(), date: eventDate, time, end: '', location, member, type: 'family' })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: eventDate, time, end, location, member })
+    else onAddEvent({ title: title.trim(), date: eventDate, time, end, location, member, type: 'family' })
     onClose()
   }
   const removeEvent = () => {
@@ -622,7 +722,11 @@ function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteE
       <form className="modal" onSubmit={submit}>
         <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2>{isTask ? '할 일 추가' : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
         <label>제목<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isTask ? '무엇을 해야 하나요?' : '어떤 일정인가요?'} /></label>
-        {!isTask && <div className="field-row"><label>날짜<input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} /></label><label>시간<input value={time} onChange={(event) => setTime(event.target.value)} /></label></div>}
+        {!isTask && <label>날짜<input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} /></label>}
+        {!isTask && <div className="modal-time-row">
+          <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
+          <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>
+        </div>}
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>집안일</option><option>장보기</option></select></label>}
         <fieldset><legend>담당자</legend><div className="member-picker">{MEMBERS.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
@@ -638,7 +742,9 @@ function Modal({ type, date, item, onClose, onAddEvent, onUpdateEvent, onDeleteE
 
 export default function App() {
   const [view, setView] = useState('home')
-  const [events, setEvents] = useState(() => load('family-scheduler-events', defaultEvents))
+  const [events, setEvents] = useState(() => load('family-scheduler-events', defaultEvents).map((event) => (
+    event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
+  )))
   const [tasks, setTasks] = useState(() => load('family-scheduler-tasks', defaultTasks))
   const [shifts, setShifts] = useState(() => load('family-scheduler-shifts', defaultShifts))
   const [childSchedules, setChildSchedules] = useState(() => load('family-scheduler-child-schedules-v1', defaultChildSchedules))
@@ -667,7 +773,7 @@ export default function App() {
     <div className={`app ${focusMode ? 'focus-mode' : ''}`}>
       <Header active={view} onChange={setView} focusMode={focusMode} setFocusMode={setFocusMode} />
       <main>
-        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setView={setView} openModal={openModal} />}
+        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setView={setView} openModal={openModal} deleteEvent={deleteEvent} />}
         {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} shifts={shifts} setShifts={setShifts} openModal={openModal} deleteEvent={deleteEvent} setView={setView} mode={calendarMode} setMode={setCalendarMode} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} />}
         {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} openCalendar={openCalendar} />}
