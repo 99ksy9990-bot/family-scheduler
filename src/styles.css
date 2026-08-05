@@ -546,7 +546,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .readonly-notice { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 13px 16px; color: #675323; border: 1px solid #e6d59e; border-radius: 15px; background: #fff9e8; font-size: 13px; }
 .readonly-notice svg { width: 20px; }
 .readonly-section form { pointer-events: none; opacity: .64; }
-.schedule-management-grid.single { grid-template-columns: minmax(0, 720px); justify-content: center; }
+.schedule-management-grid.single { grid-template-columns: minmax(0, 1fr); }
 .anniversary-card { margin-bottom: 22px; padding: 26px; }
 .anniversary-card .section-heading { align-items: flex-start; }
 .anniversary-card .section-heading > svg { color: #b68932; }
@@ -555,7 +555,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .anniversary-layout { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 22px; }
 .anniversary-form {
   display: grid;
-  grid-template-columns: minmax(140px, 1.35fr) minmax(108px, .8fr) minmax(150px, 1.1fr) minmax(110px, .75fr) minmax(72px, .55fr) minmax(72px, .55fr) minmax(135px, 1fr) auto;
+  grid-template-columns: minmax(140px, 1.35fr) minmax(108px, .8fr) minmax(150px, 1.1fr) minmax(110px, .75fr) minmax(72px, .55fr) minmax(72px, .55fr) auto;
   align-items: end;
   gap: 10px;
   padding: 18px;
@@ -573,9 +573,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .leap-month-toggle svg { width: 15px; opacity: 0; }
 .leap-month-toggle.active { border-color: #b68932; background: #fff2c9; }
 .leap-month-toggle.active svg { opacity: 1; }
-.anniversary-preview { min-height: 43px; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 7px 11px; color: #775c26; border: 1px solid #ead8ab; border-radius: 12px; background: #fff5d9; }
-.anniversary-preview span { font-size: 11px; font-weight: 700; }
-.anniversary-preview strong { color: var(--ink); font-size: 15px; }
 .anniversary-form-actions { display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; }
 .anniversary-form-actions .primary-button, .anniversary-form-actions .secondary-button { min-height: 43px; }
 .anniversary-form-error { grid-column: 1 / -1; }
@@ -601,8 +598,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .period-card .section-heading > svg, .schedule-editor-card .section-heading > svg { color: var(--primary); }
 .period-card .section-heading h2, .schedule-editor-card .section-heading h2 { font-size: 23px; }
 .period-card > p { margin-top: 9px; color: var(--muted); font-size: 12px; line-height: 1.5; }
-.period-form { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 20px; }
-.period-form label:first-child, .period-form-actions { grid-column: 1 / -1; }
+.period-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.15fr) minmax(0, 1.15fr) auto; align-items: end; gap: 11px; margin-top: 20px; }
+.period-form-actions { grid-column: auto; }
 .period-card label, .schedule-editor-card label { display: flex; flex-direction: column; gap: 6px; color: #4c575d; font-size: 12px; font-weight: 700; }
 .period-card input, .period-card select, .schedule-editor-card input, .schedule-editor-card select { width: 100%; height: 43px; padding: 0 12px; color: var(--ink); border: 1px solid #d4dcde; border-radius: 12px; outline: none; background-color: #fbfcfa; }
 .period-card input:focus, .period-card select:focus, .schedule-editor-card input:focus, .schedule-editor-card select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 101, 126, .1); }
@@ -610,8 +607,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .period-form-actions .primary-button, .period-form-actions .secondary-button { min-height: 43px; }
 .form-error { margin-top: 10px !important; color: #a3433a !important; font-weight: 700; }
 .period-list { display: grid; gap: 8px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
-.period-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 10px; border-radius: 13px; background: #f7f8f5; }
-.period-row > span:nth-child(2) { min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.period-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border-radius: 13px; background: #f7f8f5; }
+.period-row > span:nth-child(3) { min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.period-row .avatar { width: 34px; height: 34px; border-radius: 11px; }
 .period-row small { color: var(--muted); }
 .season-badge { min-width: 44px; padding: 6px 8px; color: var(--primary-dark); border-radius: 9px; background: #dff1f7; text-align: center; font-size: 11px; font-weight: 800; }
 .season-badge.vacation { color: #6e5522; background: #f5ebcc; }
@@ -656,6 +654,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .modal input, .modal select { min-width: 0; max-width: 100%; width: 100%; height: 48px; padding: 0 14px; color: var(--ink); border: 1px solid #d4dcde; border-radius: 13px; outline: none; background-color: #fbfcfa; }
 .modal input:focus, .modal select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36, 101, 126, .1); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.event-date-row > label { margin-bottom: 0; }
+.event-date-field .field-help { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.4; }
+.event-date-field .event-date-error { margin: 7px 0 0; }
 .modal-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-time-row .time-picker { grid-template-columns: 1.1fr .85fr .85fr; gap: 5px; }
 .modal-time-row select { font-size: 12px; }
@@ -759,7 +760,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .child-schedule-list { grid-template-columns: 1fr; }
   .task-title-row .event-actions { opacity: 1; }
   .anniversary-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .anniversary-name-field, .anniversary-calendar-field, .anniversary-preview, .anniversary-form-actions { grid-column: span 2; }
+  .anniversary-name-field, .anniversary-calendar-field, .anniversary-form-actions { grid-column: span 2; }
   .undo-toast { bottom: 88px; }
   .mobile-nav {
     position: fixed;
@@ -838,7 +839,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .management-tabs button em { min-width: 21px; height: 21px; }
   .period-card, .schedule-editor-card { padding: 21px; }
   .period-form { grid-template-columns: minmax(0, 1fr); }
-  .period-form label:first-child, .period-form-actions { grid-column: 1; }
+  .period-form-actions { grid-column: 1; }
   .period-form-actions { width: 100%; }
   .period-form-actions .primary-button, .period-form-actions .secondary-button { flex: 1; }
   .period-card input[type="date"] { display: block; min-width: 0; width: 100%; -webkit-appearance: none; appearance: none; }
@@ -846,13 +847,10 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .anniversary-form { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px 8px; padding: 16px; }
   .anniversary-name-field { grid-column: 1 / 4; }
   .anniversary-kind-field { grid-column: 4 / 7; }
-  .anniversary-calendar-field, .anniversary-year-field, .anniversary-preview, .anniversary-form-actions { grid-column: 1 / -1; }
+  .anniversary-calendar-field, .anniversary-year-field, .anniversary-form-actions { grid-column: 1 / -1; }
   .anniversary-year-field { grid-column: 1 / 3; }
   .anniversary-month-field { grid-column: 3 / 5; }
   .anniversary-day-field { grid-column: 5 / 7; }
-  .anniversary-preview { grid-column: 1 / 4; min-height: 43px; padding: 6px 9px; }
-  .anniversary-preview span { font-size: 10px; }
-  .anniversary-preview strong { font-size: 14px; }
   .anniversary-form-actions { grid-column: 4 / 7; }
   .anniversary-form-actions .primary-button, .anniversary-form-actions .secondary-button { min-width: 0; width: 100%; padding-inline: 8px; white-space: nowrap; }
   .anniversary-kind-field select, .anniversary-year-field select, .anniversary-month-field select, .anniversary-day-field select { padding-right: 26px !important; background-position: right 8px center; font-size: 11px; }
@@ -871,6 +869,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .modal input[type="date"] { display: block; min-width: 0; min-inline-size: 0; width: 100%; max-width: 100%; max-inline-size: 100%; padding-inline: 0; -webkit-appearance: auto; appearance: auto; color: var(--ink); background-color: #fff; -webkit-text-fill-color: var(--ink); opacity: 1; line-height: 46px; text-align: left; text-indent: 7px; }
   .modal input[type="date"]::-webkit-date-and-time-value { display: flex; width: 100%; height: 100%; min-height: 46px; align-items: center; padding: 0; color: var(--ink); line-height: normal; text-align: left; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
+  .event-date-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .modal-time-row { grid-template-columns: 1fr; gap: 0; }
   .member-picker { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
   .member-picker button { min-width: 0; gap: 4px; padding: 8px 2px; font-size: 10px; }

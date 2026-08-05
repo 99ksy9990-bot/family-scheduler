@@ -12,6 +12,8 @@
 - Latest normalized comparisons: `/tmp/family-scheduler-calendar-compare.png`, `/tmp/family-scheduler-task-compare.png`, and `/tmp/family-scheduler-event-compare.png`. Each source/implementation pair was normalized to the same 700 px height and visually inspected side by side.
 - Task-card source truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_s4qank/스크린샷 2026-08-05 오후 2.16.28.png` (886 × 382), family-input source truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/85D7F271-0BB1-4C2E-AFA7-0ECEC869483D/1-사진-1.jpg` (588 × 1280), and filter-overflow source truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_FBeXf3/스크린샷 2026-08-05 오후 2.25.08.png` (362 × 74).
 - Revised captures: `/tmp/family-scheduler-task-card-filter-final.png` and `/tmp/family-scheduler-family-input-final.png` (both 387 × 841 at the 402 × 874 CSS viewport). Focused comparisons: `/tmp/family-scheduler-task-card-focused-compare.png`, `/tmp/family-scheduler-family-input-compare.png`, and `/tmp/family-scheduler-filter-compare.png`.
+- Current period source: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_V7z7p4/스크린샷 2026-08-05 오후 2.37.49.png` (1498 × 882). Current preview-removal source: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_YEJrgP/스크린샷 2026-08-05 오후 2.36.23.png` (306 × 142).
+- Current browser-rendered captures: `/tmp/family-scheduler-period-form-final.png` (1265 × 804), `/tmp/family-scheduler-anniversary-form-final.png` (1265 × 1075), and `/tmp/family-scheduler-event-range-modal-final.png` (1265 × 712), captured in the 1280 × 720 CSS browser viewport at device scale factor 2. Current combined comparison: `/tmp/family-scheduler-comparison-final.jpg` (1500 × 1180), with both source and implementation contained in equal-width panels.
 - Primary QA viewport: 402 × 874 CSS px (iPhone 16 Pro/17 responsive target).
 - Stress viewport: 320 × 844 CSS px.
 
@@ -30,6 +32,10 @@
 - Task-card flow: add `황도 픽업`, assign it to 아빠, verify metadata/actions/avatar placement, open edit, and delete the temporary task afterward.
 - Family-connect input: type into the email field and verify its computed 16 px font size and all panel controls remain within the 402 px viewport.
 - Assignee filter: verify all six filters fit without horizontal scrolling at both 402 × 874 and 320 × 844.
+- Multi-day event: register `QA 연속 휴가` for 2026-08-10 through 2026-08-12, confirm the same event appears on all three calendar dates, open it from August 11, confirm both saved boundary dates, and delete it once to remove all three occurrences.
+- Child-specific periods: register a vacation period for 초롱 and a term period for 연두 over the same dates, then register one matching Wednesday schedule per child. The August 5 calendar cell displayed both `QA 초롱 방학` and `QA 연두 학기`, proving the period lookup is child-specific. All QA records were deleted afterward.
+- Period form: verify `자녀 · 구분 · 시작일 · 종료일 · 기간 추가` share one desktop row and the document has no horizontal overflow.
+- Anniversary form: verify the `다음 기념일` preview is absent and the add action remains aligned with the other form controls.
 
 ## Comparison history
 
@@ -65,6 +71,11 @@
 | P2 | Family-connect inputs used sub-16 px mobile text, triggering iPhone Safari focus zoom and making the panel look wider than the screen. | Set all mobile modal input/select/textarea controls to 16 px while preserving their existing control geometry. | Passed |
 | P2 | The six assignee filters used horizontal scrolling and clipped `연두` on mobile. | Replaced the mobile scroller with a six-column compact grid that fits at 402 px and the 320 px stress width. | Passed |
 | P2 | Assignee choices were not in the requested family-first order. | Reordered all assignee pickers and filters to 가족·아빠·엄마·초롱·연두, while keeping pickup choices limited to 아빠 and 엄마. | Passed |
+| P1 | A vacation or term period applied globally, so 초롱 and 연두 could not use different school calendars. | Added a child selector to each period and resolved the active season independently for each child; legacy periods remain available as `전체 자녀`. | Passed |
+| P2 | The period editor was constrained to a centered narrow card and split across rows. | Expanded the section to the full content width and placed child, type, both dates, and the add action in one desktop row; mobile keeps a no-overflow stacked layout. | Passed |
+| P1 | Period date values could remain at the old defaults when the browser emitted an input event without a change event. | Bound both input and change events, read controlled values, added required/min constraints, and verified 2026-08-20 and 2026-08-31 persisted exactly. | Passed |
+| P1 | A family vacation required separate daily events. | Added start/end dates with same-day defaults and range-aware calendar lookup; one saved event now renders on every inclusive date and deletes as one record. | Passed |
+| P2 | The yellow `다음 기념일` preview consumed form space after the user no longer wanted it. | Removed the preview component and its layout tracks/styles; the anniversary add action now follows the date fields directly. | Passed |
 
 ## Surface audit
 
@@ -85,6 +96,11 @@
 - Focused task-card comparison: the saved status line is gone; `2026-08-05` is the only detail text, edit/delete share the title line, and the 아빠 avatar occupies the far-right slot. The card and document report no horizontal overflow.
 - Family-input comparison: the email field computes to 16 px, spans x=22–365 inside the x=0–387 panel, and remains unchanged after typing; the tabs also remain inside the same panel bounds.
 - Filter comparison: at 402 px all six filters end exactly at the 373 px content edge; at 320 px each is approximately 42.8 px wide and the last filter ends at 290.99 px inside the 291 px content edge. Horizontal overflow is false at both widths.
+- Period-row comparison: all five controls share y=589 px in the 1280 px viewport; the row spans x=100–1166 px and document overflow is false. The source and final layout were inspected together in `/tmp/family-scheduler-comparison-final.jpg`.
+- Date-range modal: start and end default to the same selected day. In the browser capture each field has a 246 px border box and equal 244 px client/scroll width; the mobile rule stacks the two bounded date inputs below 660 px to prevent native iOS date text clipping.
+- Range behavior: `QA 연속 휴가` appeared on August 10, 11, and 12; editing from August 11 restored boundaries `2026-08-10` and `2026-08-12`; one confirmed delete removed all three calendar labels.
+- Child-specific behavior: overlapping child periods preserved different seasons on the same day; the August 5 cell simultaneously rendered 초롱's vacation schedule and 연두's term schedule.
+- Anniversary-preview comparison: the source preview is visible in the left panel while the final form contains no `.anniversary-preview` element; the add button remains aligned at the end of the form row.
 - Shift-summary verification: the August footer rendered `1/31일 입력 · D 1 · E 0 · N 0 · OFF 0` from the persisted data with no horizontal overflow at 402 px.
 - Focused mobile measurements: calendar date numerals 14 px (previously 16 px); anniversary preview and action share the same top coordinate; milestone and missing-year labels compute as separate block lines.
 - Home anniversary measurements: title and edit/delete controls share one row; the detail computes as a single 15.5 px-high line at the 402 px viewport. Verified copy includes `매년 양력 8월 5일 · 다음 기념일에 26주년`.

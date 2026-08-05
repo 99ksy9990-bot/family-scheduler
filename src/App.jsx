@@ -186,11 +186,12 @@ const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap(
   }]
 })
 
-const activeSeasonForDate = (date, periods) => {
+const activeSeasonForDate = (date, periods, member) => {
   const dateValue = iso(date)
   return periods
     .filter((period) => period.start <= dateValue && dateValue <= period.end)
-    .sort((a, b) => b.start.localeCompare(a.start))[0]?.season
+    .filter((period) => !member || !period.member || period.member === 'all' || period.member === member)
+    .sort((a, b) => b.start.localeCompare(a.start) || Number(b.member === member) - Number(a.member === member))[0]?.season
 }
 
 const scheduleWeekdays = (schedule) => {
@@ -213,10 +214,8 @@ const parseTime = (value, fallback = '오전 9:00') => {
 
 const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
   const dateValue = iso(date)
-  const season = activeSeasonForDate(date, schedulePeriods)
-  if (!season) return []
   return childSchedules
-    .filter((schedule) => schedule.season === season && scheduleWeekdays(schedule).includes(date.getDay()))
+    .filter((schedule) => schedule.season === activeSeasonForDate(date, schedulePeriods, schedule.member) && scheduleWeekdays(schedule).includes(date.getDay()))
     .filter((schedule) => !scheduleExceptions.some((exception) => exception.scheduleId === schedule.id && exception.date === dateValue && exception.type === 'skip'))
     .map((schedule) => ({
       ...schedule,
@@ -231,7 +230,7 @@ const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExcep
 const eventsForDate = (date, events, childSchedules, schedulePeriods, anniversaries = [], scheduleExceptions = []) => {
   const dateValue = iso(date)
   const merged = [
-    ...events.filter((event) => event.date === dateValue),
+    ...events.filter((event) => event.date <= dateValue && dateValue <= (event.endDate || event.date)),
     ...childEventsForDate(date, childSchedules, schedulePeriods, scheduleExceptions),
     ...anniversaryEventsForDate(date, anniversaries),
   ]
@@ -749,7 +748,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   } : emptyScheduleForm)
   const [editingId, setEditingId] = useState(requestedSchedule?.id || null)
   const [scheduleError, setScheduleError] = useState('')
-  const [periodForm, setPeriodForm] = useState({ season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+  const [periodForm, setPeriodForm] = useState({ member: 'leo', season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
   const [periodEditingId, setPeriodEditingId] = useState(null)
   const [periodError, setPeriodError] = useState('')
   const [anniversaryForm, setAnniversaryForm] = useState(emptyAnniversaryForm)
@@ -766,6 +765,10 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   })
 
   const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
+  const changePeriodField = (field, value) => {
+    setPeriodForm((current) => ({ ...current, [field]: value }))
+    setPeriodError('')
+  }
   const toggleWeekday = (weekday) => {
     setScheduleForm((current) => {
       const selected = current.weekdays.includes(weekday)
@@ -858,18 +861,18 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       ? current.map((period) => period.id === periodEditingId ? { ...periodForm, id: periodEditingId } : period)
       : [...current, { ...periodForm, id: `period-${Date.now()}` }])
     setPeriodError('')
-    setPeriodForm((current) => ({ ...current, start: iso(today), end: iso(addDays(today, 30)) }))
+    setPeriodForm((current) => ({ ...current, member: 'leo', start: iso(today), end: iso(addDays(today, 30)) }))
     setPeriodEditingId(null)
   }
 
   const editPeriod = (period) => {
-    setPeriodForm({ season: period.season, start: period.start, end: period.end })
+    setPeriodForm({ member: period.member || 'all', season: period.season, start: period.start, end: period.end })
     setPeriodEditingId(period.id)
     setPeriodError('')
   }
 
   const cancelPeriodEdit = () => {
-    setPeriodForm({ season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+    setPeriodForm({ member: 'leo', season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
     setPeriodEditingId(null)
     setPeriodError('')
   }
@@ -941,8 +944,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
     if (anniversaryEditingId === anniversary.id) cancelAnniversaryEdit()
   }
 
-  const anniversaryPreview = nextAnniversaryOccurrence(anniversaryForm)
-
   return (
     <div className="page schedules-page">
       <section className="page-title-row">
@@ -982,7 +983,6 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
             <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
             <label className="anniversary-month-field">월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
             <label className="anniversary-day-field">일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
-            <div className="anniversary-preview"><span>{anniversaryForm.calendarType === 'lunar' ? '음력 → 양력 변환' : '다음 기념일'}</span><strong>{formatSolarDate(anniversaryPreview)}</strong></div>
             <div className="anniversary-form-actions">
               {anniversaryEditingId && <button className="secondary-button" type="button" onClick={cancelAnniversaryEdit}>취소</button>}
               <button className="primary-button" type="submit">{anniversaryEditingId ? <Check size={17} /> : <Plus size={17} />}{anniversaryEditingId ? '수정 완료' : '기념일 추가'}</button>
@@ -1021,11 +1021,12 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
       {managementSection === 'periods' && <div className={`schedule-management-grid single ${!canEdit ? 'readonly-section' : ''}`}>
         <section className="period-card card">
           <div className="section-heading"><div><span className="eyebrow">언제 적용할지</span><h2>학기·방학 적용 기간</h2></div><CalendarRange /></div>
-          <p>기간이 겹치면 최근 시작 일정이 우선입니다.</p>
+          <p>자녀별 기간을 따로 등록할 수 있으며, 같은 자녀의 기간이 겹치면 최근 시작 일정이 우선입니다.</p>
           <form className="period-form" onSubmit={submitPeriod}>
-            <label>구분<select value={periodForm.season} onChange={(event) => setPeriodForm((current) => ({ ...current, season: event.target.value }))}><option>학기</option><option>방학</option></select></label>
-            <label>시작일<input type="date" value={periodForm.start} onChange={(event) => setPeriodForm((current) => ({ ...current, start: event.target.value }))} /></label>
-            <label>종료일<input type="date" value={periodForm.end} onChange={(event) => setPeriodForm((current) => ({ ...current, end: event.target.value }))} /></label>
+            <label>자녀<select value={periodForm.member} onChange={(event) => changePeriodField('member', event.target.value)}><option value="all">전체 자녀</option>{CHILDREN.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
+            <label>구분<select value={periodForm.season} onChange={(event) => changePeriodField('season', event.target.value)}><option>학기</option><option>방학</option></select></label>
+            <label>시작일<input type="date" value={periodForm.start} required onInput={(event) => changePeriodField('start', event.currentTarget.value)} onChange={(event) => changePeriodField('start', event.currentTarget.value)} /></label>
+            <label>종료일<input type="date" min={periodForm.start} value={periodForm.end} required onInput={(event) => changePeriodField('end', event.currentTarget.value)} onChange={(event) => changePeriodField('end', event.currentTarget.value)} /></label>
             <div className="period-form-actions">
               {periodEditingId && <button className="secondary-button" type="button" onClick={cancelPeriodEdit}>취소</button>}
               <button className="primary-button" type="submit">{periodEditingId ? <Check size={17} /> : <Plus size={17} />}{periodEditingId ? '수정 완료' : '기간 추가'}</button>
@@ -1033,16 +1034,18 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
           </form>
           {periodError && <p className="form-error" role="alert">{periodError}</p>}
           <div className="period-list">
-            {[...schedulePeriods].sort((a, b) => a.start.localeCompare(b.start)).map((period) => (
-              <div className="period-row" key={period.id}>
+            {[...schedulePeriods].sort((a, b) => `${a.member || 'all'}-${a.start}`.localeCompare(`${b.member || 'all'}-${b.start}`)).map((period) => {
+              const periodMember = period.member && period.member !== 'all' ? MEMBERS.find((member) => member.id === period.member) : MEMBERS[0]
+              return <div className="period-row" key={period.id}>
                 <span className={`season-badge ${period.season === '방학' ? 'vacation' : ''}`}>{period.season}</span>
-                <span><strong>{period.start}</strong><small>~ {period.end}</small></span>
+                <Avatar memberId={periodMember?.id || 'family'} small />
+                <span><strong>{period.member && period.member !== 'all' ? periodMember?.name : '전체 자녀'} · {period.start}</strong><small>~ {period.end}</small></span>
                 <div className="event-actions">
                   {canEdit && <button onClick={() => editPeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 수정`}><Pencil /></button>}
                   {canEdit && <button className="delete" onClick={() => deletePeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 삭제`}><Trash2 /></button>}
                 </div>
               </div>
-            ))}
+            })}
           </div>
         </section>
 
@@ -1105,6 +1108,8 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   const isEditing = Boolean(item?.id)
   const [title, setTitle] = useState(item?.title || defaults.title || '')
   const [eventDate, setEventDate] = useState(item?.date || defaults.date || date || iso(today))
+  const [eventEndDate, setEventEndDate] = useState(item?.endDate || defaults.endDate || item?.date || defaults.date || date || iso(today))
+  const [eventDateError, setEventDateError] = useState('')
   const [time, setTime] = useState(item?.time || defaults.time || '오전 9:00')
   const [end, setEnd] = useState(item?.end || defaults.end || '오전 10:00')
   const [hasTime, setHasTime] = useState(() => Boolean((item?.time || defaults.time) && (item?.time || defaults.time) !== '종일'))
@@ -1113,16 +1118,26 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   const [category, setCategory] = useState(item?.category || defaults.category || '집안일')
   const [dueDate, setDueDate] = useState(item?.dueDate || defaults.dueDate || '')
   const [reminder, setReminder] = useState(item?.reminder || defaults.reminder || 'none')
+  const changeEventStartDate = (nextDate) => {
+    setEventDate(nextDate)
+    setEventEndDate((current) => !current || current < nextDate ? nextDate : current)
+    setEventDateError('')
+  }
   const submit = (event) => {
     event.preventDefault()
     if (!title.trim()) return
     const submitted = new FormData(event.currentTarget)
     const submittedEventDate = String(submitted.get('eventDate') || eventDate)
+    const submittedEventEndDate = String(submitted.get('eventEndDate') || eventEndDate || submittedEventDate)
     const submittedDueDate = String(submitted.get('dueDate') || dueDate)
+    if (!isTask && submittedEventEndDate < submittedEventDate) {
+      setEventDateError('종료일자는 시작일자보다 빠를 수 없습니다.')
+      return
+    }
     if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
     else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, type: 'family' })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, type: 'family' })
     onAfterSave?.()
     onClose()
   }
@@ -1139,7 +1154,14 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
       <form className="modal" onSubmit={submit}>
         <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2>{isTask ? (isEditing ? '할 일 수정' : '할 일 추가') : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
         <label>제목<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isTask ? '무엇을 해야 하나요?' : '어떤 일정인가요?'} /></label>
-        {!isTask && <label>날짜<input name="eventDate" type="date" value={eventDate} onInput={(event) => setEventDate(event.currentTarget.value)} onChange={(event) => setEventDate(event.currentTarget.value)} /></label>}
+        {!isTask && <fieldset className="event-date-field"><legend>일정 기간</legend>
+          <div className="field-row event-date-row">
+            <label>시작일자<input name="eventDate" type="date" value={eventDate} required onInput={(event) => changeEventStartDate(event.currentTarget.value)} onChange={(event) => changeEventStartDate(event.currentTarget.value)} /></label>
+            <label>종료일자<input name="eventEndDate" type="date" min={eventDate} value={eventEndDate} required onInput={(event) => { setEventEndDate(event.currentTarget.value); setEventDateError('') }} onChange={(event) => { setEventEndDate(event.currentTarget.value); setEventDateError('') }} /></label>
+          </div>
+          <small className="field-help">두 날짜가 같으면 당일 일정, 다르면 해당 기간에 계속 표시됩니다.</small>
+          {eventDateError && <p className="form-error event-date-error" role="alert">{eventDateError}</p>}
+        </fieldset>}
         {!isTask && <fieldset className="all-day-field"><legend>시간</legend><div className="segmented event-time-mode">
           <button type="button" className={!hasTime ? 'active' : ''} aria-pressed={!hasTime} onClick={() => setHasTime(false)}>종일</button>
           <button type="button" className={hasTime ? 'active' : ''} aria-pressed={hasTime} onClick={() => setHasTime(true)}>시간 지정</button>
