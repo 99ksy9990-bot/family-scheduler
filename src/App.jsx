@@ -36,12 +36,22 @@ const today = new Date()
 today.setHours(0, 0, 0, 0)
 const ANNIVERSARY_YEARS = Array.from({ length: today.getFullYear() - 1899 }, (_, index) => today.getFullYear() - index)
 
+const DATA_RECOVERY_VERSION = 1
+const RECOVERED_SHIFTS = [
+  { id: 'emma-2026-08-05', date: '2026-08-05', member: 'emma', shift: 'day' },
+]
+const RECOVERED_ANNIVERSARIES = [
+  { id: 'anniversary-recovered-mother', name: '어머니', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: 1990, month: 8, day: 5 },
+  { id: 'anniversary-recovered-wedding', name: '결혼', kind: '결혼기념일', calendarType: 'solar', leapMonth: false, baseYear: 2000, month: 8, day: 5 },
+  { id: 'anniversary-recovered-father', name: '아버지', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: 9, day: 7 },
+]
+
 const defaultEvents = []
 const defaultChildSchedules = []
 const defaultSchedulePeriods = []
-const defaultAnniversaries = []
+const defaultAnniversaries = RECOVERED_ANNIVERSARIES
 const defaultTasks = []
-const defaultShifts = []
+const defaultShifts = RECOVERED_SHIFTS
 const defaultScheduleExceptions = []
 
 const LEGACY_EVENT_IDS = new Set([1, 4, 6, 7])
@@ -70,6 +80,33 @@ const load = (key, fallback) => {
 const loadWithoutLegacySeeds = (key, fallback, legacyIds) => (
   load(key, fallback).filter((item) => !legacyIds.has(item.id))
 )
+
+const mergeUnique = (current, recovered, identity) => {
+  const merged = [...current]
+  recovered.forEach((item) => {
+    if (!merged.some((candidate) => identity(candidate) === identity(item))) merged.push(item)
+  })
+  return merged
+}
+
+const loadRecoveredCollection = (key, fallback, recovered, identity, markerKey) => {
+  const current = load(key, fallback)
+  if (Number(localStorage.getItem(markerKey) || 0) >= DATA_RECOVERY_VERSION) return current
+  const merged = mergeUnique(current, recovered, identity)
+  localStorage.setItem(markerKey, String(DATA_RECOVERY_VERSION))
+  return merged
+}
+
+const upgradeSharedState = (state) => {
+  if (!state || typeof state !== 'object' || Number(state.recoveryVersion || 0) >= DATA_RECOVERY_VERSION) return state
+  return {
+    ...state,
+    schemaVersion: 3,
+    recoveryVersion: DATA_RECOVERY_VERSION,
+    shifts: mergeUnique(Array.isArray(state.shifts) ? state.shifts : [], RECOVERED_SHIFTS, (item) => `${item.member}-${item.date}`),
+    anniversaries: mergeUnique(Array.isArray(state.anniversaries) ? state.anniversaries : [], RECOVERED_ANNIVERSARIES, (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`),
+  }
+}
 
 const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
   weekday: 'long', month: 'long', day: 'numeric',
@@ -275,7 +312,7 @@ function Navigation({ active, onChange }) {
   )
 }
 
-function Header({ active, onChange, focusMode, setFocusMode, syncStatus, onOpenFamily }) {
+function Header({ active, onChange, focusMode, onToggleFocus, syncStatus, onOpenFamily }) {
   const isSynced = ['synced', 'saving', 'readonly'].includes(syncStatus)
   return (
     <header className="app-header">
@@ -287,12 +324,25 @@ function Header({ active, onChange, focusMode, setFocusMode, syncStatus, onOpenF
         <Navigation active={active} onChange={onChange} />
         <div className="header-actions">
           <button className={`family-connect-button ${isSynced ? 'connected' : ''}`} onClick={onOpenFamily} aria-label="가족 연결과 백업 열기"><Users /><span>{isSynced ? '가족 연결됨' : '가족 연결'}</span><i /></button>
-          <button className={`icon-button ${focusMode ? 'selected' : ''}`} onClick={() => setFocusMode(!focusMode)} aria-label="집중 모드 전환" title="집중 모드">
+          <button className={`icon-button ${focusMode ? 'selected' : ''}`} onClick={onToggleFocus} aria-label={focusMode ? '집중 모드 끄기' : '집중 모드 켜기'} aria-pressed={focusMode} title={focusMode ? '집중 모드 끄기' : '오늘 일정에 집중하기'}>
             <Focus size={21} />
           </button>
         </div>
       </div>
     </header>
+  )
+}
+
+function FocusModeBanner({ shiftOption, eventCount, onClose }) {
+  return (
+    <section className="focus-mode-banner" aria-live="polite">
+      <div>
+        <span><Focus /> 집중 모드</span>
+        <strong>오늘 필요한 내용만 보고 있어요.</strong>
+        <small>{shiftOption ? `엄마 ${shiftOption.code} · ${shiftOption.label}` : '엄마 근무 미입력'} · 오늘 일정 {eventCount}개</small>
+      </div>
+      <button onClick={onClose}><X /> 집중 모드 종료</button>
+    </section>
   )
 }
 
@@ -1085,10 +1135,22 @@ export default function App() {
     event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
   )))
   const [tasks, setTasks] = useState(() => loadWithoutLegacySeeds('family-scheduler-tasks', defaultTasks, LEGACY_TASK_IDS))
-  const [shifts, setShifts] = useState(() => load('family-scheduler-shifts', defaultShifts))
+  const [shifts, setShifts] = useState(() => loadRecoveredCollection(
+    'family-scheduler-shifts',
+    defaultShifts,
+    RECOVERED_SHIFTS,
+    (item) => `${item.member}-${item.date}`,
+    'family-scheduler-shifts-recovery-version',
+  ))
   const [childSchedules, setChildSchedules] = useState(() => loadWithoutLegacySeeds('family-scheduler-child-schedules-v1', defaultChildSchedules, LEGACY_CHILD_SCHEDULE_IDS))
   const [schedulePeriods, setSchedulePeriods] = useState(() => loadWithoutLegacySeeds('family-scheduler-periods-v1', defaultSchedulePeriods, LEGACY_PERIOD_IDS))
-  const [anniversaries, setAnniversaries] = useState(() => load('family-scheduler-anniversaries-v1', defaultAnniversaries))
+  const [anniversaries, setAnniversaries] = useState(() => loadRecoveredCollection(
+    'family-scheduler-anniversaries-v1',
+    defaultAnniversaries,
+    RECOVERED_ANNIVERSARIES,
+    (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`,
+    'family-scheduler-anniversaries-recovery-version',
+  ))
   const [scheduleExceptions, setScheduleExceptions] = useState(() => load('family-scheduler-schedule-exceptions-v1', defaultScheduleExceptions))
   const [modal, setModal] = useState(null)
   const [focusMode, setFocusMode] = useState(false)
@@ -1108,7 +1170,8 @@ export default function App() {
   useEffect(() => localStorage.setItem('family-scheduler-schedule-exceptions-v1', JSON.stringify(scheduleExceptions)), [scheduleExceptions])
 
   const sharedState = useMemo(() => ({
-    schemaVersion: 2,
+    schemaVersion: 3,
+    recoveryVersion: DATA_RECOVERY_VERSION,
     events,
     tasks,
     shifts,
@@ -1119,14 +1182,15 @@ export default function App() {
   }), [events, tasks, shifts, childSchedules, schedulePeriods, anniversaries, scheduleExceptions])
 
   const applySharedState = useCallback((nextState) => {
-    if (!nextState || typeof nextState !== 'object') return
-    if (Array.isArray(nextState.events)) setEvents(nextState.events)
-    if (Array.isArray(nextState.tasks)) setTasks(nextState.tasks)
-    if (Array.isArray(nextState.shifts)) setShifts(nextState.shifts)
-    if (Array.isArray(nextState.childSchedules)) setChildSchedules(nextState.childSchedules)
-    if (Array.isArray(nextState.schedulePeriods)) setSchedulePeriods(nextState.schedulePeriods)
-    if (Array.isArray(nextState.anniversaries)) setAnniversaries(nextState.anniversaries)
-    if (Array.isArray(nextState.scheduleExceptions)) setScheduleExceptions(nextState.scheduleExceptions)
+    const restoredState = upgradeSharedState(nextState)
+    if (!restoredState || typeof restoredState !== 'object') return
+    if (Array.isArray(restoredState.events)) setEvents(restoredState.events)
+    if (Array.isArray(restoredState.tasks)) setTasks(restoredState.tasks)
+    if (Array.isArray(restoredState.shifts)) setShifts(restoredState.shifts)
+    if (Array.isArray(restoredState.childSchedules)) setChildSchedules(restoredState.childSchedules)
+    if (Array.isArray(restoredState.schedulePeriods)) setSchedulePeriods(restoredState.schedulePeriods)
+    if (Array.isArray(restoredState.anniversaries)) setAnniversaries(restoredState.anniversaries)
+    if (Array.isArray(restoredState.scheduleExceptions)) setScheduleExceptions(restoredState.scheduleExceptions)
   }, [])
 
   const sync = useFamilySync({ localState: sharedState, onRemoteState: applySharedState })
@@ -1172,6 +1236,13 @@ export default function App() {
   const changeView = (nextView) => {
     setView(nextView)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const toggleFocusMode = () => {
+    if (!focusMode) {
+      setView('home')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    setFocusMode(!focusMode)
   }
   const openCalendar = (mode = '일반') => {
     setCalendarMode(mode)
@@ -1239,9 +1310,14 @@ export default function App() {
     setNotificationPermission(permission)
   }
 
+  const focusEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
+  const focusShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
+  const focusShiftOption = SHIFT_OPTIONS.find((option) => option.id === focusShift?.shift)
+
   return (
     <div className={`app ${focusMode ? 'focus-mode' : ''}`}>
-      <Header active={view} onChange={changeView} focusMode={focusMode} setFocusMode={setFocusMode} syncStatus={sync.syncStatus} onOpenFamily={() => setFamilyPanelOpen(true)} />
+      <Header active={view} onChange={changeView} focusMode={focusMode} onToggleFocus={toggleFocusMode} syncStatus={sync.syncStatus} onOpenFamily={() => setFamilyPanelOpen(true)} />
+      {focusMode && <FocusModeBanner shiftOption={focusShiftOption} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
         {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} setView={changeView} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} />}
         {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} />}

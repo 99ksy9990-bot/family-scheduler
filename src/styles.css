@@ -701,9 +701,25 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .undo-toast .toast-close { width: 30px; height: 30px; justify-content: center; padding: 0; }
 
 .mobile-nav { display: none; }
-.focus-mode .overview-grid, .focus-mode .member-legend, .focus-mode .saved-child-schedules { filter: saturate(.35); }
+.focus-mode-banner { width: min(1120px, calc(100% - 48px)); display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 24px auto 0; padding: 18px 22px; color: #f8fcfd; border-radius: 20px; background: linear-gradient(135deg, #174f65, #24657e); box-shadow: 0 14px 36px rgba(23,79,101,.2); }
+.focus-mode-banner > div { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 16px; }
+.focus-mode-banner span { grid-row: 1 / 3; display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; color: #174f65; border-radius: 12px; background: #e7f5f8; font-weight: 800; }
+.focus-mode-banner span svg { width: 17px; }
+.focus-mode-banner strong { font-size: 17px; }
+.focus-mode-banner small { color: #d9edf3; font-size: 12px; }
+.focus-mode-banner > button { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; padding: 10px 13px; color: white; border: 1px solid rgba(255,255,255,.34); border-radius: 12px; background: rgba(255,255,255,.1); font-weight: 700; }
+.focus-mode-banner > button:hover { background: rgba(255,255,255,.2); }
+.focus-mode-banner > button svg { width: 16px; }
+.focus-mode .home-page .hero-intro, .focus-mode .home-page .overview-grid { display: none; }
+.focus-mode .home-page { padding-top: 24px; }
+.focus-mode .home-page .today-card { border: 2px solid rgba(36,101,126,.26); box-shadow: 0 18px 54px rgba(23,79,101,.14); }
+.focus-mode .member-legend, .focus-mode .saved-child-schedules { filter: saturate(.35); }
 
 @media (max-width: 900px) {
+  .focus-mode-banner { width: min(100% - 28px, 680px); align-items: stretch; flex-direction: column; gap: 12px; margin-top: 14px; padding: 16px; border-radius: 16px; }
+  .focus-mode-banner > div { grid-template-columns: 1fr; gap: 5px; }
+  .focus-mode-banner span { grid-row: auto; width: max-content; }
+  .focus-mode-banner > button { justify-content: center; }
   .header-inner { width: min(100% - 32px, 680px); grid-template-columns: 1fr auto; }
   .app-header .main-nav { display: none; }
   .overview-grid, .calendar-layout, .calendar-layout.shift-mode, .schedule-management-grid, .anniversary-layout { grid-template-columns: 1fr; }
