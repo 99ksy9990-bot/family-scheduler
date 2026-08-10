@@ -3,6 +3,14 @@ import { supabase, supabaseEnabled } from '../lib/supabase'
 
 const hasSharedState = (value) => value && typeof value === 'object' && Object.keys(value).length > 0
 const isConflictError = (error) => error?.code === '40001' || error?.message?.includes('SYNC_CONFLICT')
+const isNetworkError = (error) => {
+  const description = [error?.name, error?.message, error?.details, error?.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+  return ['failed to fetch', 'fetch failed', 'networkerror', 'network request failed', 'load failed']
+    .some((message) => description.includes(message))
+}
 const stableStringify = (value) => JSON.stringify(value, (_key, nestedValue) => {
   if (!nestedValue || typeof nestedValue !== 'object' || Array.isArray(nestedValue)) return nestedValue
   return Object.keys(nestedValue).sort().reduce((ordered, key) => {
@@ -14,9 +22,9 @@ const stableStringify = (value) => JSON.stringify(value, (_key, nestedValue) => 
 export function useFamilySync({ localState, onRemoteState }) {
   const [session, setSession] = useState(null)
   const [family, setFamily] = useState(null)
-  const [syncStatus, setSyncStatus] = useState(supabaseEnabled ? 'local' : 'offline')
+  const [syncStatus, setSyncStatus] = useState('local')
   const [error, setError] = useState('')
-  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine)
+  const [isOnline, setIsOnline] = useState(true)
   const [lastSyncedAt, setLastSyncedAt] = useState(null)
   const [remoteChange, setRemoteChange] = useState(null)
   const [conflict, setConflict] = useState(null)
@@ -27,12 +35,26 @@ export function useFamilySync({ localState, onRemoteState }) {
   const pendingSnapshotRef = useRef(null)
   const resolvingConflictRef = useRef(null)
   const saveTimerRef = useRef(null)
+  const wasOfflineRef = useRef(false)
 
   useEffect(() => { localStateRef.current = localState }, [localState])
 
+  const markConnectionFailure = useCallback((connectionError) => {
+    const offline = isNetworkError(connectionError)
+    setError(connectionError?.message || '동기화 연결을 확인해 주세요.')
+    if (offline) {
+      wasOfflineRef.current = true
+      setIsOnline(false)
+    }
+    setSyncStatus(offline ? 'offline' : 'error')
+  }, [])
+
   useEffect(() => {
     const goOnline = () => setIsOnline(true)
-    const goOffline = () => setIsOnline(false)
+    const goOffline = () => {
+      wasOfflineRef.current = true
+      setIsOnline(false)
+    }
     window.addEventListener('online', goOnline)
     window.addEventListener('offline', goOffline)
     return () => {
@@ -53,6 +75,8 @@ export function useFamilySync({ localState, onRemoteState }) {
       .eq('household_id', householdId)
       .single()
     if (stateError) throw stateError
+    wasOfflineRef.current = false
+    setIsOnline(true)
     versionRef.current = stored.version
     setFamily((current) => current ? { ...current, version: stored.version } : current)
     setConflict({
@@ -68,10 +92,6 @@ export function useFamilySync({ localState, onRemoteState }) {
 
   const loadFamilyContext = useCallback(async (userId, preferredHouseholdId) => {
     if (!supabase || !userId) return null
-    if (!navigator.onLine) {
-      setSyncStatus('offline')
-      return null
-    }
     setSyncStatus('connecting')
     setError('')
 
@@ -83,6 +103,8 @@ export function useFamilySync({ localState, onRemoteState }) {
     if (preferredHouseholdId) membershipQuery = membershipQuery.eq('household_id', preferredHouseholdId)
     const { data: memberships, error: membershipError } = await membershipQuery.limit(1)
     if (membershipError) throw membershipError
+    wasOfflineRef.current = false
+    setIsOnline(true)
 
     const membership = memberships?.[0]
     if (!membership) {
@@ -143,8 +165,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       }
       setSession(data.session)
       if (data.session?.user) loadFamilyContext(data.session.user.id).catch((contextError) => {
-        setError(contextError.message)
-        setSyncStatus(navigator.onLine ? 'error' : 'offline')
+        markConnectionFailure(contextError)
       })
     })
 
@@ -158,8 +179,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       }
       window.setTimeout(() => {
         loadFamilyContext(nextSession.user.id).catch((contextError) => {
-          setError(contextError.message)
-          setSyncStatus(navigator.onLine ? 'error' : 'offline')
+          markConnectionFailure(contextError)
         })
       }, 0)
     })
@@ -168,7 +188,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       active = false
       listener.subscription.unsubscribe()
     }
-  }, [loadFamilyContext])
+  }, [loadFamilyContext, markConnectionFailure])
 
   useEffect(() => {
     if (!supabase || !family?.household?.id) return undefined
@@ -238,8 +258,8 @@ export function useFamilySync({ localState, onRemoteState }) {
     pendingLocalSaveRef.current = true
     pendingSnapshotRef.current = localState
 
-    if (!isOnline || !supabase) {
-      window.setTimeout(() => setSyncStatus('offline'), 0)
+    if (!supabase) {
+      window.setTimeout(() => setSyncStatus('local'), 0)
       return undefined
     }
 
@@ -256,13 +276,14 @@ export function useFamilySync({ localState, onRemoteState }) {
       if (saveError) {
         if (isConflictError(saveError)) {
           try { await buildConflict(family.household.id, snapshot) }
-          catch (loadError) { setError(loadError.message); setSyncStatus('error') }
+          catch (loadError) { markConnectionFailure(loadError) }
           return
         }
-        setError(saveError.message)
-        setSyncStatus(navigator.onLine ? 'error' : 'offline')
+        markConnectionFailure(saveError)
         return
       }
+      wasOfflineRef.current = false
+      setIsOnline(true)
       const savedSerialized = stableStringify(saved.state)
       remoteStateRef.current = savedSerialized
       versionRef.current = saved.version
@@ -275,15 +296,20 @@ export function useFamilySync({ localState, onRemoteState }) {
     }, 650)
 
     return () => window.clearTimeout(saveTimerRef.current)
-  }, [buildConflict, conflict, family?.household?.id, family?.membership?.can_edit, isOnline, localState])
+  }, [buildConflict, conflict, family?.household?.id, family?.membership?.can_edit, localState, markConnectionFailure])
 
   useEffect(() => {
     if (!isOnline) {
-      if (family) window.setTimeout(() => setSyncStatus('offline'), 0)
+      if (family && pendingLocalSaveRef.current) window.setTimeout(() => setSyncStatus('offline'), 0)
+      return
+    }
+    if (wasOfflineRef.current && session?.user) {
+      wasOfflineRef.current = false
+      loadFamilyContext(session.user.id).catch(markConnectionFailure)
       return
     }
     if (session?.user && family && pendingLocalSaveRef.current && !conflict) setSyncStatus('saving')
-  }, [conflict, family, isOnline, session?.user])
+  }, [conflict, family, isOnline, loadFamilyContext, markConnectionFailure, session?.user])
 
   const acceptRemote = useCallback(() => {
     if (!conflict) return
@@ -303,7 +329,7 @@ export function useFamilySync({ localState, onRemoteState }) {
   }, [conflict, family?.membership?.can_edit, onRemoteState])
 
   const keepLocal = useCallback(async () => {
-    if (!conflict || !family?.household?.id || !isOnline) return
+    if (!conflict || !family?.household?.id) return
     const localSnapshot = conflict.localState
     const serialized = stableStringify(localSnapshot)
     resolvingConflictRef.current = { serialized, throughVersion: Number(conflict.remoteVersion || versionRef.current) + 1 }
@@ -317,9 +343,11 @@ export function useFamilySync({ localState, onRemoteState }) {
     if (saveError) {
       resolvingConflictRef.current = null
       if (isConflictError(saveError)) await buildConflict(family.household.id, localSnapshot)
-      else { setError(saveError.message); setSyncStatus('error') }
+      else markConnectionFailure(saveError)
       return
     }
+    wasOfflineRef.current = false
+    setIsOnline(true)
     remoteStateRef.current = stableStringify(saved.state)
     versionRef.current = saved.version
     pendingLocalSaveRef.current = false
@@ -331,7 +359,7 @@ export function useFamilySync({ localState, onRemoteState }) {
     setConflict(null)
     setError('')
     setSyncStatus('synced')
-  }, [buildConflict, conflict, family, isOnline, onRemoteState])
+  }, [buildConflict, conflict, family, markConnectionFailure, onRemoteState])
 
   const signIn = async (email, password) => {
     setError('')

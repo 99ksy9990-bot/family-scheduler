@@ -6,7 +6,7 @@ const formatSyncTime = (value) => value ? new Intl.DateTimeFormat('ko-KR', {
 }).format(new Date(value)) : '아직 동기화되지 않음'
 
 export default function SyncStatusBar({ sync }) {
-  const offline = sync.syncStatus === 'offline' || !sync.isOnline
+  const offline = sync.syncStatus === 'offline'
   const saving = sync.syncStatus === 'saving' || sync.syncStatus === 'connecting'
   const hasError = sync.syncStatus === 'error'
   const isSynced = sync.syncStatus === 'synced' || sync.syncStatus === 'readonly'
@@ -23,7 +23,7 @@ export default function SyncStatusBar({ sync }) {
     return () => window.clearTimeout(timer)
   }, [transientKey])
 
-  if (!sync.family && sync.syncStatus !== 'offline') return null
+  if (!sync.family && !(sync.session && offline)) return null
 
   if (sync.conflict) return (
     <aside className="sync-banner conflict" role="alert">
