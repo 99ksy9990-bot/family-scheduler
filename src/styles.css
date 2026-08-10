@@ -1101,11 +1101,19 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .task-card-actions .event-actions button { width: 28px; height: 28px; }
   .task-group.groceries { grid-column: auto; }
   .task-group.groceries .task-list { grid-template-columns: 1fr; }
-  .calendar-toolbar, .calendar-toolbar.shift-mode, .calendar-toolbar.child-mode { grid-template-columns: 1fr; align-items: stretch; padding: 20px; }
-  .child-calendar-page { padding-top: 20px; }
-  .calendar-toolbar.child-mode { gap: 12px; margin-bottom: 18px; padding: 0; border: 0; background: transparent; box-shadow: none; }
-  .calendar-toolbar.child-mode > .segmented { border: 1px solid rgba(36,101,126,.1); background: rgba(255,255,255,.74); }
+  .calendar-page, .child-calendar-page { padding-top: 20px; }
+  .calendar-toolbar, .calendar-toolbar.shift-mode, .calendar-toolbar.child-mode {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
   .calendar-toolbar > .segmented { width: 100%; justify-self: stretch; margin-right: 0; }
+  .calendar-toolbar > .segmented { border: 1px solid rgba(36,101,126,.1); background: var(--lavender); }
   .month-controls { justify-content: space-between; }
   .month-controls h1 { min-width: 0; font-size: 24px; }
   .segmented button { flex: 1; }

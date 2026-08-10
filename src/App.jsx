@@ -457,6 +457,12 @@ const NAV = [
   { id: 'schedules', label: '일정 관리', icon: Settings2 },
 ]
 
+const CALENDAR_MODES = {
+  family: '가족',
+  work: '근무',
+  children: '자녀',
+}
+
 function Navigation({ active, onChange }) {
   return (
     <nav className="main-nav" aria-label="주요 메뉴">
@@ -815,9 +821,9 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const selectedConflicts = overlappingEventIds(selectedEventsRaw)
   const selectedEvents = selectedEventsRaw.map((event) => ({ ...event, conflict: selectedConflicts.has(event.id) }))
   const selectedShiftMember = shiftWorkers.find((worker) => worker.id === selectedShiftMemberId) || shiftWorkers[0]
-  const currentMode = mode === '근무표' && (!workSettings.enabled || !shiftWorkers.length)
-    ? '일반'
-    : mode === '자녀표' && !children.length ? '일반' : mode
+  const currentMode = mode === 'work' && (!workSettings.enabled || !shiftWorkers.length)
+    ? 'family'
+    : mode === 'children' && !children.length ? 'family' : mode
   const selectedShift = shifts.find((shift) => shift.date === iso(selected) && shift.member === selectedShiftMember?.id)
   const isMonthEnd = selected.getDate() === new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
   const label = new Intl.DateTimeFormat('ko-KR', { month: 'long', year: 'numeric' }).format(cursor)
@@ -835,12 +841,12 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const moveMonth = (amount) => {
     const next = new Date(cursor.getFullYear(), cursor.getMonth() + amount, 1)
     setCursor(next)
-    if (currentMode === '자녀표') setSelected(next)
+    if (currentMode === 'children') setSelected(next)
   }
 
   const selectCalendarDate = (date) => {
     setSelected(date)
-    if ((currentMode === '일반' || currentMode === '자녀표') && window.matchMedia('(max-width: 900px)').matches) {
+    if ((currentMode === 'family' || currentMode === 'children') && window.matchMedia('(max-width: 900px)').matches) {
       window.requestAnimationFrame(() => dayPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     }
   }
@@ -892,8 +898,8 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   }
 
   return (
-    <div className={`page calendar-page ${currentMode === '자녀표' ? 'child-calendar-page' : ''}`}>
-      <section className={`calendar-toolbar card ${currentMode === '근무표' ? 'shift-mode' : ''} ${currentMode === '자녀표' ? 'child-mode' : ''}`}>
+    <div className={`page calendar-page ${currentMode === 'children' ? 'child-calendar-page' : ''}`}>
+      <section className={`calendar-toolbar card ${currentMode === 'work' ? 'shift-mode' : ''} ${currentMode === 'children' ? 'child-mode' : ''}`}>
         <div className="calendar-title-slot">
           <div className="month-controls">
             <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>
@@ -902,11 +908,15 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
           </div>
         </div>
         <div className="segmented">
-          {['일반', ...(workSettings.enabled && shiftWorkers.length ? ['근무표'] : []), ...(children.length ? ['자녀표'] : [])].map((item) => <button key={item} aria-pressed={currentMode === item} className={currentMode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
+          {[
+            ['family', CALENDAR_MODES.family],
+            ...(workSettings.enabled && shiftWorkers.length ? [['work', CALENDAR_MODES.work]] : []),
+            ...(children.length ? [['children', CALENDAR_MODES.children]] : []),
+          ].map(([modeId, labelText]) => <button key={modeId} aria-pressed={currentMode === modeId} className={currentMode === modeId ? 'active' : ''} onClick={() => setMode(modeId)}>{labelText}</button>)}
         </div>
       </section>
 
-      {currentMode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openRecurringActions={openRecurringActions} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === '근무표' ? 'shift-mode' : ''}`}>
+      {currentMode === 'children' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openRecurringActions={openRecurringActions} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === 'work' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
@@ -923,7 +933,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
               return (
                 <button
                   key={iso(date)}
-                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${currentMode === '근무표' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`}
+                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${currentMode === 'work' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`}
                   data-date={iso(date)}
                   data-holiday={dayHoliday?.title || undefined}
                   aria-label={`${formatLongDate(date)}${dayHoliday ? `, ${dayHoliday.title}` : ''}`}
@@ -931,7 +941,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
                 >
                   <span>{day}</span>
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
-                  {currentMode === '일반' ? <>
+                  {currentMode === 'family' ? <>
                     <div className="day-dots">
                       {dayEvents.slice(0, 3).map((event) => {
                         const member = memberForId(event.member, profiles)
@@ -949,8 +959,8 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
           </div>
         </div>
 
-        <aside ref={dayPanelRef} className={`day-panel card ${currentMode === '근무표' ? 'shift-day-panel' : ''}`}>
-          {currentMode === '일반' ? <>
+        <aside ref={dayPanelRef} className={`day-panel card ${currentMode === 'work' ? 'shift-day-panel' : ''}`}>
+          {currentMode === 'family' ? <>
             <div className="section-heading">
               <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selected)}</h2></div>
               {canEdit && <button className="small-add" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 추가</button>}
@@ -1707,7 +1717,7 @@ export default function App() {
   const [scheduleExceptions, setScheduleExceptions] = useState(() => load('family-scheduler-schedule-exceptions-v1', defaultScheduleExceptions))
   const [modal, setModal] = useState(null)
   const [focusMode, setFocusMode] = useState(false)
-  const [calendarMode, setCalendarMode] = useState('일반')
+  const [calendarMode, setCalendarMode] = useState('family')
   const [familyPanelOpen, setFamilyPanelOpen] = useState(false)
   const [familySettingsOpen, setFamilySettingsOpen] = useState(() => !profiles.some((profile) => profile.active !== false))
   const [recurringEvent, setRecurringEvent] = useState(null)
@@ -1789,6 +1799,7 @@ export default function App() {
   }
   const openModal = (type, date, item, defaults = {}, onAfterSave) => setModal({ type, date, item, defaults, onAfterSave })
   const changeView = (nextView) => {
+    if (nextView === 'calendar') setCalendarMode('family')
     setView(nextView)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -1855,14 +1866,14 @@ export default function App() {
   }
 
   const openGeneralCalendar = () => {
-    setCalendarMode('일반')
+    setCalendarMode('family')
     changeView('calendar')
   }
 
   const openSearchResult = (event) => {
     setSearchOpen(false)
     setCalendarJumpDate(event.date)
-    setCalendarMode('일반')
+    setCalendarMode('family')
     changeView('calendar')
   }
 
