@@ -567,7 +567,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   )
 }
 
-function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, setView, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings }) {
+function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
   const { profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
@@ -575,6 +575,7 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
   const todayEvents = rawTodayEvents.map((event) => ({ ...event, conflict: conflicts.has(event.id) }))
   const childIds = new Set(children.map((child) => child.id))
   const childEvents = todayEvents.filter((event) => childIds.has(event.member))
+  const generalTodayEvents = todayEvents.filter((event) => !childIds.has(event.member))
   const dueTasks = tasks.filter((task) => !task.done && task.dueDate && task.dueDate <= iso(today))
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
     const shift = shifts.find((item) => item.date === iso(today) && item.member === worker.id)
@@ -638,18 +639,18 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
       <section className="today-card card" id="today-schedule">
         <div className="section-heading">
           <div><span className="eyebrow">오늘 한눈에 보기</span><h2>오늘의 일정</h2></div>
-          <button className="text-button" onClick={() => setView('calendar')}>캘린더 보기 <ChevronRight size={16} /></button>
+          <button className="text-button" onClick={openCalendar}>캘린더 보기 <ChevronRight size={16} /></button>
         </div>
-        <div className={`timeline timeline-count-${Math.min(todayEvents.length, 3)}`}>
-          {todayEvents.slice(0, 6).map((event) => <EventCard
+        <div className={`timeline timeline-count-${Math.min(generalTodayEvents.length, 3)}`}>
+          {generalTodayEvents.slice(0, 6).map((event) => <EventCard
             key={event.id}
             event={event}
             onEdit={canEdit && !event.holiday ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
             onDelete={canEdit && !event.holiday ? () => removeTodayEvent(event) : undefined}
           />)}
-          {!todayEvents.length && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
+          {!generalTodayEvents.length && <p className="empty-copy">{childEvents.length ? '그 밖의 일정은 없습니다.' : '비어 있는 하루예요. 일정을 추가해 보세요.'}</p>}
         </div>
-        {todayEvents.length > 6 && <button className="more-events-button" onClick={() => setView('calendar')}>+{todayEvents.length - 6}개 일정 더보기</button>}
+        {generalTodayEvents.length > 6 && <button className="more-events-button" onClick={openCalendar}>+{generalTodayEvents.length - 6}개 일정 더보기</button>}
       </section>
 
       {canEdit && <button className="floating-add" onClick={() => openModal('event')} aria-label="일정 추가"><Plus /></button>}
@@ -942,8 +943,8 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
 }
 
 function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificationPermission, onEnableNotifications }) {
-  const [periodFilter, setPeriodFilter] = useState('month')
-  const categories = ['긴급', '집안일', '장보기']
+  const [periodFilter, setPeriodFilter] = useState('week')
+  const categories = ['긴급', '장보기', '집안일']
   const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
   const deleteTask = (task) => {
     if (!window.confirm(`‘${task.title}’ 할 일을 삭제할까요?`)) return
@@ -962,6 +963,16 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
     if (periodFilter === 'month') return task.dueDate.startsWith(`${today.getFullYear()}-${pad(today.getMonth() + 1)}`)
     return true
   })
+  const sortTasks = (first, second) => {
+    const todayValue = iso(today)
+    const firstPast = Boolean(first.dueDate && first.dueDate < todayValue)
+    const secondPast = Boolean(second.dueDate && second.dueDate < todayValue)
+    if (firstPast !== secondPast) return firstPast ? 1 : -1
+    if (!first.dueDate !== !second.dueDate) return first.dueDate ? -1 : 1
+    return firstPast
+      ? (second.dueDate || '').localeCompare(first.dueDate || '')
+      : (first.dueDate || '').localeCompare(second.dueDate || '')
+  }
 
   return (
     <div className="page tasks-page">
@@ -977,7 +988,7 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
       </div>
       <div className="task-columns">
         {categories.map((category) => {
-          const grouped = visibleTasks.filter((task) => task.category === category)
+          const grouped = visibleTasks.filter((task) => task.category === category).sort(sortTasks)
           return (
             <section key={category} className={`task-group ${category === '긴급' ? 'urgent' : category === '집안일' ? 'housework' : 'groceries'}`}>
               <div className="task-heading">
@@ -1333,7 +1344,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
               {anniversaryForm.calendarType === 'lunar' && <button className={`leap-month-toggle ${anniversaryForm.leapMonth ? 'active' : ''}`} type="button" aria-pressed={anniversaryForm.leapMonth} onClick={() => changeAnniversaryField('leapMonth', !anniversaryForm.leapMonth)}><Check /> 윤달</button>}
             </fieldset>
             <div className="anniversary-date-fields">
-              <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
+              <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select className={anniversaryForm.baseYear ? '' : 'placeholder-value'} value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
               <label className="anniversary-month-field">월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
               <label className="anniversary-day-field">일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
             </div>
@@ -1568,7 +1579,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
         </div>}
         {!isTask && hasTime && <label>앱 알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="30-minutes">30분 전</option></select></label>}
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
-        {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>집안일</option><option>장보기</option></select></label>}
+        {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>장보기</option><option>집안일</option></select></label>}
         {isTask && <div className="field-row"><label>마감일<input name="dueDate" type="date" value={dueDate} onInput={(event) => setDueDate(event.currentTarget.value)} onChange={(event) => setDueDate(event.currentTarget.value)} /></label><label>알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="same-day">당일 알림</option><option value="day-before">하루 전 알림</option></select></label></div>}
         <fieldset><legend>담당자</legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
         <div className="modal-actions">
@@ -1813,6 +1824,11 @@ export default function App() {
     setNotificationPermission(permission)
   }
 
+  const openGeneralCalendar = () => {
+    setCalendarMode('일반')
+    changeView('calendar')
+  }
+
   const activeProfiles = useMemo(() => profiles.filter((profile) => profile.active !== false), [profiles])
   const children = useMemo(() => activeProfiles.filter((profile) => profile.type === 'child'), [activeProfiles])
   const shiftOptions = useMemo(() => buildShiftOptions(Array.isArray(workSettings.shiftTypes) && workSettings.shiftTypes.length ? workSettings.shiftTypes : DEFAULT_SHIFT_TYPES), [workSettings.shiftTypes])
@@ -1829,7 +1845,7 @@ export default function App() {
       <Header active={view} onChange={changeView} focusMode={focusMode} onToggleFocus={toggleFocusMode} syncStatus={sync.syncStatus} onOpenFamily={() => setFamilyPanelOpen(true)} onOpenSettings={() => setFamilySettingsOpen(true)} />
       {focusMode && <FocusModeBanner shiftOption={focusShiftOption} shiftMember={focusShiftMember} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
-        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} setView={changeView} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} />}
+        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} />}
         {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} childProfiles={childProfiles} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} onEditChildProfile={(memberId) => { setProfileEditRequest(memberId); changeView('schedules') }} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} notificationPermission={notificationPermission} onEnableNotifications={enableNotifications} />}
         {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}

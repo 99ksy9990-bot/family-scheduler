@@ -630,6 +630,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .anniversary-form label, .anniversary-form fieldset { min-width: 0; display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; color: #4c575d; border: 0; font-size: 12px; font-weight: 700; }
 .anniversary-form legend { margin-bottom: 6px; padding: 0; }
 .anniversary-form input, .anniversary-form select { width: 100%; height: 43px; padding: 0 12px; color: var(--ink); border: 1px solid #dfd7c4; border-radius: 12px; outline: none; background-color: white; }
+.anniversary-form input::placeholder, .anniversary-form select.placeholder-value { color: #8f979c; opacity: 1; }
 .anniversary-form input:focus, .anniversary-form select:focus { border-color: #b68932; box-shadow: 0 0 0 3px rgba(182, 137, 50, .12); }
 .anniversary-identity-fields, .anniversary-date-fields { display: contents; }
 .anniversary-name-field, .anniversary-calendar-field { grid-column: auto; }
@@ -1009,7 +1010,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .anniversary-form-actions { width: 100%; justify-self: stretch; }
   .anniversary-form-actions .primary-button, .anniversary-form-actions .secondary-button { min-width: 0; width: auto; flex: 1; padding-inline: 8px; white-space: nowrap; }
   .anniversary-name-field input { padding-inline: 10px; }
-  .anniversary-name-field input::placeholder { font-size: 14px; letter-spacing: -.04em; }
+  .anniversary-name-field input::placeholder, .anniversary-year-field select.placeholder-value { font-size: 14px !important; letter-spacing: -.04em; }
   .anniversary-kind-field select, .anniversary-year-field select, .anniversary-month-field select, .anniversary-day-field select { padding-left: 9px; padding-right: 25px !important; background-position: right 7px center; background-size: 13px; }
   .leap-month-toggle { grid-column: 1 / -1; }
   .anniversary-list { grid-template-columns: 1fr; }
