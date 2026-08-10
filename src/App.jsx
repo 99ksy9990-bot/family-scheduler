@@ -673,7 +673,7 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
             {childEvents.length ? childEvents.map((event) => (
               <div key={event.id} className="child-row">
                 <Avatar memberId={event.member} />
-                <span><strong>{profiles.find((member) => member.id === event.member)?.name}</strong>{event.title} · {event.time}{event.pickupBy ? ` · ${profiles.find((member) => member.id === event.pickupBy)?.name || '가족'} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
+                <span><strong>{profiles.find((member) => member.id === event.member)?.name}</strong>{event.title} · {event.time}{event.end ? ` ~ ${event.end}` : ''}{event.pickupBy ? ` · ${profiles.find((member) => member.id === event.pickupBy)?.name || '가족'} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
               </div>
             )) : <p className="empty-copy">오늘은 수업이 없습니다.</p>}
           </div>
@@ -718,7 +718,7 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef }) {
+function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef, openRecurringActions, canEdit }) {
   const { children } = useFamilyProfiles()
   const [selectedChildId, setSelectedChildId] = useState(children[0]?.id || '')
   const selectedChild = children.find((child) => child.id === selectedChildId) || children[0]
@@ -741,7 +741,8 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, mo
         {children.map((child) => <button key={child.id} className={currentChildId === child.id ? 'active' : ''} aria-pressed={currentChildId === child.id} onClick={() => chooseChild(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
       </div>
 
-      <div className="calendar-card child-month-calendar card">
+      <div className="calendar-layout shift-mode child-calendar-layout" style={{ '--child': selectedChild.color, '--child-tone': selectedChild.tone }}>
+        <div className="calendar-card child-month-calendar card">
         <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
         <div className="calendar-grid">
           {monthDays.map(({ day, date, outside }) => {
@@ -767,22 +768,32 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, mo
             </button>
           })}
         </div>
-      </div>
-
-      <article ref={detailRef} className="child-day-card card">
-        <div className="child-day-heading">
-          <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
-          <span className={`season-badge ${selectedSeason === '방학' ? 'vacation' : ''}`}>{selectedSeason || '기간 미설정'}</span>
         </div>
 
-        {holidayNames.length > 0 ? <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div> : selectedSchedules.length ? <div className="child-timeline">
-          {selectedSchedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
-            <time>{schedule.time}</time>
-            <span className={`timeline-mark ${schedule.kind === '학교' ? 'school' : 'academy'}`} />
-            <div><em>{schedule.kind}</em><strong>{schedule.title}</strong><small><Clock3 /> {schedule.time} ~ {schedule.end}</small></div>
-          </article>)}
-        </div> : <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 학교·학원 일정이 없습니다</strong><span>{selectedSeason ? `${selectedSeason} ${WEEKDAYS[selectedDate.getDay()]} 일정을 등록해 주세요.` : '먼저 학기·방학 적용 기간을 등록해 주세요.'}</span></div></div>}
-      </article>
+        <article ref={detailRef} className="child-day-card card">
+          <div className="child-day-heading">
+            <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
+            <span className={`season-badge ${selectedSeason === '방학' ? 'vacation' : ''}`}>{selectedSeason || '기간 미설정'}</span>
+          </div>
+
+          {holidayNames.length > 0 ? <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div> : selectedSchedules.length ? <div className="child-timeline">
+            {selectedSchedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
+              <time>{schedule.time}</time>
+              <span className={`timeline-mark ${schedule.kind === '학교' ? 'school' : 'academy'}`} />
+              <div>
+                <div className="child-timeline-title-row">
+                  <span><em>{schedule.kind}</em><strong>{schedule.title}</strong></span>
+                  {canEdit && <div className="event-actions child-timeline-actions">
+                    <button type="button" onClick={() => openRecurringActions(schedule)} aria-label={`${schedule.title} 수정 범위 선택`} title="일정 수정"><Pencil /></button>
+                    <button type="button" className="delete" onClick={() => openRecurringActions(schedule)} aria-label={`${schedule.title} 삭제 범위 선택`} title="일정 삭제"><Trash2 /></button>
+                  </div>}
+                </div>
+                <small><Clock3 /> {schedule.time} ~ {schedule.end}</small>
+              </div>
+            </article>)}
+          </div> : <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 학교·학원 일정이 없습니다</strong><span>{selectedSeason ? `${selectedSeason} ${WEEKDAYS[selectedDate.getDay()]} 일정을 등록해 주세요.` : '먼저 학기·방학 적용 기간을 등록해 주세요.'}</span></div></div>}
+        </article>
+      </div>
     </section>
   )
 }
@@ -891,7 +902,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
         </div>
       </section>
 
-      {currentMode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} /> : <section className={`calendar-layout ${currentMode === '근무표' ? 'shift-mode' : ''}`}>
+      {currentMode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openRecurringActions={openRecurringActions} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === '근무표' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
