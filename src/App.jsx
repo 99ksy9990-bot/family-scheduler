@@ -1013,10 +1013,11 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, pushStatus
   const visibleTasks = tasks.filter((task) => {
     if (periodFilter === 'all') return true
     if (periodFilter === 'none') return !task.dueDate
-    if (!task.dueDate) return false
-    if (periodFilter === 'today') return task.dueDate === iso(today)
-    if (periodFilter === 'week') return iso(weekStart) <= task.dueDate && task.dueDate <= iso(weekEnd)
-    if (periodFilter === 'month') return task.dueDate.startsWith(`${today.getFullYear()}-${pad(today.getMonth() + 1)}`)
+    const taskDate = task.dueDate || task.createdDate
+    if (!taskDate) return false
+    if (periodFilter === 'today') return taskDate === iso(today)
+    if (periodFilter === 'week') return iso(weekStart) <= taskDate && taskDate <= iso(weekEnd)
+    if (periodFilter === 'month') return taskDate.startsWith(`${today.getFullYear()}-${pad(today.getMonth() + 1)}`)
     return true
   })
   const sortTasks = (first, second) => {
@@ -1779,7 +1780,7 @@ export default function App() {
     setEvents((current) => current.filter((event) => event.id !== eventId))
     if (removed) notifyUndo(`‘${removed.title}’ 일정을 삭제했습니다.`, () => setEvents((current) => [...current, removed]))
   }
-  const addTask = (task) => setTasks((current) => [...current, { ...task, id: createId('task'), done: false }])
+  const addTask = (task) => setTasks((current) => [...current, { ...task, id: createId('task'), createdDate: iso(new Date()), done: false }])
   const updateTask = (updatedTask) => setTasks((current) => current.map((task) => task.id === updatedTask.id ? updatedTask : task))
   const deleteTask = (taskId) => {
     const removed = tasks.find((task) => task.id === taskId)
