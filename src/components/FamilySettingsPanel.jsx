@@ -129,7 +129,6 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
               <input aria-label={`${shift.label} 코드`} value={shift.code} maxLength="5" onChange={(event) => updateShiftType(shift.id, 'code', event.target.value.toUpperCase())} disabled={!canEdit} />
               <input aria-label={`${shift.label} 이름`} value={shift.label} onChange={(event) => updateShiftType(shift.id, 'label', event.target.value)} disabled={!canEdit} />
               <input aria-label={`${shift.label} 시작 시간`} type="time" value={shift.start || ''} onChange={(event) => updateShiftType(shift.id, 'start', event.target.value)} disabled={!canEdit || shift.id === 'off'} />
-              <span>~</span>
               <input aria-label={`${shift.label} 종료 시간`} type="time" value={shift.end || ''} onChange={(event) => updateShiftType(shift.id, 'end', event.target.value)} disabled={!canEdit || shift.id === 'off'} />
             </div>)}
           </div>

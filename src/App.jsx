@@ -387,6 +387,13 @@ const timeToMinutes = (value) => {
   return hour * 60 + Number(parsed.minute)
 }
 
+const eventStartDateTime = (event) => {
+  if (!event.date || !event.time || event.time === '종일') return null
+  const start = new Date(`${event.date}T00:00:00`)
+  start.setMinutes(timeToMinutes(event.time))
+  return start
+}
+
 const overlappingEventIds = (events) => {
   const conflicts = new Set()
   events.forEach((event, index) => {
@@ -1026,7 +1033,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const requestedSchedule = childSchedules.find((item) => item.id === scheduleEditRequest)
   const initialProfileMember = profileEditRequest || primaryChildId
   const initialProfile = childProfiles.find((item) => item.member === initialProfileMember) || emptyChildProfile(initialProfileMember)
-  const [managementSection, setManagementSection] = useState(profileEditRequest ? 'profiles' : requestedSchedule ? 'children' : 'anniversaries')
+  const [managementSection, setManagementSection] = useState(profileEditRequest ? 'profiles' : 'children')
   const [season, setSeason] = useState(() => requestedSchedule?.season || activeSeasonForDate(today, schedulePeriods) || '학기')
   const [scheduleForm, setScheduleForm] = useState(() => requestedSchedule ? {
     member: requestedSchedule.member,
@@ -1301,10 +1308,10 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
 
       <nav className="management-tabs card" aria-label="일정 관리 구분">
         {[
-          ['anniversaries', '기념일', anniversaries.length],
-          ['periods', '학기·방학', schedulePeriods.length],
           ['children', '자녀 일정', childSchedules.length],
+          ['periods', '학기·방학', schedulePeriods.length],
           ['profiles', '자녀 정보', savedChildProfiles.length],
+          ['anniversaries', '기념일', anniversaries.length],
         ].map(([id, label, count]) => <button key={id} className={managementSection === id ? 'active' : ''} aria-pressed={managementSection === id} onClick={() => setManagementSection(id)}><span>{label}</span><em>{count}</em></button>)}
       </nav>
 
@@ -1525,8 +1532,8 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
     }
     if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
     else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, type: 'family' })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, reminder: hasTime ? reminder : 'none' })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, reminder: hasTime ? reminder : 'none', type: 'family' })
     onAfterSave?.()
     onClose()
   }
@@ -1559,6 +1566,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
           <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
           <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>
         </div>}
+        {!isTask && hasTime && <label>앱 알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="30-minutes">30분 전</option></select></label>}
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>집안일</option><option>장보기</option></select></label>}
         {isTask && <div className="field-row"><label>마감일<input name="dueDate" type="date" value={dueDate} onInput={(event) => setDueDate(event.currentTarget.value)} onChange={(event) => setDueDate(event.currentTarget.value)} /></label><label>알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="same-day">당일 알림</option><option value="day-before">하루 전 알림</option></select></label></div>}
@@ -1688,17 +1696,33 @@ export default function App() {
 
   useEffect(() => {
     if (notificationPermission !== 'granted' || typeof Notification === 'undefined') return
-    const todayValue = iso(today)
-    tasks.filter((task) => !task.done && task.dueDate && task.reminder && task.reminder !== 'none').forEach((task) => {
-      const due = new Date(`${task.dueDate}T00:00:00`)
-      const trigger = task.reminder === 'day-before' ? iso(addDays(due, -1)) : task.dueDate
-      const noticeKey = `family-scheduler-notified-${task.id}-${trigger}`
-      if (trigger === todayValue && !localStorage.getItem(noticeKey)) {
-        new Notification('Family Scheduler', { body: `${task.title} · ${task.dueDate} 마감` })
-        localStorage.setItem(noticeKey, '1')
-      }
-    })
-  }, [tasks, notificationPermission])
+    const checkNotifications = () => {
+      const now = new Date()
+      const todayValue = iso(now)
+      tasks.filter((task) => !task.done && task.dueDate && task.reminder && task.reminder !== 'none').forEach((task) => {
+        const due = new Date(`${task.dueDate}T00:00:00`)
+        const trigger = task.reminder === 'day-before' ? iso(addDays(due, -1)) : task.dueDate
+        const noticeKey = `family-scheduler-notified-${task.id}-${trigger}`
+        if (trigger === todayValue && !localStorage.getItem(noticeKey)) {
+          new Notification('Family Scheduler', { body: `${task.title} · ${task.dueDate} 마감` })
+          localStorage.setItem(noticeKey, '1')
+        }
+      })
+      events.filter((event) => event.reminder === '30-minutes').forEach((event) => {
+        const start = eventStartDateTime(event)
+        if (!start) return
+        const trigger = new Date(start.getTime() - 30 * 60 * 1000)
+        const noticeKey = `family-scheduler-notified-${event.id}-${start.toISOString()}-30-minutes`
+        if (trigger <= now && now < start && !localStorage.getItem(noticeKey)) {
+          new Notification('Family Scheduler', { body: `${event.title} · ${event.time} 시작 30분 전` })
+          localStorage.setItem(noticeKey, '1')
+        }
+      })
+    }
+    checkNotifications()
+    const interval = window.setInterval(checkNotifications, 30 * 1000)
+    return () => window.clearInterval(interval)
+  }, [events, tasks, notificationPermission])
 
   const notifyUndo = (message, undo) => setUndoToast({ message, undo })
 

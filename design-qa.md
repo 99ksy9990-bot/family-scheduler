@@ -1,37 +1,50 @@
-# 등록된 자녀 정보 목록 QA
+# Design QA
 
-- Source visual truth: `C:\Users\99ksy\AppData\Local\Temp\codex-clipboard-b3722640-3310-4dec-9bc6-7c249bd9d62f.png`
-- Desktop implementation: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-profile-list-desktop.png`
-- Mobile implementation: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-profile-list-mobile.png`
-- Comparison image: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-profile-list-comparison.png`
-- Desktop viewport: 1440 x 900 CSS px; capture 1425 x 891 px
-- Mobile capture: 371 x 687 px
-- Source pixels: 1995 x 663 px
-- State: 일정 관리 > 자녀 정보 > 초롱 정보 등록 완료
+## Comparison targets
 
-## Full-view comparison evidence
+- Source visual truth:
+  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\ED066DC1-570C-49B5-8106-6325EBFC1411\1-사진-1.jpg`
+  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\ED066DC1-570C-49B5-8106-6325EBFC1411\2-사진-2.jpg`
+- Implementation screenshots:
+  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-shift-settings-mobile.png`
+  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-schedule-tabs-mobile.png`
+- Side-by-side comparison evidence:
+  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-shift-settings-comparison.png`
+  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-schedule-tabs-comparison.png`
 
-참조 화면의 자녀 선택, 6개 입력 필드, 저장 버튼 구조를 동일한 데스크톱 상태로 비교했다. 기존 Family Scheduler의 글꼴·청록색 토큰·흰 카드·필드 간격을 유지했고, 입력 카드 아래에 별도 `등록된 자녀 정보` 영역을 추가했다.
+## Viewport and state
 
-## Focused region comparison evidence
-
-모바일 캡처에서 등록 목록 카드 전체를 확인했다. 자녀 배지, 이름, 학년·반·번호, 학교, 담임선생님, 연락처, 수정 버튼이 한 카드 안에서 겹침이나 가로 넘침 없이 표시된다. 수정 버튼을 눌렀을 때 위 입력 폼이 해당 자녀로 전환되고 저장된 학교 정보가 유지되는 것도 확인했다.
+- Browser: Codex in-app browser, local Vite app at `http://127.0.0.1:5173/`.
+- CSS viewport override: 390 x 844.
+- Source pixel size: 588 x 1280 for each supplied screenshot.
+- Implementation capture size: 375 x 811 at device scale factor 1.
+- Density normalization: each source was downsampled to 375 px width before side-by-side comparison.
+- States: family member settings scrolled to shift configuration; schedule management opened on its default category.
 
 ## Findings
 
-- P0/P1/P2 없음.
-- Fonts and typography: 기존 A2Z 서체와 제목·메타 정보 계층을 유지했다.
-- Spacing and layout rhythm: 데스크톱은 2열, 모바일은 1열 목록으로 전환되며 카드 간격은 기존 자녀 일정 목록과 동일한 12px이다.
-- Colors and visual tokens: 기존 자녀 배지 색상과 청록색 편집 액션을 재사용했다.
-- Image quality and asset fidelity: 새 이미지 자산이 필요하지 않아 기존 Lucide 아이콘과 자녀 아바타를 재사용했다.
-- Copy and content: `등록된 자녀 정보`와 저장 개수, 학교 정보 전체가 짧고 구체적으로 표시된다.
-- Browser console errors: 없음.
+- No actionable P0, P1, or P2 findings.
+- Fonts and typography: existing Korean app font family, weights, hierarchy, and wrapping remain consistent with the source screens.
+- Spacing and layout rhythm: each mobile shift row now uses two equal 139.7 px columns for code/name and start/end; measured input rectangles do not overlap. Document scroll width is 375 px within the 390 px viewport.
+- Colors and visual tokens: existing primary teal, neutral borders, card surfaces, and selected states are unchanged.
+- Image quality and assets: no image assets were added or replaced; existing Lucide and native time-control icons remain sharp.
+- Copy and content: the shift separator is removed; schedule tabs read `자녀 일정`, `학기·방학`, `자녀 정보`, `기념일`; the timed-event reminder offers `30분 전`.
 
-## Primary interactions tested
+## Interaction checks
 
-- 자녀 정보 탭 진입
-- 저장된 자녀 목록 렌더링
-- 목록의 수정 버튼으로 입력 폼 전환
-- 모바일 및 데스크톱 반응형 배치
+- Opened and closed family settings.
+- Verified all four shift rows have four inputs, no separator text, no overlap, and no horizontal overflow.
+- Verified the schedule tab order and that `자녀 일정` is active on first entry.
+- Switched to `기념일`, left schedule management, returned, and verified `자녀 일정` is active again.
+- Opened a new event, enabled time selection, and verified `앱 알림` contains `알림 없음` and `30분 전`.
+- Browser console errors: none.
+
+## Comparison history
+
+- Initial post-fix comparison: no P0/P1/P2 differences remained. The requested differences from the source screenshots are intentional: the `~` separator is removed, time fields are aligned as a two-column row, the schedule categories are reordered, and `자녀 일정` is selected by default.
+
+## Follow-up polish
+
+- None required for this scope.
 
 final result: passed
