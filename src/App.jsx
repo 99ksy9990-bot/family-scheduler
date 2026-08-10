@@ -720,35 +720,32 @@ function buildCalendarDays(cursor) {
 
 function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef, openRecurringActions, canEdit }) {
   const { children } = useFamilyProfiles()
-  const [selectedChildId, setSelectedChildId] = useState(children[0]?.id || '')
-  const selectedChild = children.find((child) => child.id === selectedChildId) || children[0]
-  const currentChildId = selectedChild?.id || ''
   const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
-  const selectedSeason = activeSeasonForDate(selectedDate, schedulePeriods, currentChildId)
-  const selectedSchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
-    .filter((schedule) => schedule.member === currentChildId)
-    .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
+  const selectedDaySchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
+  const selectedScheduleGroups = children.map((child) => ({
+    child,
+    season: activeSeasonForDate(selectedDate, schedulePeriods, child.id),
+    schedules: selectedDaySchedules
+      .filter((schedule) => schedule.member === child.id)
+      .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)),
+  }))
+  const visibleScheduleGroups = selectedScheduleGroups.filter((group) => group.schedules.length)
+  const selectedSeasons = [...new Set(selectedScheduleGroups.map((group) => group.season).filter(Boolean))]
+  const selectedSeasonLabel = selectedSeasons.length ? selectedSeasons.join(' · ') : '기간 미설정'
 
-  const chooseChild = (memberId) => {
-    setSelectedChildId(memberId)
-  }
-
-  if (!selectedChild) return <div className="empty-state card"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 주간 생활표가 열립니다.</span></div>
+  if (!children.length) return <div className="empty-state card"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 주간 생활표가 열립니다.</span></div>
 
   return (
     <section className="child-week-view">
-      <div className="child-switcher" aria-label="자녀 선택">
-        {children.map((child) => <button key={child.id} className={currentChildId === child.id ? 'active' : ''} aria-pressed={currentChildId === child.id} onClick={() => chooseChild(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
-      </div>
-
-      <div className="calendar-layout shift-mode child-calendar-layout" style={{ '--child': selectedChild.color, '--child-tone': selectedChild.tone }}>
+      <div className="calendar-layout shift-mode child-calendar-layout">
         <div className="calendar-card child-month-calendar card">
         <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
         <div className="calendar-grid">
           {monthDays.map(({ day, date, outside }) => {
             const dateHolidays = holidaysForYear(date.getFullYear()).get(iso(date)) || []
             const dateSchedules = outside ? [] : childEventsForDate(date, childSchedules, schedulePeriods, scheduleExceptions)
-              .filter((schedule) => schedule.member === currentChildId)
+            const childDotGroups = children.map((child) => ({ child, schedules: dateSchedules.filter((schedule) => schedule.member === child.id) }))
+              .filter((group) => group.schedules.length)
             const active = iso(date) === iso(selectedDate)
             const isToday = iso(date) === iso(today)
             const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
@@ -758,12 +755,14 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, mo
               disabled={outside}
               className={`${outside ? 'outside' : ''} ${active ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dateHolidays.length ? 'holiday' : ''}`}
               aria-pressed={active}
-              aria-label={`${formatLongDate(date)}${dateSchedules.length ? `, 학교·학원 일정 ${dateSchedules.length}개` : ''}`}
+              aria-label={`${formatLongDate(date)}${childDotGroups.length ? `, ${childDotGroups.map(({ child, schedules }) => `${child.name} 일정 ${schedules.length}개`).join(', ')}` : ''}`}
               onClick={() => onSelectDate(date)}
             >
               <span>{day}</span>
-              <div className="day-dots child-schedule-dots" aria-hidden="true">
-                {dateSchedules.slice(0, 3).map((schedule) => <i key={schedule.id} className={schedule.kind === '학교' ? 'school' : 'academy'} />)}
+              <div className="day-dots child-schedule-dots child-schedule-dot-stack" aria-hidden="true">
+                {childDotGroups.slice(0, 3).map(({ child, schedules }) => <span className="child-schedule-dot-row" key={child.id}>
+                  {schedules.slice(0, 3).map((schedule) => <i key={schedule.id} style={{ background: child.color }} />)}
+                </span>)}
               </div>
             </button>
           })}
@@ -773,25 +772,30 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, mo
         <article ref={detailRef} className="child-day-card card">
           <div className="child-day-heading">
             <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
-            <span className={`season-badge ${selectedSeason === '방학' ? 'vacation' : ''}`}>{selectedSeason || '기간 미설정'}</span>
+            <span className={`season-badge ${selectedSeasons.length === 1 && selectedSeasons[0] === '방학' ? 'vacation' : ''}`}>{selectedSeasonLabel}</span>
           </div>
 
-          {holidayNames.length > 0 ? <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div> : selectedSchedules.length ? <div className="child-timeline">
-            {selectedSchedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
-              <time>{schedule.time}</time>
-              <span className={`timeline-mark ${schedule.kind === '학교' ? 'school' : 'academy'}`} />
-              <div>
-                <div className="child-timeline-title-row">
-                  <span><em>{schedule.kind}</em><strong>{schedule.title}</strong></span>
-                  {canEdit && <div className="event-actions child-timeline-actions">
-                    <button type="button" onClick={() => openRecurringActions(schedule)} aria-label={`${schedule.title} 수정 범위 선택`} title="일정 수정"><Pencil /></button>
-                    <button type="button" className="delete" onClick={() => openRecurringActions(schedule)} aria-label={`${schedule.title} 삭제 범위 선택`} title="일정 삭제"><Trash2 /></button>
-                  </div>}
-                </div>
-                <small><Clock3 /> {schedule.time} ~ {schedule.end}</small>
+          {holidayNames.length > 0 ? <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div> : visibleScheduleGroups.length ? <div className="child-timeline-groups">
+            {visibleScheduleGroups.map(({ child, season, schedules }) => <section className="child-timeline-group" key={child.id} style={{ '--child': child.color, '--child-tone': child.tone }}>
+              <header className="child-timeline-group-heading"><span><Avatar memberId={child.id} small /><strong>{child.name}</strong></span><span className={`season-badge ${season === '방학' ? 'vacation' : ''}`}>{season || '기간 미설정'}</span></header>
+              <div className="child-timeline">
+                {schedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
+                  <time>{schedule.time}</time>
+                  <span className="timeline-mark" />
+                  <div>
+                    <div className="child-timeline-title-row">
+                      <span><em>{schedule.kind}</em><strong>{schedule.title}</strong></span>
+                      {canEdit && <div className="event-actions child-timeline-actions">
+                        <button type="button" onClick={() => openRecurringActions(schedule)} aria-label={`${child.name} ${schedule.title} 수정 범위 선택`} title="일정 수정"><Pencil /></button>
+                        <button type="button" className="delete" onClick={() => openRecurringActions(schedule)} aria-label={`${child.name} ${schedule.title} 삭제 범위 선택`} title="일정 삭제"><Trash2 /></button>
+                      </div>}
+                    </div>
+                    <small><Clock3 /> {schedule.time}{schedule.end ? ` ~ ${schedule.end}` : ''}</small>
+                  </div>
+                </article>)}
               </div>
-            </article>)}
-          </div> : <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 학교·학원 일정이 없습니다</strong><span>{selectedSeason ? `${selectedSeason} ${WEEKDAYS[selectedDate.getDay()]} 일정을 등록해 주세요.` : '먼저 학기·방학 적용 기간을 등록해 주세요.'}</span></div></div>}
+            </section>)}
+          </div> : <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 학교·학원 일정이 없습니다</strong><span>{selectedSeasons.length ? `${selectedSeasonLabel} ${WEEKDAYS[selectedDate.getDay()]} 일정을 등록해 주세요.` : '먼저 학기·방학 적용 기간을 등록해 주세요.'}</span></div></div>}
         </article>
       </div>
     </section>
@@ -1625,9 +1629,9 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
         </fieldset>}
         {!isTask && <fieldset className="all-day-field"><legend>시간</legend><div className="segmented event-time-mode">
           <button type="button" className={!hasTime ? 'active' : ''} aria-pressed={!hasTime} onClick={() => setHasTime(false)}>종일</button>
-          <button type="button" className={hasTime ? 'active' : ''} aria-pressed={hasTime} onClick={() => setHasTime(true)}>시간 지정</button>
+          <button type="button" className={hasTime && !hasEndTime ? 'active' : ''} aria-pressed={hasTime && !hasEndTime} onClick={() => { setHasTime(true); setHasEndTime(false) }}>시작만</button>
+          <button type="button" className={hasTime && hasEndTime ? 'active' : ''} aria-pressed={hasTime && hasEndTime} onClick={() => { setHasTime(true); setHasEndTime(true) }}>시작·종료</button>
         </div></fieldset>}
-        {!isTask && hasTime && <label className="check-row optional-end-time-toggle"><input type="checkbox" checked={hasEndTime} onChange={(event) => setHasEndTime(event.target.checked)} /><span><strong>종료 시간 지정</strong><small>끄면 시작 시간만 일정에 표시됩니다.</small></span></label>}
         {!isTask && hasTime && <div className={`modal-time-row ${hasEndTime ? '' : 'single'}`}>
           <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
           {hasEndTime && <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>}
