@@ -4,26 +4,34 @@ import { Check, Pencil, Plus, RotateCcw, Settings2, Trash2, UserRoundCheck, X } 
 const PROFILE_COLORS = ['#7fc7e3', '#c9df84', '#ffaaa0', '#9b8bd3', '#e0b866', '#6fb0a8']
 const PROFILE_TONES = ['#ecf8fc', '#f6fae9', '#fff0ed', '#f4f1ff', '#fff8e6', '#edf8f6']
 const EMPTY_FORM = { id: '', name: '', type: 'adult', relation: '', color: PROFILE_COLORS[0], tone: PROFILE_TONES[0], usesShift: false }
-const SHIFT_TIME_VALUES = Array.from({ length: 24 * 12 }, (_, index) => {
-  const hour = Math.floor(index / 12)
-  const minute = (index % 12) * 5
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
-})
+const SHIFT_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
+const SHIFT_MINUTES = ['00', '10', '20', '30', '40', '50']
 
-const shiftTimeLabel = (value) => {
-  const [hourValue, minute = '00'] = value.split(':')
-  const hour = Number(hourValue)
-  const meridiem = hour < 12 ? '오전' : '오후'
-  const displayHour = hour % 12 || 12
-  return `${meridiem} ${displayHour}:${minute}`
+const shiftTimeParts = (value) => {
+  const [hourValue = '9', minuteValue = '00'] = (value || '09:00').split(':')
+  const hour24 = Number(hourValue)
+  return {
+    meridiem: hour24 < 12 ? '오전' : '오후',
+    hour: hour24 % 12 || 12,
+    minute: SHIFT_MINUTES.includes(minuteValue) ? minuteValue : String(Math.round(Number(minuteValue) / 10) * 10 % 60).padStart(2, '0'),
+  }
 }
 
-function ShiftTimeSelect({ label, value, onChange, disabled, className }) {
+const joinShiftTime = ({ meridiem, hour, minute }) => {
+  let hour24 = Number(hour) % 12
+  if (meridiem === '오후') hour24 += 12
+  return `${String(hour24).padStart(2, '0')}:${minute}`
+}
+
+function ShiftTimePicker({ label, value, onChange, disabled }) {
+  const parts = shiftTimeParts(value)
+  const update = (field, nextValue) => onChange(joinShiftTime({ ...parts, [field]: nextValue }))
   return (
-    <select className={`shift-time-select ${className}`} aria-label={label} value={value || ''} onChange={onChange} disabled={disabled}>
-      <option value="">시간 없음</option>
-      {SHIFT_TIME_VALUES.map((time) => <option key={time} value={time}>{shiftTimeLabel(time)}</option>)}
-    </select>
+    <div className="shift-time-picker" role="group" aria-label={label}>
+      <select aria-label={`${label} 오전 오후`} value={parts.meridiem} onChange={(event) => update('meridiem', event.target.value)} disabled={disabled}><option>오전</option><option>오후</option></select>
+      <select aria-label={`${label} 시`} value={parts.hour} onChange={(event) => update('hour', event.target.value)} disabled={disabled}>{SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}</select>
+      <select aria-label={`${label} 분`} value={parts.minute} onChange={(event) => update('minute', event.target.value)} disabled={disabled}>{SHIFT_MINUTES.map((minute) => <option key={minute} value={minute}>{minute}</option>)}</select>
+    </div>
   )
 }
 
@@ -150,10 +158,11 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
             {workSettings.shiftTypes.map((shift) => <div className="shift-type-row" key={shift.id}>
               <input className="shift-code-input" aria-label={`${shift.label} 코드`} value={shift.code} maxLength="5" onChange={(event) => updateShiftType(shift.id, 'code', event.target.value.toUpperCase())} disabled={!canEdit} />
               <input className="shift-name-input" aria-label={`${shift.label} 이름`} value={shift.label} onChange={(event) => updateShiftType(shift.id, 'label', event.target.value)} disabled={!canEdit} />
-              {shift.id !== 'off' && <>
-                <ShiftTimeSelect className="shift-start-select" label={`${shift.label} 시작 시간`} value={shift.start} onChange={(event) => updateShiftType(shift.id, 'start', event.target.value)} disabled={!canEdit} />
-                <ShiftTimeSelect className="shift-end-select" label={`${shift.label} 종료 시간`} value={shift.end} onChange={(event) => updateShiftType(shift.id, 'end', event.target.value)} disabled={!canEdit} />
-              </>}
+              {shift.id !== 'off' && <div className="shift-time-range">
+                <label><small>시작</small><ShiftTimePicker label={`${shift.label} 시작 시간`} value={shift.start} onChange={(value) => updateShiftType(shift.id, 'start', value)} disabled={!canEdit} /></label>
+                <span aria-hidden="true">→</span>
+                <label><small>종료</small><ShiftTimePicker label={`${shift.label} 종료 시간`} value={shift.end} onChange={(value) => updateShiftType(shift.id, 'end', value)} disabled={!canEdit} /></label>
+              </div>}
             </div>)}
           </div>
         </section>

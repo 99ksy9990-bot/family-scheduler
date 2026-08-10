@@ -9,6 +9,7 @@ const STATUS_LABELS = {
   readonly: '보기 전용으로 연결됨',
   error: '동기화 확인 필요',
   offline: '오프라인 저장 중',
+  conflict: '다른 기기 변경과 충돌',
 }
 
 export default function FamilySyncPanel({ open, onClose, sync, onExport, onImport, profiles = [], profileLinks = {}, onLinkProfile }) {
