@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import Holidays from 'date-holidays'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
@@ -8,17 +8,16 @@ import {
   UserRoundCheck, Users, X,
 } from 'lucide-react'
 import FamilySyncPanel from './components/FamilySyncPanel'
+import FamilySettingsPanel from './components/FamilySettingsPanel'
 import { useFamilySync } from './hooks/useFamilySync'
 
-const MEMBERS = [
-  { id: 'family', name: '가족', role: '가족', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' },
-  { id: 'david', name: '아빠', role: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8' },
-  { id: 'emma', name: '엄마', role: '엄마', initials: '엄', color: '#ffaaa0', tone: '#fff0ed' },
-  { id: 'leo', name: '초롱', role: '자녀', initials: '초', color: '#7fc7e3', tone: '#ecf8fc' },
-  { id: 'mia', name: '연두', role: '자녀', initials: '연', color: '#c9df84', tone: '#f6fae9' },
+const FAMILY_MEMBER = { id: 'family', name: '가족', type: 'system', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' }
+const LEGACY_PROFILES = [
+  { id: 'david', name: '아빠', type: 'adult', relation: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8', active: true },
+  { id: 'emma', name: '엄마', type: 'adult', relation: '엄마', initials: '엄', color: '#ffaaa0', tone: '#fff0ed', active: true },
+  { id: 'leo', name: '초롱', type: 'child', relation: '자녀', initials: '초', color: '#7fc7e3', tone: '#ecf8fc', active: true },
+  { id: 'mia', name: '연두', type: 'child', relation: '자녀', initials: '연', color: '#c9df84', tone: '#f6fae9', active: true },
 ]
-
-const CHILDREN = MEMBERS.filter((member) => ['leo', 'mia'].includes(member.id))
 const ANNIVERSARY_MEMBER = { id: 'anniversary', name: '기념일', initials: '기', color: '#e0b866', tone: '#fff8e6' }
 const HOLIDAY_MEMBER = { id: 'holiday', name: '공휴일', initials: '휴', color: '#e06b65', tone: '#fff1ef' }
 const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
@@ -53,10 +52,21 @@ const holidayCalendar = new Holidays('KR')
 holidayCalendar.setLanguages('ko')
 const holidayYearCache = new Map()
 
-const memberForId = (memberId) => {
+const DEFAULT_SHIFT_TYPES = [
+  { id: 'day', code: 'D', label: '주간 근무', start: '06:30', end: '15:30', color: 'sage', icon: 'sun' },
+  { id: 'evening', code: 'E', label: '오후 근무', start: '13:30', end: '22:30', color: 'blue', icon: 'sunset' },
+  { id: 'night', code: 'N', label: '야간 근무', start: '22:00', end: '08:00', color: 'navy', icon: 'moon' },
+  { id: 'off', code: 'OFF', label: '휴무', start: '', end: '', color: 'lavender', icon: 'calendar' },
+]
+
+const FamilyProfilesContext = createContext(null)
+const useFamilyProfiles = () => useContext(FamilyProfilesContext)
+
+const memberForId = (memberId, profiles = []) => {
   if (memberId === ANNIVERSARY_MEMBER.id) return ANNIVERSARY_MEMBER
   if (memberId === HOLIDAY_MEMBER.id) return HOLIDAY_MEMBER
-  return MEMBERS.find((member) => member.id === memberId) || MEMBERS[0]
+  if (memberId === FAMILY_MEMBER.id) return FAMILY_MEMBER
+  return profiles.find((member) => member.id === memberId) || FAMILY_MEMBER
 }
 
 const normalizeHolidayName = (name) => name.replace('석가탄신일', '부처님오신날')
@@ -117,32 +127,26 @@ const holidayEventsForDate = (date) => (holidaysForYear(date.getFullYear()).get(
   holiday: true,
 }))
 
-const DATA_RECOVERY_VERSION = 1
-const RECOVERED_SHIFTS = [
-  { id: 'emma-2026-08-05', date: '2026-08-05', member: 'emma', shift: 'day' },
-]
-const RECOVERED_ANNIVERSARIES = [
-  { id: 'anniversary-recovered-mother', name: '어머니', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: 1990, month: 8, day: 5 },
-  { id: 'anniversary-recovered-wedding', name: '결혼', kind: '결혼기념일', calendarType: 'solar', leapMonth: false, baseYear: 2000, month: 8, day: 5 },
-  { id: 'anniversary-recovered-father', name: '아버지', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: 9, day: 7 },
-]
+const DATA_RECOVERY_VERSION = 2
+const RECOVERED_SHIFTS = []
+const RECOVERED_ANNIVERSARIES = []
 
 const defaultEvents = []
 const defaultChildSchedules = []
 const defaultSchedulePeriods = []
-const defaultAnniversaries = RECOVERED_ANNIVERSARIES
+const defaultAnniversaries = []
 const defaultTasks = []
-const defaultShifts = RECOVERED_SHIFTS
+const defaultShifts = []
 const defaultScheduleExceptions = []
-const defaultChildProfiles = CHILDREN.map((child) => ({
-  member: child.id,
+const emptyChildProfile = (member) => ({
+  member,
   school: '',
   grade: '',
   classNumber: '',
   studentNumber: '',
   teacherName: '',
   teacherPhone: '',
-}))
+})
 
 const LEGACY_EVENT_IDS = new Set([1, 4, 6, 7])
 const LEGACY_TASK_IDS = new Set([1, 2, 3, 4, 5, 6, 7])
@@ -151,12 +155,14 @@ const LEGACY_CHILD_SCHEDULE_IDS = new Set([
 ])
 const LEGACY_PERIOD_IDS = new Set(['term-first-2026', 'vacation-summer-2026', 'term-second-2026'])
 
-const SHIFT_OPTIONS = [
-  { id: 'day', code: 'D', label: '주간 근무', shortLabel: 'D', time: '오전 6:30 – 오후 3:30', endLabel: '오후 3:30 종료', icon: Sun, color: 'sage' },
-  { id: 'evening', code: 'E', label: '오후 근무', shortLabel: 'E', time: '오후 1:30 – 오후 10:30', endLabel: '오후 10:30 종료', icon: Sunset, color: 'blue' },
-  { id: 'night', code: 'N', label: '야간 근무', shortLabel: 'N', time: '오후 10:00 – 오전 8:00', endLabel: '다음 날 오전 8:00 종료', icon: Moon, color: 'navy' },
-  { id: 'off', code: 'OFF', label: '휴무', shortLabel: 'OFF', time: '근무 없음', endLabel: '오늘은 휴무입니다', icon: CalendarDays, color: 'lavender' },
-]
+const SHIFT_ICONS = { sun: Sun, sunset: Sunset, moon: Moon, calendar: CalendarDays }
+const buildShiftOptions = (shiftTypes) => shiftTypes.map((shift) => ({
+  ...shift,
+  shortLabel: shift.code,
+  time: shift.start && shift.end ? `${shift.start} – ${shift.end}` : '근무 없음',
+  endLabel: shift.end ? `${shift.end} 종료` : '오늘은 휴무입니다',
+  icon: SHIFT_ICONS[shift.icon] || CalendarDays,
+}))
 
 const load = (key, fallback) => {
   try {
@@ -165,6 +171,19 @@ const load = (key, fallback) => {
   } catch {
     return fallback
   }
+}
+
+const hasLegacyLocalData = () => [
+  'family-scheduler-events', 'family-scheduler-tasks', 'family-scheduler-shifts',
+  'family-scheduler-child-schedules-v1', 'family-scheduler-child-profiles-v1',
+  'family-scheduler-periods-v1', 'family-scheduler-anniversaries-v1',
+].some((key) => localStorage.getItem(key) !== null)
+
+const defaultWorkSettingsFor = (profiles, shifts = []) => {
+  const profileIds = new Set(profiles.map((profile) => profile.id))
+  const shiftMemberIds = [...new Set(shifts.map((shift) => shift.member).filter((id) => profileIds.has(id)))]
+  const workerIds = shiftMemberIds.length ? shiftMemberIds : profileIds.has('emma') ? ['emma'] : []
+  return { enabled: workerIds.length > 0, workerIds, shiftTypes: DEFAULT_SHIFT_TYPES }
 }
 
 const createId = (prefix) => (
@@ -194,11 +213,20 @@ const loadRecoveredCollection = (key, fallback, recovered, identity, markerKey) 
 }
 
 const upgradeSharedState = (state) => {
-  if (!state || typeof state !== 'object' || Number(state.recoveryVersion || 0) >= DATA_RECOVERY_VERSION) return state
+  if (!state || typeof state !== 'object') return state
+  const needsRecovery = Number(state.recoveryVersion || 0) < DATA_RECOVERY_VERSION
+  const needsProfiles = Number(state.schemaVersion || 0) < 5 || !Array.isArray(state.profiles)
+  if (!needsRecovery && !needsProfiles) return state
+  const hasLegacyData = ['events', 'tasks', 'shifts', 'childSchedules', 'childProfiles', 'schedulePeriods', 'anniversaries']
+    .some((key) => Array.isArray(state[key]) && state[key].length > 0)
+  const profiles = Array.isArray(state.profiles) ? state.profiles : hasLegacyData ? LEGACY_PROFILES : []
   return {
     ...state,
-    schemaVersion: 4,
+    schemaVersion: 5,
     recoveryVersion: DATA_RECOVERY_VERSION,
+    profiles,
+    workSettings: state.workSettings || defaultWorkSettingsFor(profiles, state.shifts),
+    profileLinks: state.profileLinks && typeof state.profileLinks === 'object' ? state.profileLinks : {},
     shifts: mergeUnique(Array.isArray(state.shifts) ? state.shifts : [], RECOVERED_SHIFTS, (item) => `${item.member}-${item.date}`),
     anniversaries: mergeUnique(Array.isArray(state.anniversaries) ? state.anniversaries : [], RECOVERED_ANNIVERSARIES, (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`),
   }
@@ -374,7 +402,8 @@ const overlappingEventIds = (events) => {
 }
 
 function Avatar({ memberId, small = false }) {
-  const member = memberForId(memberId)
+  const { profiles } = useFamilyProfiles()
+  const member = memberForId(memberId, profiles)
   return (
     <span className={`avatar ${small ? 'avatar-small' : ''}`} style={{ '--member': member.color, '--member-tone': member.tone }} title={member.name}>
       {member.initials}
@@ -434,7 +463,7 @@ function Navigation({ active, onChange }) {
   )
 }
 
-function Header({ active, onChange, focusMode, onToggleFocus, syncStatus, onOpenFamily }) {
+function Header({ active, onChange, focusMode, onToggleFocus, syncStatus, onOpenFamily, onOpenSettings }) {
   const isSynced = ['synced', 'saving', 'readonly'].includes(syncStatus)
   return (
     <header className="app-header">
@@ -445,6 +474,7 @@ function Header({ active, onChange, focusMode, onToggleFocus, syncStatus, onOpen
         </button>
         <Navigation active={active} onChange={onChange} />
         <div className="header-actions">
+          <button className="icon-button family-settings-button" onClick={onOpenSettings} aria-label="가족 구성원 설정 열기" title="가족 구성원 설정"><UserRoundCheck size={21} /></button>
           <button className={`family-connect-button ${isSynced ? 'connected' : ''}`} onClick={onOpenFamily} aria-label="가족 연결과 백업 열기"><Users /><span>{isSynced ? '가족 연결됨' : '가족 연결'}</span><i /></button>
           <button className={`icon-button ${focusMode ? 'selected' : ''}`} onClick={onToggleFocus} aria-label={focusMode ? '집중 모드 끄기' : '집중 모드 켜기'} aria-pressed={focusMode} title={focusMode ? '집중 모드 끄기' : '오늘 일정에 집중하기'}>
             <Focus size={21} />
@@ -455,13 +485,13 @@ function Header({ active, onChange, focusMode, onToggleFocus, syncStatus, onOpen
   )
 }
 
-function FocusModeBanner({ shiftOption, eventCount, onClose }) {
+function FocusModeBanner({ shiftOption, shiftMember, eventCount, onClose }) {
   return (
     <section className="focus-mode-banner" aria-live="polite">
       <div>
         <span><Focus /> 집중 모드</span>
         <strong>오늘 필요한 내용만 보고 있어요.</strong>
-        <small>{shiftOption ? `엄마 ${shiftOption.code} · ${shiftOption.label}` : '엄마 근무 미입력'} · 오늘 일정 {eventCount}개</small>
+        <small>{shiftMember ? (shiftOption ? `${shiftMember.name} ${shiftOption.code} · ${shiftOption.label}` : `${shiftMember.name} 근무 미입력`) : '근무표 미사용'} · 오늘 일정 {eventCount}개</small>
       </div>
       <button onClick={onClose}><X /> 집중 모드 종료</button>
     </section>
@@ -469,9 +499,10 @@ function FocusModeBanner({ shiftOption, eventCount, onClose }) {
 }
 
 function MemberLegend() {
+  const { activeProfiles } = useFamilyProfiles()
   return (
     <div className="member-legend">
-      {[...MEMBERS, ANNIVERSARY_MEMBER, HOLIDAY_MEMBER].map((member) => (
+      {[FAMILY_MEMBER, ...activeProfiles, ANNIVERSARY_MEMBER, HOLIDAY_MEMBER].map((member) => (
         <span key={member.id}><i style={{ background: member.color }} />{member.name}</span>
       ))}
     </div>
@@ -479,7 +510,8 @@ function MemberLegend() {
 }
 
 function EventCard({ event, compact = false, calendarSummary = false, onEdit, onDelete }) {
-  const member = memberForId(event.member)
+  const { profiles } = useFamilyProfiles()
+  const member = memberForId(event.member, profiles)
   const hasActions = Boolean(onEdit || onDelete)
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
@@ -502,7 +534,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
             {actions}
           </div>
           {(event.milestoneLabel || event.pickupBy || event.conflict) && <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
-            <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
+            <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
             {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
           </div>}
         </div>
@@ -520,7 +552,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
           {actions}
         </div>
         <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
-          <span>{event.location}{event.milestoneLabel ? ` · ${event.milestoneLabel}` : ''}{event.pickupBy ? ` · ${MEMBERS.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
+          <span>{event.location}{event.milestoneLabel ? ` · ${event.milestoneLabel}` : ''}{event.pickupBy ? ` · ${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
           {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
         </div>
       </div>
@@ -528,15 +560,19 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   )
 }
 
-function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, setView, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo }) {
+function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, setView, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
+  const { profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const conflicts = overlappingEventIds(rawTodayEvents)
   const todayEvents = rawTodayEvents.map((event) => ({ ...event, conflict: conflicts.has(event.id) }))
-  const childEvents = todayEvents.filter((event) => ['leo', 'mia'].includes(event.member))
+  const childIds = new Set(children.map((child) => child.id))
+  const childEvents = todayEvents.filter((event) => childIds.has(event.member))
   const dueTasks = tasks.filter((task) => !task.done && task.dueDate && task.dueDate <= iso(today))
-  const todayShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
-  const shiftOption = SHIFT_OPTIONS.find((option) => option.id === todayShift?.shift)
+  const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
+    const shift = shifts.find((item) => item.date === iso(today) && item.member === worker.id)
+    return { worker, option: shiftOptions.find((option) => option.id === shift?.shift) }
+  }) : []
 
   useEffect(() => {
     const timer = window.setInterval(() => setGreeting((current) => {
@@ -568,27 +604,28 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
       </section>
 
       <section className="overview-grid">
-        <article className="status-card card">
-          <div className="card-label"><span>엄마 오늘 근무</span><span className="status-pill"><i /> {shiftOption?.code || '미입력'}</span></div>
-          <h2>{shiftOption?.label || '근무 미입력'}</h2>
-          <p className="large-detail"><Clock3 /> {shiftOption?.endLabel || '근무표에서 입력하세요'}</p>
-          <button className="support-note" type="button" aria-controls="today-schedule" onClick={() => document.getElementById('today-schedule')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+        {todayWorkerShifts.map(({ worker, option }, index) => <article className="status-card card" key={worker.id}>
+          <div className="card-label"><span>{worker.name} 오늘 근무</span><span className="status-pill"><i /> {option?.code || '미입력'}</span></div>
+          <h2>{option?.label || '근무 미입력'}</h2>
+          <p className="large-detail"><Clock3 /> {option?.endLabel || '근무표에서 입력하세요'}</p>
+          {index === 0 && <button className="support-note" type="button" aria-controls="today-schedule" onClick={() => document.getElementById('today-schedule')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
             <Sparkles size={20} />
             <span><strong>{isShared ? '가족 동기화' : '오늘 요약'}</strong>오늘 일정 {todayEvents.length}개{dueTasks.length ? ` · 마감 할 일 ${dueTasks.length}개` : ''}</span>
-          </button>
-        </article>
+          </button>}
+        </article>)}
 
-        <article className="children-card card">
+        {children.length > 0 && <article className="children-card card">
           <div className="section-heading"><h2>자녀 일정</h2><GraduationCap /></div>
           <div className="children-list">
             {childEvents.length ? childEvents.map((event) => (
               <div key={event.id} className="child-row">
                 <Avatar memberId={event.member} />
-                <span><strong>{MEMBERS.find((member) => member.id === event.member)?.name}</strong>{event.title} · {event.time}{event.pickupBy ? ` · ${MEMBERS.find((member) => member.id === event.pickupBy)?.name} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
+                <span><strong>{profiles.find((member) => member.id === event.member)?.name}</strong>{event.title} · {event.time}{event.pickupBy ? ` · ${profiles.find((member) => member.id === event.pickupBy)?.name || '가족'} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
               </div>
             )) : <p className="empty-copy">오늘은 수업이 없습니다.</p>}
           </div>
-        </article>
+        </article>}
+        {!activeProfiles.length && <article className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>이름과 역할을 등록하면 일정, 자녀표, 근무표가 가족에 맞게 구성됩니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></article>}
       </section>
 
       <section className="today-card card" id="today-schedule">
@@ -628,18 +665,20 @@ function buildCalendarDays(cursor) {
 }
 
 function ChildWeekView({ childSchedules, childProfiles, schedulePeriods, scheduleExceptions, canEdit, onEditProfile }) {
+  const { children } = useFamilyProfiles()
   const mondayFor = (date) => addDays(date, -((date.getDay() + 6) % 7))
   const initialMonday = mondayFor(today)
-  const [selectedChildId, setSelectedChildId] = useState(CHILDREN[0].id)
+  const [selectedChildId, setSelectedChildId] = useState(children[0]?.id || '')
   const [weekStart, setWeekStart] = useState(initialMonday)
   const [selectedDate, setSelectedDate] = useState(today.getDay() >= 1 && today.getDay() <= 5 ? today : initialMonday)
   const weekDays = Array.from({ length: 5 }, (_, index) => addDays(weekStart, index))
-  const selectedChild = CHILDREN.find((child) => child.id === selectedChildId) || CHILDREN[0]
-  const profile = childProfiles.find((item) => item.member === selectedChildId) || defaultChildProfiles.find((item) => item.member === selectedChildId)
+  const selectedChild = children.find((child) => child.id === selectedChildId) || children[0]
+  const currentChildId = selectedChild?.id || ''
+  const profile = childProfiles.find((item) => item.member === currentChildId) || emptyChildProfile(currentChildId)
   const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
-  const selectedSeason = activeSeasonForDate(selectedDate, schedulePeriods, selectedChildId)
+  const selectedSeason = activeSeasonForDate(selectedDate, schedulePeriods, currentChildId)
   const selectedSchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
-    .filter((schedule) => schedule.member === selectedChildId)
+    .filter((schedule) => schedule.member === currentChildId)
     .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
 
   const moveWeek = (amount) => {
@@ -652,22 +691,24 @@ function ChildWeekView({ childSchedules, childProfiles, schedulePeriods, schedul
     setSelectedChildId(memberId)
   }
 
+  if (!selectedChild) return <div className="empty-state card"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 주간 생활표가 열립니다.</span></div>
+
   const schoolSummary = [profile.school, profile.grade && `${profile.grade}학년`, profile.classNumber && `${profile.classNumber}반`, profile.studentNumber && `${profile.studentNumber}번`].filter(Boolean).join(' · ')
 
   return (
     <section className="child-week-view">
       <div className="child-switcher" aria-label="자녀 선택">
-        {CHILDREN.map((child) => <button key={child.id} className={selectedChildId === child.id ? 'active' : ''} aria-pressed={selectedChildId === child.id} onClick={() => chooseChild(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
+        {children.map((child) => <button key={child.id} className={currentChildId === child.id ? 'active' : ''} aria-pressed={currentChildId === child.id} onClick={() => chooseChild(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
       </div>
 
       <article className="child-profile-card card">
-        <Avatar memberId={selectedChildId} />
+        <Avatar memberId={currentChildId} />
         <div className="child-profile-copy">
           <span className="eyebrow">{selectedChild.name} 학교 정보</span>
           <h2>{schoolSummary || '학교 정보를 등록해 주세요'}</h2>
           <p>{profile.teacherName ? `담임 ${profile.teacherName} 선생님` : '담임선생님 정보 없음'}{profile.teacherPhone && <> · <a href={`tel:${profile.teacherPhone}`}><Phone />{profile.teacherPhone}</a></>}</p>
         </div>
-        {canEdit && <button className="profile-edit-button" onClick={() => onEditProfile(selectedChildId)}><Pencil /> 편집</button>}
+        {canEdit && <button className="profile-edit-button" onClick={() => onEditProfile(currentChildId)}><Pencil /> 편집</button>}
       </article>
 
       <div className="week-strip card">
@@ -701,23 +742,29 @@ function ChildWeekView({ childSchedules, childProfiles, schedulePeriods, schedul
 }
 
 function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, anniversaries, setAnniversaries, shifts, setShifts, scheduleExceptions, openModal, deleteEvent, mode, setMode, openRecurringActions, canEdit, notifyUndo, onEditChildProfile }) {
+  const { profiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
   const [lastShiftChange, setLastShiftChange] = useState(null)
+  const [selectedShiftMemberId, setSelectedShiftMemberId] = useState(shiftWorkers[0]?.id || '')
   const dayPanelRef = useRef(null)
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
   const selectedEventsRaw = eventsForDate(selected, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const selectedConflicts = overlappingEventIds(selectedEventsRaw)
   const selectedEvents = selectedEventsRaw.map((event) => ({ ...event, conflict: selectedConflicts.has(event.id) }))
-  const selectedShift = shifts.find((shift) => shift.date === iso(selected) && shift.member === 'emma')
+  const selectedShiftMember = shiftWorkers.find((worker) => worker.id === selectedShiftMemberId) || shiftWorkers[0]
+  const currentMode = mode === '근무표' && (!workSettings.enabled || !shiftWorkers.length)
+    ? '일반'
+    : mode === '자녀표' && !children.length ? '일반' : mode
+  const selectedShift = shifts.find((shift) => shift.date === iso(selected) && shift.member === selectedShiftMember?.id)
   const isMonthEnd = selected.getDate() === new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
   const label = new Intl.DateTimeFormat('ko-KR', { month: 'long', year: 'numeric' }).format(cursor)
   const cursorMonthShifts = shifts.filter((shift) => {
     const date = new Date(`${shift.date}T00:00:00`)
-    return shift.member === 'emma' && date.getFullYear() === cursor.getFullYear() && date.getMonth() === cursor.getMonth()
+    return shift.member === selectedShiftMember?.id && date.getFullYear() === cursor.getFullYear() && date.getMonth() === cursor.getMonth()
   })
   const monthShiftCount = cursorMonthShifts.length
-  const monthShiftCounts = SHIFT_OPTIONS.reduce((counts, option) => ({
+  const monthShiftCounts = shiftOptions.reduce((counts, option) => ({
     ...counts,
     [option.id]: cursorMonthShifts.filter((shift) => shift.shift === option.id).length,
   }), {})
@@ -730,20 +777,20 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
 
   const selectCalendarDate = (date) => {
     setSelected(date)
-    if (mode === '일반' && window.matchMedia('(max-width: 900px)').matches) {
+    if (currentMode === '일반' && window.matchMedia('(max-width: 900px)').matches) {
       window.requestAnimationFrame(() => dayPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     }
   }
 
   const setSelectedShift = (shiftId) => {
-    if (!canEdit) return
+    if (!canEdit || !selectedShiftMember) return
     const selectedDate = iso(selected)
-    const previous = shifts.find((shift) => shift.date === selectedDate && shift.member === 'emma')
-    setLastShiftChange({ date: selectedDate, previous: previous ? { ...previous } : null })
+    const previous = shifts.find((shift) => shift.date === selectedDate && shift.member === selectedShiftMember.id)
+    setLastShiftChange({ date: selectedDate, member: selectedShiftMember.id, previous: previous ? { ...previous } : null })
     setShifts((currentShifts) => {
-      const existing = currentShifts.find((shift) => shift.date === selectedDate && shift.member === 'emma')
+      const existing = currentShifts.find((shift) => shift.date === selectedDate && shift.member === selectedShiftMember.id)
       if (existing) return currentShifts.map((shift) => shift.id === existing.id ? { ...shift, shift: shiftId } : shift)
-      return [...currentShifts, { id: `emma-${selectedDate}`, date: selectedDate, member: 'emma', shift: shiftId }]
+      return [...currentShifts, { id: `${selectedShiftMember.id}-${selectedDate}`, date: selectedDate, member: selectedShiftMember.id, shift: shiftId }]
     })
     const nextDate = addDays(selected, 1)
     if (nextDate.getMonth() === selected.getMonth() && nextDate.getFullYear() === selected.getFullYear()) {
@@ -752,9 +799,9 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
   }
 
   const clearSelectedShift = () => {
-    if (!canEdit) return
+    if (!canEdit || !selectedShiftMember) return
     const selectedDate = iso(selected)
-    setShifts((currentShifts) => currentShifts.filter((shift) => !(shift.date === selectedDate && shift.member === 'emma')))
+    setShifts((currentShifts) => currentShifts.filter((shift) => !(shift.date === selectedDate && shift.member === selectedShiftMember.id)))
   }
 
   const removeSelectedEvent = (event) => {
@@ -774,7 +821,7 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
   const undoLastShift = () => {
     if (!lastShiftChange) return
     setShifts((current) => {
-      const withoutChanged = current.filter((shift) => !(shift.date === lastShiftChange.date && shift.member === 'emma'))
+      const withoutChanged = current.filter((shift) => !(shift.date === lastShiftChange.date && shift.member === lastShiftChange.member))
       return lastShiftChange.previous ? [...withoutChanged, lastShiftChange.previous] : withoutChanged
     })
     setSelected(new Date(`${lastShiftChange.date}T00:00:00`))
@@ -782,28 +829,28 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
   }
 
   return (
-    <div className={`page calendar-page ${mode === '자녀표' ? 'child-calendar-page' : ''}`}>
-      <section className={`calendar-toolbar card ${mode === '근무표' ? 'shift-mode' : ''} ${mode === '자녀표' ? 'child-mode' : ''}`}>
+    <div className={`page calendar-page ${currentMode === '자녀표' ? 'child-calendar-page' : ''}`}>
+      <section className={`calendar-toolbar card ${currentMode === '근무표' ? 'shift-mode' : ''} ${currentMode === '자녀표' ? 'child-mode' : ''}`}>
         <div className="calendar-title-slot">
           <div className="month-controls">
-            {mode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>}
-            <h1>{mode === '자녀표' ? '주간 생활표' : label}</h1>
-            {mode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>}
+            {currentMode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>}
+            <h1>{currentMode === '자녀표' ? '주간 생활표' : label}</h1>
+            {currentMode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>}
           </div>
         </div>
         <div className="segmented">
-          {['일반', '근무표', '자녀표'].map((item) => <button key={item} aria-pressed={mode === item} className={mode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
+          {['일반', ...(workSettings.enabled && shiftWorkers.length ? ['근무표'] : []), ...(children.length ? ['자녀표'] : [])].map((item) => <button key={item} aria-pressed={currentMode === item} className={currentMode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
         </div>
       </section>
 
-      {mode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} childProfiles={childProfiles} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} canEdit={canEdit} onEditProfile={onEditChildProfile} /> : <section className={`calendar-layout ${mode === '근무표' ? 'shift-mode' : ''}`}>
+      {currentMode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} childProfiles={childProfiles} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} canEdit={canEdit} onEditProfile={onEditChildProfile} /> : <section className={`calendar-layout ${currentMode === '근무표' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
             {monthDays.map(({ day, date, outside }) => {
               const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
-              const dayShift = shifts.find((shift) => shift.date === iso(date) && shift.member === 'emma')
-              const shiftOption = SHIFT_OPTIONS.find((option) => option.id === dayShift?.shift)
+              const dayShift = shifts.find((shift) => shift.date === iso(date) && shift.member === selectedShiftMember?.id)
+              const shiftOption = shiftOptions.find((option) => option.id === dayShift?.shift)
               const ShiftIcon = shiftOption?.icon
               const isSelected = iso(date) === iso(selected)
               const isToday = iso(date) === iso(today)
@@ -813,7 +860,7 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
               return (
                 <button
                   key={iso(date)}
-                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${mode === '근무표' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`}
+                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${currentMode === '근무표' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''}`}
                   data-date={iso(date)}
                   data-holiday={dayHoliday?.title || undefined}
                   aria-label={`${formatLongDate(date)}${dayHoliday ? `, ${dayHoliday.title}` : ''}`}
@@ -821,10 +868,10 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
                 >
                   <span>{day}</span>
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
-                  {mode === '일반' ? <>
+                  {currentMode === '일반' ? <>
                     <div className="day-dots">
                       {dayEvents.slice(0, 3).map((event) => {
-                        const member = memberForId(event.member)
+                        const member = memberForId(event.member, profiles)
                         return <i key={event.id} style={{ background: member.color }} />
                       })}
                     </div>
@@ -839,8 +886,8 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
           </div>
         </div>
 
-        <aside ref={dayPanelRef} className={`day-panel card ${mode === '근무표' ? 'shift-day-panel' : ''}`}>
-          {mode === '일반' ? <>
+        <aside ref={dayPanelRef} className={`day-panel card ${currentMode === '근무표' ? 'shift-day-panel' : ''}`}>
+          {currentMode === '일반' ? <>
             <div className="section-heading">
               <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selected)}</h2></div>
               {canEdit && <button className="small-add" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 추가</button>}
@@ -858,13 +905,14 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
             </div>
             <MemberLegend />
           </> : <>
+            {shiftWorkers.length > 1 && <div className="shift-worker-switcher" aria-label="근무표 구성원 선택">{shiftWorkers.map((worker) => <button key={worker.id} className={selectedShiftMember?.id === worker.id ? 'active' : ''} aria-pressed={selectedShiftMember?.id === worker.id} onClick={() => { setSelectedShiftMemberId(worker.id); setLastShiftChange(null) }}><Avatar memberId={worker.id} small />{worker.name}</button>)}</div>}
             <div className="shift-editor-heading">
-              <Avatar memberId="emma" />
-              <div><span className="eyebrow">엄마 근무표</span><h2>{formatLongDate(selected)}</h2></div>
+              <Avatar memberId={selectedShiftMember?.id || FAMILY_MEMBER.id} />
+              <div><span className="eyebrow">{selectedShiftMember?.name || '가족'} 근무표</span><h2>{formatLongDate(selected)}</h2></div>
             </div>
             <p className="shift-help">{isMonthEnd ? '월말에는 다음 달로 넘어가지 않습니다.' : '근무 선택 후 다음 날짜로 자동 이동합니다.'}</p>
             <div className="shift-editor-grid">
-              {SHIFT_OPTIONS.map(({ id, code, label: optionLabel, time, icon: Icon, color }) => (
+              {shiftOptions.map(({ id, code, label: optionLabel, time, icon: Icon, color }) => (
                 <button key={id} className={`${color} ${selectedShift?.shift === id ? 'active' : ''}`} aria-pressed={selectedShift?.shift === id} disabled={!canEdit} onClick={() => setSelectedShift(id)}>
                   <Icon />
                   <span><strong>{code} · {optionLabel}</strong><small>{time}</small></span>
@@ -875,7 +923,7 @@ function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, 
             <div className="shift-editor-footer">
               <span className="shift-count-summary">
                 <strong>{monthShiftCount}/{daysInCursorMonth}일 입력</strong>
-                <span aria-label="이번 달 근무 개수">{SHIFT_OPTIONS.map((option) => <i key={option.id}><b>{option.code}</b> {monthShiftCounts[option.id]}</i>)}</span>
+                <span aria-label="이번 달 근무 개수">{shiftOptions.map((option) => <i key={option.id}><b>{option.code}</b> {monthShiftCounts[option.id]}</i>)}</span>
               </span>
               <div>{lastShiftChange && canEdit && <button onClick={undoLastShift}><RotateCcw /> 직전 입력 취소</button>}{selectedShift && canEdit && <button onClick={clearSelectedShift}>지정 해제</button>}</div>
             </div>
@@ -963,19 +1011,21 @@ function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, notificati
   )
 }
 
-const emptyScheduleForm = {
-  member: 'leo', kind: '학원', title: '', weekdays: [1],
+const emptyScheduleFormFor = (member = '') => ({
+  member, kind: '학원', title: '', weekdays: [1],
   time: '오후 4:00', end: '오후 5:00',
-}
+})
 
 const emptyAnniversaryForm = {
   name: '', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: today.getMonth() + 1, day: today.getDate(),
 }
 
 function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setChildProfiles, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled, profileEditRequest, onProfileEditHandled }) {
+  const { profiles, children } = useFamilyProfiles()
+  const primaryChildId = children[0]?.id || ''
   const requestedSchedule = childSchedules.find((item) => item.id === scheduleEditRequest)
-  const initialProfileMember = profileEditRequest || CHILDREN[0].id
-  const initialProfile = childProfiles.find((item) => item.member === initialProfileMember) || defaultChildProfiles.find((item) => item.member === initialProfileMember)
+  const initialProfileMember = profileEditRequest || primaryChildId
+  const initialProfile = childProfiles.find((item) => item.member === initialProfileMember) || emptyChildProfile(initialProfileMember)
   const [managementSection, setManagementSection] = useState(profileEditRequest ? 'profiles' : requestedSchedule ? 'children' : 'anniversaries')
   const [season, setSeason] = useState(() => requestedSchedule?.season || activeSeasonForDate(today, schedulePeriods) || '학기')
   const [scheduleForm, setScheduleForm] = useState(() => requestedSchedule ? {
@@ -985,10 +1035,10 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     weekdays: scheduleWeekdays(requestedSchedule),
     time: requestedSchedule.time,
     end: requestedSchedule.end,
-  } : emptyScheduleForm)
+  } : emptyScheduleFormFor(primaryChildId))
   const [editingId, setEditingId] = useState(requestedSchedule?.id || null)
   const [scheduleError, setScheduleError] = useState('')
-  const [periodForm, setPeriodForm] = useState({ member: 'leo', season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+  const [periodForm, setPeriodForm] = useState({ member: primaryChildId, season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
   const [periodEditingId, setPeriodEditingId] = useState(null)
   const [periodError, setPeriodError] = useState('')
   const [anniversaryForm, setAnniversaryForm] = useState(emptyAnniversaryForm)
@@ -998,6 +1048,9 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const [profileForm, setProfileForm] = useState(initialProfile)
   const [profileSaved, setProfileSaved] = useState(false)
   const profileEditorRef = useRef(null)
+  const currentScheduleMember = children.some((child) => child.id === scheduleForm.member) ? scheduleForm.member : primaryChildId
+  const currentProfileMember = children.some((child) => child.id === profileMember) ? profileMember : primaryChildId
+  const currentPeriodMember = periodForm.member === 'all' || children.some((child) => child.id === periodForm.member) ? periodForm.member : primaryChildId
 
   const visibleSchedules = [...childSchedules]
     .filter((schedule) => schedule.season === season)
@@ -1014,7 +1067,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
   const selectProfileMember = (memberId) => {
     setProfileMember(memberId)
-    setProfileForm(childProfiles.find((item) => item.member === memberId) || defaultChildProfiles.find((item) => item.member === memberId))
+    setProfileForm(childProfiles.find((item) => item.member === memberId) || emptyChildProfile(memberId))
     setProfileSaved(false)
   }
   const changeProfileField = (field, value) => {
@@ -1044,6 +1097,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     }
     const nextSchedule = {
       ...scheduleForm,
+      member: currentScheduleMember,
       id: editingId || `child-${Date.now()}`,
       season,
       title: scheduleForm.title.trim(),
@@ -1065,7 +1119,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     setChildSchedules((current) => editingId
       ? current.map((schedule) => schedule.id === editingId ? nextSchedule : schedule)
       : [...current, nextSchedule])
-    setScheduleForm(emptyScheduleForm)
+    setScheduleForm(emptyScheduleFormFor(primaryChildId))
     setEditingId(null)
     setScheduleError('')
   }
@@ -1085,7 +1139,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   }
 
   const cancelScheduleEdit = () => {
-    setScheduleForm(emptyScheduleForm)
+    setScheduleForm(emptyScheduleFormFor(primaryChildId))
     setEditingId(null)
     setScheduleError('')
   }
@@ -1101,7 +1155,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     const timer = window.setTimeout(() => {
       setManagementSection('profiles')
       setProfileMember(profileEditRequest)
-      setProfileForm(childProfiles.find((item) => item.member === profileEditRequest) || defaultChildProfiles.find((item) => item.member === profileEditRequest))
+      setProfileForm(childProfiles.find((item) => item.member === profileEditRequest) || emptyChildProfile(profileEditRequest))
       onProfileEditHandled?.()
     }, 0)
     return () => window.clearTimeout(timer)
@@ -1110,9 +1164,9 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const submitProfile = (event) => {
     event.preventDefault()
     if (!canEdit) return
-    const nextProfile = Object.fromEntries(Object.entries({ ...profileForm, member: profileMember }).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]))
-    setChildProfiles((current) => current.some((item) => item.member === profileMember)
-      ? current.map((item) => item.member === profileMember ? nextProfile : item)
+    const nextProfile = Object.fromEntries(Object.entries({ ...profileForm, member: currentProfileMember }).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]))
+    setChildProfiles((current) => current.some((item) => item.member === currentProfileMember)
+      ? current.map((item) => item.member === currentProfileMember ? nextProfile : item)
       : [...current, nextProfile])
     setProfileSaved(true)
   }
@@ -1120,6 +1174,22 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const editProfile = (memberId) => {
     selectProfileMember(memberId)
     window.requestAnimationFrame(() => profileEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const deleteProfile = (profile) => {
+    const child = children.find((item) => item.id === profile.member)
+    if (!child) return
+    if (!window.confirm(`‘${child.name}’ 학교 정보를 삭제할까요?`)) return
+    setChildProfiles((current) => current.filter((item) => item.member !== profile.member))
+    if (profileMember === profile.member) {
+      setProfileForm(emptyChildProfile(profile.member))
+      setProfileSaved(false)
+    }
+    notifyUndo?.(`‘${child.name}’ 학교 정보를 삭제했습니다.`, () => setChildProfiles((current) => (
+      current.some((item) => item.member === profile.member)
+        ? current.map((item) => item.member === profile.member ? profile : item)
+        : [...current, profile]
+    )))
   }
 
   const deleteSchedule = (schedule) => {
@@ -1137,10 +1207,10 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
       return
     }
     setSchedulePeriods((current) => periodEditingId
-      ? current.map((period) => period.id === periodEditingId ? { ...periodForm, id: periodEditingId } : period)
-      : [...current, { ...periodForm, id: `period-${Date.now()}` }])
+      ? current.map((period) => period.id === periodEditingId ? { ...periodForm, member: currentPeriodMember, id: periodEditingId } : period)
+      : [...current, { ...periodForm, member: currentPeriodMember, id: `period-${Date.now()}` }])
     setPeriodError('')
-    setPeriodForm((current) => ({ ...current, member: 'leo', start: iso(today), end: iso(addDays(today, 30)) }))
+    setPeriodForm((current) => ({ ...current, member: primaryChildId, start: iso(today), end: iso(addDays(today, 30)) }))
     setPeriodEditingId(null)
   }
 
@@ -1151,7 +1221,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   }
 
   const cancelPeriodEdit = () => {
-    setPeriodForm({ member: 'leo', season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
+    setPeriodForm({ member: primaryChildId, season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
     setPeriodEditingId(null)
     setPeriodError('')
   }
@@ -1301,8 +1371,8 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
         <section className="period-card card">
           <div className="section-heading"><div><span className="eyebrow">언제 적용할지</span><h2>학기·방학 적용 기간</h2></div><CalendarRange /></div>
           <p>자녀별 기간을 따로 등록할 수 있으며, 같은 자녀의 기간이 겹치면 최근 시작 일정이 우선입니다.</p>
-          <form className="period-form" onSubmit={submitPeriod}>
-            <label>자녀<select value={periodForm.member} onChange={(event) => changePeriodField('member', event.target.value)}><option value="all">전체 자녀</option>{CHILDREN.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
+          {children.length ? <form className="period-form" onSubmit={submitPeriod}>
+            <label>자녀<select value={currentPeriodMember} onChange={(event) => changePeriodField('member', event.target.value)}><option value="all">전체 자녀</option>{children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
             <label>구분<select value={periodForm.season} onChange={(event) => changePeriodField('season', event.target.value)}><option>학기</option><option>방학</option></select></label>
             <label>시작일<input type="date" value={periodForm.start} required onInput={(event) => changePeriodField('start', event.currentTarget.value)} onChange={(event) => changePeriodField('start', event.currentTarget.value)} /></label>
             <label>종료일<input type="date" min={periodForm.start} value={periodForm.end} required onInput={(event) => changePeriodField('end', event.currentTarget.value)} onChange={(event) => changePeriodField('end', event.currentTarget.value)} /></label>
@@ -1310,11 +1380,11 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
               {periodEditingId && <button className="secondary-button" type="button" onClick={cancelPeriodEdit}>취소</button>}
               <button className="primary-button" type="submit">{periodEditingId ? <Check size={17} /> : <Plus size={17} />}{periodEditingId ? '수정 완료' : '기간 추가'}</button>
             </div>
-          </form>
+          </form> : <div className="settings-empty"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 먼저 추가해 주세요.</span></div>}
           {periodError && <p className="form-error" role="alert">{periodError}</p>}
           <div className="period-list">
             {[...schedulePeriods].sort((a, b) => `${a.member || 'all'}-${a.start}`.localeCompare(`${b.member || 'all'}-${b.start}`)).map((period) => {
-              const periodMember = period.member && period.member !== 'all' ? MEMBERS.find((member) => member.id === period.member) : MEMBERS[0]
+              const periodMember = period.member && period.member !== 'all' ? profiles.find((member) => member.id === period.member) : FAMILY_MEMBER
               return <div className="period-row" key={period.id}>
                 <span className={`season-badge ${period.season === '방학' ? 'vacation' : ''}`}>{period.season}</span>
                 <Avatar memberId={periodMember?.id || 'family'} small />
@@ -1332,8 +1402,8 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
 
       {managementSection === 'profiles' && <><section ref={profileEditorRef} className={`child-profile-editor card ${!canEdit ? 'readonly-section' : ''}`}>
         <div className="section-heading"><div><span className="eyebrow">학기 중 기본 정보</span><h2>자녀 학교 정보</h2><p>학년·반·번호와 담임선생님 연락처를 자녀표에서 한눈에 확인합니다.</p></div><GraduationCap /></div>
-        <div className="profile-child-picker" aria-label="정보를 편집할 자녀">
-          {CHILDREN.map((child) => <button key={child.id} type="button" className={profileMember === child.id ? 'active' : ''} aria-pressed={profileMember === child.id} onClick={() => selectProfileMember(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
+        {children.length ? <><div className="profile-child-picker" aria-label="정보를 편집할 자녀">
+          {children.map((child) => <button key={child.id} type="button" className={currentProfileMember === child.id ? 'active' : ''} aria-pressed={currentProfileMember === child.id} onClick={() => selectProfileMember(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
         </div>
         <form className="child-profile-form" onSubmit={submitProfile}>
           <label className="profile-school-field">학교<input value={profileForm.school} onChange={(event) => changeProfileField('school', event.target.value)} placeholder="예: 새봄초등학교" /></label>
@@ -1343,14 +1413,15 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
           <label>담임선생님<input value={profileForm.teacherName} onChange={(event) => changeProfileField('teacherName', event.target.value)} placeholder="예: 김하늘" /></label>
           <label className="profile-phone-field">연락처<input type="tel" value={profileForm.teacherPhone} onChange={(event) => changeProfileField('teacherPhone', event.target.value)} placeholder="010-0000-0000" /></label>
           <div className="profile-form-actions"><button className="primary-button" type="submit"><Check size={17} /> 정보 저장</button>{profileSaved && <span role="status">저장되었습니다.</span>}</div>
-        </form>
+        </form></> : <div className="settings-empty"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 학교 정보를 입력할 수 있습니다.</span></div>}
       </section>
 
       <section className="saved-child-profiles">
         <div className="section-heading"><div><span className="eyebrow">자녀표에 표시되는 정보</span><h2>등록된 자녀 정보</h2></div><span className="count-badge">{savedChildProfiles.length}</span></div>
         <div className="child-profile-list">
           {savedChildProfiles.map((profile) => {
-            const child = CHILDREN.find((item) => item.id === profile.member) || CHILDREN[0]
+            const child = children.find((item) => item.id === profile.member)
+            if (!child) return null
             const classInfo = [profile.grade && `${profile.grade}학년`, profile.classNumber && `${profile.classNumber}반`, profile.studentNumber && `${profile.studentNumber}번`].filter(Boolean).join(' · ')
             return <article className="saved-child-profile-card card" key={profile.member}>
               <Avatar memberId={profile.member} />
@@ -1359,7 +1430,10 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
                 <h3>{profile.school || '학교 미입력'}</h3>
                 <small>{profile.teacherName ? `담임 ${profile.teacherName} 선생님` : '담임선생님 미입력'}{profile.teacherPhone && <a href={`tel:${profile.teacherPhone}`}><Phone />{profile.teacherPhone}</a>}</small>
               </div>
-              {canEdit && <button className="profile-list-edit" onClick={() => editProfile(profile.member)} aria-label={`${child.name} 학교 정보 수정`}><Pencil /> 수정</button>}
+              {canEdit && <div className="event-actions profile-list-actions">
+                <button onClick={() => editProfile(profile.member)} aria-label={`${child.name} 학교 정보 수정`}><Pencil /></button>
+                <button className="delete" onClick={() => deleteProfile(profile)} aria-label={`${child.name} 학교 정보 삭제`}><Trash2 /></button>
+              </div>}
             </article>
           })}
           {!savedChildProfiles.length && <div className="empty-state card"><GraduationCap /><strong>등록된 자녀 정보가 없습니다</strong><span>위 입력란에서 학교 정보를 저장하면 여기에 표시됩니다.</span></div>}
@@ -1369,11 +1443,11 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
       {managementSection === 'children' && <>
         <section className={`schedule-editor-card card ${!canEdit ? 'readonly-section' : ''}`}>
           <div className="section-heading"><div><span className="eyebrow">무엇을 언제 할지</span><h2>자녀 학교·학원 일정</h2></div><BookOpen /></div>
-          <div className="segmented wide schedule-season-tabs">
+          {children.length ? <><div className="segmented wide schedule-season-tabs">
             {['학기', '방학'].map((item) => <button key={item} type="button" aria-pressed={season === item} className={season === item ? 'active' : ''} onClick={() => { setSeason(item); cancelScheduleEdit() }}>{item}</button>)}
           </div>
           <form className="child-schedule-form" onSubmit={submitSchedule}>
-            <label>자녀<select value={scheduleForm.member} onChange={(event) => changeScheduleField('member', event.target.value)}>{CHILDREN.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
+            <label>자녀<select value={currentScheduleMember} onChange={(event) => changeScheduleField('member', event.target.value)}>{children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>
             <label>구분<select value={scheduleForm.kind} onChange={(event) => changeScheduleField('kind', event.target.value)}><option>학교</option><option>학원</option></select></label>
             <label className="schedule-title-field">과목·일정명<input value={scheduleForm.title} onChange={(event) => changeScheduleField('title', event.target.value)} placeholder="예: 피아노 레슨" required /></label>
             <fieldset className="weekday-field">
@@ -1389,7 +1463,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
               <button className="primary-button" type="submit">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? '수정 완료' : `${season} 일정 추가`}</button>
             </div>
             {scheduleError && <p className="form-error schedule-form-error" role="alert">{scheduleError}</p>}
-          </form>
+          </form></> : <div className="settings-empty"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 학교·학원 일정을 입력할 수 있습니다.</span></div>}
         </section>
 
 
@@ -1397,7 +1471,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
         <div className="section-heading"><div><span className="eyebrow">달력에 반복 반영</span><h2>{season} 등록 일정</h2></div><span className="count-badge">{visibleSchedules.length}</span></div>
         <div className="child-schedule-list">
           {visibleSchedules.map((schedule) => {
-            const child = CHILDREN.find((item) => item.id === schedule.member)
+            const child = children.find((item) => item.id === schedule.member)
             return (
               <article className="child-schedule-card card" key={schedule.id}>
                 <Avatar memberId={schedule.member} />
@@ -1417,6 +1491,8 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
 }
 
 function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask }) {
+  const { activeProfiles } = useFamilyProfiles()
+  const selectableMembers = [FAMILY_MEMBER, ...activeProfiles]
   const isTask = type === 'task'
   const isEditing = Boolean(item?.id)
   const [title, setTitle] = useState(item?.title || defaults.title || '')
@@ -1427,7 +1503,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   const [end, setEnd] = useState(item?.end || defaults.end || '오전 10:00')
   const [hasTime, setHasTime] = useState(() => Boolean((item?.time || defaults.time) && (item?.time || defaults.time) !== '종일'))
   const [location, setLocation] = useState(item?.location || defaults.location || '')
-  const [member, setMember] = useState(item?.member || defaults.member || 'david')
+  const [member, setMember] = useState(item?.member || defaults.member || activeProfiles[0]?.id || FAMILY_MEMBER.id)
   const [category, setCategory] = useState(item?.category || defaults.category || '집안일')
   const [dueDate, setDueDate] = useState(item?.dueDate || defaults.dueDate || '')
   const [reminder, setReminder] = useState(item?.reminder || defaults.reminder || 'none')
@@ -1486,7 +1562,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>집안일</option><option>장보기</option></select></label>}
         {isTask && <div className="field-row"><label>마감일<input name="dueDate" type="date" value={dueDate} onInput={(event) => setDueDate(event.currentTarget.value)} onChange={(event) => setDueDate(event.currentTarget.value)} /></label><label>알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="same-day">당일 알림</option><option value="day-before">하루 전 알림</option></select></label></div>}
-        <fieldset><legend>담당자</legend><div className="member-picker">{MEMBERS.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
+        <fieldset><legend>담당자</legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
         <div className="modal-actions">
           {isEditing && <button type="button" className="danger-button" onClick={removeItem}><Trash2 size={17} /> {isTask ? '할 일 삭제' : '일정 삭제'}</button>}
           <button type="button" className="secondary-button" onClick={onClose}>취소</button>
@@ -1522,6 +1598,7 @@ function UndoToast({ toast, onUndo, onClose }) {
 
 export default function App() {
   const [view, setView] = useState('home')
+  const [profiles, setProfiles] = useState(() => load('family-scheduler-profiles-v1', hasLegacyLocalData() ? LEGACY_PROFILES : []))
   const [events, setEvents] = useState(() => loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
     event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
   )))
@@ -1533,8 +1610,10 @@ export default function App() {
     (item) => `${item.member}-${item.date}`,
     'family-scheduler-shifts-recovery-version',
   ))
+  const [workSettings, setWorkSettings] = useState(() => load('family-scheduler-work-settings-v1', defaultWorkSettingsFor(profiles, shifts)))
+  const [profileLinks, setProfileLinks] = useState(() => load('family-scheduler-profile-links-v1', {}))
   const [childSchedules, setChildSchedules] = useState(() => loadWithoutLegacySeeds('family-scheduler-child-schedules-v1', defaultChildSchedules, LEGACY_CHILD_SCHEDULE_IDS))
-  const [childProfiles, setChildProfiles] = useState(() => load('family-scheduler-child-profiles-v1', defaultChildProfiles))
+  const [childProfiles, setChildProfiles] = useState(() => load('family-scheduler-child-profiles-v1', profiles.filter((profile) => profile.type === 'child').map((profile) => emptyChildProfile(profile.id))))
   const [schedulePeriods, setSchedulePeriods] = useState(() => loadWithoutLegacySeeds('family-scheduler-periods-v1', defaultSchedulePeriods, LEGACY_PERIOD_IDS))
   const [anniversaries, setAnniversaries] = useState(() => loadRecoveredCollection(
     'family-scheduler-anniversaries-v1',
@@ -1548,12 +1627,14 @@ export default function App() {
   const [focusMode, setFocusMode] = useState(false)
   const [calendarMode, setCalendarMode] = useState('일반')
   const [familyPanelOpen, setFamilyPanelOpen] = useState(false)
+  const [familySettingsOpen, setFamilySettingsOpen] = useState(() => !profiles.some((profile) => profile.active !== false))
   const [recurringEvent, setRecurringEvent] = useState(null)
   const [scheduleEditRequest, setScheduleEditRequest] = useState(null)
   const [profileEditRequest, setProfileEditRequest] = useState(null)
   const [undoToast, setUndoToast] = useState(null)
   const [notificationPermission, setNotificationPermission] = useState(() => typeof Notification === 'undefined' ? 'unsupported' : Notification.permission)
 
+  useEffect(() => localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(profiles)), [profiles])
   useEffect(() => localStorage.setItem('family-scheduler-events', JSON.stringify(events)), [events])
   useEffect(() => localStorage.setItem('family-scheduler-tasks', JSON.stringify(tasks)), [tasks])
   useEffect(() => localStorage.setItem('family-scheduler-shifts', JSON.stringify(shifts)), [shifts])
@@ -1562,10 +1643,14 @@ export default function App() {
   useEffect(() => localStorage.setItem('family-scheduler-periods-v1', JSON.stringify(schedulePeriods)), [schedulePeriods])
   useEffect(() => localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify(anniversaries)), [anniversaries])
   useEffect(() => localStorage.setItem('family-scheduler-schedule-exceptions-v1', JSON.stringify(scheduleExceptions)), [scheduleExceptions])
-
+  useEffect(() => localStorage.setItem('family-scheduler-work-settings-v1', JSON.stringify(workSettings)), [workSettings])
+  useEffect(() => localStorage.setItem('family-scheduler-profile-links-v1', JSON.stringify(profileLinks)), [profileLinks])
   const sharedState = useMemo(() => ({
-    schemaVersion: 4,
+    schemaVersion: 5,
     recoveryVersion: DATA_RECOVERY_VERSION,
+    profiles,
+    workSettings,
+    profileLinks,
     events,
     tasks,
     shifts,
@@ -1574,11 +1659,14 @@ export default function App() {
     schedulePeriods,
     anniversaries,
     scheduleExceptions,
-  }), [events, tasks, shifts, childSchedules, childProfiles, schedulePeriods, anniversaries, scheduleExceptions])
+  }), [profiles, workSettings, profileLinks, events, tasks, shifts, childSchedules, childProfiles, schedulePeriods, anniversaries, scheduleExceptions])
 
   const applySharedState = useCallback((nextState) => {
     const restoredState = upgradeSharedState(nextState)
     if (!restoredState || typeof restoredState !== 'object') return
+    if (Array.isArray(restoredState.profiles)) setProfiles(restoredState.profiles)
+    if (restoredState.workSettings && typeof restoredState.workSettings === 'object') setWorkSettings(restoredState.workSettings)
+    if (restoredState.profileLinks && typeof restoredState.profileLinks === 'object') setProfileLinks(restoredState.profileLinks)
     if (Array.isArray(restoredState.events)) setEvents(restoredState.events)
     if (Array.isArray(restoredState.tasks)) setTasks(restoredState.tasks)
     if (Array.isArray(restoredState.shifts)) setShifts(restoredState.shifts)
@@ -1701,16 +1789,23 @@ export default function App() {
     setNotificationPermission(permission)
   }
 
+  const activeProfiles = useMemo(() => profiles.filter((profile) => profile.active !== false), [profiles])
+  const children = useMemo(() => activeProfiles.filter((profile) => profile.type === 'child'), [activeProfiles])
+  const shiftOptions = useMemo(() => buildShiftOptions(Array.isArray(workSettings.shiftTypes) && workSettings.shiftTypes.length ? workSettings.shiftTypes : DEFAULT_SHIFT_TYPES), [workSettings.shiftTypes])
+  const shiftWorkers = useMemo(() => activeProfiles.filter((profile) => workSettings.workerIds?.includes(profile.id)), [activeProfiles, workSettings.workerIds])
+  const familyProfilesValue = useMemo(() => ({ profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings }), [profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings])
   const focusEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
-  const focusShift = shifts.find((shift) => shift.date === iso(today) && shift.member === 'emma')
-  const focusShiftOption = SHIFT_OPTIONS.find((option) => option.id === focusShift?.shift)
+  const focusShiftMember = workSettings.enabled ? shiftWorkers[0] : null
+  const focusShift = shifts.find((shift) => shift.date === iso(today) && shift.member === focusShiftMember?.id)
+  const focusShiftOption = shiftOptions.find((option) => option.id === focusShift?.shift)
 
   return (
+    <FamilyProfilesContext.Provider value={familyProfilesValue}>
     <div className={`app ${focusMode ? 'focus-mode' : ''}`}>
-      <Header active={view} onChange={changeView} focusMode={focusMode} onToggleFocus={toggleFocusMode} syncStatus={sync.syncStatus} onOpenFamily={() => setFamilyPanelOpen(true)} />
-      {focusMode && <FocusModeBanner shiftOption={focusShiftOption} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
+      <Header active={view} onChange={changeView} focusMode={focusMode} onToggleFocus={toggleFocusMode} syncStatus={sync.syncStatus} onOpenFamily={() => setFamilyPanelOpen(true)} onOpenSettings={() => setFamilySettingsOpen(true)} />
+      {focusMode && <FocusModeBanner shiftOption={focusShiftOption} shiftMember={focusShiftMember} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
-        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} setView={changeView} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} />}
+        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} setView={changeView} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} />}
         {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} childProfiles={childProfiles} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} onEditChildProfile={(memberId) => { setProfileEditRequest(memberId); changeView('schedules') }} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} notificationPermission={notificationPermission} onEnableNotifications={enableNotifications} />}
         {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}
@@ -1725,8 +1820,10 @@ export default function App() {
         onSkipDate={() => skipRecurringDate(recurringEvent)}
         onDeleteSeries={() => deleteRecurringSeries(recurringEvent)}
       />
-      <FamilySyncPanel open={familyPanelOpen} onClose={() => setFamilyPanelOpen(false)} sync={sync} onExport={exportBackup} onImport={importBackup} />
+      <FamilySyncPanel open={familyPanelOpen} onClose={() => setFamilyPanelOpen(false)} sync={sync} onExport={exportBackup} onImport={importBackup} profiles={activeProfiles} profileLinks={profileLinks} onLinkProfile={(userId, profileId) => setProfileLinks((current) => ({ ...current, [userId]: profileId }))} />
+      <FamilySettingsPanel open={familySettingsOpen} onClose={() => setFamilySettingsOpen(false)} profiles={profiles} setProfiles={setProfiles} workSettings={workSettings} setWorkSettings={setWorkSettings} canEdit={canEdit} />
       <UndoToast toast={undoToast} onUndo={() => { undoToast?.undo(); setUndoToast(null) }} onClose={() => setUndoToast(null)} />
     </div>
+    </FamilyProfilesContext.Provider>
   )
 }

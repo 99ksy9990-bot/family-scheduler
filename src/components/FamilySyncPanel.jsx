@@ -11,7 +11,7 @@ const STATUS_LABELS = {
   offline: '오프라인 저장 중',
 }
 
-export default function FamilySyncPanel({ open, onClose, sync, onExport, onImport }) {
+export default function FamilySyncPanel({ open, onClose, sync, onExport, onImport, profiles = [], profileLinks = {}, onLinkProfile }) {
   const [authMode, setAuthMode] = useState('signin')
   const [familyMode, setFamilyMode] = useState('create')
   const [email, setEmail] = useState('')
@@ -102,7 +102,7 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
             {sync.family.members.map((member) => (
               <div className="family-member-row" key={member.user_id}>
                 <span className="member-initial">{member.display_name.slice(0, 1)}</span>
-                <span><strong>{member.display_name}{member.user_id === sync.session.user.id ? ' · 나' : ''}</strong><small>{member.member_role === 'parent' ? '부모' : '자녀'} · {member.can_edit ? '수정 가능' : '보기 전용'}</small></span>
+                <span><strong>{member.display_name}{member.user_id === sync.session.user.id ? ' · 나' : ''}</strong><small>{member.member_role === 'parent' ? '부모' : '자녀'} · {member.can_edit ? '수정 가능' : '보기 전용'}</small><select className="profile-link-select" aria-label={`${member.display_name} 일정 프로필 연결`} value={profileLinks[member.user_id] || ''} onChange={(event) => onLinkProfile?.(member.user_id, event.target.value)} disabled={!sync.family.membership.can_edit}><option value="">일정 프로필 연결 안 함</option>{profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></span>
                 {isOwner && member.user_id !== sync.session.user.id && <button className={`permission-toggle ${member.can_edit ? 'active' : ''}`} aria-pressed={member.can_edit} disabled={busy} onClick={() => run(() => sync.updatePermission(member.user_id, !member.can_edit))}>{member.can_edit ? '수정 허용' : '보기 전용'}</button>}
               </div>
             ))}
