@@ -897,7 +897,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
         <div className="calendar-title-slot">
           <div className="month-controls">
             <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>
-            <h1>{currentMode === '자녀표' ? `${label} 자녀표` : label}</h1>
+            <h1>{label}</h1>
             <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>
           </div>
         </div>

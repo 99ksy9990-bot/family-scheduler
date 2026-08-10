@@ -396,8 +396,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 }
 .calendar-toolbar.shift-mode { grid-template-columns: minmax(0, 1.65fr) minmax(320px, .75fr); }
 .calendar-toolbar.child-mode { grid-template-columns: minmax(0, 1fr) auto; }
-.calendar-toolbar.child-mode .calendar-title-slot { justify-content: flex-start; padding-left: 28px; }
-.calendar-toolbar.child-mode .month-controls h1 { min-width: 0; text-align: left; }
 .calendar-title-slot { display: flex; justify-content: center; }
 .calendar-toolbar > .segmented { justify-self: end; margin-right: 28px; }
 .month-controls { display: flex; align-items: center; gap: 8px; }
@@ -1107,7 +1105,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .calendar-toolbar, .calendar-toolbar.shift-mode, .calendar-toolbar.child-mode { grid-template-columns: 1fr; align-items: stretch; padding: 20px; }
   .child-calendar-page { padding-top: 20px; }
   .calendar-toolbar.child-mode { gap: 12px; margin-bottom: 18px; padding: 0; border: 0; background: transparent; box-shadow: none; }
-  .calendar-toolbar.child-mode .calendar-title-slot { justify-content: flex-start; padding-left: 4px; }
   .calendar-toolbar.child-mode > .segmented { border: 1px solid rgba(36,101,126,.1); background: rgba(255,255,255,.74); }
   .calendar-toolbar > .segmented { width: 100%; justify-self: stretch; margin-right: 0; }
   .month-controls { justify-content: space-between; }
