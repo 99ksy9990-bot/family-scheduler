@@ -12,6 +12,10 @@ const STATUS_LABELS = {
   conflict: '다른 기기 변경과 충돌',
 }
 
+const formatSyncTime = (value) => value ? new Intl.DateTimeFormat('ko-KR', {
+  month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit',
+}).format(new Date(value)) : '아직 동기화되지 않음'
+
 export default function FamilySyncPanel({ open, onClose, sync, onExport, onImport, profiles = [], profileLinks = {}, onLinkProfile }) {
   const [authMode, setAuthMode] = useState('signin')
   const [familyMode, setFamilyMode] = useState('create')
@@ -56,7 +60,7 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
           <button className="icon-button" onClick={onClose} aria-label="가족 연결 닫기"><X /></button>
         </div>
 
-        <div className={`sync-state sync-${sync.syncStatus}`}><Cloud /><span><strong>{STATUS_LABELS[sync.syncStatus] || '연결 상태 확인 중'}</strong>{sync.error || '각 기기에서 같은 가족 일정을 확인할 수 있습니다.'}</span></div>
+        <div className={`sync-state sync-${sync.syncStatus}`}><Cloud /><span><strong>{STATUS_LABELS[sync.syncStatus] || '연결 상태 확인 중'}</strong>{sync.error || '각 기기에서 같은 가족 일정을 확인할 수 있습니다.'}{sync.family && <small>마지막 동기화 {formatSyncTime(sync.lastSyncedAt)}</small>}</span></div>
 
         {!sync.session ? <>
           <div className="segmented wide sync-tabs">

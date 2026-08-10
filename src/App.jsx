@@ -652,7 +652,7 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
     <div className="page home-page">
       <section className="hero-intro">
         <span className="eyebrow">{formatLongDate(today)}</span>
-        <h1>{greeting}, 우리 가족.</h1>
+        <h1>{greeting}, <span className="greeting-family">우리 가족.</span></h1>
         <p>우리 가족의 오늘 하루를 한눈에 확인하세요.</p>
       </section>
 

@@ -235,9 +235,15 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   text-transform: uppercase;
 }
 
-.hero-intro { max-width: 700px; margin-bottom: 34px; }
+.hero-intro { max-width: 100%; margin-bottom: 34px; }
 .hero-intro h1, .page-title-row h1 { font-size: clamp(36px, 5vw, 54px); line-height: 1.08; font-weight: 800; }
+.home-page .hero-intro h1 { text-wrap: pretty; }
+.greeting-family { white-space: nowrap; }
 .hero-intro p, .page-title-row p { margin-top: 12px; color: var(--muted); font-size: 19px; }
+
+@media (min-width: 901px) {
+  .home-page .hero-intro h1 { font-size: clamp(38px, 4vw, 50px); }
+}
 
 .overview-grid { display: grid; grid-template-columns: 1.06fr .94fr; gap: 22px; margin-bottom: 22px; }
 .status-card, .children-card { min-height: 286px; padding: 30px; }
@@ -802,6 +808,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .sync-state > svg { width: 22px; color: var(--primary); }
 .sync-state span { display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.45; }
 .sync-state strong { color: var(--ink); font-size: 14px; }
+.sync-state small { color: var(--muted); font-size: 11px; }
 .sync-synced, .sync-readonly { color: #43602e; border-color: #cadcaf; background: #f4f8ed; }
 .sync-error { color: #8b3d35; border-color: #efc4be; background: #fff3f1; }
 .sync-tabs { margin: 18px 0; }
