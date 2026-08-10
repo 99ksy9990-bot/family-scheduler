@@ -3,6 +3,13 @@ import { supabase, supabaseEnabled } from '../lib/supabase'
 
 const hasSharedState = (value) => value && typeof value === 'object' && Object.keys(value).length > 0
 const isConflictError = (error) => error?.code === '40001' || error?.message?.includes('SYNC_CONFLICT')
+const stableStringify = (value) => JSON.stringify(value, (_key, nestedValue) => {
+  if (!nestedValue || typeof nestedValue !== 'object' || Array.isArray(nestedValue)) return nestedValue
+  return Object.keys(nestedValue).sort().reduce((ordered, key) => {
+    ordered[key] = nestedValue[key]
+    return ordered
+  }, {})
+})
 
 export function useFamilySync({ localState, onRemoteState }) {
   const [session, setSession] = useState(null)
@@ -18,6 +25,7 @@ export function useFamilySync({ localState, onRemoteState }) {
   const versionRef = useRef(0)
   const pendingLocalSaveRef = useRef(false)
   const pendingSnapshotRef = useRef(null)
+  const resolvingConflictRef = useRef(null)
   const saveTimerRef = useRef(null)
 
   useEffect(() => { localStateRef.current = localState }, [localState])
@@ -101,7 +109,7 @@ export function useFamilySync({ localState, onRemoteState }) {
     setConflict(null)
 
     if (hasSharedState(stored.state)) {
-      const serialized = JSON.stringify(stored.state)
+      const serialized = stableStringify(stored.state)
       remoteStateRef.current = serialized
       pendingLocalSaveRef.current = false
       onRemoteState(stored.state)
@@ -112,7 +120,7 @@ export function useFamilySync({ localState, onRemoteState }) {
         expected_version: stored.version,
       }).single()
       if (saveError) throw saveError
-      remoteStateRef.current = JSON.stringify(saved.state)
+      remoteStateRef.current = stableStringify(saved.state)
       versionRef.current = saved.version
       setFamily((current) => current ? { ...current, version: saved.version } : current)
       setLastSyncedAt(saved.updated_at)
@@ -171,10 +179,22 @@ export function useFamilySync({ localState, onRemoteState }) {
         event: 'UPDATE', schema: 'public', table: 'household_states', filter: `household_id=eq.${householdId}`,
       }, ({ new: changed }) => {
         if (!hasSharedState(changed?.state)) return
-        const serialized = JSON.stringify(changed.state)
-        const localSerialized = JSON.stringify(localStateRef.current)
+        const serialized = stableStringify(changed.state)
+        const localSerialized = stableStringify(localStateRef.current)
         setVersion(changed.version)
         setLastSyncedAt(changed.updated_at)
+        const resolution = resolvingConflictRef.current
+        if (resolution && (serialized === resolution.serialized || Number(changed.version) <= resolution.throughVersion)) {
+          remoteStateRef.current = serialized
+          if (serialized === resolution.serialized) {
+            pendingLocalSaveRef.current = false
+            pendingSnapshotRef.current = null
+            resolvingConflictRef.current = null
+            setConflict(null)
+            setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly')
+          }
+          return
+        }
         if (serialized === localSerialized) {
           remoteStateRef.current = serialized
           pendingLocalSaveRef.current = false
@@ -207,9 +227,14 @@ export function useFamilySync({ localState, onRemoteState }) {
   }, [family?.household?.id, family?.membership?.can_edit, onRemoteState, session?.user?.id, setVersion])
 
   useEffect(() => {
-    if (!family?.household?.id || !family.membership.can_edit || conflict) return undefined
-    const serialized = JSON.stringify(localState)
-    if (serialized === remoteStateRef.current) return undefined
+    if (!family?.household?.id || !family.membership.can_edit || conflict || resolvingConflictRef.current) return undefined
+    const serialized = stableStringify(localState)
+    if (serialized === remoteStateRef.current) {
+      pendingLocalSaveRef.current = false
+      pendingSnapshotRef.current = null
+      window.setTimeout(() => setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly'), 0)
+      return undefined
+    }
     pendingLocalSaveRef.current = true
     pendingSnapshotRef.current = localState
 
@@ -238,10 +263,10 @@ export function useFamilySync({ localState, onRemoteState }) {
         setSyncStatus(navigator.onLine ? 'error' : 'offline')
         return
       }
-      const savedSerialized = JSON.stringify(saved.state)
+      const savedSerialized = stableStringify(saved.state)
       remoteStateRef.current = savedSerialized
       versionRef.current = saved.version
-      pendingLocalSaveRef.current = savedSerialized !== JSON.stringify(localStateRef.current)
+      pendingLocalSaveRef.current = savedSerialized !== stableStringify(localStateRef.current)
       pendingSnapshotRef.current = pendingLocalSaveRef.current ? localStateRef.current : null
       setFamily((current) => current ? { ...current, version: saved.version } : current)
       setLastSyncedAt(saved.updated_at)
@@ -257,41 +282,49 @@ export function useFamilySync({ localState, onRemoteState }) {
       if (family) window.setTimeout(() => setSyncStatus('offline'), 0)
       return
     }
-    if (session?.user && family && pendingLocalSaveRef.current && !conflict) {
-      setSyncStatus('saving')
-      setVersion(versionRef.current)
-    }
-  }, [conflict, family, isOnline, session?.user, setVersion])
+    if (session?.user && family && pendingLocalSaveRef.current && !conflict) setSyncStatus('saving')
+  }, [conflict, family, isOnline, session?.user])
 
   const acceptRemote = useCallback(() => {
     if (!conflict) return
-    remoteStateRef.current = JSON.stringify(conflict.remoteState)
+    const serialized = stableStringify(conflict.remoteState)
+    resolvingConflictRef.current = { serialized, throughVersion: Number(conflict.remoteVersion || versionRef.current) }
+    remoteStateRef.current = serialized
     pendingLocalSaveRef.current = false
     pendingSnapshotRef.current = null
+    setConflict(null)
     onRemoteState(conflict.remoteState)
     setLastSyncedAt(conflict.updatedAt)
-    setConflict(null)
     setError('')
     setSyncStatus(family?.membership?.can_edit ? 'synced' : 'readonly')
+    window.setTimeout(() => {
+      if (resolvingConflictRef.current?.serialized === serialized) resolvingConflictRef.current = null
+    }, 0)
   }, [conflict, family?.membership?.can_edit, onRemoteState])
 
   const keepLocal = useCallback(async () => {
     if (!conflict || !family?.household?.id || !isOnline) return
+    const localSnapshot = conflict.localState
+    const serialized = stableStringify(localSnapshot)
+    resolvingConflictRef.current = { serialized, throughVersion: Number(conflict.remoteVersion || versionRef.current) + 1 }
+    setConflict(null)
     setSyncStatus('saving')
     const { data: saved, error: saveError } = await supabase.rpc('save_household_state_v2', {
       target_household_id: family.household.id,
-      next_state: conflict.localState,
+      next_state: localSnapshot,
       expected_version: conflict.remoteVersion,
     }).single()
     if (saveError) {
-      if (isConflictError(saveError)) await buildConflict(family.household.id, conflict.localState)
+      resolvingConflictRef.current = null
+      if (isConflictError(saveError)) await buildConflict(family.household.id, localSnapshot)
       else { setError(saveError.message); setSyncStatus('error') }
       return
     }
-    remoteStateRef.current = JSON.stringify(saved.state)
+    remoteStateRef.current = stableStringify(saved.state)
     versionRef.current = saved.version
     pendingLocalSaveRef.current = false
     pendingSnapshotRef.current = null
+    resolvingConflictRef.current = null
     onRemoteState(saved.state)
     setFamily((current) => current ? { ...current, version: saved.version } : current)
     setLastSyncedAt(saved.updated_at)

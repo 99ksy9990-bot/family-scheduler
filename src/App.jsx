@@ -390,6 +390,10 @@ const timeToMinutes = (value) => {
   return hour * 60 + Number(parsed.minute)
 }
 
+const generalEventsForDate = (date, events, childSchedules, schedulePeriods, anniversaries = [], scheduleExceptions = []) =>
+  eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
+    .filter((event) => !(event.type === 'school' && event.recurring))
+
 const overlappingEventIds = (events) => {
   const conflicts = new Set()
   events.forEach((event, index) => {
@@ -714,14 +718,9 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions }) {
+function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef }) {
   const { children } = useFamilyProfiles()
-  const mondayFor = (date) => addDays(date, -((date.getDay() + 6) % 7))
-  const initialMonday = mondayFor(today)
   const [selectedChildId, setSelectedChildId] = useState(children[0]?.id || '')
-  const [weekStart, setWeekStart] = useState(initialMonday)
-  const [selectedDate, setSelectedDate] = useState(today.getDay() >= 1 && today.getDay() <= 5 ? today : initialMonday)
-  const weekDays = Array.from({ length: 5 }, (_, index) => addDays(weekStart, index))
   const selectedChild = children.find((child) => child.id === selectedChildId) || children[0]
   const currentChildId = selectedChild?.id || ''
   const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
@@ -729,12 +728,6 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions }) 
   const selectedSchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
     .filter((schedule) => schedule.member === currentChildId)
     .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
-
-  const moveWeek = (amount) => {
-    const nextStart = addDays(weekStart, amount * 7)
-    setWeekStart(nextStart)
-    setSelectedDate(nextStart)
-  }
 
   const chooseChild = (memberId) => {
     setSelectedChildId(memberId)
@@ -748,19 +741,35 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions }) 
         {children.map((child) => <button key={child.id} className={currentChildId === child.id ? 'active' : ''} aria-pressed={currentChildId === child.id} onClick={() => chooseChild(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
       </div>
 
-      <div className="week-strip card">
-        <button className="week-nav-button" onClick={() => moveWeek(-1)} aria-label="이전 주"><ChevronLeft /></button>
-        <div className="weekday-switcher">
-          {weekDays.map((date) => {
+      <div className="calendar-card child-month-calendar card">
+        <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
+        <div className="calendar-grid">
+          {monthDays.map(({ day, date, outside }) => {
             const dateHolidays = holidaysForYear(date.getFullYear()).get(iso(date)) || []
+            const dateSchedules = outside ? [] : childEventsForDate(date, childSchedules, schedulePeriods, scheduleExceptions)
+              .filter((schedule) => schedule.member === currentChildId)
             const active = iso(date) === iso(selectedDate)
-            return <button key={iso(date)} className={`${active ? 'active' : ''} ${dateHolidays.length ? 'holiday' : ''}`} aria-pressed={active} aria-label={`${formatLongDate(date)}${dateHolidays.length ? `, ${dateHolidays.map((holiday) => holiday.name).join(', ')}` : ''}`} onClick={() => setSelectedDate(date)}><span>{WEEKDAY_SHORT[date.getDay()]}</span><strong>{date.getDate()}</strong>{dateHolidays.length > 0 && <i />}</button>
+            const isToday = iso(date) === iso(today)
+            const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
+            return <button
+              key={iso(date)}
+              type="button"
+              disabled={outside}
+              className={`${outside ? 'outside' : ''} ${active ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dateHolidays.length ? 'holiday' : ''}`}
+              aria-pressed={active}
+              aria-label={`${formatLongDate(date)}${dateSchedules.length ? `, 학교·학원 일정 ${dateSchedules.length}개` : ''}`}
+              onClick={() => onSelectDate(date)}
+            >
+              <span>{day}</span>
+              <div className="day-dots child-schedule-dots" aria-hidden="true">
+                {dateSchedules.slice(0, 3).map((schedule) => <i key={schedule.id} className={schedule.kind === '학교' ? 'school' : 'academy'} />)}
+              </div>
+            </button>
           })}
         </div>
-        <button className="week-nav-button" onClick={() => moveWeek(1)} aria-label="다음 주"><ChevronRight /></button>
       </div>
 
-      <article className="child-day-card card">
+      <article ref={detailRef} className="child-day-card card">
         <div className="child-day-heading">
           <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
           <span className={`season-badge ${selectedSeason === '방학' ? 'vacation' : ''}`}>{selectedSeason || '기간 미설정'}</span>
@@ -787,7 +796,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const [selectedShiftMemberId, setSelectedShiftMemberId] = useState(shiftWorkers[0]?.id || '')
   const dayPanelRef = useRef(null)
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
-  const selectedEventsRaw = eventsForDate(selected, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
+  const selectedEventsRaw = generalEventsForDate(selected, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const selectedConflicts = overlappingEventIds(selectedEventsRaw)
   const selectedEvents = selectedEventsRaw.map((event) => ({ ...event, conflict: selectedConflicts.has(event.id) }))
   const selectedShiftMember = shiftWorkers.find((worker) => worker.id === selectedShiftMemberId) || shiftWorkers[0]
@@ -811,11 +820,12 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   const moveMonth = (amount) => {
     const next = new Date(cursor.getFullYear(), cursor.getMonth() + amount, 1)
     setCursor(next)
+    if (currentMode === '자녀표') setSelected(next)
   }
 
   const selectCalendarDate = (date) => {
     setSelected(date)
-    if (currentMode === '일반' && window.matchMedia('(max-width: 900px)').matches) {
+    if ((currentMode === '일반' || currentMode === '자녀표') && window.matchMedia('(max-width: 900px)').matches) {
       window.requestAnimationFrame(() => dayPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     }
   }
@@ -871,9 +881,9 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
       <section className={`calendar-toolbar card ${currentMode === '근무표' ? 'shift-mode' : ''} ${currentMode === '자녀표' ? 'child-mode' : ''}`}>
         <div className="calendar-title-slot">
           <div className="month-controls">
-            {currentMode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>}
-            <h1>{currentMode === '자녀표' ? '주간 생활표' : label}</h1>
-            {currentMode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>}
+            <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>
+            <h1>{currentMode === '자녀표' ? `${label} 자녀표` : label}</h1>
+            <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>
           </div>
         </div>
         <div className="segmented">
@@ -881,12 +891,12 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
         </div>
       </section>
 
-      {currentMode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} /> : <section className={`calendar-layout ${currentMode === '근무표' ? 'shift-mode' : ''}`}>
+      {currentMode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} /> : <section className={`calendar-layout ${currentMode === '근무표' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
             {monthDays.map(({ day, date, outside }) => {
-              const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
+              const dayEvents = generalEventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
               const dayShift = shifts.find((shift) => shift.date === iso(date) && shift.member === selectedShiftMember?.id)
               const shiftOption = shiftOptions.find((option) => option.id === dayShift?.shift)
               const ShiftIcon = shiftOption?.icon

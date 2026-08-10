@@ -500,10 +500,14 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .shift-editor-footer button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; padding: 7px 10px; color: #9c4239; border: 0; border-radius: 9px; background: #fff0ed; font-size: 12px; font-weight: 700; }
 .shift-editor-footer button svg { width: 13px; height: 13px; }
 
-.child-week-view { width: min(780px, 100%); display: grid; gap: 16px; margin: 0 auto; }
+.child-week-view { width: 100%; display: grid; gap: 16px; margin: 0 auto; }
 .child-switcher { display: flex; justify-content: center; gap: 9px; }
 .child-switcher button, .profile-child-picker button { min-height: 46px; display: inline-flex; align-items: center; gap: 8px; padding: 7px 15px 7px 8px; color: var(--muted); border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.78); font-weight: 750; }
 .child-switcher button.active, .profile-child-picker button.active { color: var(--primary-dark); border-color: #92c9dd; background: #e8f6fb; box-shadow: 0 5px 14px rgba(36,101,126,.1); }
+.child-month-calendar { width: 100%; }
+.child-month-calendar .calendar-grid button:disabled { cursor: default; }
+.child-schedule-dots i.school { background: #76c5df; }
+.child-schedule-dots i.academy { background: #f0aa72; }
 .child-profile-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 20px 22px; }
 .child-profile-card > .avatar { width: 52px; height: 52px; border-radius: 17px; }
 .child-profile-copy { min-width: 0; display: grid; gap: 3px; }
