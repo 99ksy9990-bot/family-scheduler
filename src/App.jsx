@@ -1637,11 +1637,12 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
             return (
               <article className="child-schedule-card card" key={schedule.id}>
                 <Avatar memberId={schedule.member} />
-                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong><small>{formatScheduleWeekdays(schedule)} · {schedule.time}{schedule.end ? `~${schedule.end}` : ''}</small></div>
+                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong></div>
                 <div className="event-actions">
                   {canEdit && <button onClick={() => editSchedule(schedule)} aria-label={`${schedule.title} 수정`}><Pencil /></button>}
                   {canEdit && <button className="delete" onClick={() => deleteSchedule(schedule)} aria-label={`${schedule.title} 삭제`}><Trash2 /></button>}
                 </div>
+                <small className="child-schedule-meta">{formatScheduleWeekdays(schedule)} · {schedule.time}{schedule.end ? `~${schedule.end}` : ''}</small>
               </article>
             )
           })}

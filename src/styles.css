@@ -113,9 +113,11 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .home-page .hero-intro h1,
 .tasks-page .page-title-row h1,
 .schedules-page .page-title-row h1,
+.settings-page .page-title-row h1,
 .calendar-toolbar .month-controls h1,
 .calendar-toolbar > .segmented button,
 .calendar-grid button > span:first-child { font-family: 'KIMM', 'A2Z', sans-serif; }
+.settings-page .settings-title-row h1 { font-weight: 700; }
 
 .app { min-height: 100vh; }
 .app main { min-height: calc(100vh - 76px); }
@@ -752,13 +754,14 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .saved-child-schedules { margin-top: 34px; }
 .saved-child-schedules > .section-heading { padding: 0 4px; }
 .child-schedule-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-.child-schedule-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 13px; padding: 17px; }
-.child-schedule-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.child-schedule-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; gap: 4px 13px; padding: 17px; }
+.child-schedule-card > .avatar { grid-row: 1 / span 2; }
+.child-schedule-copy { min-width: 0; grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 4px; }
 .child-schedule-copy > span { display: flex; align-items: center; gap: 7px; color: var(--primary); font-size: 12px; font-weight: 700; }
 .child-schedule-copy em { padding: 3px 7px; color: #596268; border-radius: 7px; background: #eef2f3; font-size: 10px; font-style: normal; }
 .child-schedule-copy strong { font-size: 17px; }
-.child-schedule-copy small { color: var(--muted); line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
-.child-schedule-card .event-actions { align-self: center; }
+.child-schedule-meta { min-width: 0; grid-column: 2 / -1; grid-row: 2; overflow: visible; color: var(--muted); font-size: 12px; line-height: 1.4; letter-spacing: -.035em; white-space: nowrap; text-overflow: clip; }
+.child-schedule-card .event-actions { grid-column: 3; grid-row: 1; align-self: center; }
 .child-schedule-list > .empty-state { grid-column: 1 / -1; min-height: 190px; }
 .child-schedule-list > .empty-state span { max-width: none; white-space: nowrap; }
 
