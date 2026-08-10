@@ -29,8 +29,8 @@ function ShiftTimePicker({ label, value, onChange, disabled }) {
   return (
     <div className="shift-time-picker" role="group" aria-label={label}>
       <select aria-label={`${label} 오전 오후`} value={parts.meridiem} onChange={(event) => update('meridiem', event.target.value)} disabled={disabled}><option>오전</option><option>오후</option></select>
-      <select aria-label={`${label} 시`} value={parts.hour} onChange={(event) => update('hour', event.target.value)} disabled={disabled}>{SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}</select>
-      <select aria-label={`${label} 분`} value={parts.minute} onChange={(event) => update('minute', event.target.value)} disabled={disabled}>{SHIFT_MINUTES.map((minute) => <option key={minute} value={minute}>{minute}</option>)}</select>
+      <select aria-label={`${label} 시`} value={parts.hour} onChange={(event) => update('hour', event.target.value)} disabled={disabled}>{SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}시</option>)}</select>
+      <select aria-label={`${label} 분`} value={parts.minute} onChange={(event) => update('minute', event.target.value)} disabled={disabled}>{SHIFT_MINUTES.map((minute) => <option key={minute} value={minute}>{minute}분</option>)}</select>
     </div>
   )
 }
