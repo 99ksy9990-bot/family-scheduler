@@ -4,7 +4,7 @@ import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare,
   ChevronLeft, ChevronRight, Clock3, Focus, GraduationCap, Home, Moon, Pencil,
-  Plus, RotateCcw, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2,
+  Phone, Plus, RotateCcw, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2,
   UserRoundCheck, Users, X,
 } from 'lucide-react'
 import FamilySyncPanel from './components/FamilySyncPanel'
@@ -134,6 +134,15 @@ const defaultAnniversaries = RECOVERED_ANNIVERSARIES
 const defaultTasks = []
 const defaultShifts = RECOVERED_SHIFTS
 const defaultScheduleExceptions = []
+const defaultChildProfiles = CHILDREN.map((child) => ({
+  member: child.id,
+  school: '',
+  grade: '',
+  classNumber: '',
+  studentNumber: '',
+  teacherName: '',
+  teacherPhone: '',
+}))
 
 const LEGACY_EVENT_IDS = new Set([1, 4, 6, 7])
 const LEGACY_TASK_IDS = new Set([1, 2, 3, 4, 5, 6, 7])
@@ -188,7 +197,7 @@ const upgradeSharedState = (state) => {
   if (!state || typeof state !== 'object' || Number(state.recoveryVersion || 0) >= DATA_RECOVERY_VERSION) return state
   return {
     ...state,
-    schemaVersion: 3,
+    schemaVersion: 4,
     recoveryVersion: DATA_RECOVERY_VERSION,
     shifts: mergeUnique(Array.isArray(state.shifts) ? state.shifts : [], RECOVERED_SHIFTS, (item) => `${item.member}-${item.date}`),
     anniversaries: mergeUnique(Array.isArray(state.anniversaries) ? state.anniversaries : [], RECOVERED_ANNIVERSARIES, (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`),
@@ -310,6 +319,7 @@ const parseTime = (value, fallback = '오전 9:00') => {
 
 const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
   const dateValue = iso(date)
+  if (holidaysForYear(date.getFullYear()).has(dateValue)) return []
   return childSchedules
     .filter((schedule) => schedule.season === activeSeasonForDate(date, schedulePeriods, schedule.member) && scheduleWeekdays(schedule).includes(date.getDay()))
     .filter((schedule) => !scheduleExceptions.some((exception) => exception.scheduleId === schedule.id && exception.date === dateValue && exception.type === 'skip'))
@@ -617,7 +627,80 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, setShifts, scheduleExceptions, openModal, deleteEvent, mode, setMode, openRecurringActions, canEdit, notifyUndo }) {
+function ChildWeekView({ childSchedules, childProfiles, schedulePeriods, scheduleExceptions, canEdit, onEditProfile }) {
+  const mondayFor = (date) => addDays(date, -((date.getDay() + 6) % 7))
+  const initialMonday = mondayFor(today)
+  const [selectedChildId, setSelectedChildId] = useState(CHILDREN[0].id)
+  const [weekStart, setWeekStart] = useState(initialMonday)
+  const [selectedDate, setSelectedDate] = useState(today.getDay() >= 1 && today.getDay() <= 5 ? today : initialMonday)
+  const weekDays = Array.from({ length: 5 }, (_, index) => addDays(weekStart, index))
+  const selectedChild = CHILDREN.find((child) => child.id === selectedChildId) || CHILDREN[0]
+  const profile = childProfiles.find((item) => item.member === selectedChildId) || defaultChildProfiles.find((item) => item.member === selectedChildId)
+  const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
+  const selectedSeason = activeSeasonForDate(selectedDate, schedulePeriods, selectedChildId)
+  const selectedSchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
+    .filter((schedule) => schedule.member === selectedChildId)
+    .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time))
+
+  const moveWeek = (amount) => {
+    const nextStart = addDays(weekStart, amount * 7)
+    setWeekStart(nextStart)
+    setSelectedDate(nextStart)
+  }
+
+  const chooseChild = (memberId) => {
+    setSelectedChildId(memberId)
+  }
+
+  const schoolSummary = [profile.school, profile.grade && `${profile.grade}학년`, profile.classNumber && `${profile.classNumber}반`, profile.studentNumber && `${profile.studentNumber}번`].filter(Boolean).join(' · ')
+
+  return (
+    <section className="child-week-view">
+      <div className="child-switcher" aria-label="자녀 선택">
+        {CHILDREN.map((child) => <button key={child.id} className={selectedChildId === child.id ? 'active' : ''} aria-pressed={selectedChildId === child.id} onClick={() => chooseChild(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
+      </div>
+
+      <article className="child-profile-card card">
+        <Avatar memberId={selectedChildId} />
+        <div className="child-profile-copy">
+          <span className="eyebrow">{selectedChild.name} 학교 정보</span>
+          <h2>{schoolSummary || '학교 정보를 등록해 주세요'}</h2>
+          <p>{profile.teacherName ? `담임 ${profile.teacherName} 선생님` : '담임선생님 정보 없음'}{profile.teacherPhone && <> · <a href={`tel:${profile.teacherPhone}`}><Phone />{profile.teacherPhone}</a></>}</p>
+        </div>
+        {canEdit && <button className="profile-edit-button" onClick={() => onEditProfile(selectedChildId)}><Pencil /> 편집</button>}
+      </article>
+
+      <div className="week-strip card">
+        <button className="week-nav-button" onClick={() => moveWeek(-1)} aria-label="이전 주"><ChevronLeft /></button>
+        <div className="weekday-switcher">
+          {weekDays.map((date) => {
+            const dateHolidays = holidaysForYear(date.getFullYear()).get(iso(date)) || []
+            const active = iso(date) === iso(selectedDate)
+            return <button key={iso(date)} className={`${active ? 'active' : ''} ${dateHolidays.length ? 'holiday' : ''}`} aria-pressed={active} aria-label={`${formatLongDate(date)}${dateHolidays.length ? `, ${dateHolidays.map((holiday) => holiday.name).join(', ')}` : ''}`} onClick={() => setSelectedDate(date)}><span>{WEEKDAY_SHORT[date.getDay()]}</span><strong>{date.getDate()}</strong>{dateHolidays.length > 0 && <i />}</button>
+          })}
+        </div>
+        <button className="week-nav-button" onClick={() => moveWeek(1)} aria-label="다음 주"><ChevronRight /></button>
+      </div>
+
+      <article className="child-day-card card">
+        <div className="child-day-heading">
+          <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
+          <span className={`season-badge ${selectedSeason === '방학' ? 'vacation' : ''}`}>{selectedSeason || '기간 미설정'}</span>
+        </div>
+
+        {holidayNames.length > 0 ? <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div> : selectedSchedules.length ? <div className="child-timeline">
+          {selectedSchedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
+            <time>{schedule.time}</time>
+            <span className={`timeline-mark ${schedule.kind === '학교' ? 'school' : 'academy'}`} />
+            <div><em>{schedule.kind}</em><strong>{schedule.title}</strong><small><Clock3 /> {schedule.time} ~ {schedule.end}</small></div>
+          </article>)}
+        </div> : <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 학교·학원 일정이 없습니다</strong><span>{selectedSeason ? `${selectedSeason} ${WEEKDAYS[selectedDate.getDay()]} 일정을 등록해 주세요.` : '먼저 학기·방학 적용 기간을 등록해 주세요.'}</span></div></div>}
+      </article>
+    </section>
+  )
+}
+
+function CalendarView({ events, childSchedules, childProfiles, schedulePeriods, anniversaries, setAnniversaries, shifts, setShifts, scheduleExceptions, openModal, deleteEvent, mode, setMode, openRecurringActions, canEdit, notifyUndo, onEditChildProfile }) {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState(today)
   const [lastShiftChange, setLastShiftChange] = useState(null)
@@ -699,21 +782,21 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   }
 
   return (
-    <div className="page calendar-page">
-      <section className={`calendar-toolbar card ${mode === '근무표' ? 'shift-mode' : ''}`}>
+    <div className={`page calendar-page ${mode === '자녀표' ? 'child-calendar-page' : ''}`}>
+      <section className={`calendar-toolbar card ${mode === '근무표' ? 'shift-mode' : ''} ${mode === '자녀표' ? 'child-mode' : ''}`}>
         <div className="calendar-title-slot">
           <div className="month-controls">
-            <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>
-            <h1>{label}</h1>
-            <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>
+            {mode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>}
+            <h1>{mode === '자녀표' ? '주간 생활표' : label}</h1>
+            {mode !== '자녀표' && <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>}
           </div>
         </div>
         <div className="segmented">
-          {['일반', '근무표'].map((item) => <button key={item} aria-pressed={mode === item} className={mode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
+          {['일반', '근무표', '자녀표'].map((item) => <button key={item} aria-pressed={mode === item} className={mode === item ? 'active' : ''} onClick={() => setMode(item)}>{item}</button>)}
         </div>
       </section>
 
-      <section className={`calendar-layout ${mode === '근무표' ? 'shift-mode' : ''}`}>
+      {mode === '자녀표' ? <ChildWeekView childSchedules={childSchedules} childProfiles={childProfiles} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} canEdit={canEdit} onEditProfile={onEditChildProfile} /> : <section className={`calendar-layout ${mode === '근무표' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
@@ -798,7 +881,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
             </div>
           </>}
         </aside>
-      </section>
+      </section>}
     </div>
   )
 }
@@ -889,9 +972,11 @@ const emptyAnniversaryForm = {
   name: '', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: today.getMonth() + 1, day: today.getDate(),
 }
 
-function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled }) {
+function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setChildProfiles, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled, profileEditRequest, onProfileEditHandled }) {
   const requestedSchedule = childSchedules.find((item) => item.id === scheduleEditRequest)
-  const [managementSection, setManagementSection] = useState(requestedSchedule ? 'children' : 'anniversaries')
+  const initialProfileMember = profileEditRequest || CHILDREN[0].id
+  const initialProfile = childProfiles.find((item) => item.member === initialProfileMember) || defaultChildProfiles.find((item) => item.member === initialProfileMember)
+  const [managementSection, setManagementSection] = useState(profileEditRequest ? 'profiles' : requestedSchedule ? 'children' : 'anniversaries')
   const [season, setSeason] = useState(() => requestedSchedule?.season || activeSeasonForDate(today, schedulePeriods) || '학기')
   const [scheduleForm, setScheduleForm] = useState(() => requestedSchedule ? {
     member: requestedSchedule.member,
@@ -909,6 +994,9 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   const [anniversaryForm, setAnniversaryForm] = useState(emptyAnniversaryForm)
   const [anniversaryEditingId, setAnniversaryEditingId] = useState(null)
   const [anniversaryError, setAnniversaryError] = useState('')
+  const [profileMember, setProfileMember] = useState(initialProfileMember)
+  const [profileForm, setProfileForm] = useState(initialProfile)
+  const [profileSaved, setProfileSaved] = useState(false)
 
   const visibleSchedules = [...childSchedules]
     .filter((schedule) => schedule.season === season)
@@ -920,6 +1008,15 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
   })
 
   const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
+  const selectProfileMember = (memberId) => {
+    setProfileMember(memberId)
+    setProfileForm(childProfiles.find((item) => item.member === memberId) || defaultChildProfiles.find((item) => item.member === memberId))
+    setProfileSaved(false)
+  }
+  const changeProfileField = (field, value) => {
+    setProfileForm((current) => ({ ...current, [field]: value }))
+    setProfileSaved(false)
+  }
   const changePeriodField = (field, value) => {
     setPeriodForm((current) => ({ ...current, [field]: value }))
     setPeriodError('')
@@ -994,6 +1091,27 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
     const timer = window.setTimeout(() => onScheduleEditHandled?.(), 0)
     return () => window.clearTimeout(timer)
   }, [onScheduleEditHandled, scheduleEditRequest])
+
+  useEffect(() => {
+    if (!profileEditRequest) return
+    const timer = window.setTimeout(() => {
+      setManagementSection('profiles')
+      setProfileMember(profileEditRequest)
+      setProfileForm(childProfiles.find((item) => item.member === profileEditRequest) || defaultChildProfiles.find((item) => item.member === profileEditRequest))
+      onProfileEditHandled?.()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [childProfiles, onProfileEditHandled, profileEditRequest])
+
+  const submitProfile = (event) => {
+    event.preventDefault()
+    if (!canEdit) return
+    const nextProfile = Object.fromEntries(Object.entries({ ...profileForm, member: profileMember }).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]))
+    setChildProfiles((current) => current.some((item) => item.member === profileMember)
+      ? current.map((item) => item.member === profileMember ? nextProfile : item)
+      : [...current, nextProfile])
+    setProfileSaved(true)
+  }
 
   const deleteSchedule = (schedule) => {
     if (!window.confirm(`‘${schedule.title}’ 반복 일정을 삭제할까요?`)) return
@@ -1107,6 +1225,7 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
           ['anniversaries', '기념일', anniversaries.length],
           ['periods', '학기·방학', schedulePeriods.length],
           ['children', '자녀 일정', childSchedules.length],
+          ['profiles', '자녀 정보', childProfiles.filter((profile) => profile.school || profile.teacherName).length],
         ].map(([id, label, count]) => <button key={id} className={managementSection === id ? 'active' : ''} aria-pressed={managementSection === id} onClick={() => setManagementSection(id)}><span>{label}</span><em>{count}</em></button>)}
       </nav>
 
@@ -1201,6 +1320,22 @@ function SchedulesView({ childSchedules, setChildSchedules, schedulePeriods, set
         </section>
 
       </div>}
+
+      {managementSection === 'profiles' && <section className={`child-profile-editor card ${!canEdit ? 'readonly-section' : ''}`}>
+        <div className="section-heading"><div><span className="eyebrow">학기 중 기본 정보</span><h2>자녀 학교 정보</h2><p>학년·반·번호와 담임선생님 연락처를 자녀표에서 한눈에 확인합니다.</p></div><GraduationCap /></div>
+        <div className="profile-child-picker" aria-label="정보를 편집할 자녀">
+          {CHILDREN.map((child) => <button key={child.id} type="button" className={profileMember === child.id ? 'active' : ''} aria-pressed={profileMember === child.id} onClick={() => selectProfileMember(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
+        </div>
+        <form className="child-profile-form" onSubmit={submitProfile}>
+          <label className="profile-school-field">학교<input value={profileForm.school} onChange={(event) => changeProfileField('school', event.target.value)} placeholder="예: 새봄초등학교" /></label>
+          <label>학년<input inputMode="numeric" value={profileForm.grade} onChange={(event) => changeProfileField('grade', event.target.value)} placeholder="예: 3" /></label>
+          <label>반<input inputMode="numeric" value={profileForm.classNumber} onChange={(event) => changeProfileField('classNumber', event.target.value)} placeholder="예: 2" /></label>
+          <label>번호<input inputMode="numeric" value={profileForm.studentNumber} onChange={(event) => changeProfileField('studentNumber', event.target.value)} placeholder="예: 15" /></label>
+          <label>담임선생님<input value={profileForm.teacherName} onChange={(event) => changeProfileField('teacherName', event.target.value)} placeholder="예: 김하늘" /></label>
+          <label className="profile-phone-field">연락처<input type="tel" value={profileForm.teacherPhone} onChange={(event) => changeProfileField('teacherPhone', event.target.value)} placeholder="010-0000-0000" /></label>
+          <div className="profile-form-actions"><button className="primary-button" type="submit"><Check size={17} /> 정보 저장</button>{profileSaved && <span role="status">저장되었습니다.</span>}</div>
+        </form>
+      </section>}
 
       {managementSection === 'children' && <>
         <section className={`schedule-editor-card card ${!canEdit ? 'readonly-section' : ''}`}>
@@ -1370,6 +1505,7 @@ export default function App() {
     'family-scheduler-shifts-recovery-version',
   ))
   const [childSchedules, setChildSchedules] = useState(() => loadWithoutLegacySeeds('family-scheduler-child-schedules-v1', defaultChildSchedules, LEGACY_CHILD_SCHEDULE_IDS))
+  const [childProfiles, setChildProfiles] = useState(() => load('family-scheduler-child-profiles-v1', defaultChildProfiles))
   const [schedulePeriods, setSchedulePeriods] = useState(() => loadWithoutLegacySeeds('family-scheduler-periods-v1', defaultSchedulePeriods, LEGACY_PERIOD_IDS))
   const [anniversaries, setAnniversaries] = useState(() => loadRecoveredCollection(
     'family-scheduler-anniversaries-v1',
@@ -1385,6 +1521,7 @@ export default function App() {
   const [familyPanelOpen, setFamilyPanelOpen] = useState(false)
   const [recurringEvent, setRecurringEvent] = useState(null)
   const [scheduleEditRequest, setScheduleEditRequest] = useState(null)
+  const [profileEditRequest, setProfileEditRequest] = useState(null)
   const [undoToast, setUndoToast] = useState(null)
   const [notificationPermission, setNotificationPermission] = useState(() => typeof Notification === 'undefined' ? 'unsupported' : Notification.permission)
 
@@ -1392,21 +1529,23 @@ export default function App() {
   useEffect(() => localStorage.setItem('family-scheduler-tasks', JSON.stringify(tasks)), [tasks])
   useEffect(() => localStorage.setItem('family-scheduler-shifts', JSON.stringify(shifts)), [shifts])
   useEffect(() => localStorage.setItem('family-scheduler-child-schedules-v1', JSON.stringify(childSchedules)), [childSchedules])
+  useEffect(() => localStorage.setItem('family-scheduler-child-profiles-v1', JSON.stringify(childProfiles)), [childProfiles])
   useEffect(() => localStorage.setItem('family-scheduler-periods-v1', JSON.stringify(schedulePeriods)), [schedulePeriods])
   useEffect(() => localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify(anniversaries)), [anniversaries])
   useEffect(() => localStorage.setItem('family-scheduler-schedule-exceptions-v1', JSON.stringify(scheduleExceptions)), [scheduleExceptions])
 
   const sharedState = useMemo(() => ({
-    schemaVersion: 3,
+    schemaVersion: 4,
     recoveryVersion: DATA_RECOVERY_VERSION,
     events,
     tasks,
     shifts,
     childSchedules,
+    childProfiles,
     schedulePeriods,
     anniversaries,
     scheduleExceptions,
-  }), [events, tasks, shifts, childSchedules, schedulePeriods, anniversaries, scheduleExceptions])
+  }), [events, tasks, shifts, childSchedules, childProfiles, schedulePeriods, anniversaries, scheduleExceptions])
 
   const applySharedState = useCallback((nextState) => {
     const restoredState = upgradeSharedState(nextState)
@@ -1415,6 +1554,7 @@ export default function App() {
     if (Array.isArray(restoredState.tasks)) setTasks(restoredState.tasks)
     if (Array.isArray(restoredState.shifts)) setShifts(restoredState.shifts)
     if (Array.isArray(restoredState.childSchedules)) setChildSchedules(restoredState.childSchedules)
+    if (Array.isArray(restoredState.childProfiles)) setChildProfiles(restoredState.childProfiles)
     if (Array.isArray(restoredState.schedulePeriods)) setSchedulePeriods(restoredState.schedulePeriods)
     if (Array.isArray(restoredState.anniversaries)) setAnniversaries(restoredState.anniversaries)
     if (Array.isArray(restoredState.scheduleExceptions)) setScheduleExceptions(restoredState.scheduleExceptions)
@@ -1542,9 +1682,9 @@ export default function App() {
       {focusMode && <FocusModeBanner shiftOption={focusShiftOption} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
         {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} setView={changeView} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} />}
-        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} />}
+        {view === 'calendar' && <CalendarView events={events} childSchedules={childSchedules} childProfiles={childProfiles} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} onEditChildProfile={(memberId) => { setProfileEditRequest(memberId); changeView('schedules') }} />}
         {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} notificationPermission={notificationPermission} onEnableNotifications={enableNotifications} />}
-        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} />}
+        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={changeView} /></div>
       {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}
