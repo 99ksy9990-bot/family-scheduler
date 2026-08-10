@@ -997,6 +997,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const [profileMember, setProfileMember] = useState(initialProfileMember)
   const [profileForm, setProfileForm] = useState(initialProfile)
   const [profileSaved, setProfileSaved] = useState(false)
+  const profileEditorRef = useRef(null)
 
   const visibleSchedules = [...childSchedules]
     .filter((schedule) => schedule.season === season)
@@ -1006,6 +1007,9 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     const second = nextAnniversaryOccurrence(b)?.getTime() ?? Number.MAX_SAFE_INTEGER
     return first - second
   })
+  const savedChildProfiles = childProfiles.filter((profile) => (
+    profile.school || profile.grade || profile.classNumber || profile.studentNumber || profile.teacherName || profile.teacherPhone
+  ))
 
   const changeScheduleField = (field, value) => setScheduleForm((current) => ({ ...current, [field]: value }))
   const selectProfileMember = (memberId) => {
@@ -1111,6 +1115,11 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
       ? current.map((item) => item.member === profileMember ? nextProfile : item)
       : [...current, nextProfile])
     setProfileSaved(true)
+  }
+
+  const editProfile = (memberId) => {
+    selectProfileMember(memberId)
+    window.requestAnimationFrame(() => profileEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
   const deleteSchedule = (schedule) => {
@@ -1225,7 +1234,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
           ['anniversaries', '기념일', anniversaries.length],
           ['periods', '학기·방학', schedulePeriods.length],
           ['children', '자녀 일정', childSchedules.length],
-          ['profiles', '자녀 정보', childProfiles.filter((profile) => profile.school || profile.teacherName).length],
+          ['profiles', '자녀 정보', savedChildProfiles.length],
         ].map(([id, label, count]) => <button key={id} className={managementSection === id ? 'active' : ''} aria-pressed={managementSection === id} onClick={() => setManagementSection(id)}><span>{label}</span><em>{count}</em></button>)}
       </nav>
 
@@ -1321,7 +1330,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
 
       </div>}
 
-      {managementSection === 'profiles' && <section className={`child-profile-editor card ${!canEdit ? 'readonly-section' : ''}`}>
+      {managementSection === 'profiles' && <><section ref={profileEditorRef} className={`child-profile-editor card ${!canEdit ? 'readonly-section' : ''}`}>
         <div className="section-heading"><div><span className="eyebrow">학기 중 기본 정보</span><h2>자녀 학교 정보</h2><p>학년·반·번호와 담임선생님 연락처를 자녀표에서 한눈에 확인합니다.</p></div><GraduationCap /></div>
         <div className="profile-child-picker" aria-label="정보를 편집할 자녀">
           {CHILDREN.map((child) => <button key={child.id} type="button" className={profileMember === child.id ? 'active' : ''} aria-pressed={profileMember === child.id} onClick={() => selectProfileMember(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
@@ -1335,7 +1344,27 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
           <label className="profile-phone-field">연락처<input type="tel" value={profileForm.teacherPhone} onChange={(event) => changeProfileField('teacherPhone', event.target.value)} placeholder="010-0000-0000" /></label>
           <div className="profile-form-actions"><button className="primary-button" type="submit"><Check size={17} /> 정보 저장</button>{profileSaved && <span role="status">저장되었습니다.</span>}</div>
         </form>
-      </section>}
+      </section>
+
+      <section className="saved-child-profiles">
+        <div className="section-heading"><div><span className="eyebrow">자녀표에 표시되는 정보</span><h2>등록된 자녀 정보</h2></div><span className="count-badge">{savedChildProfiles.length}</span></div>
+        <div className="child-profile-list">
+          {savedChildProfiles.map((profile) => {
+            const child = CHILDREN.find((item) => item.id === profile.member) || CHILDREN[0]
+            const classInfo = [profile.grade && `${profile.grade}학년`, profile.classNumber && `${profile.classNumber}반`, profile.studentNumber && `${profile.studentNumber}번`].filter(Boolean).join(' · ')
+            return <article className="saved-child-profile-card card" key={profile.member}>
+              <Avatar memberId={profile.member} />
+              <div className="saved-child-profile-copy">
+                <span><strong>{child.name}</strong>{classInfo && <em>{classInfo}</em>}</span>
+                <h3>{profile.school || '학교 미입력'}</h3>
+                <small>{profile.teacherName ? `담임 ${profile.teacherName} 선생님` : '담임선생님 미입력'}{profile.teacherPhone && <a href={`tel:${profile.teacherPhone}`}><Phone />{profile.teacherPhone}</a>}</small>
+              </div>
+              {canEdit && <button className="profile-list-edit" onClick={() => editProfile(profile.member)} aria-label={`${child.name} 학교 정보 수정`}><Pencil /> 수정</button>}
+            </article>
+          })}
+          {!savedChildProfiles.length && <div className="empty-state card"><GraduationCap /><strong>등록된 자녀 정보가 없습니다</strong><span>위 입력란에서 학교 정보를 저장하면 여기에 표시됩니다.</span></div>}
+        </div>
+      </section></>}
 
       {managementSection === 'children' && <>
         <section className={`schedule-editor-card card ${!canEdit ? 'readonly-section' : ''}`}>

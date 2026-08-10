@@ -719,6 +719,24 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .child-profile-form input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36,101,126,.1); }
 .profile-form-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding-top: 4px; }
 .profile-form-actions span { color: #4f742d; font-size: 12px; font-weight: 750; }
+.saved-child-profiles { margin-top: 34px; }
+.saved-child-profiles > .section-heading { padding: 0 4px; }
+.saved-child-profiles .count-badge { color: var(--primary); background: #e5f3f7; }
+.child-profile-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 15px; }
+.saved-child-profile-card { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 18px; }
+.saved-child-profile-card > .avatar { width: 46px; height: 46px; border-radius: 15px; }
+.saved-child-profile-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.saved-child-profile-copy > span { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.saved-child-profile-copy > span strong { color: var(--primary); font-size: 13px; }
+.saved-child-profile-copy > span em { overflow: hidden; color: var(--muted); font-size: 11px; font-style: normal; white-space: nowrap; text-overflow: ellipsis; }
+.saved-child-profile-copy h3 { overflow: hidden; font-size: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.saved-child-profile-copy small { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 5px 9px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.saved-child-profile-copy a { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); text-decoration: none; font-weight: 750; }
+.saved-child-profile-copy a svg { width: 13px; height: 13px; }
+.profile-list-edit { display: inline-flex; align-items: center; gap: 5px; padding: 8px 10px; color: var(--primary); border: 0; border-radius: 10px; background: #e8f5f9; font-size: 11px; font-weight: 750; }
+.profile-list-edit svg { width: 13px; height: 13px; }
+.child-profile-list > .empty-state { grid-column: 1 / -1; min-height: 170px; }
+.child-profile-list > .empty-state span { max-width: none; }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow-y: auto; padding: 20px; background: rgba(16, 28, 35, .48); backdrop-filter: blur(7px); animation: fade .2s ease; overscroll-behavior: contain; }
 @keyframes fade { from { opacity: 0; } }
@@ -973,6 +991,12 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .profile-school-field, .profile-phone-field, .profile-form-actions { grid-column: 1 / -1; }
   .profile-form-actions { align-items: stretch; flex-direction: column; }
   .profile-form-actions .primary-button { width: 100%; }
+  .child-profile-list { grid-template-columns: 1fr; }
+  .saved-child-profile-card { gap: 11px; padding: 15px; }
+  .saved-child-profile-card > .avatar { width: 42px; height: 42px; border-radius: 13px; }
+  .saved-child-profile-copy h3 { font-size: 16px; }
+  .saved-child-profile-copy small { font-size: 11px; }
+  .profile-list-edit { align-self: stretch; justify-content: center; }
   .modal-backdrop { place-items: start center; padding: max(14px, env(safe-area-inset-top)) 14px max(100px, env(safe-area-inset-bottom)); }
   .modal { width: 100%; margin: auto 0; padding: 22px; border-radius: 22px; }
   .modal input, .modal select, .modal textarea { font-size: 16px; }

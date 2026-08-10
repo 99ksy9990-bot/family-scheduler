@@ -1,29 +1,37 @@
-# 자녀 주간 생활표 QA
+# 등록된 자녀 정보 목록 QA
 
-- Source visual truth: `C:\Users\99ksy\.codex\generated_images\019fd144-df0c-7670-a5d2-0447c45631d2\exec-4e5b19c5-c89a-4274-884f-d5f17868f264.png`
-- Implementation screenshot: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-week-mobile.png`
-- Comparison image: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-week-comparison.png`
-- Browser viewport: 390 x 844 CSS px
-- State: 캘린더 > 자녀표 > 초롱 > 2026년 8월 10일
+- Source visual truth: `C:\Users\99ksy\AppData\Local\Temp\codex-clipboard-b3722640-3310-4dec-9bc6-7c249bd9d62f.png`
+- Desktop implementation: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-profile-list-desktop.png`
+- Mobile implementation: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-profile-list-mobile.png`
+- Comparison image: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-child-profile-list-comparison.png`
+- Desktop viewport: 1440 x 900 CSS px; capture 1425 x 891 px
+- Mobile capture: 371 x 687 px
+- Source pixels: 1995 x 663 px
+- State: 일정 관리 > 자녀 정보 > 초롱 정보 등록 완료
 
 ## Full-view comparison evidence
 
-참조 화면과 구현 화면을 같은 390 x 844 기준으로 나란히 비교했다. 상단 자녀표 탭, 자녀 선택, 학교 정보, 월~금 주간 선택, 선택 날짜 타임라인, 하단 내비게이션의 계층과 색상 흐름이 일치한다. 기존 Family Scheduler 글꼴·색상·아이콘을 그대로 사용했으며 가로 넘침은 없다.
+참조 화면의 자녀 선택, 6개 입력 필드, 저장 버튼 구조를 동일한 데스크톱 상태로 비교했다. 기존 Family Scheduler의 글꼴·청록색 토큰·흰 카드·필드 간격을 유지했고, 입력 카드 아래에 별도 `등록된 자녀 정보` 영역을 추가했다.
 
-## Focused behavior evidence
+## Focused region comparison evidence
 
-- 월~금 영역 왼쪽과 오른쪽 화살표로 7일씩 이동한다.
-- 2026년 8월 17일 `광복절 (대체공휴일)`에는 반복 등록된 `정규 수업`이 생성되지 않고 공휴일 안내가 표시된다.
-- 다음 날인 8월 18일에는 학교 `정규 수업`과 학원 `영어 교실`이 시간순으로 표시된다.
-- 프로필 편집 버튼이 `일정 관리 > 자녀 정보`로 연결되고 입력한 학교·학년·반·번호·담임·연락처를 유지한다.
+모바일 캡처에서 등록 목록 카드 전체를 확인했다. 자녀 배지, 이름, 학년·반·번호, 학교, 담임선생님, 연락처, 수정 버튼이 한 카드 안에서 겹침이나 가로 넘침 없이 표시된다. 수정 버튼을 눌렀을 때 위 입력 폼이 해당 자녀로 전환되고 저장된 학교 정보가 유지되는 것도 확인했다.
 
 ## Findings
 
 - P0/P1/P2 없음.
-- Layout: 390px 모바일에서 탭, 프로필, 주간 이동, 타임라인이 겹치거나 잘리지 않는다.
-- Visual fidelity: 참조의 청록 강조색, 흰 카드, 둥근 주간 선택 구조를 기존 디자인 토큰으로 재현했다.
-- Interaction: 자녀 전환, 날짜 선택, 이전/다음 주, 프로필 편집이 모두 동작한다.
-- Holiday logic: 공휴일에는 학교·학원 반복 일정만 제외되며 공휴일 표시는 유지된다.
+- Fonts and typography: 기존 A2Z 서체와 제목·메타 정보 계층을 유지했다.
+- Spacing and layout rhythm: 데스크톱은 2열, 모바일은 1열 목록으로 전환되며 카드 간격은 기존 자녀 일정 목록과 동일한 12px이다.
+- Colors and visual tokens: 기존 자녀 배지 색상과 청록색 편집 액션을 재사용했다.
+- Image quality and asset fidelity: 새 이미지 자산이 필요하지 않아 기존 Lucide 아이콘과 자녀 아바타를 재사용했다.
+- Copy and content: `등록된 자녀 정보`와 저장 개수, 학교 정보 전체가 짧고 구체적으로 표시된다.
 - Browser console errors: 없음.
+
+## Primary interactions tested
+
+- 자녀 정보 탭 진입
+- 저장된 자녀 목록 렌더링
+- 목록의 수정 버튼으로 입력 폼 전환
+- 모바일 및 데스크톱 반응형 배치
 
 final result: passed
