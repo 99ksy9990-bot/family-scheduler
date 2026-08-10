@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Check, Pencil, Plus, RotateCcw, Settings2, Trash2, UserRoundCheck, X } from 'lucide-react'
 
-const PROFILE_COLORS = ['#7fc7e3', '#c9df84', '#ffaaa0', '#9b8bd3', '#e0b866', '#6fb0a8']
-const PROFILE_TONES = ['#ecf8fc', '#f6fae9', '#fff0ed', '#f4f1ff', '#fff8e6', '#edf8f6']
+const PROFILE_COLORS = ['#7fc7e3', '#c9df84', '#ffaaa0', '#6fb0a8', '#6f97d8', '#8bcdb4']
+const PROFILE_TONES = ['#ecf8fc', '#f6fae9', '#fff0ed', '#edf8f6', '#eef3fb', '#eef9f5']
 const EMPTY_FORM = { id: '', name: '', type: 'adult', relation: '', color: PROFILE_COLORS[0], tone: PROFILE_TONES[0], usesShift: false }
 const SHIFT_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
 const SHIFT_MINUTES = ['00', '10', '20', '30', '40', '50']

@@ -735,7 +735,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .child-schedule-copy > span { display: flex; align-items: center; gap: 7px; color: var(--primary); font-size: 12px; font-weight: 700; }
 .child-schedule-copy em { padding: 3px 7px; color: #596268; border-radius: 7px; background: #eef2f3; font-size: 10px; font-style: normal; }
 .child-schedule-copy strong { font-size: 17px; }
-.child-schedule-copy small { overflow: hidden; color: var(--muted); white-space: nowrap; text-overflow: ellipsis; }
+.child-schedule-copy small { color: var(--muted); line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
 .child-schedule-card .event-actions { align-self: center; }
 .child-schedule-list > .empty-state { grid-column: 1 / -1; min-height: 190px; }
 .child-schedule-list > .empty-state span { max-width: none; white-space: nowrap; }
@@ -994,14 +994,13 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .shift-type-row { display: grid; grid-template-columns: 64px minmax(120px, .7fr) minmax(410px, 1.7fr); align-items: end; gap: 8px; }
 .shift-type-row > * { min-width: 0; min-inline-size: 0; max-width: 100%; }
 .modal .shift-type-row input, .modal .shift-type-row select { height: 40px; padding: 0 10px; font-size: 12px; }
-.shift-time-range { min-width: 0; width: 100%; display: grid; grid-template-columns: minmax(130px, 1fr) 9px minmax(130px, 1fr); align-items: end; gap: 3px; }
+.shift-time-range { min-width: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 7px minmax(0, 1fr); align-items: end; gap: 1px; }
 .shift-time-range > label { min-width: 0; display: grid; gap: 4px; margin: 0; }
-.shift-time-range > label:first-child { justify-self: start; }
-.shift-time-range > label:last-child { justify-self: end; }
-.shift-time-range > label:last-child .shift-time-picker { justify-self: end; }
+.shift-time-range > label:first-child, .shift-time-range > label:last-child { width: 100%; justify-self: stretch; }
+.shift-time-range > label:last-child .shift-time-picker { justify-self: stretch; }
 .shift-time-range > label > small { color: var(--muted); font-size: 10px; }
-.shift-time-range > span { padding-bottom: 12px; color: var(--muted); font-size: 13px; }
-.shift-time-picker { min-width: 0; display: grid; grid-template-columns: 48px 39px 39px; gap: 2px; }
+.shift-time-range > span { padding-bottom: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+.shift-time-picker { min-width: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr)); gap: 3px; }
 .modal .shift-time-picker select { min-width: 0; width: 100%; padding: 0 3px !important; appearance: none; -webkit-appearance: none; background-image: none; text-align: center; text-align-last: center; }
 .settings-actions { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
 .shift-worker-switcher { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
@@ -1231,11 +1230,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .undo-toast { min-width: calc(100% - 24px); grid-template-columns: 1fr auto; gap: 7px; padding-left: 13px; font-size: 12px; }
   .undo-toast .toast-close { display: none; }
   input, select, textarea { font-size: 16px !important; }
-}
-
-@media (max-width: 360px) {
-  .shift-time-range { grid-template-columns: minmax(118px, 1fr) 7px minmax(118px, 1fr); }
-  .shift-time-picker { grid-template-columns: 44px 35px 35px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
