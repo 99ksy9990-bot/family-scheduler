@@ -2,53 +2,42 @@
 
 ## Comparison targets
 
-- Source visual truth:
-  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\8F30A439-D390-4263-ADE9-F34698866D10\1-사진-1.jpg`
-  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\8F30A439-D390-4263-ADE9-F34698866D10\2-사진-2.jpg`
-  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\8F30A439-D390-4263-ADE9-F34698866D10\3-사진-3.jpg`
-  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\8F30A439-D390-4263-ADE9-F34698866D10\4-사진-4.jpg`
-- Implementation screenshots:
-  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-home-deduplicated-mobile.png`
-  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-tasks-default-week-mobile.png`
-  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-anniversary-placeholder-mobile.png`
-- Side-by-side comparison evidence:
-  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-home-comparison.png`
-  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-tasks-comparison.png`
-  - `C:\Users\99ksy\.codex\visualizations\2026\08\05\019fd144-df0c-7670-a5d2-0447c45631d2\family-scheduler-anniversary-comparison.png`
+- Source visual truth: `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\F34C1210-F5AC-4A96-B28A-E6234160DB66\1-사진-1.jpg`
+- Local source copy used for normalization: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-shift-settings-reference.jpg`
+- Implementation screenshot: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-shift-settings-mobile-fixed.png`
+- Side-by-side comparison: `C:\Users\99ksy\Documents\패밀리 스케줄러\qa-shift-settings-comparison.png`
 
 ## Viewport and state
 
 - Browser: Codex in-app browser, local Vite app at `http://127.0.0.1:5173/`.
-- Mobile CSS viewport override: 390 x 844.
-- Wide regression viewport: 1280 x 900.
-- Source pixel size: 588 x 1280 per supplied screenshot.
-- Implementation capture size: 375 x 811 at device scale factor 1.
-- Density normalization: each source was downsampled to 375 px width before side-by-side comparison.
-- States: home with a child schedule, tasks on initial load, and anniversary form with an empty birth-year selection.
+- CSS viewport: 390 x 844.
+- Source pixels: 588 x 1280, normalized to 390 x 849.
+- Implementation pixels: 375 x 811, normalized to 390 x 843 for comparison.
+- Density normalization: both images were scaled to 390 px width before comparison.
+- State: family settings open and scrolled to the shift settings section.
 
 ## Findings
 
-- No actionable P0, P1, or P2 findings.
-- Fonts and typography: the anniversary name placeholder and empty year selection both compute to 14 px, `rgb(143, 151, 156)`, and `-0.56px` letter spacing on mobile. A selected year returns to the existing 16 px dark ink style.
-- Spacing and layout rhythm: mobile and 1280 px layouts have no horizontal overflow. Existing card, filter, and form spacing remain unchanged.
-- Colors and visual tokens: placeholder gray and selected dark ink use the existing neutral palette; category colors and active teal filter state are preserved.
-- Image quality and assets: no image assets or icons were added or replaced.
-- Copy and content: child schedules are shown only in the child section; the remaining timeline uses `그 밖의 일정은 없습니다.` when appropriate. Task headings read `긴급`, `장보기`, `집안일`, and `이번 주` is selected by default.
+- No actionable P0, P1, or P2 findings remain.
+- Fonts and typography: the existing Korean type scale and weights are preserved. Time labels remain centered and readable at mobile width.
+- Spacing and layout rhythm: every shift row now uses two equal 139.7 px tracks with a 6 px gap. Measured child controls stay within the 316.6 px section boundary and no control has horizontal scroll overflow.
+- Colors and visual tokens: the existing border, surface, teal action, and muted copy tokens remain unchanged.
+- Image quality and assets: no image or icon assets were added or replaced.
+- Copy and content: codes, shift names, and stored 24-hour values are preserved. Visible time labels use Korean `오전/오후` notation. The OFF row no longer renders meaningless empty time controls.
 
 ## Interaction checks
 
-- Verified a child schedule appears in `자녀 일정` and does not appear again in `오늘의 일정`.
-- Switched the calendar to `자녀표`, returned home, selected `캘린더 보기`, and verified `일반` is active.
-- Verified the initial task period filter is `이번 주`.
-- Verified task category order is `긴급`, `장보기`, `집안일` at mobile and wide widths.
-- Verified task sort code places dated past items after current/future items, with newer past dates before older past dates.
-- Verified empty year and selected year visual states.
-- Browser console errors: none.
+- Closed and reopened the family settings panel successfully.
+- Verified six time selectors render for D, E, and N, and zero time selectors render for OFF.
+- Verified each selector keeps its stored value and exposes an accessible shift-specific label.
+- Verified no shift-setting control has `scrollWidth` larger than its rendered width.
+- Lint and production build pass.
 
 ## Comparison history
 
-- Initial post-fix comparison: no P0/P1/P2 differences remained. Data differences between the supplied captures and local browser state are expected; the requested information architecture, ordering, placeholder styling, and responsive behavior were compared directly.
-- Focused comparison: the anniversary form comparison provides a readable focused view of the name placeholder, year placeholder, and selected field styling; no additional crop was needed.
+- Before: iPhone Safari native time inputs retained an intrinsic width larger than each mobile grid track, causing the start and end controls to overlap and extend beyond the card.
+- Fix: replaced native time inputs with bounded single-select controls backed by the same `HH:mm` data, added explicit mobile grid classes, and removed the OFF time row.
+- After: the focused side-by-side comparison shows aligned two-column rows with visible gaps and no overlap or clipping.
 
 ## Follow-up polish
 

@@ -4,6 +4,28 @@ import { Check, Pencil, Plus, RotateCcw, Settings2, Trash2, UserRoundCheck, X } 
 const PROFILE_COLORS = ['#7fc7e3', '#c9df84', '#ffaaa0', '#9b8bd3', '#e0b866', '#6fb0a8']
 const PROFILE_TONES = ['#ecf8fc', '#f6fae9', '#fff0ed', '#f4f1ff', '#fff8e6', '#edf8f6']
 const EMPTY_FORM = { id: '', name: '', type: 'adult', relation: '', color: PROFILE_COLORS[0], tone: PROFILE_TONES[0], usesShift: false }
+const SHIFT_TIME_VALUES = Array.from({ length: 24 * 12 }, (_, index) => {
+  const hour = Math.floor(index / 12)
+  const minute = (index % 12) * 5
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+})
+
+const shiftTimeLabel = (value) => {
+  const [hourValue, minute = '00'] = value.split(':')
+  const hour = Number(hourValue)
+  const meridiem = hour < 12 ? '오전' : '오후'
+  const displayHour = hour % 12 || 12
+  return `${meridiem} ${displayHour}:${minute}`
+}
+
+function ShiftTimeSelect({ label, value, onChange, disabled, className }) {
+  return (
+    <select className={`shift-time-select ${className}`} aria-label={label} value={value || ''} onChange={onChange} disabled={disabled}>
+      <option value="">시간 없음</option>
+      {SHIFT_TIME_VALUES.map((time) => <option key={time} value={time}>{shiftTimeLabel(time)}</option>)}
+    </select>
+  )
+}
 
 const profileLabel = (profile) => profile.type === 'child' ? '자녀' : profile.type === 'adult' ? '성인' : '가족'
 
@@ -126,10 +148,12 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
           <p>근무표 사용 구성원이 있을 때만 홈과 캘린더에 근무표가 표시됩니다.</p>
           <div className="shift-type-settings">
             {workSettings.shiftTypes.map((shift) => <div className="shift-type-row" key={shift.id}>
-              <input aria-label={`${shift.label} 코드`} value={shift.code} maxLength="5" onChange={(event) => updateShiftType(shift.id, 'code', event.target.value.toUpperCase())} disabled={!canEdit} />
-              <input aria-label={`${shift.label} 이름`} value={shift.label} onChange={(event) => updateShiftType(shift.id, 'label', event.target.value)} disabled={!canEdit} />
-              <input aria-label={`${shift.label} 시작 시간`} type="time" value={shift.start || ''} onChange={(event) => updateShiftType(shift.id, 'start', event.target.value)} disabled={!canEdit || shift.id === 'off'} />
-              <input aria-label={`${shift.label} 종료 시간`} type="time" value={shift.end || ''} onChange={(event) => updateShiftType(shift.id, 'end', event.target.value)} disabled={!canEdit || shift.id === 'off'} />
+              <input className="shift-code-input" aria-label={`${shift.label} 코드`} value={shift.code} maxLength="5" onChange={(event) => updateShiftType(shift.id, 'code', event.target.value.toUpperCase())} disabled={!canEdit} />
+              <input className="shift-name-input" aria-label={`${shift.label} 이름`} value={shift.label} onChange={(event) => updateShiftType(shift.id, 'label', event.target.value)} disabled={!canEdit} />
+              {shift.id !== 'off' && <>
+                <ShiftTimeSelect className="shift-start-select" label={`${shift.label} 시작 시간`} value={shift.start} onChange={(event) => updateShiftType(shift.id, 'start', event.target.value)} disabled={!canEdit} />
+                <ShiftTimeSelect className="shift-end-select" label={`${shift.label} 종료 시간`} value={shift.end} onChange={(event) => updateShiftType(shift.id, 'end', event.target.value)} disabled={!canEdit} />
+              </>}
             </div>)}
           </div>
         </section>
