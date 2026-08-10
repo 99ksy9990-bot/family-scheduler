@@ -775,11 +775,15 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .event-date-field .field-help { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.4; }
 .event-date-field .event-date-error { margin: 7px 0 0; }
 .modal-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-time-row.single { grid-template-columns: 1fr; }
 .modal-time-row .time-picker { grid-template-columns: 1.1fr .85fr .85fr; gap: 5px; }
 .modal-time-row select { font-size: 12px; }
 .all-day-field { margin-bottom: 17px !important; }
 .event-time-mode { width: 100%; min-height: 48px; padding: 4px; }
 .event-time-mode button { min-height: 38px; flex: 1; }
+.modal .optional-end-time-toggle { margin: -6px 0 12px; }
+.optional-end-time-toggle strong { font-size: 13px; }
+.optional-end-time-toggle small { font-size: 11px; line-height: 1.35; }
 .modal legend { margin-bottom: 9px; }
 .member-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .member-picker button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 9px 4px; color: var(--muted); border: 1px solid var(--line); border-radius: 14px; background: white; font-size: 12px; }

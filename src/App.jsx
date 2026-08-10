@@ -1573,6 +1573,7 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   const [time, setTime] = useState(item?.time || defaults.time || '오전 9:00')
   const [end, setEnd] = useState(item?.end || defaults.end || '오전 10:00')
   const [hasTime, setHasTime] = useState(() => Boolean((item?.time || defaults.time) && (item?.time || defaults.time) !== '종일'))
+  const [hasEndTime, setHasEndTime] = useState(() => (item || defaults.time || defaults.end) ? Boolean(item?.end || defaults.end) : true)
   const [location, setLocation] = useState(item?.location || defaults.location || '')
   const [member, setMember] = useState(item?.member || defaults.member || activeProfiles[0]?.id || FAMILY_MEMBER.id)
   const [category, setCategory] = useState(item?.category || defaults.category || '집안일')
@@ -1596,8 +1597,8 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
     }
     if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
     else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, reminder: hasTime ? reminder : 'none' })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime ? end : '', location, member, reminder: hasTime ? reminder : 'none', type: 'family' })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, reminder: hasTime ? reminder : 'none' })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, reminder: hasTime ? reminder : 'none', type: 'family' })
     onAfterSave?.()
     onClose()
   }
@@ -1626,9 +1627,10 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
           <button type="button" className={!hasTime ? 'active' : ''} aria-pressed={!hasTime} onClick={() => setHasTime(false)}>종일</button>
           <button type="button" className={hasTime ? 'active' : ''} aria-pressed={hasTime} onClick={() => setHasTime(true)}>시간 지정</button>
         </div></fieldset>}
-        {!isTask && hasTime && <div className="modal-time-row">
+        {!isTask && hasTime && <label className="check-row optional-end-time-toggle"><input type="checkbox" checked={hasEndTime} onChange={(event) => setHasEndTime(event.target.checked)} /><span><strong>종료 시간 지정</strong><small>끄면 시작 시간만 일정에 표시됩니다.</small></span></label>}
+        {!isTask && hasTime && <div className={`modal-time-row ${hasEndTime ? '' : 'single'}`}>
           <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
-          <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>
+          {hasEndTime && <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>}
         </div>}
         {!isTask && hasTime && <label>앱 알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="30-minutes">30분 전</option></select></label>}
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
