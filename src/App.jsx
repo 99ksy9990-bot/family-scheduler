@@ -646,6 +646,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   const { profiles } = useFamilyProfiles()
   const member = memberForId(event.member, profiles)
   const hasActions = Boolean(onEdit || onDelete || onDiscuss)
+  const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
   const actions = hasActions && <div className="event-actions">
@@ -660,7 +661,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
         <div className="event-copy">
           <div className="event-meta-row">
             <Avatar memberId={event.member} small />
-            <span className="event-time">{event.time || '종일'}</span>
+            <span className="event-time">{timeLabel}</span>
             {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
           </div>
           <div className="event-title-row">
@@ -678,7 +679,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
 
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-      <div className="event-time">{event.time || '종일'}</div>
+      <div className="event-time">{timeLabel}</div>
       <Avatar memberId={event.member} small />
       <div className="event-copy">
         <div className="event-title-row">
