@@ -601,10 +601,16 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(weekStart, index)
     const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
+    const dayWorkerShifts = workSettings.enabled ? shiftWorkers.flatMap((worker) => {
+      const shift = shifts.find((item) => item.date === iso(date) && item.member === worker.id)
+      const option = shiftOptions.find((item) => item.id === shift?.shift)
+      return option ? [{ worker, option }] : []
+    }) : []
     return {
       date,
       generalEvents: dayEvents.filter((event) => !isChildCalendarEvent(event)),
       childEvents: dayEvents.filter((event) => isChildCalendarEvent(event)),
+      workerShifts: dayWorkerShifts,
     }
   })
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
@@ -693,7 +699,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <button className="text-button" onClick={openCalendar}>전체 캘린더 <ChevronRight size={16} /></button>
         </div>
         <div className="home-week-strip">
-          {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents }) => {
+          {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents, workerShifts: dayWorkerShifts }) => {
             const isToday = iso(date) === iso(today)
             const openDay = () => openCalendarDate(date, 'all')
             const dayHolidays = dayGeneralEvents.filter((event) => event.holiday)
@@ -701,10 +707,12 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const childCount = dayChildEvents.length
             const totalCount = familyCount + childCount
             const conflictCount = overlappingEventCount([...dayGeneralEvents.filter((event) => !event.holiday), ...dayChildEvents])
-            return <button key={iso(date)} className={isToday ? 'today' : ''} onClick={openDay} aria-label={`${formatLongDate(date)}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
-              <span>{WEEKDAY_SHORT[date.getDay()]}</span>
-              <strong>{date.getDate()}</strong>
-              <span className="week-counts"><em>가족 {familyCount}</em><em>자녀 {childCount}</em></span>
+            const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
+            const shiftCodes = dayWorkerShifts.map(({ option }) => option.code).join('·')
+            return <button key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ''}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
+              <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span></strong>
+              <span className="week-shifts" aria-hidden="true">{dayWorkerShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={`week-shift-code ${option.color}`}>{option.code}</i>)}{dayWorkerShifts.length > 2 && <i className="week-shift-code more">+{dayWorkerShifts.length - 2}</i>}</span>
+              <span className="week-counts"><em>가족 {familyCount}</em><b aria-hidden="true">/</b><em>자녀 {childCount}</em></span>
               <small className="week-day-detail">{[dayHolidays[0]?.title, conflictCount ? `시간 겹침 ${conflictCount}` : '', totalCount > 2 ? `+${totalCount - 2}개` : totalCount ? `일정 ${totalCount}개` : dayHolidays.length ? '일정 0개' : '비어 있음'].filter(Boolean).join(' · ')}</small>
             </button>
           })}

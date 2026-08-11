@@ -341,10 +341,20 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .home-week-strip button.today { color: white; border-color: var(--primary); background: var(--primary); box-shadow: 0 6px 14px rgba(36,101,126,.18); }
 .home-week-strip span { font-size: 11px; font-weight: 700; }
 .home-week-strip strong { font-size: 20px; }
+.home-week-strip .week-date-label { display: inline-flex; align-items: baseline; gap: 1px; }
+.home-week-strip .week-date-label span { font-size: .58em; }
+.home-week-strip .week-date-label.sunday { color: #d4514b; }
+.home-week-strip .week-date-label.saturday { color: #376fc3; }
+.home-week-strip .week-shifts { display: flex; min-height: 18px; align-items: center; justify-content: center; gap: 3px; }
+.home-week-strip .week-shift-code { min-width: 22px; padding: 3px 5px; border-radius: 7px; font-size: 9px; font-style: normal; font-weight: 800; line-height: 1; }
+.home-week-strip .week-shift-code.sage { color: #536d22; background: #dceeb5; }
+.home-week-strip .week-shift-code.blue { color: #155f79; background: #cceaf4; }
+.home-week-strip .week-shift-code.navy { color: white; background: #3d456d; }
+.home-week-strip .week-shift-code.lavender, .home-week-strip .week-shift-code.more { color: #555d70; background: #e9e8fb; }
 .home-week-strip em { font-size: 10px; font-style: normal; font-weight: 700; opacity: .78; }
 .home-week-strip small { width: 100%; overflow: hidden; font-size: 10px; white-space: nowrap; text-overflow: ellipsis; }
 .home-week-strip .week-counts { display: flex; justify-content: center; gap: 5px; width: 100%; }
-.home-week-strip .week-counts em + em { padding-left: 5px; border-left: 1px solid currentColor; }
+.home-week-strip .week-counts b { font-size: 10px; opacity: .48; }
 
 .event-card {
   --event: var(--sky);
@@ -1300,9 +1310,12 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .home-week-strip { grid-template-columns: repeat(7, minmax(68px, 1fr)); gap: 5px; overflow-x: auto; padding-bottom: 5px; scroll-snap-type: x proximity; }
   .home-week-strip button { min-height: 84px; padding: 8px 4px; scroll-snap-align: start; }
   .home-week-strip strong { font-size: 17px; }
-  .home-week-strip .week-counts { align-items: stretch; flex-direction: column; flex-wrap: nowrap; gap: 0; padding-top: 3px; border-top: 1px solid currentColor; font-family: 'A2Z', sans-serif; white-space: nowrap; }
-  .home-week-strip .week-counts em { width: 100%; padding: 2px 0; font-size: 8px; text-align: center; }
-  .home-week-strip .week-counts em + em { margin: 0; padding: 2px 0; border: 0; }
+  .home-week-strip .week-date-label { font-size: 17px; }
+  .home-week-strip .week-shifts { min-height: 16px; }
+  .home-week-strip .week-shift-code { min-width: 19px; padding: 2px 4px; font-size: 8px; }
+  .home-week-strip .week-counts { align-items: center; flex-direction: row; flex-wrap: nowrap; gap: 3px; padding: 0; border: 0; font-family: 'A2Z', sans-serif; white-space: nowrap; }
+  .home-week-strip .week-counts em { width: auto; padding: 0; font-size: 8px; text-align: center; }
+  .home-week-strip .week-counts b { font-size: 8px; }
   .home-week-strip .week-day-detail { display: none; }
   .today-summary-note { align-items: flex-start; }
   .today-summary-links { gap: 3px 7px; }

@@ -76,6 +76,10 @@ test('모바일에서도 주요 내비게이션이 보인다', async ({ page }, 
 
 test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('mobile'), '모바일 프로젝트 전용 확인')
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'week-shift', date: '2026-08-11', member: 'emma', shift: 'day' }]))
+  })
+  await page.reload()
   const layout = await page.evaluate(() => {
     const rect = (selector) => document.querySelector(selector)?.getBoundingClientRect()
     const today = rect('.home-page > .today-card')
@@ -93,18 +97,24 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
 
   const weekSummaryLayout = await page.locator('.home-week-strip button').first().evaluate((button) => {
     const counts = [...button.querySelectorAll('.week-counts em')]
-    const countGroup = button.querySelector('.week-counts')
     return {
       count: counts.length,
-      stacked: counts[1].getBoundingClientRect().top >= counts[0].getBoundingClientRect().bottom,
-      dividerWidth: getComputedStyle(countGroup).borderTopWidth,
-      childDividerWidth: getComputedStyle(counts[1]).borderTopWidth,
+      sameLine: Math.abs(counts[0].getBoundingClientRect().top - counts[1].getBoundingClientRect().top) < 1,
+      summaryText: button.querySelector('.week-counts').textContent,
       detailDisplay: getComputedStyle(button.querySelector('.week-day-detail')).display,
       fontFamily: getComputedStyle(button.querySelector('.week-counts')).fontFamily,
     }
   })
-  expect(weekSummaryLayout).toMatchObject({ count: 2, stacked: true, dividerWidth: '1px', childDividerWidth: '0px', detailDisplay: 'none' })
+  expect(weekSummaryLayout).toMatchObject({ count: 2, sameLine: true, summaryText: '가족 0/자녀 0', detailDisplay: 'none' })
   expect(weekSummaryLayout.fontFamily).toContain('A2Z')
+
+  const sunday = page.locator('.home-week-strip button.sunday')
+  const saturday = page.locator('.home-week-strip button.saturday')
+  await expect(sunday.locator('.week-date-label')).toHaveText('9(일)')
+  await expect(saturday.locator('.week-date-label')).toHaveText('15(토)')
+  await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(212, 81, 75)')
+  await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(55, 111, 195)')
+  await expect(page.locator('.home-week-strip button.today .week-shift-code')).toHaveText('D')
 })
 
 test('캘린더 오늘 날짜 숫자는 다른 날짜와 같은 크기로 표시한다', async ({ page }) => {
