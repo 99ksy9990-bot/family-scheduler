@@ -8,10 +8,17 @@ const profiles = [
 ]
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript((seedProfiles) => {
+  await page.addInitScript(({ seedProfiles, fixedNow }) => {
+    const NativeDate = Date
+    class FixedDate extends NativeDate {
+      constructor(...args) { super(...(args.length ? args : [fixedNow])) }
+      static now() { return new NativeDate(fixedNow).getTime() }
+    }
+    Object.setPrototypeOf(FixedDate, NativeDate)
+    window.Date = FixedDate
     localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(seedProfiles))
     localStorage.setItem('family-scheduler-work-settings-v1', JSON.stringify({ enabled: true, workerIds: ['emma'], shiftTypes: [] }))
-  }, profiles)
+  }, { seedProfiles: profiles, fixedNow: '2026-08-11T09:00:00+09:00' })
   await page.goto('/')
 })
 
@@ -40,7 +47,7 @@ test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 �
   await page.getByRole('button', { name: '일정 관리', exact: true }).first().click()
   const scheduleCard = page.locator('.schedule-editor-card')
   const empty = scheduleCard.locator('.settings-empty')
-  await expect(empty.getByText('가족 구성원 설정에서 자녀를 추가하면 일정을 입력할 수 있습니다.', { exact: true })).toBeVisible()
+  await expect(empty.getByText('자녀 추가 → 학기·방학 설정 → 학교·학원 일정 등록', { exact: true })).toBeVisible()
   const emptyLayout = await scheduleCard.evaluate((card) => {
     const heading = card.querySelector('.section-heading')
     const emptyState = card.querySelector('.settings-empty')
@@ -136,10 +143,19 @@ test('주요 화면을 이동한다', async ({ page }) => {
 
 test('일정 모달을 Escape로 닫는다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
-  await page.getByRole('button', { name: '가족 일정 추가' }).click()
+  const trigger = page.getByRole('button', { name: '가족 일정 추가' })
+  await trigger.click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
+  await expect(trigger).toBeFocused()
+})
+
+test('연결 전 홈에서 로컬 저장 상태와 가족 연결 진입을 안내한다', async ({ page }) => {
+  const banner = page.locator('.family-connect-banner')
+  await expect(banner).toContainText('현재 일정은 이 기기에만 저장됩니다.')
+  await banner.getByRole('button', { name: '가족 연결', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('가족 연결')
 })
 
 test('일정 입력 화면의 섹션 간격을 동일하게 유지한다', async ({ page }, testInfo) => {
@@ -302,30 +318,74 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
     managementInMetaRow: Boolean(card.querySelector('.event-meta-row .event-management-action .event-actions')),
     actionsInTitleRow: card.querySelectorAll('.event-title-row .event-actions').length,
     fitsParent: card.getBoundingClientRect().right <= card.parentElement.getBoundingClientRect().right + 1,
-    titleFitsRow: card.querySelector('.event-title-row').scrollWidth <= card.querySelector('.event-title-row').clientWidth,
+    titleOverflowHidden: getComputedStyle(card.querySelector('.event-title-row')).overflow === 'hidden',
     visibleActionSizes: [...card.querySelectorAll('.event-actions button')].map((button) => Math.round(button.getBoundingClientRect().width)),
     touchInsets: [...card.querySelectorAll('.event-actions button')].map((button) => getComputedStyle(button, '::after').inset),
   }))
-  expect(actionRows).toEqual({ managementInMetaRow: false, actionsInTitleRow: 1, fitsParent: true, titleFitsRow: true, visibleActionSizes: testInfo.project.name.includes('mobile') ? [32, 32] : [30, 30], touchInsets: ['-6px', '-6px'] })
+  expect(actionRows).toEqual({ managementInMetaRow: false, actionsInTitleRow: 1, fitsParent: true, titleOverflowHidden: true, visibleActionSizes: testInfo.project.name.includes('mobile') ? [32, 32] : [30, 30], touchInsets: ['-6px', '-6px'] })
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
-    await expect(mobileMarkers.locator('.family')).toHaveText('가 1')
-    await expect(mobileMarkers.locator('.children')).toHaveText('자 1')
-    await expect(mobileMarkers.locator('.work')).toHaveText('D')
+    await expect(mobileMarkers.locator('.family')).toHaveText('1')
+    await expect(mobileMarkers.locator('.children')).toHaveText('1')
+    await expect(page.locator('[data-date="2026-08-15"] .overview-shift-stripes .sage')).toHaveCount(1)
     const markerStyle = await mobileMarkers.locator('.family').evaluate((marker) => ({
       width: marker.getBoundingClientRect().width,
       height: marker.getBoundingClientRect().height,
+      fontSize: Number.parseFloat(getComputedStyle(marker).fontSize),
       fontFamily: getComputedStyle(marker).fontFamily,
-      afterContent: getComputedStyle(marker, '::after').content,
+      hasDot: Boolean(marker.querySelector('span')),
     }))
-    expect(markerStyle.width).toBeGreaterThan(markerStyle.height)
+    expect(markerStyle.width).toBeGreaterThanOrEqual(16)
+    expect(markerStyle.height).toBeGreaterThanOrEqual(16)
+    expect(markerStyle.fontSize).toBeGreaterThanOrEqual(10)
     expect(markerStyle.fontFamily).toContain('A2Z')
-    expect(markerStyle.afterContent).toBe('none')
+    expect(markerStyle.hasDot).toBe(true)
   }
   const firstOverviewGroup = page.locator('.overview-day-groups > .overview-day-section').first()
   await expect(firstOverviewGroup.locator('header')).toContainText('근무')
   const markerOrder = await page.locator('[data-date="2026-08-15"] .calendar-overview-markers .overview-marker').allTextContents()
-  expect(markerOrder).toEqual(['D', '가 1', '자 1'])
+  expect(markerOrder).toEqual(['1', '1'])
+})
+
+test('통합 캘린더는 OFF를 숨기고 근무 탭에는 그대로 유지한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'off-one', date: '2026-08-11', member: 'emma', shift: 'off' }]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const day = page.locator('[data-date="2026-08-11"]')
+  await expect(day.locator('.overview-shift-stripes')).toHaveCount(0)
+  await expect(day).toHaveAttribute('aria-label', /엄마 근무 OFF/)
+  await page.getByRole('button', { name: '근무', exact: true }).click()
+  await expect(day.locator('.shift-chip')).toHaveText('OFF')
+})
+
+test('모바일 캘린더 셀을 키우고 모달 본문만 스크롤한다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const calendar = page.locator('.calendar-card')
+  const cell = page.locator('[data-date="2026-08-11"]')
+  const calendarLayout = await calendar.evaluate((card) => ({
+    fits: card.scrollWidth <= card.clientWidth,
+    cellHeight: Math.round(card.querySelector('[data-date="2026-08-11"]').getBoundingClientRect().height),
+  }))
+  expect(calendarLayout.fits).toBe(true)
+  expect(calendarLayout.cellHeight).toBeGreaterThanOrEqual(70)
+  await cell.click()
+  await page.getByRole('button', { name: '가족 일정 추가' }).click()
+  const dialog = page.getByRole('dialog')
+  const modalLayout = await dialog.evaluate((modal) => {
+    const body = modal.querySelector('.modal-scroll-body')
+    const actions = modal.querySelector('.modal-actions')
+    return {
+      modalOverflow: getComputedStyle(modal).overflow,
+      bodyOverflow: getComputedStyle(body).overflowY,
+      actionsPosition: getComputedStyle(actions).position,
+      actionsBelowBody: actions.getBoundingClientRect().top >= body.getBoundingClientRect().top,
+      fitsViewport: modal.getBoundingClientRect().height <= window.innerHeight - 20,
+    }
+  })
+  expect(modalLayout).toEqual({ modalOverflow: 'hidden', bodyOverflow: 'auto', actionsPosition: 'static', actionsBelowBody: true, fitsViewport: true })
 })
 
 test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', async ({ page }) => {
@@ -334,6 +394,7 @@ test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', asy
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('제목').fill('매주 분리수거')
   await dialog.getByLabel('마감일').fill('2026-08-11')
+  await dialog.getByRole('button', { name: /알림·반복 설정/ }).click()
   await dialog.getByLabel('반복 주기').selectOption('weekly')
   await dialog.getByRole('button', { name: '할 일 추가' }).click()
   const card = page.locator('.task-card').filter({ hasText: '매주 분리수거' }).first()

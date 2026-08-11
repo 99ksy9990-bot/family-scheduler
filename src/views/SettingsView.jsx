@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Bell, ChevronRight, Cloud, Download, Settings2, UserRoundCheck, Users } from 'lucide-react'
 
 const PUSH_STATUS_COPY = {
@@ -10,6 +11,7 @@ const PUSH_STATUS_COPY = {
 }
 
 export default function SettingsView({ appVersion, profiles, workSettings, sync, pushStatus, pushError, onOpenProfiles, onOpenFamily, onEnableNotifications }) {
+  const [notificationHelpOpen, setNotificationHelpOpen] = useState(false)
   const activeProfiles = profiles.filter((profile) => profile.active !== false)
   const workerCount = activeProfiles.filter((profile) => workSettings.workerIds?.includes(profile.id)).length
   const connected = Boolean(sync.family)
@@ -19,7 +21,14 @@ export default function SettingsView({ appVersion, profiles, workSettings, sync,
         : sync.syncStatus === 'error' ? '동기화 확인 필요' : '가족 일정 동기화됨'
     : sync.session ? '가족방 연결 필요' : '로그인·가족 연결 필요'
   const [notificationTitle, notificationDetail] = PUSH_STATUS_COPY[pushStatus] || PUSH_STATUS_COPY.idle
-  const notificationActionable = !['enabled', 'enabling', 'denied', 'unsupported'].includes(pushStatus)
+  const notificationActionable = !['enabled', 'enabling', 'unsupported'].includes(pushStatus)
+  const openNotificationAction = () => {
+    if (pushStatus === 'denied') {
+      setNotificationHelpOpen((current) => !current)
+      return
+    }
+    if (notificationActionable) onEnableNotifications()
+  }
 
   return (
     <div className="page settings-page">
@@ -63,11 +72,16 @@ export default function SettingsView({ appVersion, profiles, workSettings, sync,
 
         <section className="settings-hub-card notification-settings-card card">
           <div className="section-heading"><div><span className="eyebrow">기기별 설정</span><h2>알림</h2><p>사용 중인 기기에서 가족 일정 알림을 받습니다.</p></div><Bell /></div>
-          <button className={`settings-hub-row notification-row ${pushStatus === 'enabled' ? 'enabled' : ''}`} onClick={() => notificationActionable && onEnableNotifications()} aria-disabled={!notificationActionable}>
+          <button className={`settings-hub-row notification-row ${pushStatus === 'enabled' ? 'enabled' : ''}`} onClick={openNotificationAction} aria-disabled={!notificationActionable} aria-expanded={pushStatus === 'denied' ? notificationHelpOpen : undefined} aria-controls={pushStatus === 'denied' ? 'notification-permission-help' : undefined}>
             <span className="settings-hub-icon sky"><Bell /></span>
             <span><strong>{notificationTitle}</strong><small>{pushError || notificationDetail}</small></span>
-            {notificationActionable ? <ChevronRight /> : <em className={pushStatus === 'enabled' ? 'success' : ''}>{pushStatus === 'enabled' ? '사용 중' : '상태 확인'}</em>}
+            {notificationActionable ? (pushStatus === 'denied' ? <em>설정 방법 보기</em> : <ChevronRight />) : <em className={pushStatus === 'enabled' ? 'success' : ''}>{pushStatus === 'enabled' ? '사용 중' : '상태 확인'}</em>}
           </button>
+          {pushStatus === 'denied' && notificationHelpOpen && <div id="notification-permission-help" className="notification-permission-help" role="region" aria-label="알림 권한 설정 방법">
+            <strong>iPhone에서 알림을 다시 허용하려면</strong>
+            <ol><li>홈 화면 앱: 설정 → 알림 → Family Scheduler → 알림 허용</li><li>Safari: 설정 → 앱 → Safari → 알림에서 이 사이트를 허용</li></ol>
+            <small>설정을 바꾼 뒤 앱으로 돌아오면 알림 상태를 다시 확인합니다.</small>
+          </div>}
         </section>
       </div>
     </div>

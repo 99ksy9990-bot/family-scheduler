@@ -9,7 +9,7 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
-export function useModalAccessibility(open, onClose) {
+export function useModalAccessibility(open, onClose, returnFocusRef) {
   const dialogRef = useRef(null)
   const closeRef = useRef(onClose)
 
@@ -19,7 +19,7 @@ export function useModalAccessibility(open, onClose) {
 
   useEffect(() => {
     if (!open) return undefined
-    const previouslyFocused = document.activeElement
+    const previouslyFocused = returnFocusRef?.current || document.activeElement
     const dialog = dialogRef.current
     const initialFocus = dialog?.querySelector('[autofocus], [data-autofocus], button, input, select, textarea')
     window.setTimeout(() => (initialFocus || dialog)?.focus(), 0)
@@ -51,9 +51,11 @@ export function useModalAccessibility(open, onClose) {
     document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+      window.requestAnimationFrame(() => {
+        if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) previouslyFocused.focus()
+      })
     }
-  }, [open])
+  }, [open, returnFocusRef])
 
   return dialogRef
 }
