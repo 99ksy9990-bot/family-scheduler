@@ -96,6 +96,18 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
   await dialog.getByLabel('제목').fill('체험 학습')
   await dialog.getByRole('button', { name: '일정 추가' }).click()
   await expect(page.getByText('체험 학습', { exact: true })).toBeVisible()
+  const directEventLayout = await page.locator('.child-direct-events .calendar-summary').evaluate((card) => ({
+    clientWidth: card.clientWidth,
+    scrollWidth: card.scrollWidth,
+    metaDisplay: getComputedStyle(card.querySelector('.event-meta-row')).display,
+    titleDisplay: getComputedStyle(card.querySelector('.event-title-row')).display,
+    avatarLeft: card.querySelector('.avatar')?.getBoundingClientRect().left,
+    titleLeft: card.querySelector('.event-title-row')?.getBoundingClientRect().left,
+  }))
+  expect(directEventLayout.scrollWidth).toBeLessThanOrEqual(directEventLayout.clientWidth)
+  expect(directEventLayout.metaDisplay).toBe('flex')
+  expect(directEventLayout.titleDisplay).toBe('flex')
+  expect(Math.abs(directEventLayout.avatarLeft - directEventLayout.titleLeft)).toBeLessThan(1)
 })
 
 test('근무 카드 포커스 테두리는 셀 안쪽에 표시하고 입력 일수 문구는 숨긴다', async ({ page }) => {
