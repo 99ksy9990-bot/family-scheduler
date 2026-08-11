@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Check, Pencil, Plus, RotateCcw, Settings2, Trash2, UserRoundCheck, X } from 'lucide-react'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
+import { useAppDialog } from '../hooks/useAppDialog'
 
 const PROFILE_COLORS = ['#7fc7e3', '#c9df84', '#ffaaa0', '#6fb0a8', '#6f97d8', '#8bcdb4']
 const PROFILE_TONES = ['#ecf8fc', '#f6fae9', '#fff0ed', '#edf8f6', '#eef3fb', '#eef9f5']
@@ -38,6 +40,8 @@ function ShiftTimePicker({ label, value, onChange, disabled }) {
 const profileLabel = (profile) => profile.type === 'child' ? '자녀' : profile.type === 'adult' ? '성인' : '가족'
 
 export default function FamilySettingsPanel({ open, onClose, profiles, setProfiles, workSettings, setWorkSettings, canEdit }) {
+  const { confirm } = useAppDialog()
+  const dialogRef = useModalAccessibility(open, onClose)
   const [form, setForm] = useState(EMPTY_FORM)
   const [message, setMessage] = useState('')
   const activeProfiles = useMemo(() => profiles.filter((profile) => profile.active !== false), [profiles])
@@ -87,8 +91,8 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
     resetForm()
   }
 
-  const archiveProfile = (profile) => {
-    if (!canEdit || !window.confirm(`‘${profile.name}’을 가족 목록에서 숨길까요? 기존 일정은 보존됩니다.`)) return
+  const archiveProfile = async (profile) => {
+    if (!canEdit || !await confirm(`‘${profile.name}’을 가족 목록에서 숨길까요? 기존 일정은 보존됩니다.`)) return
     setProfiles((current) => current.map((item) => item.id === profile.id ? { ...item, active: false } : item))
     setWorkSettings((current) => ({ ...current, workerIds: current.workerIds.filter((id) => id !== profile.id) }))
     if (form.id === profile.id) resetForm()
@@ -108,7 +112,7 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
 
   return (
     <div className="modal-backdrop family-settings-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closePanel()}>
-      <section className="modal family-settings-panel" role="dialog" aria-modal="true" aria-labelledby="family-settings-title">
+      <section ref={dialogRef} tabIndex="-1" className="modal family-settings-panel" role="dialog" aria-modal="true" aria-labelledby="family-settings-title">
         <div className="modal-heading">
           <div><span className="eyebrow">가족별 맞춤 설정</span><h2 id="family-settings-title">가족 구성원 관리</h2></div>
           <button className="icon-button" onClick={closePanel} aria-label="가족 구성원 설정 닫기"><X /></button>

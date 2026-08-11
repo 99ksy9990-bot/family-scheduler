@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Check, Cloud, Copy, Download, History, LogOut, ShieldCheck, Upload, Users, X } from 'lucide-react'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
+import { useAppDialog } from '../hooks/useAppDialog'
 
 const STATUS_LABELS = {
   local: '이 기기에 저장 중',
@@ -17,6 +19,8 @@ const formatSyncTime = (value) => value ? new Intl.DateTimeFormat('ko-KR', {
 }).format(new Date(value)) : '아직 동기화되지 않음'
 
 export default function FamilySyncPanel({ open, onClose, sync, onExport, onImport, profiles = [], profileLinks = {}, onLinkProfile }) {
+  const { confirm } = useAppDialog()
+  const dialogRef = useModalAccessibility(open, onClose)
   const [authMode, setAuthMode] = useState('signin')
   const [familyMode, setFamilyMode] = useState('create')
   const [email, setEmail] = useState('')
@@ -54,7 +58,7 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
 
   return (
     <div className="modal-backdrop family-sync-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="modal family-sync-panel" role="dialog" aria-modal="true" aria-labelledby="family-sync-title">
+      <section ref={dialogRef} tabIndex="-1" className="modal family-sync-panel" role="dialog" aria-modal="true" aria-labelledby="family-sync-title">
         <div className="modal-heading">
           <div><span className="eyebrow">가족 계정과 안전한 백업</span><h2 id="family-sync-title">가족 연결</h2></div>
           <button className="icon-button" onClick={onClose} aria-label="가족 연결 닫기"><X /></button>
@@ -119,7 +123,7 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
           </div>
           {sync.family.history?.length > 0 && <div className="backup-history">
             <div className="section-heading"><h3>자동 백업 기록</h3><span>최근 {sync.family.history.length}개</span></div>
-            {sync.family.history.map((backup) => <div className="backup-history-row" key={backup.id}><span><strong>버전 {backup.version}</strong><small>{new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(backup.created_at))}</small></span>{sync.family.membership.can_edit && <button disabled={busy} onClick={() => window.confirm('이 시점의 가족 일정으로 복원할까요? 현재 상태도 자동 백업됩니다.') && run(() => sync.restoreVersion(backup.id))}><History /> 복원</button>}</div>)}
+            {sync.family.history.map((backup) => <div className="backup-history-row" key={backup.id}><span><strong>버전 {backup.version}</strong><small>{new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(backup.created_at))}</small></span>{sync.family.membership.can_edit && <button disabled={busy} onClick={async () => { if (await confirm('이 시점의 가족 일정으로 복원할까요? 현재 상태도 자동 백업됩니다.')) run(() => sync.restoreVersion(backup.id)) }}><History /> 복원</button>}</div>)}
           </div>}
           <button className="sign-out-button" onClick={() => run(sync.signOut)}><LogOut /> 로그아웃</button>
         </>}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, CheckSquare, Download, FileText, Image, MessageCircle, Paperclip, Plus, Send, Trash2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
 
 const formatDateTime = (value) => new Intl.DateTimeFormat('ko-KR', {
   month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -9,6 +10,7 @@ const formatDateTime = (value) => new Intl.DateTimeFormat('ko-KR', {
 const safeSegment = (value) => value.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 100)
 
 export default function EventCollaborationPanel({ event, family, session, canEdit, onClose }) {
+  const dialogRef = useModalAccessibility(Boolean(event), onClose)
   const [comments, setComments] = useState([])
   const [checklist, setChecklist] = useState([])
   const [attachments, setAttachments] = useState([])
@@ -145,7 +147,7 @@ export default function EventCollaborationPanel({ event, family, session, canEdi
 
   return (
     <div className="modal-backdrop collaboration-backdrop" role="presentation" onMouseDown={(click) => click.target === click.currentTarget && onClose()}>
-      <section className="modal collaboration-panel" role="dialog" aria-modal="true" aria-labelledby="collaboration-title">
+      <section ref={dialogRef} tabIndex="-1" className="modal collaboration-panel" role="dialog" aria-modal="true" aria-labelledby="collaboration-title">
         <div className="modal-heading">
           <div><span className="eyebrow">일정별 대화와 준비</span><h2 id="collaboration-title">{event.title}</h2><small>{event.date} · {event.time || '종일'}{event.location ? ` · ${event.location}` : ''}</small></div>
           <button className="icon-button" onClick={onClose} aria-label="닫기"><X /></button>

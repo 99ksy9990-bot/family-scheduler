@@ -14,3 +14,9 @@ _5
 lumina_family_calendar
 .env*
 !.env.example
+/audit-*/
+/qa-*.png
+/qa-*.jpg
+/design-qa-*.png
+/playwright-report/
+/test-results/

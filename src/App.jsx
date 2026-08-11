@@ -1,18 +1,26 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import Holidays from 'date-holidays'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare,
-  ChevronLeft, ChevronRight, Clock3, Cloud, Cog, Download, Focus, GraduationCap, Home, Moon, Pencil,
+  ChevronLeft, ChevronRight, Clock3, Cog, Focus, GraduationCap, Home, Moon, Pencil,
   MessageCircle, Phone, Plus, RotateCcw, Search, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2,
-  UserRoundCheck, Users, X,
+  UserRoundCheck, X,
 } from 'lucide-react'
-import FamilySyncPanel from './components/FamilySyncPanel'
-import FamilySettingsPanel from './components/FamilySettingsPanel'
-import EventCollaborationPanel from './components/EventCollaborationPanel'
 import SyncStatusBar from './components/SyncStatusBar'
+import { useAppDialog } from './hooks/useAppDialog'
 import { useFamilySync } from './hooks/useFamilySync'
+import { usePersistedValue } from './hooks/usePersistedValue'
 import { usePushNotifications } from './hooks/usePushNotifications'
+import { useModalAccessibility } from './hooks/useModalAccessibility'
+import { useToday } from './hooks/useToday'
+import { addDays, formatLongDate, formatSolarDate, iso, pad, startOfToday, validSolarDate } from './lib/dates'
+import { holidayEventsForDate, holidaysForYear } from './lib/holidays'
+import { hasLegacyLocalData, load, loadRecoveredCollection, loadWithoutLegacySeeds, mergeUnique } from './lib/persistence'
+
+const FamilySyncPanel = lazy(() => import('./components/FamilySyncPanel'))
+const FamilySettingsPanel = lazy(() => import('./components/FamilySettingsPanel'))
+const EventCollaborationPanel = lazy(() => import('./components/EventCollaborationPanel'))
+const SettingsView = lazy(() => import('./views/SettingsView'))
 
 const FAMILY_MEMBER = { id: 'family', name: '가족', type: 'system', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' }
 const LEGACY_PROFILES = [
@@ -37,23 +45,11 @@ const TASK_PERIOD_FILTERS = [
   { id: 'none', label: '기한 없음' },
 ]
 
-const pad = (value) => String(value).padStart(2, '0')
-const iso = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-const addDays = (base, amount) => {
-  const date = new Date(base)
-  date.setDate(date.getDate() + amount)
-  return date
-}
-const today = new Date()
-today.setHours(0, 0, 0, 0)
 const MIN_ANNIVERSARY_YEAR = 1950
-const ANNIVERSARY_YEARS = Array.from(
-  { length: today.getFullYear() - MIN_ANNIVERSARY_YEAR + 1 },
-  (_, index) => today.getFullYear() - index,
+const anniversaryYearsFor = (date) => Array.from(
+  { length: date.getFullYear() - MIN_ANNIVERSARY_YEAR + 1 },
+  (_, index) => date.getFullYear() - index,
 )
-const holidayCalendar = new Holidays('KR')
-holidayCalendar.setLanguages('ko')
-const holidayYearCache = new Map()
 
 const DEFAULT_SHIFT_TYPES = [
   { id: 'day', code: 'D', label: '주간 근무', start: '06:30', end: '15:30', color: 'sage', icon: 'sun' },
@@ -71,64 +67,6 @@ const memberForId = (memberId, profiles = []) => {
   if (memberId === FAMILY_MEMBER.id) return FAMILY_MEMBER
   return profiles.find((member) => member.id === memberId) || FAMILY_MEMBER
 }
-
-const normalizeHolidayName = (name) => name.replace('석가탄신일', '부처님오신날')
-
-const holidaysForYear = (year) => {
-  if (holidayYearCache.has(year)) return holidayYearCache.get(year)
-
-  const holidayMap = new Map()
-  const addHoliday = (dateValue, name, substitute = false) => {
-    const list = holidayMap.get(dateValue) || []
-    if (!list.some((holiday) => holiday.name === name)) list.push({ name, substitute })
-    holidayMap.set(dateValue, list)
-  }
-
-  holidayCalendar.getHolidays(year)
-    .filter((holiday) => holiday.type === 'public')
-    .filter((holiday) => !holiday.name.startsWith('설날') && !holiday.name.startsWith('추석'))
-    .forEach((holiday) => addHoliday(holiday.date.slice(0, 10), normalizeHolidayName(holiday.name), Boolean(holiday.substitute)))
-
-  const addLunarFestival = (lunarMonth, lunarDay, name) => {
-    const calendar = new KoreanLunarCalendar()
-    if (!calendar.setLunarDate(year, lunarMonth, lunarDay, false)) return
-    const solar = calendar.getSolarCalendar()
-    const center = new Date(solar.year, solar.month - 1, solar.day)
-    const festivalDates = [-1, 0, 1].map((offset) => addDays(center, offset))
-    festivalDates.forEach((date, index) => addHoliday(iso(date), index === 1 ? name : `${name} 연휴`))
-
-    const festivalNames = new Set([name, `${name} 연휴`])
-    const needsSubstitute = festivalDates.some((date) => (
-      date.getDay() === 0 || (holidayMap.get(iso(date)) || []).some((holiday) => !festivalNames.has(holiday.name))
-    ))
-    if (!needsSubstitute) return
-    let substituteDate = addDays(festivalDates[2], 1)
-    while (substituteDate.getDay() === 0 || substituteDate.getDay() === 6 || holidayMap.has(iso(substituteDate))) {
-      substituteDate = addDays(substituteDate, 1)
-    }
-    addHoliday(iso(substituteDate), `${name} (대체공휴일)`, true)
-  }
-
-  addLunarFestival(1, 1, '설날')
-  addLunarFestival(8, 15, '추석')
-  if (year >= 2026) addHoliday(`${year}-05-01`, '노동절')
-  if (year === 2026) addHoliday('2026-06-03', '전국동시지방선거일')
-
-  holidayYearCache.set(year, holidayMap)
-  return holidayMap
-}
-
-const holidayEventsForDate = (date) => (holidaysForYear(date.getFullYear()).get(iso(date)) || []).map((holiday, index) => ({
-  id: `holiday-${iso(date)}-${index}`,
-  date: iso(date),
-  title: holiday.name,
-  time: '종일',
-  end: '',
-  location: holiday.substitute ? '대한민국 대체공휴일' : '대한민국 공휴일',
-  member: HOLIDAY_MEMBER.id,
-  type: 'holiday',
-  holiday: true,
-}))
 
 const DATA_RECOVERY_VERSION = 2
 const RECOVERED_SHIFTS = []
@@ -167,20 +105,11 @@ const buildShiftOptions = (shiftTypes) => shiftTypes.map((shift) => ({
   icon: SHIFT_ICONS[shift.icon] || CalendarDays,
 }))
 
-const load = (key, fallback) => {
-  try {
-    const saved = localStorage.getItem(key)
-    return saved ? JSON.parse(saved) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-const hasLegacyLocalData = () => [
+const LEGACY_STORAGE_KEYS = [
   'family-scheduler-events', 'family-scheduler-tasks', 'family-scheduler-shifts',
   'family-scheduler-child-schedules-v1', 'family-scheduler-child-profiles-v1',
   'family-scheduler-periods-v1', 'family-scheduler-anniversaries-v1',
-].some((key) => localStorage.getItem(key) !== null)
+]
 
 const defaultWorkSettingsFor = (profiles, shifts = []) => {
   const profileIds = new Set(profiles.map((profile) => profile.id))
@@ -194,26 +123,6 @@ const createId = (prefix) => (
     ? `${prefix}-${crypto.randomUUID()}`
     : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 )
-
-const loadWithoutLegacySeeds = (key, fallback, legacyIds) => (
-  load(key, fallback).filter((item) => !legacyIds.has(item.id))
-)
-
-const mergeUnique = (current, recovered, identity) => {
-  const merged = [...current]
-  recovered.forEach((item) => {
-    if (!merged.some((candidate) => identity(candidate) === identity(item))) merged.push(item)
-  })
-  return merged
-}
-
-const loadRecoveredCollection = (key, fallback, recovered, identity, markerKey) => {
-  const current = load(key, fallback)
-  if (Number(localStorage.getItem(markerKey) || 0) >= DATA_RECOVERY_VERSION) return current
-  const merged = mergeUnique(current, recovered, identity)
-  localStorage.setItem(markerKey, String(DATA_RECOVERY_VERSION))
-  return merged
-}
 
 const upgradeSharedState = (state) => {
   if (!state || typeof state !== 'object') return state
@@ -235,10 +144,6 @@ const upgradeSharedState = (state) => {
   }
 }
 
-const formatLongDate = (date) => new Intl.DateTimeFormat('ko-KR', {
-  weekday: 'long', month: 'long', day: 'numeric',
-}).format(date)
-const formatSolarDate = (date) => date ? `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.` : '변환 가능한 날짜 없음'
 const FAMILY_GREETINGS = {
   morning: ['좋은 아침이에요', '반가운 아침이에요', '힘찬 아침이에요', '상쾌한 아침이에요'],
   afternoon: ['좋은 오후예요', '반가운 오후예요', '즐거운 오후예요', '여유로운 오후예요'],
@@ -262,11 +167,6 @@ const familyGreeting = (date = new Date()) => {
   return options[GREETING_SEQUENCE % options.length]
 }
 
-const validSolarDate = (year, month, day) => {
-  const date = new Date(year, month - 1, day)
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null
-}
-
 const anniversarySolarOccurrences = (anniversary, solarYear) => {
   if (anniversary.calendarType === 'solar') {
     const date = validSolarDate(solarYear, Number(anniversary.month), Number(anniversary.day))
@@ -282,7 +182,7 @@ const anniversarySolarOccurrences = (anniversary, solarYear) => {
   })
 }
 
-const nextAnniversaryOccurrence = (anniversary, from = today) => {
+const nextAnniversaryOccurrence = (anniversary, from = startOfToday()) => {
   for (let year = from.getFullYear(); year <= Math.min(from.getFullYear() + 3, 2050); year += 1) {
     const occurrence = anniversarySolarOccurrences(anniversary, year).find((date) => date >= from)
     if (occurrence) return occurrence
@@ -497,85 +397,8 @@ function Header({ active, onChange, focusMode, onToggleFocus, onOpenSearch }) {
   )
 }
 
-const PUSH_STATUS_COPY = {
-  enabled: ['알림 사용 중', '이 기기에서 가족 일정 알림을 받습니다.'],
-  enabling: ['알림 설정 중', '브라우저 알림 권한과 기기를 연결하고 있습니다.'],
-  denied: ['알림 권한 차단됨', '브라우저 설정에서 알림 권한을 허용해 주세요.'],
-  unsupported: ['알림 미지원', '이 브라우저에서는 백그라운드 알림을 사용할 수 없습니다.'],
-  error: ['알림 확인 필요', '알림 설정을 다시 확인해 주세요.'],
-  idle: ['알림 꺼짐', '가족 일정 알림을 이 기기에서 받아보세요.'],
-}
-
-function SettingsView({ profiles, workSettings, sync, pushStatus, pushError, onOpenProfiles, onOpenFamily, onEnableNotifications }) {
-  const activeProfiles = profiles.filter((profile) => profile.active !== false)
-  const workerCount = activeProfiles.filter((profile) => workSettings.workerIds?.includes(profile.id)).length
-  const connected = Boolean(sync.family)
-  const syncState = connected
-    ? sync.syncStatus === 'offline' ? '오프라인 저장 중'
-      : sync.syncStatus === 'saving' || sync.syncStatus === 'connecting' ? '동기화 중'
-        : sync.syncStatus === 'error' ? '동기화 확인 필요' : '가족 일정 동기화됨'
-    : sync.session ? '가족방 연결 필요' : '로그인·가족 연결 필요'
-  const [notificationTitle, notificationDetail] = PUSH_STATUS_COPY[pushStatus] || PUSH_STATUS_COPY.idle
-  const notificationActionable = !['enabled', 'enabling', 'denied', 'unsupported'].includes(pushStatus)
-
-  return (
-    <div className="page settings-page">
-      <section className="page-title-row settings-title-row">
-        <div><span className="eyebrow">우리 가족과 앱 관리</span><h1>설정</h1><p>가족 구성, 연결, 근무표와 알림을 한곳에서 관리합니다.</p></div>
-      </section>
-
-      <div className="settings-hub-grid">
-        <section className="settings-hub-card card">
-          <div className="section-heading"><div><span className="eyebrow">가족과 근무</span><h2>가족 구성</h2><p>캘린더에 표시할 가족과 근무표를 설정합니다.</p></div><UserRoundCheck /></div>
-          <div className="settings-hub-list">
-            <button className="settings-hub-row" onClick={onOpenProfiles}>
-              <span className="settings-hub-icon sky"><UserRoundCheck /></span>
-              <span><strong>가족 구성원 관리</strong><small>{activeProfiles.length ? `${activeProfiles.length}명 등록됨` : '구성원을 먼저 등록해 주세요.'}</small></span>
-              <ChevronRight />
-            </button>
-            <button className="settings-hub-row" onClick={onOpenProfiles}>
-              <span className="settings-hub-icon sage"><Settings2 /></span>
-              <span><strong>근무표 설정</strong><small>{workSettings.enabled && workerCount ? `${workerCount}명 사용 중` : '사용할 구성원과 근무 시간을 설정하세요.'}</small></span>
-              <ChevronRight />
-            </button>
-          </div>
-        </section>
-
-        <section className="settings-hub-card card">
-          <div className="section-heading"><div><span className="eyebrow">공유와 보관</span><h2>가족 연결</h2><p>다른 기기와 일정을 공유하고 데이터를 보관합니다.</p></div><Cloud /></div>
-          <div className="settings-hub-list">
-            <button className="settings-hub-row" onClick={onOpenFamily}>
-              <span className={`settings-hub-icon ${connected ? 'connected' : 'lavender'}`}><Users /></span>
-              <span><strong>가족 연결·동기화</strong><small>{connected ? `${sync.family.household.name} · ${sync.family.members.length}명 연결` : syncState}</small></span>
-              <em className={connected ? 'success' : ''}>{syncState}</em>
-              <ChevronRight />
-            </button>
-            <button className="settings-hub-row" onClick={onOpenFamily}>
-              <span className="settings-hub-icon peach"><Download /></span>
-              <span><strong>백업·불러오기</strong><small>가족 일정 파일을 저장하거나 이전 내용을 불러옵니다.</small></span>
-              <ChevronRight />
-            </button>
-          </div>
-        </section>
-
-        <section className="settings-hub-card notification-settings-card card">
-          <div className="section-heading"><div><span className="eyebrow">기기별 설정</span><h2>알림</h2><p>사용 중인 기기에서 가족 일정 알림을 받습니다.</p></div><Bell /></div>
-          <button
-            className={`settings-hub-row notification-row ${pushStatus === 'enabled' ? 'enabled' : ''}`}
-            onClick={() => notificationActionable && onEnableNotifications()}
-            aria-disabled={!notificationActionable}
-          >
-            <span className="settings-hub-icon sky"><Bell /></span>
-            <span><strong>{notificationTitle}</strong><small>{pushError || notificationDetail}</small></span>
-            {notificationActionable ? <ChevronRight /> : <em className={pushStatus === 'enabled' ? 'success' : ''}>{pushStatus === 'enabled' ? '사용 중' : '상태 확인'}</em>}
-          </button>
-        </section>
-      </div>
-    </div>
-  )
-}
-
-function SearchPanel({ open, onClose, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions, onSelect }) {
+function SearchPanel({ open, onClose, today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions, onSelect }) {
+  const dialogRef = useModalAccessibility(open, onClose)
   const { profiles } = useFamilyProfiles()
   const defaultFrom = iso(addDays(today, -365))
   const defaultTo = iso(addDays(today, 365))
@@ -604,7 +427,7 @@ function SearchPanel({ open, onClose, events, childSchedules, schedulePeriods, a
   if (!open) return null
   return (
     <div className="modal-backdrop search-backdrop" role="presentation" onMouseDown={(click) => click.target === click.currentTarget && onClose()}>
-      <section className="modal search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
+      <section ref={dialogRef} tabIndex="-1" className="modal search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
         <div className="modal-heading"><div><span className="eyebrow">가족 일정 전체에서 찾기</span><h2 id="search-title">통합 검색</h2></div><button className="icon-button" onClick={onClose} aria-label="검색 닫기"><X /></button></div>
         <label className="search-query"><Search /><input autoFocus value={query} onChange={(change) => setQuery(change.target.value)} placeholder="일정명, 가족 구성원, 장소 검색" /></label>
         <div className="search-date-range"><label>시작일<input type="date" value={fromDate} onChange={(change) => setFromDate(change.target.value)} /></label><span>~</span><label>종료일<input type="date" value={toDate} onChange={(change) => setToDate(change.target.value)} /></label></div>
@@ -695,7 +518,8 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   )
 }
 
-function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings, onOpenCollaboration }) {
+function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings, onOpenCollaboration }) {
+  const { confirm } = useAppDialog()
   const [greeting, setGreeting] = useState(() => familyGreeting())
   const { profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
@@ -717,12 +541,12 @@ function HomeView({ events, childSchedules, schedulePeriods, anniversaries, setA
     }), 60_000)
     return () => window.clearInterval(timer)
   }, [])
-  const removeTodayEvent = (event) => {
+  const removeTodayEvent = async (event) => {
     if (event.recurring && !event.anniversary) {
       openRecurringActions(event)
       return
     }
-    if (!window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
+    if (!await confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
     if (event.anniversary) {
       const removed = anniversaries.find((anniversary) => anniversary.id === event.anniversaryId)
       setAnniversaries((current) => current.filter((anniversary) => anniversary.id !== event.anniversaryId))
@@ -801,7 +625,7 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef, openRecurringActions, canEdit }) {
+function ChildWeekView({ today, childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef, openRecurringActions, canEdit }) {
   const { children } = useFamilyProfiles()
   const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
   const selectedDaySchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
@@ -885,7 +709,8 @@ function ChildWeekView({ childSchedules, schedulePeriods, scheduleExceptions, mo
   )
 }
 
-function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, setShifts, scheduleExceptions, openModal, deleteEvent, mode, setMode, openRecurringActions, canEdit, notifyUndo, jumpDate, onOpenCollaboration }) {
+function CalendarView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, setShifts, scheduleExceptions, openModal, deleteEvent, mode, setMode, openRecurringActions, canEdit, notifyUndo, jumpDate, onOpenCollaboration }) {
+  const { confirm } = useAppDialog()
   const { profiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const initialDate = jumpDate ? new Date(`${jumpDate}T00:00:00`) : today
   const [cursor, setCursor] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1))
@@ -950,12 +775,12 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
     setShifts((currentShifts) => currentShifts.filter((shift) => !(shift.date === selectedDate && shift.member === selectedShiftMember.id)))
   }
 
-  const removeSelectedEvent = (event) => {
+  const removeSelectedEvent = async (event) => {
     if (event.recurring && !event.anniversary) {
       openRecurringActions(event)
       return
     }
-    if (!window.confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
+    if (!await confirm(`‘${event.title}’ 일정을 삭제할까요?`)) return
     if (event.anniversary) {
       const removed = anniversaries.find((anniversary) => anniversary.id === event.anniversaryId)
       setAnniversaries((current) => current.filter((anniversary) => anniversary.id !== event.anniversaryId))
@@ -993,7 +818,7 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
         </div>
       </section>
 
-      {currentMode === 'children' ? <ChildWeekView childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openRecurringActions={openRecurringActions} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === 'work' ? 'shift-mode' : ''}`}>
+      {currentMode === 'children' ? <ChildWeekView today={today} childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openRecurringActions={openRecurringActions} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === 'work' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
@@ -1085,12 +910,13 @@ function CalendarView({ events, childSchedules, schedulePeriods, anniversaries, 
   )
 }
 
-function TasksView({ tasks, setTasks, openModal, canEdit, notifyUndo, pushStatus, pushError, onEnableNotifications }) {
+function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pushStatus, pushError, onEnableNotifications }) {
+  const { confirm } = useAppDialog()
   const [periodFilter, setPeriodFilter] = useState('week')
   const categories = ['긴급', '장보기', '집안일']
   const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
-  const deleteTask = (task) => {
-    if (!window.confirm(`‘${task.title}’ 할 일을 삭제할까요?`)) return
+  const deleteTask = async (task) => {
+    if (!await confirm(`‘${task.title}’ 할 일을 삭제할까요?`)) return
     setTasks((current) => current.filter((item) => item.id !== task.id))
     notifyUndo?.(`‘${task.title}’ 할 일을 삭제했습니다.`, () => setTasks((current) => [...current, task]))
   }
@@ -1179,11 +1005,12 @@ const emptyScheduleFormFor = (member = '') => ({
   time: '오후 4:00', end: '오후 5:00',
 })
 
-const emptyAnniversaryForm = {
-  name: '', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: today.getMonth() + 1, day: today.getDate(),
-}
+const emptyAnniversaryFormFor = (date) => ({
+  name: '', kind: '생일', calendarType: 'solar', leapMonth: false, baseYear: '', month: date.getMonth() + 1, day: date.getDate(),
+})
 
-function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setChildProfiles, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled, profileEditRequest, onProfileEditHandled }) {
+function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles, setChildProfiles, schedulePeriods, setSchedulePeriods, anniversaries, setAnniversaries, canEdit, notifyUndo, scheduleEditRequest, onScheduleEditHandled, profileEditRequest, onProfileEditHandled }) {
+  const { confirm } = useAppDialog()
   const { profiles, children } = useFamilyProfiles()
   const primaryChildId = children[0]?.id || ''
   const requestedSchedule = childSchedules.find((item) => item.id === scheduleEditRequest)
@@ -1204,12 +1031,13 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   const [periodForm, setPeriodForm] = useState({ member: primaryChildId, season: '학기', start: iso(today), end: iso(addDays(today, 30)) })
   const [periodEditingId, setPeriodEditingId] = useState(null)
   const [periodError, setPeriodError] = useState('')
-  const [anniversaryForm, setAnniversaryForm] = useState(emptyAnniversaryForm)
+  const [anniversaryForm, setAnniversaryForm] = useState(() => emptyAnniversaryFormFor(today))
   const [anniversaryEditingId, setAnniversaryEditingId] = useState(null)
   const [anniversaryError, setAnniversaryError] = useState('')
   const [profileMember, setProfileMember] = useState(initialProfileMember)
   const [profileForm, setProfileForm] = useState(initialProfile)
   const [profileSaved, setProfileSaved] = useState(false)
+  const anniversaryYears = useMemo(() => anniversaryYearsFor(today), [today])
   const profileEditorRef = useRef(null)
   const currentScheduleMember = children.some((child) => child.id === scheduleForm.member) ? scheduleForm.member : primaryChildId
   const currentProfileMember = children.some((child) => child.id === profileMember) ? profileMember : primaryChildId
@@ -1339,10 +1167,10 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     window.requestAnimationFrame(() => profileEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
-  const deleteProfile = (profile) => {
+  const deleteProfile = async (profile) => {
     const child = children.find((item) => item.id === profile.member)
     if (!child) return
-    if (!window.confirm(`‘${child.name}’ 학교 정보를 삭제할까요?`)) return
+    if (!await confirm(`‘${child.name}’ 학교 정보를 삭제할까요?`)) return
     setChildProfiles((current) => current.filter((item) => item.member !== profile.member))
     if (profileMember === profile.member) {
       setProfileForm(emptyChildProfile(profile.member))
@@ -1355,8 +1183,8 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     )))
   }
 
-  const deleteSchedule = (schedule) => {
-    if (!window.confirm(`‘${schedule.title}’ 반복 일정을 삭제할까요?`)) return
+  const deleteSchedule = async (schedule) => {
+    if (!await confirm(`‘${schedule.title}’ 반복 일정을 삭제할까요?`)) return
     setChildSchedules((current) => current.filter((item) => item.id !== schedule.id))
     notifyUndo?.(`‘${schedule.title}’ 반복 일정을 삭제했습니다.`, () => setChildSchedules((current) => [...current, schedule]))
     if (editingId === schedule.id) cancelScheduleEdit()
@@ -1389,8 +1217,8 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     setPeriodError('')
   }
 
-  const deletePeriod = (period) => {
-    if (!window.confirm(`${period.season} 적용 기간을 삭제할까요?`)) return
+  const deletePeriod = async (period) => {
+    if (!await confirm(`${period.season} 적용 기간을 삭제할까요?`)) return
     setSchedulePeriods((current) => current.filter((item) => item.id !== period.id))
     notifyUndo?.(`${period.season} 적용 기간을 삭제했습니다.`, () => setSchedulePeriods((current) => [...current, period]))
     if (periodEditingId === period.id) cancelPeriodEdit()
@@ -1424,7 +1252,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
     setAnniversaries((current) => anniversaryEditingId
       ? current.map((anniversary) => anniversary.id === anniversaryEditingId ? nextAnniversary : anniversary)
       : [...current, nextAnniversary])
-    setAnniversaryForm(emptyAnniversaryForm)
+    setAnniversaryForm(emptyAnniversaryFormFor(today))
     setAnniversaryEditingId(null)
     setAnniversaryError('')
   }
@@ -1444,13 +1272,13 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   }
 
   const cancelAnniversaryEdit = () => {
-    setAnniversaryForm(emptyAnniversaryForm)
+    setAnniversaryForm(emptyAnniversaryFormFor(today))
     setAnniversaryEditingId(null)
     setAnniversaryError('')
   }
 
-  const deleteAnniversary = (anniversary) => {
-    if (!window.confirm(`‘${anniversaryTitle(anniversary)}’ 기념일을 삭제할까요?`)) return
+  const deleteAnniversary = async (anniversary) => {
+    if (!await confirm(`‘${anniversaryTitle(anniversary)}’ 기념일을 삭제할까요?`)) return
     setAnniversaries((current) => current.filter((item) => item.id !== anniversary.id))
     notifyUndo?.(`‘${anniversaryTitle(anniversary)}’을 삭제했습니다.`, () => setAnniversaries((current) => [...current, anniversary]))
     if (anniversaryEditingId === anniversary.id) cancelAnniversaryEdit()
@@ -1489,7 +1317,7 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
               {anniversaryForm.calendarType === 'lunar' && <button className={`leap-month-toggle ${anniversaryForm.leapMonth ? 'active' : ''}`} type="button" aria-pressed={anniversaryForm.leapMonth} onClick={() => changeAnniversaryField('leapMonth', !anniversaryForm.leapMonth)}><Check /> 윤달</button>}
             </fieldset>
             <div className="anniversary-date-fields">
-              <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select className={anniversaryForm.baseYear ? '' : 'placeholder-value'} value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{ANNIVERSARY_YEARS.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
+              <label className="anniversary-year-field">{anniversaryForm.kind === '생일' ? '출생 연도' : '시작 연도'}<select className={anniversaryForm.baseYear ? '' : 'placeholder-value'} value={anniversaryForm.baseYear} onChange={(event) => changeAnniversaryField('baseYear', event.target.value)}><option value="">연도 선택</option>{anniversaryYears.map((year) => <option key={year} value={year}>{year}년</option>)}</select></label>
               <label className="anniversary-month-field">월<select value={anniversaryForm.month} onChange={(event) => changeAnniversaryField('month', Number(event.target.value))}>{CALENDAR_MONTHS.map((month) => <option key={month} value={month}>{month}월</option>)}</select></label>
               <label className="anniversary-day-field">일<select value={anniversaryForm.day} onChange={(event) => changeAnniversaryField('day', Number(event.target.value))}>{CALENDAR_DAYS.slice(0, anniversaryForm.calendarType === 'lunar' ? 30 : 31).map((day) => <option key={day} value={day}>{day}일</option>)}</select></label>
             </div>
@@ -1654,7 +1482,9 @@ function SchedulesView({ childSchedules, setChildSchedules, childProfiles, setCh
   )
 }
 
-function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask }) {
+function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask }) {
+  const { confirm } = useAppDialog()
+  const dialogRef = useModalAccessibility(true, onClose)
   const { activeProfiles } = useFamilyProfiles()
   const selectableMembers = [FAMILY_MEMBER, ...activeProfiles]
   const isTask = type === 'task'
@@ -1695,9 +1525,9 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
     onAfterSave?.()
     onClose()
   }
-  const removeItem = () => {
+  const removeItem = async () => {
     const itemType = isTask ? '할 일' : '일정'
-    if (window.confirm(`‘${item.title}’ ${itemType}을 삭제할까요?`)) {
+    if (await confirm(`‘${item.title}’ ${itemType}을 삭제할까요?`)) {
       if (isTask) onDeleteTask(item.id)
       else onDeleteEvent(item.id)
       onClose()
@@ -1705,8 +1535,8 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
   }
   return (
     <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <form className="modal" onSubmit={submit}>
-        <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2>{isTask ? (isEditing ? '할 일 수정' : '할 일 추가') : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
+      <form ref={dialogRef} tabIndex="-1" className="modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title" onSubmit={submit}>
+        <div className="modal-heading"><div><span className="eyebrow">Family Scheduler</span><h2 id="event-modal-title">{isTask ? (isEditing ? '할 일 수정' : '할 일 추가') : isEditing ? '일정 수정' : '일정 추가'}</h2></div><button type="button" className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
         <label>제목<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isTask ? '무엇을 해야 하나요?' : '어떤 일정인가요?'} /></label>
         {!isTask && <fieldset className="event-date-field"><legend>일정 기간</legend>
           <div className="field-row event-date-row">
@@ -1741,10 +1571,11 @@ function Modal({ type, date, item, defaults = {}, onAfterSave, onClose, onAddEve
 }
 
 function RecurringActionDialog({ event, onClose, onEditDate, onEditSeries, onSkipDate, onDeleteSeries }) {
+  const dialogRef = useModalAccessibility(Boolean(event), onClose)
   if (!event) return null
   return (
     <div className="modal-backdrop" onMouseDown={(click) => click.target === click.currentTarget && onClose()}>
-      <section className="modal recurring-dialog" role="dialog" aria-modal="true" aria-labelledby="recurring-dialog-title">
+      <section ref={dialogRef} tabIndex="-1" className="modal recurring-dialog" role="dialog" aria-modal="true" aria-labelledby="recurring-dialog-title">
         <div className="modal-heading"><div><span className="eyebrow">반복 일정 변경 범위</span><h2 id="recurring-dialog-title">{event.title}</h2></div><button className="icon-button" onClick={onClose} aria-label="닫기"><X /></button></div>
         <p>{formatLongDate(new Date(`${event.date}T00:00:00`))} 일정만 바꾸거나 전체 반복 규칙을 관리할 수 있습니다.</p>
         <div className="recurring-actions-grid">
@@ -1764,11 +1595,13 @@ function UndoToast({ toast, onUndo, onClose }) {
 }
 
 export default function App() {
+  const today = useToday()
+  const { alert, confirm } = useAppDialog()
   const [view, setView] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get('view')
     return NAV.some((item) => item.id === requested) ? requested : 'home'
   })
-  const [profiles, setProfiles] = useState(() => load('family-scheduler-profiles-v1', hasLegacyLocalData() ? LEGACY_PROFILES : []))
+  const [profiles, setProfiles] = useState(() => load('family-scheduler-profiles-v1', hasLegacyLocalData(LEGACY_STORAGE_KEYS) ? LEGACY_PROFILES : []))
   const [events, setEvents] = useState(() => loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
     event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
   )))
@@ -1779,6 +1612,7 @@ export default function App() {
     RECOVERED_SHIFTS,
     (item) => `${item.member}-${item.date}`,
     'family-scheduler-shifts-recovery-version',
+    DATA_RECOVERY_VERSION,
   ))
   const [workSettings, setWorkSettings] = useState(() => load('family-scheduler-work-settings-v1', defaultWorkSettingsFor(profiles, shifts)))
   const [profileLinks, setProfileLinks] = useState(() => load('family-scheduler-profile-links-v1', {}))
@@ -1791,6 +1625,7 @@ export default function App() {
     RECOVERED_ANNIVERSARIES,
     (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`,
     'family-scheduler-anniversaries-recovery-version',
+    DATA_RECOVERY_VERSION,
   ))
   const [scheduleExceptions, setScheduleExceptions] = useState(() => load('family-scheduler-schedule-exceptions-v1', defaultScheduleExceptions))
   const [modal, setModal] = useState(null)
@@ -1806,17 +1641,17 @@ export default function App() {
   const [calendarJumpDate, setCalendarJumpDate] = useState(null)
   const [collaborationEvent, setCollaborationEvent] = useState(null)
 
-  useEffect(() => localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(profiles)), [profiles])
-  useEffect(() => localStorage.setItem('family-scheduler-events', JSON.stringify(events)), [events])
-  useEffect(() => localStorage.setItem('family-scheduler-tasks', JSON.stringify(tasks)), [tasks])
-  useEffect(() => localStorage.setItem('family-scheduler-shifts', JSON.stringify(shifts)), [shifts])
-  useEffect(() => localStorage.setItem('family-scheduler-child-schedules-v1', JSON.stringify(childSchedules)), [childSchedules])
-  useEffect(() => localStorage.setItem('family-scheduler-child-profiles-v1', JSON.stringify(childProfiles)), [childProfiles])
-  useEffect(() => localStorage.setItem('family-scheduler-periods-v1', JSON.stringify(schedulePeriods)), [schedulePeriods])
-  useEffect(() => localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify(anniversaries)), [anniversaries])
-  useEffect(() => localStorage.setItem('family-scheduler-schedule-exceptions-v1', JSON.stringify(scheduleExceptions)), [scheduleExceptions])
-  useEffect(() => localStorage.setItem('family-scheduler-work-settings-v1', JSON.stringify(workSettings)), [workSettings])
-  useEffect(() => localStorage.setItem('family-scheduler-profile-links-v1', JSON.stringify(profileLinks)), [profileLinks])
+  usePersistedValue('family-scheduler-profiles-v1', profiles)
+  usePersistedValue('family-scheduler-events', events)
+  usePersistedValue('family-scheduler-tasks', tasks)
+  usePersistedValue('family-scheduler-shifts', shifts)
+  usePersistedValue('family-scheduler-child-schedules-v1', childSchedules)
+  usePersistedValue('family-scheduler-child-profiles-v1', childProfiles)
+  usePersistedValue('family-scheduler-periods-v1', schedulePeriods)
+  usePersistedValue('family-scheduler-anniversaries-v1', anniversaries)
+  usePersistedValue('family-scheduler-schedule-exceptions-v1', scheduleExceptions)
+  usePersistedValue('family-scheduler-work-settings-v1', workSettings)
+  usePersistedValue('family-scheduler-profile-links-v1', profileLinks)
   const sharedState = useMemo(() => ({
     schemaVersion: 5,
     recoveryVersion: DATA_RECOVERY_VERSION,
@@ -1910,10 +1745,10 @@ export default function App() {
     })
   }
 
-  const deleteRecurringSeries = (event) => {
+  const deleteRecurringSeries = async (event) => {
     const removedSchedule = childSchedules.find((schedule) => schedule.id === event.scheduleId)
     const removedExceptions = scheduleExceptions.filter((exception) => exception.scheduleId === event.scheduleId)
-    if (!removedSchedule || !window.confirm(`‘${event.title}’ 전체 반복 일정을 삭제할까요?`)) return
+    if (!removedSchedule || !await confirm(`‘${event.title}’ 전체 반복 일정을 삭제할까요?`)) return
     setChildSchedules((current) => current.filter((schedule) => schedule.id !== event.scheduleId))
     setScheduleExceptions((current) => current.filter((exception) => exception.scheduleId !== event.scheduleId))
     notifyUndo(`‘${event.title}’ 전체 반복 일정을 삭제했습니다.`, () => {
@@ -1939,7 +1774,7 @@ export default function App() {
       applySharedState(imported)
       notifyUndo('백업 데이터를 불러왔습니다.', () => applySharedState(sharedState))
     } catch {
-      window.alert('Family Scheduler 백업 파일인지 확인해 주세요.')
+      await alert('Family Scheduler 백업 파일인지 확인해 주세요.')
     }
   }
 
@@ -1972,14 +1807,14 @@ export default function App() {
       <SyncStatusBar sync={sync} />
       {focusMode && <FocusModeBanner shiftOption={focusShiftOption} shiftMember={focusShiftMember} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
-        {view === 'home' && <HomeView events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} onOpenCollaboration={setCollaborationEvent} />}
-        {view === 'calendar' && <CalendarView key={calendarJumpDate || 'calendar'} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} jumpDate={calendarJumpDate} onOpenCollaboration={setCollaborationEvent} />}
-        {view === 'tasks' && <TasksView tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onEnableNotifications={pushNotifications.enable} />}
-        {view === 'schedules' && <SchedulesView childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}
-        {view === 'settings' && <SettingsView profiles={profiles} workSettings={workSettings} sync={sync} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onOpenProfiles={() => setFamilySettingsOpen(true)} onOpenFamily={() => setFamilyPanelOpen(true)} onEnableNotifications={pushNotifications.enable} />}
+        {view === 'home' && <HomeView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} onOpenCollaboration={setCollaborationEvent} />}
+        {view === 'calendar' && <CalendarView key={calendarJumpDate || 'calendar'} today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} jumpDate={calendarJumpDate} onOpenCollaboration={setCollaborationEvent} />}
+        {view === 'tasks' && <TasksView today={today} tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onEnableNotifications={pushNotifications.enable} />}
+        {view === 'schedules' && <SchedulesView today={today} childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}
+        {view === 'settings' && <Suspense fallback={<div className="page-loading" role="status">설정을 불러오는 중입니다.</div>}><SettingsView profiles={profiles} workSettings={workSettings} sync={sync} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onOpenProfiles={() => setFamilySettingsOpen(true)} onOpenFamily={() => setFamilyPanelOpen(true)} onEnableNotifications={pushNotifications.enable} /></Suspense>}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={changeView} /></div>
-      {modal && <Modal {...modal} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}
+      {modal && <Modal {...modal} today={today} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}
       <RecurringActionDialog
         event={recurringEvent}
         onClose={() => setRecurringEvent(null)}
@@ -1988,10 +1823,12 @@ export default function App() {
         onSkipDate={() => skipRecurringDate(recurringEvent)}
         onDeleteSeries={() => deleteRecurringSeries(recurringEvent)}
       />
-      <FamilySyncPanel open={familyPanelOpen} onClose={() => setFamilyPanelOpen(false)} sync={sync} onExport={exportBackup} onImport={importBackup} profiles={activeProfiles} profileLinks={profileLinks} onLinkProfile={(userId, profileId) => setProfileLinks((current) => ({ ...current, [userId]: profileId }))} />
-      <FamilySettingsPanel open={familySettingsOpen} onClose={() => setFamilySettingsOpen(false)} profiles={profiles} setProfiles={setProfiles} workSettings={workSettings} setWorkSettings={setWorkSettings} canEdit={canEdit} />
-      <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} scheduleExceptions={scheduleExceptions} onSelect={openSearchResult} />
-      <EventCollaborationPanel event={collaborationEvent} family={sync.family} session={sync.session} canEdit={canEdit} onClose={() => setCollaborationEvent(null)} />
+      <Suspense fallback={null}>
+        <FamilySyncPanel open={familyPanelOpen} onClose={() => setFamilyPanelOpen(false)} sync={sync} onExport={exportBackup} onImport={importBackup} profiles={activeProfiles} profileLinks={profileLinks} onLinkProfile={(userId, profileId) => setProfileLinks((current) => ({ ...current, [userId]: profileId }))} />
+        <FamilySettingsPanel open={familySettingsOpen} onClose={() => setFamilySettingsOpen(false)} profiles={profiles} setProfiles={setProfiles} workSettings={workSettings} setWorkSettings={setWorkSettings} canEdit={canEdit} />
+        <EventCollaborationPanel event={collaborationEvent} family={sync.family} session={sync.session} canEdit={canEdit} onClose={() => setCollaborationEvent(null)} />
+      </Suspense>
+      <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} scheduleExceptions={scheduleExceptions} onSelect={openSearchResult} />
       <UndoToast toast={undoToast} onUndo={() => { undoToast?.undo(); setUndoToast(null) }} onClose={() => setUndoToast(null)} />
     </div>
     </FamilyProfilesContext.Provider>

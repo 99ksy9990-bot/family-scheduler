@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import AppDialogProvider from './components/AppDialogProvider.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './styles.css'
 
 if ('serviceWorker' in navigator) {
@@ -11,6 +13,10 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <AppDialogProvider>
+        <App />
+      </AppDialogProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

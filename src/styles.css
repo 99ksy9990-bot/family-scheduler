@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'KIMM';
-  src: url('/fonts/KIMM_bold.ttf') format('truetype');
+  src: url('/fonts/KIMM_bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: 'A2Z';
-  src: url('/fonts/A2Z-Light.ttf') format('truetype');
+  src: url('/fonts/A2Z-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -16,7 +16,7 @@
 
 @font-face {
   font-family: 'A2Z';
-  src: url('/fonts/A2Z-Regular.ttf') format('truetype');
+  src: url('/fonts/A2Z-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -24,7 +24,7 @@
 
 @font-face {
   font-family: 'A2Z';
-  src: url('/fonts/A2Z-Medium.ttf') format('truetype');
+  src: url('/fonts/A2Z-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -32,7 +32,7 @@
 
 @font-face {
   font-family: 'A2Z';
-  src: url('/fonts/A2Z-SemiBold.ttf') format('truetype');
+  src: url('/fonts/A2Z-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -40,7 +40,7 @@
 
 @font-face {
   font-family: 'A2Z';
-  src: url('/fonts/A2Z-Bold.ttf') format('truetype');
+  src: url('/fonts/A2Z-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -48,7 +48,7 @@
 
 @font-face {
   font-family: 'A2Z';
-  src: url('/fonts/A2Z-ExtraBold.ttf') format('truetype');
+  src: url('/fonts/A2Z-ExtraBold.woff2') format('woff2');
   font-weight: 800;
   font-style: normal;
   font-display: swap;
@@ -820,6 +820,19 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .member-picker button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 9px 4px; color: var(--muted); border: 1px solid var(--line); border-radius: 14px; background: white; font-size: 12px; }
 .member-picker button.active { color: var(--primary-dark); border-color: var(--primary); background: #eff8fa; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.app-dialog { width: min(420px, 100%); text-align: center; }
+.app-dialog > svg { width: 38px; height: 38px; padding: 8px; border-radius: 14px; color: #a35c2f; background: #fff2df; }
+.app-dialog h2 { margin: 14px 0 8px; }
+.app-dialog p { margin: 0; color: var(--muted); line-height: 1.55; white-space: pre-line; }
+.app-dialog .modal-actions { justify-content: center; }
+.app-dialog .modal-actions button { min-width: 120px; }
+
+.error-boundary { width: min(560px, calc(100% - 32px)); margin: 12vh auto; padding: 40px; border-radius: 28px; text-align: center; background: #fff; box-shadow: var(--shadow); }
+.error-boundary span { color: var(--primary); font-size: .82rem; font-weight: 800; letter-spacing: .08em; }
+.error-boundary h1 { margin: 12px 0; }
+.error-boundary p { color: var(--muted); line-height: 1.6; }
+.error-boundary button { min-height: 48px; margin-top: 14px; padding: 0 24px; border: 0; border-radius: 16px; color: #fff; background: var(--primary); font: inherit; font-weight: 700; cursor: pointer; }
+.page-loading { width: min(1180px, calc(100% - 40px)); margin: 40px auto; padding: 32px; border-radius: 24px; text-align: center; color: var(--muted); background: #fff; box-shadow: var(--shadow); }
 
 .recurring-dialog > p { margin: -8px 0 22px; color: var(--muted); line-height: 1.55; }
 .recurring-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -1242,6 +1255,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .modal-actions { position: sticky; bottom: -22px; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 8px; margin: 16px -4px -22px; padding: 12px 4px max(18px, env(safe-area-inset-bottom)); border-radius: 0 0 22px 22px; background: linear-gradient(rgba(255,255,255,.94), #fff 24%); }
   .modal-actions button { min-width: 0; width: 100%; margin: 0; padding-inline: 10px; white-space: nowrap; }
   .modal-actions .danger-button { grid-column: 1 / -1; width: 100%; margin-right: 0; }
+  .app-dialog .modal-actions { position: static; display: flex; margin: 20px 0 0; padding: 0; background: none; }
   .recurring-actions-grid, .backup-actions { grid-template-columns: 1fr; }
   .family-sync-backdrop { align-items: end; padding: 0; }
   .family-sync-panel { width: 100%; max-height: calc(100vh - 18px); border-radius: 26px 26px 0 0; }
