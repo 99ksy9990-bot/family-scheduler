@@ -705,7 +705,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
               <span>{WEEKDAY_SHORT[date.getDay()]}</span>
               <strong>{date.getDate()}</strong>
               <span className="week-counts"><em>가족 {familyCount}</em><em>자녀 {childCount}</em></span>
-              <small>{[dayHolidays[0]?.title, conflictCount ? `시간 겹침 ${conflictCount}` : '', totalCount > 2 ? `+${totalCount - 2}개` : totalCount ? `일정 ${totalCount}개` : dayHolidays.length ? '일정 0개' : '비어 있음'].filter(Boolean).join(' · ')}</small>
+              <small className="week-day-detail">{[dayHolidays[0]?.title, conflictCount ? `시간 겹침 ${conflictCount}` : '', totalCount > 2 ? `+${totalCount - 2}개` : totalCount ? `일정 ${totalCount}개` : dayHolidays.length ? '일정 0개' : '비어 있음'].filter(Boolean).join(' · ')}</small>
             </button>
           })}
         </div>
@@ -983,9 +983,9 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
                   <span>{day}</span>
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
                   {currentMode === 'all' ? (familyDayEvents.length > 0 || childDayEvents.length > 0 || shiftOption) && <div className="calendar-overview-markers" aria-hidden="true">
+                    {shiftOption && <i className={`overview-marker work ${shiftOption.color}`}>{shiftOption.code}</i>}
                     {familyDayEvents.length > 0 && <i className="overview-marker family">가 {familyDayEvents.length}</i>}
                     {childDayEvents.length > 0 && <i className="overview-marker children">자 {childDayEvents.length}</i>}
-                    {shiftOption && <i className={`overview-marker work ${shiftOption.color}`}>{shiftOption.code}</i>}
                   </div> : currentMode === 'family' ? <>
                     <div className="day-dots">
                       {scheduledDayEvents.slice(0, 3).map((event) => {
@@ -1011,10 +1011,10 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               {canEdit && <div className="overview-add-actions"><button className="small-add" aria-label="가족 일정 추가" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 가족</button>{children.length > 0 && <button className="small-add" aria-label="자녀 일정 추가" onClick={() => openModal('event', iso(selected), undefined, { member: children[0].id, members: [children[0].id], calendarScope: 'children' })}><Plus size={18} /> 자녀</button>}</div>}
             </div>
             <div className="overview-day-groups">
+              {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <div className="overview-shift-row" key={worker.id}><Avatar memberId={worker.id} small /><span><strong>{worker.name}</strong><small>{option ? `${option.code} · ${option.label} · ${option.time}` : '근무 미입력'}</small></span></div>)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
               {selectedHolidayEvents.length > 0 && <section className="overview-day-section holiday-group"><header><span>공휴일</span><small>일정 개수에서 제외</small></header>{selectedHolidayEvents.map((event) => <div className="overview-holiday" key={event.id}><CalendarDays /> <strong>{event.title}</strong></div>)}</section>}
               <section className="overview-day-section"><header><span>가족 일정</span><b>{selectedFamilyEvents.length}</b></header><div className="day-events">{selectedFamilyEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onDiscuss={() => onOpenCollaboration(event)} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedFamilyEvents.length && <p className="overview-empty">등록된 가족 일정이 없습니다.</p>}</div></section>
               {children.length > 0 && <section className="overview-day-section"><header><span>자녀 일정</span><b>{selectedChildEvents.length}</b></header><div className="day-events">{selectedChildEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedChildEvents.length && <p className="overview-empty">등록된 자녀 일정이 없습니다.</p>}</div></section>}
-              {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <div className="overview-shift-row" key={worker.id}><Avatar memberId={worker.id} small /><span><strong>{worker.name}</strong><small>{option ? `${option.code} · ${option.label} · ${option.time}` : '근무 미입력'}</small></span></div>)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
             </div>
           </> : currentMode === 'family' ? <>
             <div className="section-heading">

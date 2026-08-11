@@ -90,6 +90,21 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   })
   expect(layout.gaps.every((gap) => Math.abs(gap - 22) < 1)).toBe(true)
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth)
+
+  const weekSummaryLayout = await page.locator('.home-week-strip button').first().evaluate((button) => {
+    const counts = [...button.querySelectorAll('.week-counts em')]
+    const countGroup = button.querySelector('.week-counts')
+    return {
+      count: counts.length,
+      stacked: counts[1].getBoundingClientRect().top >= counts[0].getBoundingClientRect().bottom,
+      dividerWidth: getComputedStyle(countGroup).borderTopWidth,
+      childDividerWidth: getComputedStyle(counts[1]).borderTopWidth,
+      detailDisplay: getComputedStyle(button.querySelector('.week-day-detail')).display,
+      fontFamily: getComputedStyle(button.querySelector('.week-counts')).fontFamily,
+    }
+  })
+  expect(weekSummaryLayout).toMatchObject({ count: 2, stacked: true, dividerWidth: '1px', childDividerWidth: '0px', detailDisplay: 'none' })
+  expect(weekSummaryLayout.fontFamily).toContain('A2Z')
 })
 
 test('캘린더 오늘 날짜 숫자는 다른 날짜와 같은 크기로 표시한다', async ({ page }) => {
@@ -152,7 +167,7 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
   await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
 })
 
-test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일은 분리한다', async ({ page }) => {
+test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일은 분리한다', async ({ page }, testInfo) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([
       { id: 'family-one', title: '가족 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' },
@@ -169,6 +184,25 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(page.locator('.overview-day-section').filter({ hasText: '자녀 일정' })).toContainText('자녀 일정')
   await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D · 주간 근무')
   await expect(page.locator('.overview-day-section.holiday-group')).toContainText('일정 개수에서 제외')
+  if (testInfo.project.name.includes('mobile')) {
+    const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
+    await expect(mobileMarkers.locator('.family')).toHaveText('가 1')
+    await expect(mobileMarkers.locator('.children')).toHaveText('자 1')
+    await expect(mobileMarkers.locator('.work')).toHaveText('D')
+    const markerStyle = await mobileMarkers.locator('.family').evaluate((marker) => ({
+      width: marker.getBoundingClientRect().width,
+      height: marker.getBoundingClientRect().height,
+      fontFamily: getComputedStyle(marker).fontFamily,
+      afterContent: getComputedStyle(marker, '::after').content,
+    }))
+    expect(markerStyle.width).toBeGreaterThan(markerStyle.height)
+    expect(markerStyle.fontFamily).toContain('A2Z')
+    expect(markerStyle.afterContent).toBe('none')
+  }
+  const firstOverviewGroup = page.locator('.overview-day-groups > .overview-day-section').first()
+  await expect(firstOverviewGroup.locator('header')).toContainText('근무')
+  const markerOrder = await page.locator('[data-date="2026-08-15"] .calendar-overview-markers .overview-marker').allTextContents()
+  expect(markerOrder).toEqual(['D', '가 1', '자 1'])
 })
 
 test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', async ({ page }) => {

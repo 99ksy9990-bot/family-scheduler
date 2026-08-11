@@ -1273,13 +1273,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .calendar-grid button .calendar-holiday-name { display: none; }
   .calendar-event-labels { display: none; }
   .day-dots { display: flex; margin-top: 7px; }
-  .calendar-overview-markers { gap: 3px; margin-top: 5px; }
-  .overview-marker { min-width: 17px; width: 17px; height: 17px; overflow: hidden; padding: 0; border-radius: 50%; color: transparent !important; font-size: 0; }
-  .overview-marker::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .overview-marker.family::after { background: #8c78c4; }
-  .overview-marker.children::after { background: #51afd1; }
-  .overview-marker.work::after { content: attr(class); display: none; }
-  .overview-marker.work { color: #1b6078 !important; font-size: 8px; }
+  .calendar-overview-markers { gap: 2px; margin-top: 4px; }
+  .overview-marker { min-width: 0; width: auto; height: 15px; overflow: visible; padding: 0 3px; border-radius: 6px; font-family: 'A2Z', sans-serif; font-size: 7px; font-weight: 700; }
+  .overview-marker::after { content: none; }
   .overview-add-actions { gap: 5px; }
   .overview-add-actions .small-add { min-width: 0; padding-inline: 10px; }
   .overview-day-section { padding: 12px; }
@@ -1301,9 +1297,13 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .home-page .overview-grid { order: 4; }
   .home-page > .today-card, .home-page > .week-strip-card, .home-page > .overview-grid { margin: 0; }
   .week-strip-card { padding: 19px 17px; }
-  .home-week-strip { grid-template-columns: repeat(7, minmax(58px, 1fr)); gap: 5px; overflow-x: auto; padding-bottom: 5px; scroll-snap-type: x proximity; }
+  .home-week-strip { grid-template-columns: repeat(7, minmax(68px, 1fr)); gap: 5px; overflow-x: auto; padding-bottom: 5px; scroll-snap-type: x proximity; }
   .home-week-strip button { min-height: 84px; padding: 8px 4px; scroll-snap-align: start; }
   .home-week-strip strong { font-size: 17px; }
+  .home-week-strip .week-counts { align-items: stretch; flex-direction: column; flex-wrap: nowrap; gap: 0; padding-top: 3px; border-top: 1px solid currentColor; font-family: 'A2Z', sans-serif; white-space: nowrap; }
+  .home-week-strip .week-counts em { width: 100%; padding: 2px 0; font-size: 8px; text-align: center; }
+  .home-week-strip .week-counts em + em { margin: 0; padding: 2px 0; border: 0; }
+  .home-week-strip .week-day-detail { display: none; }
   .today-summary-note { align-items: flex-start; }
   .today-summary-links { gap: 3px 7px; }
   .today-summary-links button { font-size: 12px; }
