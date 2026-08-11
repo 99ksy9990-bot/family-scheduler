@@ -549,8 +549,11 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
     return (
       <article className={`event-card home-event-row ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
         <AvatarGroup memberIds={eventMembers} small />
-        <strong className="home-event-title">{event.title}</strong>
-        <span className="event-time">· {timeLabel}</span>
+        <div className="home-event-main">
+          <strong className="home-event-title">{event.title}</strong>
+          <span className="home-event-separator" aria-hidden="true">·</span>
+          <span className="event-time">{timeLabel}</span>
+        </div>
         <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>
       </article>
     )
@@ -633,7 +636,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     .filter(({ option }) => option)
     .map(({ worker, option }) => ({
       id: `home-shift-${worker.id}-${iso(today)}`,
-      title: `${option.code} · ${option.label}`,
+      title: option.code,
       date: iso(today),
       time: option.time,
       member: worker.id,
@@ -677,10 +680,10 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         </div>
         {todayTimelineEvents.length > 6 && <button className="more-events-button" onClick={openCalendar}>+{todayTimelineEvents.length - 6}개 일정 더보기</button>}
         <nav className="today-summary-bar" aria-label="오늘 일정 요약">
-          <button type="button" onClick={() => openCalendarDate(today, 'work')}>근무</button>
-          <button type="button" onClick={() => openCalendarDate(today, 'family')}>가족 일정 {generalTodayEvents.length}개</button>
-          <button type="button" onClick={() => openChildCalendarDate(today)}>자녀 일정 {childEvents.length}개</button>
-          <button type="button" onClick={openTasks}>마감 할 일 {dueTasks.length}개</button>
+          <button className="family" type="button" aria-label={`가족 일정 ${generalTodayEvents.length}개`} onClick={() => openCalendarDate(today, 'family')}><span>가족</span><b>{generalTodayEvents.length}</b></button>
+          <button className="work" type="button" aria-label={`근무 ${todayShiftEvents.length}개`} onClick={() => openCalendarDate(today, 'work')}><span>근무</span><b>{todayShiftEvents.length}</b></button>
+          <button className="children" type="button" aria-label={`자녀 일정 ${childEvents.length}개`} onClick={() => openChildCalendarDate(today)}><span>자녀</span><b>{childEvents.length}</b></button>
+          <button className="tasks" type="button" aria-label={`마감 할 일 ${dueTasks.length}개`} onClick={openTasks}><span>할 일</span><b>{dueTasks.length}</b></button>
         </nav>
       </section>
 

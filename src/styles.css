@@ -332,11 +332,13 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .timeline > .empty-copy { grid-column: 1 / -1; }
 .more-events-button { display: flex; margin: 14px auto 0; padding: 8px 13px; color: var(--primary); border: 0; border-radius: 10px; background: #edf6f8; font-weight: 700; }
 .today-card .event-card { min-height: 58px; padding: 10px 13px; }
-.today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; }
+.today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
 .today-card .home-event-row .avatar-group { grid-column: 1; padding-left: 0; }
 .today-card .home-event-row .avatar { width: 32px; height: 32px; border-radius: 11px; }
-.today-card .home-event-title { min-width: 0; overflow: hidden; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
-.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.today-card .home-event-main { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; }
+.today-card .home-event-title { min-width: 0; flex: 0 1 auto; overflow: hidden; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
+.today-card .home-event-separator { flex: 0 0 auto; color: var(--muted); font-weight: 700; }
+.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; flex: 0 0 auto; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .event-time-row { min-width: 0; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 6px; }
 .today-card .event-time { min-width: 0; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .home-category-chip { flex: 0 0 auto; padding: 3px 6px; color: #5c5477; border-radius: 7px; background: #e9e6f7; font-size: 9px; font-style: normal; font-weight: 800; }
@@ -349,10 +351,15 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-card .event-detail-row > span { font-size: 13px; }
 .today-card .event-actions { flex: 0 0 auto; }
 .today-card .event-actions button { width: 30px; height: 30px; border-radius: 9px; }
-.today-summary-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--line); }
-.today-summary-bar button { min-width: 0; padding: 4px 8px; color: var(--primary-dark); border: 0; border-left: 1px solid var(--line); background: transparent; font-size: 12px; font-weight: 750; white-space: nowrap; }
-.today-summary-bar button:first-child { border-left: 0; }
-.today-summary-bar button:hover { color: var(--primary); }
+.today-summary-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--line); }
+.today-summary-bar button { min-width: 0; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 8px; color: var(--primary-dark); border: 1px solid #cfe0e5; border-radius: 11px; background: #f1f8fa; box-shadow: 0 3px 8px rgba(36, 101, 126, .07); font-size: 12px; font-weight: 750; white-space: nowrap; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.today-summary-bar button b { font-size: 1em; }
+.today-summary-bar button.family { color: #60567f; border-color: #ddd8ef; background: #f2f0fb; }
+.today-summary-bar button.work { color: #536c25; border-color: #d4e2b8; background: #f1f7e5; }
+.today-summary-bar button.children { color: #17627a; border-color: #c9e2eb; background: #eaf6f9; }
+.today-summary-bar button.tasks { color: #9a4d45; border-color: #efd4cf; background: #fff1ee; }
+.today-summary-bar button:hover, .today-summary-bar button:focus-visible { border-color: currentColor; box-shadow: 0 5px 12px rgba(36, 101, 126, .13); transform: translateY(-1px); }
+.today-summary-bar button:active { box-shadow: none; transform: translateY(0); }
 .week-strip-card { margin-top: 20px; padding: 24px 26px; }
 .home-week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
 .home-week-strip button { min-width: 0; min-height: 104px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 6px; color: var(--ink); border: 1px solid var(--line); border-radius: 15px; background: #fbfcfa; }
@@ -1326,7 +1333,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .event-time { font-size: 14px; }
   .event-copy strong { font-size: 16px; }
   .timeline { grid-template-columns: 1fr; }
-  .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 6px; padding-inline: 10px; }
+  .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
   .today-card .home-event-title { font-size: 13px; }
   .today-card .home-event-row .event-time { max-width: 116px; font-size: 10px; }
   .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 9px; }
@@ -1349,8 +1356,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .today-summary-note { align-items: flex-start; }
   .today-summary-links { gap: 3px 7px; }
   .today-summary-links button { font-size: 12px; }
-  .today-summary-bar { margin-top: 14px; padding-top: 11px; }
-  .today-summary-bar button { padding-inline: 1px; font-family: 'A2Z', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: -.06em; }
+  .today-summary-bar { gap: 5px; margin-top: 14px; padding-top: 11px; }
+  .today-summary-bar button { min-height: 36px; padding-inline: 4px; font-family: 'A2Z', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: -.06em; }
   .app-update-banner { bottom: 88px; grid-template-columns: minmax(0, 1fr) auto; padding-left: 14px; }
   .app-update-banner .update-close { display: none; }
   .shift-help, .period-card > p, .anniversary-card .section-heading p, .empty-copy { letter-spacing: -.035em; white-space: nowrap; }

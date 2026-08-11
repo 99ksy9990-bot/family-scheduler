@@ -64,31 +64,40 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await page.reload()
 
   const todayCard = page.locator('.today-card')
-  await expect(todayCard.getByText('D · 주간 근무', { exact: true })).toBeVisible()
+  await expect(todayCard.getByText('D', { exact: true })).toBeVisible()
   await expect(todayCard.getByText('오늘 자녀 일정', { exact: true })).toBeVisible()
-  await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('· 오전 6:30 – 오후 3:30')
+  await expect(todayCard.locator('.home-event-row').first().locator('.home-event-separator')).toHaveText('·')
+  await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('오전 6:30 – 오후 3:30')
   await expect(todayCard.locator('.home-category-chip.work')).toHaveText('근무')
   await expect(todayCard.locator('.home-category-chip.children')).toHaveText('자녀')
   await expect(todayCard.getByRole('button', { name: /대화와 준비물/ })).toHaveCount(0)
   await expect(todayCard.getByRole('button', { name: /수정|삭제/ })).toHaveCount(0)
   const homeEventOrder = await todayCard.locator('.home-event-row').first().evaluate((card) => ({
     children: [...card.children].map((child) => child.className),
+    mainChildren: [...card.querySelector('.home-event-main').children].map((child) => child.className),
+    titleToDot: Math.round(card.querySelector('.home-event-separator').getBoundingClientRect().left - card.querySelector('.home-event-title').getBoundingClientRect().right),
+    dotToTime: Math.round(card.querySelector('.event-time').getBoundingClientRect().left - card.querySelector('.home-event-separator').getBoundingClientRect().right),
     oneLine: [...card.children].every((child) => {
       const first = card.children[0].getBoundingClientRect()
       const current = child.getBoundingClientRect()
       return Math.abs((first.top + first.height / 2) - (current.top + current.height / 2)) < 2
     }),
   }))
-  expect(homeEventOrder.children).toEqual(['avatar-group', 'home-event-title', 'event-time', 'home-category-chip work'])
+  expect(homeEventOrder.children).toEqual(['avatar-group', 'home-event-main', 'home-category-chip work'])
+  expect(homeEventOrder.mainChildren).toEqual(['home-event-title', 'home-event-separator', 'event-time'])
+  expect(homeEventOrder.titleToDot).toBeLessThanOrEqual(3)
+  expect(homeEventOrder.dotToTime).toBeLessThanOrEqual(3)
   expect(homeEventOrder.oneLine).toBe(true)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
     const buttons = [...bar.querySelectorAll('button')]
     return {
       labels: buttons.map((button) => button.textContent),
       oneLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
+      topBorder: getComputedStyle(bar).borderTopStyle,
+      chips: buttons.every((button) => getComputedStyle(button).borderStyle === 'solid' && getComputedStyle(button).backgroundColor !== 'rgba(0, 0, 0, 0)' && getComputedStyle(button).cursor === 'pointer'),
     }
   })
-  expect(todaySummary).toEqual({ labels: ['근무', '가족 일정 0개', '자녀 일정 1개', '마감 할 일 0개'], oneLine: true })
+  expect(todaySummary).toEqual({ labels: ['가족0', '근무1', '자녀1', '할 일0'], oneLine: true, topBorder: 'solid', chips: true })
   await expect(page.locator('.home-page > .overview-grid')).toHaveCount(0)
   await expect(page.locator('.home-week-strip .week-day-detail')).toHaveCount(0)
 
