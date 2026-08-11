@@ -19,21 +19,22 @@ import { holidayEventsForDate, holidaysForYear } from './lib/holidays'
 import { inspectBackup } from './lib/backup'
 import { hasLegacyLocalData, load, loadRecoveredCollection, loadWithoutLegacySeeds, mergeUnique } from './lib/persistence'
 import { hasRecurrence, isRecurrenceStart, recurringEventForDate } from './lib/recurrence'
+import { MEMBER_COLORS, SYSTEM_COLORS, migrateMemberProfiles } from './lib/colors'
 
 const FamilySyncPanel = lazy(() => import('./components/FamilySyncPanel'))
 const FamilySettingsPanel = lazy(() => import('./components/FamilySettingsPanel'))
 const EventCollaborationPanel = lazy(() => import('./components/EventCollaborationPanel'))
 const SettingsView = lazy(() => import('./views/SettingsView'))
 
-const FAMILY_MEMBER = { id: 'family', name: '가족', type: 'system', initials: '가', color: '#9b8bd3', tone: '#f4f1ff' }
+const FAMILY_MEMBER = { id: 'family', name: '가족', type: 'system', initials: '가', color: SYSTEM_COLORS.family, tone: '#EFF6F8' }
 const LEGACY_PROFILES = [
-  { id: 'david', name: '아빠', type: 'adult', relation: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8', active: true },
-  { id: 'emma', name: '엄마', type: 'adult', relation: '엄마', initials: '엄', color: '#ffaaa0', tone: '#fff0ed', active: true },
-  { id: 'leo', name: '초롱', type: 'child', relation: '자녀', initials: '초', color: '#7fc7e3', tone: '#ecf8fc', active: true },
-  { id: 'mia', name: '연두', type: 'child', relation: '자녀', initials: '연', color: '#c9df84', tone: '#f6fae9', active: true },
+  { id: 'david', name: '아빠', type: 'adult', relation: '아빠', initials: '아', color: MEMBER_COLORS[0].color, tone: MEMBER_COLORS[0].tone, active: true },
+  { id: 'emma', name: '엄마', type: 'adult', relation: '엄마', initials: '엄', color: MEMBER_COLORS[1].color, tone: MEMBER_COLORS[1].tone, active: true },
+  { id: 'leo', name: '초롱', type: 'child', relation: '자녀', initials: '초', color: MEMBER_COLORS[2].color, tone: MEMBER_COLORS[2].tone, active: true },
+  { id: 'mia', name: '연두', type: 'child', relation: '자녀', initials: '연', color: MEMBER_COLORS[3].color, tone: MEMBER_COLORS[3].tone, active: true },
 ]
-const ANNIVERSARY_MEMBER = { id: 'anniversary', name: '기념일', initials: '기', color: '#e0b866', tone: '#fff8e6' }
-const HOLIDAY_MEMBER = { id: 'holiday', name: '공휴일', initials: '휴', color: '#e06b65', tone: '#fff1ef' }
+const ANNIVERSARY_MEMBER = { id: 'anniversary', name: '기념일', initials: '기', color: SYSTEM_COLORS.anniversary, tone: '#FFFBEB' }
+const HOLIDAY_MEMBER = { id: 'holiday', name: '공휴일', initials: '휴', color: SYSTEM_COLORS.holiday, tone: '#FEF2F2' }
 const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
 const WEEKDAY_SHORT = ['일', '월', '화', '수', '목', '금', '토']
 const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
@@ -131,13 +132,15 @@ const upgradeSharedState = (state) => {
   const needsRecovery = Number(state.recoveryVersion || 0) < DATA_RECOVERY_VERSION
   const needsProfiles = Number(state.schemaVersion || 0) < 5 || !Array.isArray(state.profiles)
   const needsCalendarScopes = Number(state.schemaVersion || 0) < 6
-  if (!needsRecovery && !needsProfiles && !needsCalendarScopes) return state
+  const needsMemberColors = Number(state.schemaVersion || 0) < 7
+  if (!needsRecovery && !needsProfiles && !needsCalendarScopes && !needsMemberColors) return state
   const hasLegacyData = ['events', 'tasks', 'shifts', 'childSchedules', 'childProfiles', 'schedulePeriods', 'anniversaries']
     .some((key) => Array.isArray(state[key]) && state[key].length > 0)
-  const profiles = Array.isArray(state.profiles) ? state.profiles : hasLegacyData ? LEGACY_PROFILES : []
+  const sourceProfiles = Array.isArray(state.profiles) ? state.profiles : hasLegacyData ? LEGACY_PROFILES : []
+  const profiles = needsMemberColors ? migrateMemberProfiles(sourceProfiles) : sourceProfiles
   return {
     ...state,
-    schemaVersion: 6,
+    schemaVersion: 7,
     recoveryVersion: DATA_RECOVERY_VERSION,
     profiles,
     workSettings: state.workSettings || defaultWorkSettingsFor(profiles, state.shifts),
@@ -1911,7 +1914,7 @@ export default function App() {
     const requested = new URLSearchParams(window.location.search).get('view')
     return NAV.some((item) => item.id === requested) ? requested : 'home'
   })
-  const [profiles, setProfiles] = useState(() => load('family-scheduler-profiles-v1', hasLegacyLocalData(LEGACY_STORAGE_KEYS) ? LEGACY_PROFILES : []))
+  const [profiles, setProfiles] = useState(() => migrateMemberProfiles(load('family-scheduler-profiles-v1', hasLegacyLocalData(LEGACY_STORAGE_KEYS) ? LEGACY_PROFILES : [])))
   const [events, setEvents] = useState(() => normalizeEventCalendarScopes(
     loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
       event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
@@ -1969,7 +1972,7 @@ export default function App() {
   usePersistedValue('family-scheduler-work-settings-v1', workSettings)
   usePersistedValue('family-scheduler-profile-links-v1', profileLinks)
   const sharedState = useMemo(() => ({
-    schemaVersion: 6,
+    schemaVersion: 7,
     recoveryVersion: DATA_RECOVERY_VERSION,
     profiles,
     workSettings,

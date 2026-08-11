@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { MEMBER_COLORS, SYSTEM_COLORS, migrateMemberProfiles } from '../src/lib/colors.js'
 
 const profiles = [
   { id: 'david', name: '아빠', type: 'adult', relation: '아빠', initials: '아', color: '#a9c978', tone: '#f2f7e8', active: true },
@@ -26,6 +27,17 @@ test('홈 화면을 표시한다', async ({ page }) => {
   await expect(page.getByRole('button', { name: '홈으로 이동' })).toBeVisible()
   await expect(page.getByText('Family Scheduler', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: '오늘의 일정' })).toBeVisible()
+})
+
+test('구성원 색을 새 팔레트로 중복 없이 결정적으로 마이그레이션한다', async ({ page }) => {
+  const first = migrateMemberProfiles(profiles)
+  const second = migrateMemberProfiles(profiles)
+  expect(first).toEqual(second)
+  expect(new Set(first.map((profile) => profile.color)).size).toBe(first.length)
+  expect(first.every((profile) => MEMBER_COLORS.some((entry) => entry.color === profile.color && entry.tone === profile.tone))).toBe(true)
+  expect(first.every((profile) => !Object.values(SYSTEM_COLORS).includes(profile.color))).toBe(true)
+
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-profiles-v1') || '[]'))).toEqual(first)
 })
 
 test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 유지한다', async ({ page }) => {
@@ -231,7 +243,7 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   await expect(sunday.locator('.week-date-label')).toHaveText('9(일)')
   await expect(saturday.locator('.week-date-label')).toHaveText('15(토)')
   await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(212, 81, 75)')
-  await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(55, 111, 195)')
+  await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(76, 87, 93)')
   await expect(page.locator('.home-week-strip button.today .week-shift-code')).toHaveText('D')
 })
 

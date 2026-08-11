@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react'
 import { Check, Pencil, Plus, RotateCcw, Settings2, Trash2, UserRoundCheck, X } from 'lucide-react'
 import { useModalAccessibility } from '../hooks/useModalAccessibility'
 import { useAppDialog } from '../hooks/useAppDialog'
+import { MEMBER_COLORS, memberColorFor } from '../lib/colors'
 
-const PROFILE_COLORS = ['#7fc7e3', '#c9df84', '#ffaaa0', '#6fb0a8', '#6f97d8', '#8bcdb4']
-const PROFILE_TONES = ['#ecf8fc', '#f6fae9', '#fff0ed', '#edf8f6', '#eef3fb', '#eef9f5']
-const EMPTY_FORM = { id: '', name: '', type: 'adult', relation: '', color: PROFILE_COLORS[0], tone: PROFILE_TONES[0], usesShift: false }
+const EMPTY_FORM = { id: '', name: '', type: 'adult', relation: '', color: MEMBER_COLORS[0].color, tone: MEMBER_COLORS[0].tone, usesShift: false }
 const SHIFT_HOURS = Array.from({ length: 12 }, (_, index) => index + 1)
 const SHIFT_MINUTES = ['00', '10', '20', '30', '40', '50']
 
@@ -65,7 +64,7 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
   const saveProfile = (event) => {
     event.preventDefault()
     if (!canEdit || !form.name.trim()) return
-    const colorIndex = Math.max(0, PROFILE_COLORS.indexOf(form.color))
+    const selectedColor = memberColorFor(form.color) || MEMBER_COLORS[0]
     const id = form.id || crypto.randomUUID()
     const nextProfile = {
       id,
@@ -73,8 +72,8 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
       type: form.type,
       relation: form.relation.trim(),
       initials: form.name.trim().slice(0, 1),
-      color: form.color,
-      tone: PROFILE_TONES[colorIndex],
+      color: selectedColor.color,
+      tone: selectedColor.tone,
       active: true,
     }
     setProfiles((current) => current.some((profile) => profile.id === id)
@@ -149,7 +148,16 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
               <label>구분<select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))} disabled={!canEdit}><option value="adult">성인</option><option value="child">자녀</option><option value="other">기타 가족</option></select></label>
               <label>관계 또는 호칭<input value={form.relation} onChange={(event) => setForm((current) => ({ ...current, relation: event.target.value }))} placeholder="예: 엄마, 할머니" disabled={!canEdit} /></label>
             </div>
-            <fieldset className="profile-color-field"><legend>표시 색상</legend><div>{PROFILE_COLORS.map((color) => <button type="button" key={color} className={form.color === color ? 'active' : ''} style={{ background: color }} aria-label={`${color} 색상`} aria-pressed={form.color === color} onClick={() => setForm((current) => ({ ...current, color }))} disabled={!canEdit}>{form.color === color && <Check />}</button>)}</div></fieldset>
+            <fieldset className="profile-color-field"><legend>표시 색상</legend><div>{MEMBER_COLORS.map((entry) => {
+              const owners = activeProfiles.filter((profile) => profile.id !== form.id && profile.color.toLowerCase() === entry.color.toLowerCase())
+              const paletteExhausted = activeProfiles.filter((profile) => profile.id !== form.id).length >= MEMBER_COLORS.length
+              const disabled = !canEdit || (owners.length > 0 && !paletteExhausted)
+              const usage = owners.length ? `${owners[0].name}과 같은 색` : ''
+              return <span className="profile-color-option" key={entry.id}>
+                <button type="button" className={form.color === entry.color ? 'active' : ''} style={{ background: entry.color }} aria-label={`${entry.id} 색상${owners.length ? `, ${owners[0].name} 사용 중` : ''}`} aria-pressed={form.color === entry.color} onClick={() => setForm((current) => ({ ...current, color: entry.color, tone: entry.tone }))} disabled={disabled}>{form.color === entry.color && <Check />}</button>
+                {usage && <small>{paletteExhausted ? usage : `${owners[0].name} 사용 중`}</small>}
+              </span>
+            })}</div></fieldset>
             <label className="check-row"><input type="checkbox" checked={form.usesShift} onChange={(event) => setForm((current) => ({ ...current, usesShift: event.target.checked }))} disabled={!canEdit} /><span><strong>근무표 사용</strong><small>이 구성원의 교대·일반 근무를 달력에 입력합니다.</small></span></label>
             <button className="primary-button" disabled={!canEdit}><Plus /> {form.id ? '변경사항 저장' : '구성원 추가'}</button>
           </form>
