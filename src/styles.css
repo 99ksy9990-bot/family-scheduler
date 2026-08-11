@@ -338,7 +338,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-card .home-event-main { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; }
 .today-card .home-event-title { min-width: 0; flex: 0 1 auto; overflow: hidden; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .home-event-separator { flex: 0 0 auto; color: var(--muted); font-weight: 700; }
-.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; flex: 0 0 auto; overflow: hidden; color: var(--primary); font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
+.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; flex: 0 0 auto; overflow: hidden; color: var(--primary); font-size: 15px; font-weight: 400; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .event-time-row { min-width: 0; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 6px; }
 .today-card .event-time { min-width: 0; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .home-category-chip { flex: 0 0 auto; padding: 3px 6px; color: #5c5477; border-radius: 7px; background: #e9e6f7; font-size: 9px; font-style: normal; font-weight: 800; }
@@ -1332,7 +1332,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .timeline { grid-template-columns: 1fr; }
   .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
   .today-card .home-event-title { font-size: 13px; }
-  .today-card .home-event-row .event-time { max-width: 116px; font-size: 13px; }
+  .today-card .home-event-row .event-time { max-width: none; font-size: 13px; }
   .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 9px; }
   .home-page { display: flex; flex-direction: column; gap: 22px; }
   .home-page .hero-intro { order: 1; margin-bottom: 2px; }

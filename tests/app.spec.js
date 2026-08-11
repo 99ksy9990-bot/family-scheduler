@@ -84,6 +84,8 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     titleToDot: Math.round(card.querySelector('.home-event-separator').getBoundingClientRect().left - card.querySelector('.home-event-title').getBoundingClientRect().right),
     dotToTime: Math.round(card.querySelector('.event-time').getBoundingClientRect().left - card.querySelector('.home-event-separator').getBoundingClientRect().right),
     sameFontSize: getComputedStyle(card.querySelector('.home-event-title')).fontSize === getComputedStyle(card.querySelector('.event-time')).fontSize,
+    timeWeight: getComputedStyle(card.querySelector('.event-time')).fontWeight,
+    mainFits: card.querySelector('.home-event-main').scrollWidth <= card.querySelector('.home-event-main').clientWidth,
     oneLine: [...card.children].every((child) => {
       const first = card.children[0].getBoundingClientRect()
       const current = child.getBoundingClientRect()
@@ -95,6 +97,8 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   expect(homeEventOrder.titleToDot).toBeLessThanOrEqual(3)
   expect(homeEventOrder.dotToTime).toBeLessThanOrEqual(3)
   expect(homeEventOrder.sameFontSize).toBe(true)
+  expect(homeEventOrder.timeWeight).toBe('400')
+  expect(homeEventOrder.mainFits).toBe(true)
   expect(homeEventOrder.oneLine).toBe(true)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
     const buttons = [...bar.querySelectorAll('button')]
