@@ -44,6 +44,24 @@ test('모바일에서도 주요 내비게이션이 보인다', async ({ page }, 
   await expect(page.getByRole('button', { name: '일정 관리', exact: true }).last()).toBeVisible()
 })
 
+test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), '모바일 프로젝트 전용 확인')
+  const layout = await page.evaluate(() => {
+    const rect = (selector) => document.querySelector(selector)?.getBoundingClientRect()
+    const today = rect('.home-page > .today-card')
+    const week = rect('.home-page > .week-strip-card')
+    const overview = rect('.home-page > .overview-grid')
+    const overviewCards = [...document.querySelectorAll('.overview-grid > .card')].map((element) => element.getBoundingClientRect())
+    return {
+      gaps: [week.top - today.bottom, overview.top - week.bottom, overviewCards[1].top - overviewCards[0].bottom],
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+    }
+  })
+  expect(layout.gaps.every((gap) => Math.abs(gap - 22) < 1)).toBe(true)
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth)
+})
+
 test('첫 로드 후 오프라인에서도 앱 셸이 열린다', async ({ page, context }) => {
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready

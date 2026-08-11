@@ -9,7 +9,7 @@ const PUSH_STATUS_COPY = {
   idle: ['알림 꺼짐', '가족 일정 알림을 이 기기에서 받아보세요.'],
 }
 
-export default function SettingsView({ profiles, workSettings, sync, pushStatus, pushError, onOpenProfiles, onOpenFamily, onEnableNotifications }) {
+export default function SettingsView({ appVersion, profiles, workSettings, sync, pushStatus, pushError, onOpenProfiles, onOpenFamily, onEnableNotifications }) {
   const activeProfiles = profiles.filter((profile) => profile.active !== false)
   const workerCount = activeProfiles.filter((profile) => workSettings.workerIds?.includes(profile.id)).length
   const connected = Boolean(sync.family)
@@ -24,7 +24,7 @@ export default function SettingsView({ profiles, workSettings, sync, pushStatus,
   return (
     <div className="page settings-page">
       <section className="page-title-row settings-title-row">
-        <div><span className="eyebrow">우리 가족과 앱 관리</span><h1>설정</h1><p>가족 구성, 연결, 근무표와 알림을 한곳에서 관리합니다.</p></div>
+        <div><span className="eyebrow">우리 가족과 앱 관리</span><h1>설정</h1><p>가족 구성, 연결, 근무표와 알림을 한곳에서 관리합니다.</p><small className="app-version">앱 버전 {appVersion}</small></div>
       </section>
 
       <div className="settings-hub-grid">

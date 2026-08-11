@@ -1,12 +1,15 @@
 const CACHE_PREFIX = 'family-scheduler-shell'
-const CACHE_NAME = `${CACHE_PREFIX}-v4`
+const CACHE_NAME = `${CACHE_PREFIX}-v5`
 const PRECACHE_ENTRIES = self.__WB_MANIFEST
 const PRECACHE_URLS = PRECACHE_ENTRIES.map((entry) => typeof entry === 'string' ? entry : entry.url)
 const PRECACHE_ABSOLUTE_URLS = new Set(PRECACHE_URLS.map((url) => new URL(url, self.location.origin).href))
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)))
-  self.skipWaiting()
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {

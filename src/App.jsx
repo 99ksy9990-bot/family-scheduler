@@ -103,8 +103,8 @@ const SHIFT_ICONS = { sun: Sun, sunset: Sunset, moon: Moon, calendar: CalendarDa
 const buildShiftOptions = (shiftTypes) => shiftTypes.map((shift) => ({
   ...shift,
   shortLabel: shift.code,
-  time: shift.start && shift.end ? `${shift.start} – ${shift.end}` : '근무 없음',
-  endLabel: shift.end ? `${shift.end} 종료` : '오늘은 휴무입니다',
+  time: shift.start && shift.end ? `${formatDisplayTime(shift.start)} – ${formatDisplayTime(shift.end)}` : '근무 없음',
+  endLabel: shift.end ? `${formatDisplayTime(shift.end)} 종료` : '오늘은 휴무입니다',
   icon: SHIFT_ICONS[shift.icon] || CalendarDays,
 }))
 
@@ -247,8 +247,25 @@ const parseTime = (value, fallback = '오전 9:00') => {
   const normalized = value === '자정' ? '오전 12:00' : value === '정오' ? '오후 12:00' : value
   const match = /^(오전|오후)\s+(\d{1,2}):(\d{2})$/.exec(normalized || '')
   if (match) return { meridiem: match[1], hour: Number(match[2]), minute: match[3] }
+  const twentyFourHour = /^(\d{1,2}):(\d{2})$/.exec(normalized || '')
+  if (twentyFourHour) {
+    const hour = Number(twentyFourHour[1])
+    if (hour >= 0 && hour < 24) return { meridiem: hour < 12 ? '오전' : '오후', hour: hour % 12 || 12, minute: twentyFourHour[2] }
+  }
   if (value === fallback) return { meridiem: '오전', hour: 9, minute: '00' }
   return parseTime(fallback, fallback)
+}
+
+const formatDisplayTime = (value) => {
+  if (!value) return ''
+  if (value === '종일') return value
+  const parsed = parseTime(value)
+  return `${parsed.meridiem} ${parsed.hour}:${parsed.minute}`
+}
+
+const assignedMemberIds = (item, pluralKey = 'members', singularKey = 'member') => {
+  const plural = Array.isArray(item?.[pluralKey]) ? item[pluralKey].filter(Boolean) : []
+  return plural.length ? [...new Set(plural)] : item?.[singularKey] ? [item[singularKey]] : [FAMILY_MEMBER.id]
 }
 
 const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
@@ -309,7 +326,9 @@ const overlappingEventIds = (events) => {
   const conflicts = new Set()
   events.forEach((event, index) => {
     events.slice(index + 1).forEach((candidate) => {
-      if (event.member !== candidate.member || !event.end || !candidate.end) return
+      const eventMembers = new Set(assignedMemberIds(event))
+      const sharesMember = assignedMemberIds(candidate).some((memberId) => eventMembers.has(memberId))
+      if (!sharesMember || !event.end || !candidate.end) return
       if (timeToMinutes(event.time) < timeToMinutes(candidate.end) && timeToMinutes(candidate.time) < timeToMinutes(event.end)) {
         conflicts.add(event.id)
         conflicts.add(candidate.id)
@@ -327,6 +346,14 @@ function Avatar({ memberId, small = false }) {
       {member.initials}
     </span>
   )
+}
+
+function AvatarGroup({ memberIds, small = false }) {
+  const uniqueIds = [...new Set(memberIds?.length ? memberIds : [FAMILY_MEMBER.id])]
+  return <span className="avatar-group" aria-label={`${uniqueIds.length}명 담당`}>
+    {uniqueIds.slice(0, 3).map((memberId) => <Avatar key={memberId} memberId={memberId} small={small} />)}
+    {uniqueIds.length > 3 && <span className={`avatar avatar-more ${small ? 'avatar-small' : ''}`}>+{uniqueIds.length - 3}</span>}
+  </span>
 }
 
 function TimePicker({ label, value, onChange, fallback }) {
@@ -451,7 +478,7 @@ function SearchPanel({ open, onClose, today, events, childSchedules, schedulePer
         <div className="search-date-range"><label>시작일<input type="date" value={fromDate} onChange={(change) => setFromDate(change.target.value)} /></label><span>~</span><label>종료일<input type="date" value={toDate} onChange={(change) => setToDate(change.target.value)} /></label></div>
         <div className="search-result-heading"><strong>{query.trim() ? `검색 결과 ${results.length}개` : `기간 내 일정 ${results.length}개`}</strong><small>최대 100개 표시</small></div>
         <div className="search-results">
-          {results.map((event) => <button key={`${event.id}-${event.date}`} onClick={() => onSelect(event)}><Avatar memberId={event.member} small /><span><strong>{event.title}</strong><small>{event.date} · {event.time || '종일'} · {event.memberName}{event.location ? ` · ${event.location}` : ''}</small></span><ChevronRight /></button>)}
+          {results.map((event) => <button key={`${event.id}-${event.date}`} onClick={() => onSelect(event)}><AvatarGroup memberIds={assignedMemberIds(event)} small /><span><strong>{event.title}</strong><small>{event.date} · {event.time || '종일'} · {event.memberName}{event.location ? ` · ${event.location}` : ''}</small></span><ChevronRight /></button>)}
           {!results.length && <div className="empty-state"><Search /><strong>찾은 일정이 없습니다</strong><span>검색어 또는 날짜 범위를 바꿔 보세요.</span></div>}
         </div>
       </section>
@@ -486,6 +513,7 @@ function MemberLegend() {
 function EventCard({ event, compact = false, calendarSummary = false, onEdit, onDelete, onDiscuss }) {
   const { profiles } = useFamilyProfiles()
   const member = memberForId(event.member, profiles)
+  const eventMembers = assignedMemberIds(event)
   const hasActions = Boolean(onEdit || onDelete || onDiscuss)
   const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
@@ -501,7 +529,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
       <article className={`event-card calendar-summary ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
         <div className="event-copy">
           <div className="event-meta-row">
-            <Avatar memberId={event.member} small />
+            <AvatarGroup memberIds={eventMembers} small />
             <span className="event-time">{timeLabel}</span>
             {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
           </div>
@@ -521,7 +549,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
       <div className="event-time">{timeLabel}</div>
-      <Avatar memberId={event.member} small />
+      <AvatarGroup memberIds={eventMembers} small />
       <div className="event-copy">
         <div className="event-title-row">
           <strong>{event.title}</strong>
@@ -536,20 +564,28 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   )
 }
 
-function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings, onOpenCollaboration }) {
+function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings, onOpenCollaboration }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
   const { profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const conflicts = overlappingEventIds(rawTodayEvents)
   const todayEvents = rawTodayEvents.map((event) => ({ ...event, conflict: conflicts.has(event.id) }))
   const childIds = new Set(children.map((child) => child.id))
-  const childEvents = todayEvents.filter((event) => childIds.has(event.member))
-  const generalTodayEvents = todayEvents.filter((event) => !childIds.has(event.member))
+  const childEvents = todayEvents
+    .filter((event) => event.type === 'school' && event.recurring && assignedMemberIds(event).some((memberId) => childIds.has(memberId)))
+    .sort((first, second) => timeToMinutes(first.time) - timeToMinutes(second.time) || first.title.localeCompare(second.title, 'ko'))
+  const recurringChildEventIds = new Set(childEvents.map((event) => event.id))
+  const generalTodayEvents = todayEvents.filter((event) => !recurringChildEventIds.has(event.id))
   const dueTasks = tasks.filter((task) => !task.done && task.dueDate && task.dueDate <= iso(today))
   const weekStart = addDays(today, -today.getDay())
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(weekStart, index)
-    return { date, events: eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions) }
+    const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
+    return {
+      date,
+      generalEvents: dayEvents.filter((event) => !(event.type === 'school' && event.recurring)),
+      childEvents: dayEvents.filter((event) => event.type === 'school' && event.recurring),
+    }
   })
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
     const shift = shifts.find((item) => item.date === iso(today) && item.member === worker.id)
@@ -589,10 +625,14 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <div className="card-label"><span>{worker.name} 오늘 근무</span><span className="status-pill"><i /> {option?.code || '미입력'}</span></div>
           <h2>{option?.label || '근무 미입력'}</h2>
           <p className="large-detail"><Clock3 /> {option?.endLabel || '근무표에서 입력하세요'}</p>
-          {index === 0 && <button className="support-note" type="button" aria-controls="today-schedule" onClick={() => document.getElementById('today-schedule')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+          {index === 0 && <div className="support-note today-summary-note">
             <Sparkles size={20} />
-            <span><strong>{isShared ? '가족 동기화' : '오늘 요약'}</strong>오늘 일정 {todayEvents.length}개{dueTasks.length ? ` · 마감 할 일 ${dueTasks.length}개` : ''}</span>
-          </button>}
+            <span><strong>{isShared ? '가족 동기화' : '오늘 요약'}</strong><span className="today-summary-links">
+              <button type="button" onClick={() => openCalendarDate(today)}>가족 일정 {generalTodayEvents.length}개</button>
+              {children.length > 0 && <button type="button" onClick={() => openChildCalendarDate(today)}>자녀 일정 {childEvents.length}개</button>}
+              {dueTasks.length > 0 && <button type="button" onClick={openTasks}>마감 할 일 {dueTasks.length}개</button>}
+            </span></span>
+          </div>}
         </article>)}
 
         {children.length > 0 && <article className="children-card card">
@@ -600,8 +640,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <div className="children-list">
             {childEvents.length ? childEvents.map((event) => (
               <div key={event.id} className="child-row">
-                <Avatar memberId={event.member} />
-                <span><strong>{profiles.find((member) => member.id === event.member)?.name}</strong>{event.title} · {event.time}{event.end ? ` ~ ${event.end}` : ''}{event.pickupBy ? ` · ${profiles.find((member) => member.id === event.pickupBy)?.name || '가족'} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
+                <AvatarGroup memberIds={assignedMemberIds(event)} />
+                <span><strong>{assignedMemberIds(event).map((memberId) => profiles.find((member) => member.id === memberId)?.name || '가족').join('·')}</strong>{event.title} · {event.time}{event.end ? ` ~ ${event.end}` : ''}{event.pickupBy ? ` · ${profiles.find((member) => member.id === event.pickupBy)?.name || '가족'} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
               </div>
             )) : <p className="empty-copy">오늘은 수업이 없습니다.</p>}
           </div>
@@ -609,7 +649,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         {!activeProfiles.length && <article className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>이름과 역할을 등록하면 일정, 자녀표, 근무표가 가족에 맞게 구성됩니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></article>}
       </section>
 
-      <section className="today-card card" id="today-schedule">
+      <section className={`today-card card ${generalTodayEvents.length ? '' : 'is-empty'}`} id="today-schedule">
         <div className="section-heading">
           <div><span className="eyebrow">오늘 한눈에 보기</span><h2>오늘의 일정</h2></div>
           <button className="text-button" onClick={openCalendar}>캘린더 보기 <ChevronRight size={16} /></button>
@@ -633,13 +673,15 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <button className="text-button" onClick={openCalendar}>전체 캘린더 <ChevronRight size={16} /></button>
         </div>
         <div className="home-week-strip">
-          {weekDays.map(({ date, events: dayEvents }) => {
+          {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents }) => {
             const isToday = iso(date) === iso(today)
-            return <button key={iso(date)} className={isToday ? 'today' : ''} onClick={() => openCalendarDate(date)} aria-label={`${formatLongDate(date)}, 일정 ${dayEvents.length}개`}>
+            const openDay = dayGeneralEvents.length || !dayChildEvents.length ? () => openCalendarDate(date) : () => openChildCalendarDate(date)
+            const firstEvent = dayGeneralEvents[0] || dayChildEvents[0]
+            return <button key={iso(date)} className={isToday ? 'today' : ''} onClick={openDay} aria-label={`${formatLongDate(date)}, 가족 일정 ${dayGeneralEvents.length}개, 자녀 일정 ${dayChildEvents.length}개`}>
               <span>{WEEKDAY_SHORT[date.getDay()]}</span>
               <strong>{date.getDate()}</strong>
-              <em>{dayEvents.length ? `${dayEvents.length}개` : '비어 있음'}</em>
-              {dayEvents[0] && <small>{dayEvents[0].title}</small>}
+              <em>{dayGeneralEvents.length ? `가족 ${dayGeneralEvents.length}` : dayChildEvents.length ? `자녀 ${dayChildEvents.length}` : '비어 있음'}</em>
+              {firstEvent && <small>{firstEvent.title}</small>}
             </button>
           })}
         </div>
@@ -784,6 +826,11 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
     if (currentMode === 'children') setSelected(next)
   }
 
+  const goToToday = () => {
+    setCursor(new Date(today.getFullYear(), today.getMonth(), 1))
+    setSelected(today)
+  }
+
   const selectCalendarDate = (date) => {
     setSelected(date)
     if ((currentMode === 'family' || currentMode === 'children') && window.matchMedia('(max-width: 900px)').matches) {
@@ -844,6 +891,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
             <button className="icon-button" onClick={() => moveMonth(-1)} aria-label="이전 달"><ChevronLeft /></button>
             <h1>{label}</h1>
             <button className="icon-button" onClick={() => moveMonth(1)} aria-label="다음 달"><ChevronRight /></button>
+            <button className="calendar-today-button" onClick={goToToday}>오늘</button>
           </div>
         </div>
         <div className="segmented">
@@ -882,7 +930,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
                   {currentMode === 'family' ? <>
                     <div className="day-dots">
-                      {dayEvents.slice(0, 3).map((event) => {
+                      {scheduledDayEvents.slice(0, 3).map((event) => {
                         const member = memberForId(event.member, profiles)
                         return <i key={event.id} style={{ background: member.color }} />
                       })}
@@ -949,6 +997,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
 
 function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pushStatus, pushError, onEnableNotifications }) {
   const [periodFilter, setPeriodFilter] = useState('week')
+  const [showCompleted, setShowCompleted] = useState(false)
   const categories = ['긴급', '장보기', '집안일']
   const toggleTask = (id) => setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task))
   const deleteTask = (task) => {
@@ -967,7 +1016,8 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
     if (periodFilter === 'month') return taskDate.startsWith(`${today.getFullYear()}-${pad(today.getMonth() + 1)}`)
     return true
   })
-  const visibleTasks = periodTasks
+  const completedInPeriod = periodTasks.filter((task) => task.done).length
+  const visibleTasks = periodTasks.filter((task) => showCompleted || !task.done)
   const totalRemaining = tasks.filter((task) => !task.done).length
   const visibleRemaining = visibleTasks.filter((task) => !task.done).length
   const sortTasks = (first, second) => {
@@ -993,7 +1043,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
           <button onClick={() => openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
           <button className="delete" onClick={() => deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
         </span>}
-        <Avatar memberId={task.assignee} small />
+        <AvatarGroup memberIds={assignedMemberIds(task, 'assignees', 'assignee')} small />
       </span>
     </article>
   }
@@ -1010,6 +1060,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
       </section>
       <div className="task-filter-bar" aria-label="할 일 기간 필터">
         {TASK_PERIOD_FILTERS.map((filter) => <button key={filter.id} className={periodFilter === filter.id ? 'active' : ''} aria-pressed={periodFilter === filter.id} onClick={() => setPeriodFilter(filter.id)}>{filter.label}</button>)}
+        {completedInPeriod > 0 && <button className="completed-task-toggle" aria-pressed={showCompleted} onClick={() => setShowCompleted((current) => !current)}>{showCompleted ? '완료 숨기기' : `완료 보기 ${completedInPeriod}`}</button>}
       </div>
       <div className="task-columns">
         {categories.map((category) => {
@@ -1509,7 +1560,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
   )
 }
 
-function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask }) {
+function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDate, onAfterSave, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask }) {
   const dialogRef = useModalAccessibility(true, onClose)
   const { activeProfiles } = useFamilyProfiles()
   const selectableMembers = [FAMILY_MEMBER, ...activeProfiles]
@@ -1524,7 +1575,12 @@ function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, o
   const [hasTime, setHasTime] = useState(() => Boolean((item?.time || defaults.time) && (item?.time || defaults.time) !== '종일'))
   const [hasEndTime, setHasEndTime] = useState(() => (item || defaults.time || defaults.end) ? Boolean(item?.end || defaults.end) : true)
   const [location, setLocation] = useState(item?.location || defaults.location || '')
-  const [member, setMember] = useState(item?.member || defaults.member || activeProfiles[0]?.id || FAMILY_MEMBER.id)
+  const defaultMember = item?.member || item?.assignee || defaults.member || activeProfiles[0]?.id || FAMILY_MEMBER.id
+  const [selectedMembers, setSelectedMembers] = useState(() => {
+    const stored = isTask ? item?.assignees : item?.members
+    return Array.isArray(stored) && stored.length ? stored : [defaultMember]
+  })
+  const member = selectedMembers[0] || FAMILY_MEMBER.id
   const [category, setCategory] = useState(item?.category || defaults.category || '집안일')
   const [dueDate, setDueDate] = useState(item?.dueDate || defaults.dueDate || '')
   const [reminder, setReminder] = useState(item?.reminder || defaults.reminder || 'none')
@@ -1532,6 +1588,21 @@ function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, o
   const [repeatInterval, setRepeatInterval] = useState(item?.recurrence?.interval || defaults.recurrence?.interval || 1)
   const [repeatUntil, setRepeatUntil] = useState(item?.recurrence?.until || defaults.recurrence?.until || '')
   const recurrence = repeatFrequency === 'none' ? null : { frequency: repeatFrequency, interval: Math.max(1, Number(repeatInterval) || 1), until: repeatUntil }
+  const conflictingEvents = (() => {
+    if (isTask || !hasTime || !hasEndTime || !eventDate || !getConflictEventsForDate) return []
+    const selectedSet = new Set(selectedMembers)
+    return getConflictEventsForDate(eventDate).filter((candidate) => {
+      if (candidate.id === item?.id || candidate.seriesId === item?.id || !candidate.end) return false
+      if (!assignedMemberIds(candidate).some((memberId) => selectedSet.has(memberId))) return false
+      return timeToMinutes(time) < timeToMinutes(candidate.end) && timeToMinutes(candidate.time) < timeToMinutes(end)
+    })
+  })()
+  const toggleMember = (memberId) => setSelectedMembers((current) => {
+    if (memberId === FAMILY_MEMBER.id) return [FAMILY_MEMBER.id]
+    const withoutFamily = current.filter((id) => id !== FAMILY_MEMBER.id)
+    if (withoutFamily.includes(memberId)) return withoutFamily.length > 1 ? withoutFamily.filter((id) => id !== memberId) : withoutFamily
+    return [...withoutFamily, memberId]
+  })
   const changeEventStartDate = (nextDate) => {
     setEventDate(nextDate)
     setEventEndDate((current) => !current || current < nextDate ? nextDate : current)
@@ -1549,10 +1620,10 @@ function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, o
       return
     }
     const repeatValue = recurrence || undefined
-    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
-    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, dueDate: submittedDueDate, reminder })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, reminder: hasTime ? reminder : 'none', recurrence: repeatValue })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, reminder: hasTime ? reminder : 'none', recurrence: repeatValue, type: 'family' })
+    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, assignees: selectedMembers, dueDate: submittedDueDate, reminder })
+    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, assignees: selectedMembers, dueDate: submittedDueDate, reminder })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue, type: 'family' })
     onAfterSave?.()
     onClose()
   }
@@ -1583,6 +1654,7 @@ function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, o
           <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
           {hasEndTime && <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>}
         </div>}
+        {!isTask && conflictingEvents.length > 0 && <div className="form-warning" role="status"><AlertTriangle /><span><strong>시간이 겹치는 일정이 있습니다.</strong>{conflictingEvents.slice(0, 2).map((event) => event.title).join(' · ')}</span></div>}
         {!isTask && hasTime && <label>앱 알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="30-minutes">30분 전</option></select></label>}
         {!isTask && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>장보기</option><option>집안일</option></select></label>}
@@ -1593,7 +1665,7 @@ function Modal({ type, date, today, item, defaults = {}, onAfterSave, onClose, o
           </select>
           {repeatFrequency !== 'none' && <><label>간격<input type="number" min="1" max="99" value={repeatInterval} onChange={(event) => setRepeatInterval(event.target.value)} /></label><label>종료일<input type="date" min={eventDate} value={repeatUntil} onChange={(event) => setRepeatUntil(event.target.value)} /></label></>}
         </div></fieldset>}
-        <fieldset><legend>담당자</legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={member === person.id ? 'active' : ''} onClick={() => setMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
+        <fieldset><legend>담당자 <small>여러 명 선택 가능</small></legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={selectedMembers.includes(person.id) ? 'active' : ''} aria-pressed={selectedMembers.includes(person.id)} onClick={() => toggleMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
         <div className="modal-actions">
           {isEditing && <button type="button" className="danger-button" onClick={removeItem}><Trash2 size={17} /> {isTask ? '할 일 삭제' : '일정 삭제'}</button>}
           <button type="button" className="secondary-button" onClick={onClose}>취소</button>
@@ -1640,6 +1712,14 @@ function BackupPreviewDialog({ preview, onClose, onConfirm }) {
 function UndoToast({ toast, onUndo, onClose }) {
   if (!toast) return null
   return <div className="undo-toast" role="status"><span>{toast.message}</span><button onClick={onUndo}><RotateCcw /> 실행 취소</button><button className="toast-close" onClick={onClose} aria-label="알림 닫기"><X /></button></div>
+}
+
+function AppUpdateBanner({ onUpdate, onClose }) {
+  return <div className="app-update-banner" role="status">
+    <span><strong>새 버전이 준비됐습니다.</strong>저장된 일정은 그대로 유지됩니다.</span>
+    <button onClick={onUpdate}>지금 업데이트</button>
+    <button className="update-close" onClick={onClose} aria-label="업데이트 안내 닫기"><X /></button>
+  </div>
 }
 
 export default function App() {
@@ -1689,6 +1769,7 @@ export default function App() {
   const [calendarJumpDate, setCalendarJumpDate] = useState(null)
   const [collaborationEvent, setCollaborationEvent] = useState(null)
   const [backupPreview, setBackupPreview] = useState(null)
+  const [updateWorker, setUpdateWorker] = useState(null)
 
   usePersistedValue('family-scheduler-profiles-v1', profiles)
   usePersistedValue('family-scheduler-events', events)
@@ -1736,6 +1817,18 @@ export default function App() {
   const sync = useFamilySync({ localState: sharedState, onRemoteState: applySharedState })
   const pushNotifications = usePushNotifications({ session: sync.session, family: sync.family })
   const canEdit = !sync.family || sync.family.membership.can_edit
+
+  useEffect(() => {
+    const handleUpdateReady = (event) => setUpdateWorker(event.detail?.worker || null)
+    window.addEventListener('family-scheduler:update-ready', handleUpdateReady)
+    return () => window.removeEventListener('family-scheduler:update-ready', handleUpdateReady)
+  }, [])
+
+  const applyAppUpdate = () => {
+    if (!updateWorker) return
+    navigator.serviceWorker?.addEventListener('controllerchange', () => window.location.reload(), { once: true })
+    updateWorker.postMessage({ type: 'SKIP_WAITING' })
+  }
 
   useEffect(() => {
     if (!undoToast) return undefined
@@ -1794,6 +1887,7 @@ export default function App() {
       end: event.end,
       location: event.location,
       member: event.member,
+      members: event.members,
       reminder: event.reminder,
       recurrence: undefined,
     }, () => {
@@ -1871,11 +1965,14 @@ export default function App() {
     changeView('calendar')
   }
 
-  const openCalendarDate = (date) => {
+  const openCalendarDate = (date, nextMode = 'family') => {
     setCalendarJumpDate(iso(date))
-    setCalendarMode('family')
-    changeView('calendar')
+    setCalendarMode(nextMode)
+    setView('calendar')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  const openChildCalendarDate = (date) => openCalendarDate(date, 'children')
 
   const openSearchResult = (event) => {
     setSearchOpen(false)
@@ -1893,6 +1990,14 @@ export default function App() {
   const focusShiftMember = workSettings.enabled ? shiftWorkers[0] : null
   const focusShift = shifts.find((shift) => shift.date === iso(today) && shift.member === focusShiftMember?.id)
   const focusShiftOption = shiftOptions.find((option) => option.id === focusShift?.shift)
+  const getConflictEventsForDate = useCallback((dateValue) => eventsForDate(
+    new Date(`${dateValue}T00:00:00`),
+    events,
+    childSchedules,
+    schedulePeriods,
+    anniversaries,
+    scheduleExceptions,
+  ), [anniversaries, childSchedules, events, scheduleExceptions, schedulePeriods])
 
   return (
     <FamilyProfilesContext.Provider value={familyProfilesValue}>
@@ -1901,14 +2006,14 @@ export default function App() {
       <SyncStatusBar sync={sync} />
       {focusMode && <FocusModeBanner shiftOption={focusShiftOption} shiftMember={focusShiftMember} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
-        {view === 'home' && <HomeView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openCalendarDate={openCalendarDate} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} onOpenCollaboration={setCollaborationEvent} />}
+        {view === 'home' && <HomeView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openCalendarDate={openCalendarDate} openChildCalendarDate={openChildCalendarDate} openTasks={() => changeView('tasks')} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} onOpenCollaboration={setCollaborationEvent} />}
         {view === 'calendar' && <CalendarView key={calendarJumpDate || 'calendar'} today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} jumpDate={calendarJumpDate} onOpenCollaboration={setCollaborationEvent} />}
         {view === 'tasks' && <TasksView today={today} tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onEnableNotifications={pushNotifications.enable} />}
         {view === 'schedules' && <SchedulesView today={today} childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}
-        {view === 'settings' && <Suspense fallback={<div className="page-loading" role="status">설정을 불러오는 중입니다.</div>}><SettingsView profiles={profiles} workSettings={workSettings} sync={sync} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onOpenProfiles={() => setFamilySettingsOpen(true)} onOpenFamily={() => setFamilyPanelOpen(true)} onEnableNotifications={pushNotifications.enable} /></Suspense>}
+        {view === 'settings' && <Suspense fallback={<div className="page-loading" role="status">설정을 불러오는 중입니다.</div>}><SettingsView appVersion={import.meta.env.VITE_APP_VERSION || 'local'} profiles={profiles} workSettings={workSettings} sync={sync} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onOpenProfiles={() => setFamilySettingsOpen(true)} onOpenFamily={() => setFamilyPanelOpen(true)} onEnableNotifications={pushNotifications.enable} /></Suspense>}
       </main>
       <div className="mobile-nav"><Navigation active={view} onChange={changeView} /></div>
-      {modal && <Modal {...modal} today={today} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}
+      {modal && <Modal {...modal} today={today} getConflictEventsForDate={getConflictEventsForDate} onClose={() => setModal(null)} onAddEvent={addEvent} onUpdateEvent={updateEvent} onDeleteEvent={deleteEvent} onAddTask={addTask} onUpdateTask={updateTask} onDeleteTask={deleteTask} />}
       <RecurringActionDialog
         event={recurringEvent}
         onClose={() => setRecurringEvent(null)}
@@ -1919,12 +2024,13 @@ export default function App() {
       />
       <BackupPreviewDialog preview={backupPreview} onClose={() => setBackupPreview(null)} onConfirm={confirmBackupImport} />
       <Suspense fallback={null}>
-        <FamilySyncPanel open={familyPanelOpen} onClose={() => setFamilyPanelOpen(false)} sync={sync} onExport={exportBackup} onImport={importBackup} profiles={activeProfiles} profileLinks={profileLinks} onLinkProfile={(userId, profileId) => setProfileLinks((current) => ({ ...current, [userId]: profileId }))} />
-        <FamilySettingsPanel open={familySettingsOpen} onClose={() => setFamilySettingsOpen(false)} profiles={profiles} setProfiles={setProfiles} workSettings={workSettings} setWorkSettings={setWorkSettings} canEdit={canEdit} />
-        <EventCollaborationPanel event={collaborationEvent} family={sync.family} session={sync.session} canEdit={canEdit} onClose={() => setCollaborationEvent(null)} />
+        {familyPanelOpen && <FamilySyncPanel open onClose={() => setFamilyPanelOpen(false)} sync={sync} onExport={exportBackup} onImport={importBackup} profiles={activeProfiles} profileLinks={profileLinks} onLinkProfile={(userId, profileId) => setProfileLinks((current) => ({ ...current, [userId]: profileId }))} />}
+        {familySettingsOpen && <FamilySettingsPanel open onClose={() => setFamilySettingsOpen(false)} profiles={profiles} setProfiles={setProfiles} workSettings={workSettings} setWorkSettings={setWorkSettings} canEdit={canEdit} />}
+        {collaborationEvent && <EventCollaborationPanel event={collaborationEvent} family={sync.family} session={sync.session} canEdit={canEdit} onClose={() => setCollaborationEvent(null)} />}
       </Suspense>
       <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} scheduleExceptions={scheduleExceptions} onSelect={openSearchResult} />
       <UndoToast toast={undoToast} onUndo={() => { undoToast?.undo(); setUndoToast(null) }} onClose={() => setUndoToast(null)} />
+      {updateWorker && <AppUpdateBanner onUpdate={applyAppUpdate} onClose={() => setUpdateWorker(null)} />}
     </div>
     </FamilyProfilesContext.Provider>
   )
