@@ -233,6 +233,11 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 }
 
 .hero-intro { max-width: 100%; margin-bottom: 34px; }
+.home-page { display: flex; flex-direction: column; }
+.home-page .hero-intro { order: 1; }
+.home-page .today-card { order: 2; }
+.home-page .week-strip-card { order: 3; }
+.home-page .overview-grid { order: 4; }
 .hero-intro h1, .page-title-row h1 { font-size: clamp(36px, 5vw, 54px); line-height: 1.08; font-weight: 800; }
 .home-page .hero-intro h1 { text-wrap: pretty; }
 .greeting-family { white-space: nowrap; }
@@ -352,7 +357,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .home-week-strip .week-shift-code.navy { color: white; background: #3d456d; }
 .home-week-strip .week-shift-code.lavender, .home-week-strip .week-shift-code.more { color: #555d70; background: #e9e8fb; }
 .home-week-strip em { font-size: 10px; font-style: normal; font-weight: 700; opacity: .78; }
-.home-week-strip small { width: 100%; overflow: hidden; font-size: 10px; white-space: nowrap; text-overflow: ellipsis; }
 .home-week-strip .week-counts { display: flex; justify-content: center; gap: 5px; width: 100%; }
 .home-week-strip .week-counts b { font-size: 10px; opacity: .48; }
 
@@ -525,6 +529,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .calendar-summary .event-meta-row .event-time { color: var(--primary); font-size: 13px; white-space: nowrap; }
 .day-panel .calendar-summary .event-meta-row i { font-style: normal; }
 .day-panel .calendar-summary .event-location { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.calendar-summary .event-meta-row .event-discuss-action { flex: 0 0 auto; margin-left: auto; }
 .day-panel .calendar-summary .event-title-row { min-height: 30px; }
 .day-panel .empty-state span { max-width: none; white-space: nowrap; }
 .empty-state { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); text-align: center; }
@@ -1316,7 +1321,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .home-week-strip .week-counts { align-items: center; flex-direction: row; flex-wrap: nowrap; gap: 3px; padding: 0; border: 0; font-family: 'A2Z', sans-serif; white-space: nowrap; }
   .home-week-strip .week-counts em { width: auto; padding: 0; font-size: 8px; text-align: center; }
   .home-week-strip .week-counts b { font-size: 8px; }
-  .home-week-strip .week-day-detail { display: none; }
   .today-summary-note { align-items: flex-start; }
   .today-summary-links { gap: 3px 7px; }
   .today-summary-links button { font-size: 12px; }

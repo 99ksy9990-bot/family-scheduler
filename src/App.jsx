@@ -538,11 +538,12 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
-  const actions = hasActions && <div className="event-actions">
-    {onDiscuss && <button onClick={onDiscuss} aria-label={`${event.title} 대화와 준비물`} title="대화·준비물"><MessageCircle /></button>}
+  const discussButton = onDiscuss && <button onClick={onDiscuss} aria-label={`${event.title} 대화와 준비물`} title="대화·준비물"><MessageCircle /></button>
+  const managementActions = (onEdit || onDelete) && <div className="event-actions">
     {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
     {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
   </div>
+  const actions = hasActions && <div className="event-actions">{discussButton}{onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}{onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}</div>
 
   if (calendarSummary) {
     return (
@@ -552,10 +553,11 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
             <AvatarGroup memberIds={eventMembers} small />
             <span className="event-time">{timeLabel}</span>
             {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
+            {discussButton && <div className="event-actions event-discuss-action">{discussButton}</div>}
           </div>
           <div className="event-title-row">
             <strong>{event.title}</strong>
-            {actions}
+            {managementActions}
           </div>
           {(event.milestoneLabel || event.pickupBy || event.conflict) && <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
             <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
@@ -617,6 +619,19 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     const shift = shifts.find((item) => item.date === iso(today) && item.member === worker.id)
     return { worker, option: shiftOptions.find((option) => option.id === shift?.shift) }
   }) : []
+  const todayShiftEvents = todayWorkerShifts
+    .filter(({ option }) => option)
+    .map(({ worker, option }) => ({
+      id: `home-shift-${worker.id}-${iso(today)}`,
+      title: `${worker.name} 오늘 근무`,
+      date: iso(today),
+      time: option.time,
+      location: `${option.code} · ${option.label}`,
+      member: worker.id,
+      members: [worker.id],
+      homeShift: true,
+    }))
+  const todayTimelineEvents = [...todayShiftEvents, ...todayEvents]
 
   useEffect(() => {
     const timer = window.setInterval(() => setGreeting((current) => {
@@ -675,22 +690,22 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         {!activeProfiles.length && <article className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>이름과 역할을 등록하면 일정, 자녀표, 근무표가 가족에 맞게 구성됩니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></article>}
       </section>
 
-      <section className={`today-card card ${generalTodayEvents.length ? '' : 'is-empty'}`} id="today-schedule">
+      <section className={`today-card card ${todayTimelineEvents.length ? '' : 'is-empty'}`} id="today-schedule">
         <div className="section-heading">
           <div><span className="eyebrow">오늘 한눈에 보기</span><h2>오늘의 일정</h2></div>
           <button className="text-button" onClick={openCalendar}>캘린더 보기 <ChevronRight size={16} /></button>
         </div>
-        <div className={`timeline timeline-count-${Math.min(generalTodayEvents.length, 3)}`}>
-          {generalTodayEvents.slice(0, 6).map((event) => <EventCard
+        <div className={`timeline timeline-count-${Math.min(todayTimelineEvents.length, 3)}`}>
+          {todayTimelineEvents.slice(0, 6).map((event) => <EventCard
             key={event.id}
             event={event}
-            onDiscuss={!event.holiday ? () => onOpenCollaboration(event) : undefined}
-            onEdit={canEdit && !event.holiday ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
-            onDelete={canEdit && !event.holiday ? () => removeTodayEvent(event) : undefined}
+            onDiscuss={!event.holiday && !event.homeShift ? () => onOpenCollaboration(event) : undefined}
+            onEdit={canEdit && !event.holiday && !event.homeShift ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
+            onDelete={canEdit && !event.holiday && !event.homeShift ? () => removeTodayEvent(event) : undefined}
           />)}
-          {!generalTodayEvents.length && <p className="empty-copy">{childEvents.length ? '그 밖의 일정은 없습니다.' : '비어 있는 하루예요. 일정을 추가해 보세요.'}</p>}
+          {!todayTimelineEvents.length && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
         </div>
-        {generalTodayEvents.length > 6 && <button className="more-events-button" onClick={openCalendar}>+{generalTodayEvents.length - 6}개 일정 더보기</button>}
+        {todayTimelineEvents.length > 6 && <button className="more-events-button" onClick={openCalendar}>+{todayTimelineEvents.length - 6}개 일정 더보기</button>}
       </section>
 
       <section className="week-strip-card card" aria-labelledby="week-strip-title">
@@ -705,7 +720,6 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const dayHolidays = dayGeneralEvents.filter((event) => event.holiday)
             const familyCount = dayGeneralEvents.length - dayHolidays.length
             const childCount = dayChildEvents.length
-            const totalCount = familyCount + childCount
             const conflictCount = overlappingEventCount([...dayGeneralEvents.filter((event) => !event.holiday), ...dayChildEvents])
             const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
             const shiftCodes = dayWorkerShifts.map(({ option }) => option.code).join('·')
@@ -713,7 +727,6 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
               <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span></strong>
               <span className="week-shifts" aria-hidden="true">{dayWorkerShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={`week-shift-code ${option.color}`}>{option.code}</i>)}{dayWorkerShifts.length > 2 && <i className="week-shift-code more">+{dayWorkerShifts.length - 2}</i>}</span>
               <span className="week-counts"><em>가족 {familyCount}</em><b aria-hidden="true">/</b><em>자녀 {childCount}</em></span>
-              <small className="week-day-detail">{[dayHolidays[0]?.title, conflictCount ? `시간 겹침 ${conflictCount}` : '', totalCount > 2 ? `+${totalCount - 2}개` : totalCount ? `일정 ${totalCount}개` : dayHolidays.length ? '일정 0개' : '비어 있음'].filter(Boolean).join(' · ')}</small>
             </button>
           })}
         </div>

@@ -21,6 +21,30 @@ test('홈 화면을 표시한다', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '오늘의 일정' })).toBeVisible()
 })
 
+test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스크톱 순서를 유지한다', async ({ page }, testInfo) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'today-shift', date: '2026-08-11', member: 'emma', shift: 'day' }]))
+    localStorage.setItem('family-scheduler-events', JSON.stringify([
+      { id: 'today-child', title: '오늘 자녀 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', member: 'leo', members: ['leo'], calendarScope: 'children' },
+    ]))
+  })
+  await page.reload()
+
+  const todayCard = page.locator('.today-card')
+  await expect(todayCard.getByText('엄마 오늘 근무', { exact: true })).toBeVisible()
+  await expect(todayCard.getByText('오늘 자녀 일정', { exact: true })).toBeVisible()
+  await expect(page.locator('.home-week-strip .week-day-detail')).toHaveCount(0)
+
+  if (!testInfo.project.name.includes('mobile')) {
+    const order = await page.evaluate(() => {
+      const top = (selector) => document.querySelector(selector).getBoundingClientRect().top
+      return [top('.today-card'), top('.week-strip-card'), top('.overview-grid')]
+    })
+    expect(order[0]).toBeLessThan(order[1])
+    expect(order[1]).toBeLessThan(order[2])
+  }
+})
+
 test('주요 화면을 이동한다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await expect(page.getByRole('heading', { name: /년 .*월/ })).toBeVisible()
@@ -101,11 +125,11 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
       count: counts.length,
       sameLine: Math.abs(counts[0].getBoundingClientRect().top - counts[1].getBoundingClientRect().top) < 1,
       summaryText: button.querySelector('.week-counts').textContent,
-      detailDisplay: getComputedStyle(button.querySelector('.week-day-detail')).display,
+      detailCount: button.querySelectorAll('.week-day-detail').length,
       fontFamily: getComputedStyle(button.querySelector('.week-counts')).fontFamily,
     }
   })
-  expect(weekSummaryLayout).toMatchObject({ count: 2, sameLine: true, summaryText: '가족 0/자녀 0', detailDisplay: 'none' })
+  expect(weekSummaryLayout).toMatchObject({ count: 2, sameLine: true, summaryText: '가족 0/자녀 0', detailCount: 0 })
   expect(weekSummaryLayout.fontFamily).toContain('A2Z')
 
   const sunday = page.locator('.home-week-strip button.sunday')
@@ -194,6 +218,13 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(page.locator('.overview-day-section').filter({ hasText: '자녀 일정' })).toContainText('자녀 일정')
   await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D · 주간 근무')
   await expect(page.locator('.overview-day-section.holiday-group')).toContainText('일정 개수에서 제외')
+  const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 일정' })
+  await expect(familyEventCard.getByRole('button', { name: '가족 일정 대화와 준비물' })).toBeVisible()
+  const actionRows = await familyEventCard.evaluate((card) => ({
+    discussInMetaRow: Boolean(card.querySelector('.event-meta-row .event-discuss-action')),
+    deleteInTitleRow: Boolean(card.querySelector('.event-title-row .event-actions .delete')),
+  }))
+  expect(actionRows).toEqual({ discussInMetaRow: true, deleteInTitleRow: true })
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
     await expect(mobileMarkers.locator('.family')).toHaveText('가 1')
