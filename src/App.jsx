@@ -569,7 +569,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
 
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-      <div className="event-time">{timeLabel}</div>
+      <div className="event-time-row"><span className="event-time">{timeLabel}</span>{event.homeCategory && <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>}</div>
       <AvatarGroup memberIds={eventMembers} small />
       <div className="event-copy">
         <div className="event-title-row">
@@ -585,9 +585,9 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   )
 }
 
-function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, deleteEvent, openRecurringActions, canEdit, isShared, notifyUndo, onOpenSettings, onOpenCollaboration }) {
+function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, deleteEvent, openRecurringActions, canEdit, notifyUndo, onOpenSettings }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
-  const { profiles, activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
+  const { activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const conflicts = overlappingEventIds(rawTodayEvents)
   const todayEvents = rawTodayEvents.map((event) => ({ ...event, conflict: conflicts.has(event.id) }))
@@ -629,8 +629,14 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       member: worker.id,
       members: [worker.id],
       homeShift: true,
+      homeCategory: '근무',
+      homeCategoryId: 'work',
     }))
-  const todayTimelineEvents = [...todayShiftEvents, ...todayEvents]
+  const todayTimelineEvents = [...todayShiftEvents, ...todayEvents.map((event) => ({
+    ...event,
+    homeCategory: event.holiday ? '공휴일' : isChildCalendarEvent(event) ? '자녀' : '가족',
+    homeCategoryId: event.holiday ? 'holiday' : isChildCalendarEvent(event) ? 'children' : 'family',
+  }))]
 
   useEffect(() => {
     const timer = window.setInterval(() => setGreeting((current) => {
@@ -660,35 +666,6 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         <p>우리 가족의 오늘 하루를 한눈에 확인하세요.</p>
       </section>
 
-      <section className="overview-grid">
-        {todayWorkerShifts.map(({ worker, option }, index) => <article className="status-card card" key={worker.id}>
-          <div className="card-label"><span>{worker.name} 오늘 근무</span><span className="status-pill"><i /> {option?.code || '미입력'}</span></div>
-          <h2>{option?.label || '근무 미입력'}</h2>
-          <p className="large-detail"><Clock3 /> {option?.endLabel || '근무표에서 입력하세요'}</p>
-          {index === 0 && <div className="support-note today-summary-note">
-            <Sparkles size={20} />
-            <span><strong>{isShared ? '가족 동기화' : '오늘 요약'}</strong><span className="today-summary-links">
-              <button type="button" onClick={() => openCalendarDate(today, 'family')}>가족 일정 {generalTodayEvents.length}개</button>
-              {children.length > 0 && <button type="button" onClick={() => openChildCalendarDate(today)}>자녀 일정 {childEvents.length}개</button>}
-              {dueTasks.length > 0 && <button type="button" onClick={openTasks}>마감 할 일 {dueTasks.length}개</button>}
-            </span></span>
-          </div>}
-        </article>)}
-
-        {children.length > 0 && <article className="children-card card">
-          <div className="section-heading"><h2>자녀 일정</h2><GraduationCap /></div>
-          <div className="children-list">
-            {childEvents.length ? childEvents.map((event) => (
-              <div key={event.id} className="child-row">
-                <AvatarGroup memberIds={assignedMemberIds(event)} />
-                <span><strong>{assignedMemberIds(event).map((memberId) => profiles.find((member) => member.id === memberId)?.name || '가족').join('·')}</strong>{event.title} · {event.time}{event.end ? ` ~ ${event.end}` : ''}{event.pickupBy ? ` · ${profiles.find((member) => member.id === event.pickupBy)?.name || '가족'} 픽업` : ''}{event.conflict ? ' · 시간 겹침' : ''}</span>
-              </div>
-            )) : <p className="empty-copy">오늘은 수업이 없습니다.</p>}
-          </div>
-        </article>}
-        {!activeProfiles.length && <article className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>이름과 역할을 등록하면 일정, 자녀표, 근무표가 가족에 맞게 구성됩니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></article>}
-      </section>
-
       <section className={`today-card card ${todayTimelineEvents.length ? '' : 'is-empty'}`} id="today-schedule">
         <div className="section-heading">
           <div><span className="eyebrow">오늘 한눈에 보기</span><h2>오늘의 일정</h2></div>
@@ -698,13 +675,18 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           {todayTimelineEvents.slice(0, 6).map((event) => <EventCard
             key={event.id}
             event={event}
-            onDiscuss={!event.holiday && !event.homeShift ? () => onOpenCollaboration(event) : undefined}
             onEdit={canEdit && !event.holiday && !event.homeShift ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
             onDelete={canEdit && !event.holiday && !event.homeShift ? () => removeTodayEvent(event) : undefined}
           />)}
           {!todayTimelineEvents.length && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
         </div>
         {todayTimelineEvents.length > 6 && <button className="more-events-button" onClick={openCalendar}>+{todayTimelineEvents.length - 6}개 일정 더보기</button>}
+        <nav className="today-summary-bar" aria-label="오늘 일정 요약">
+          <button type="button" onClick={() => openCalendarDate(today, 'work')}>근무</button>
+          <button type="button" onClick={() => openCalendarDate(today, 'family')}>가족 일정 {generalTodayEvents.length}개</button>
+          <button type="button" onClick={() => openChildCalendarDate(today)}>자녀 일정 {childEvents.length}개</button>
+          <button type="button" onClick={openTasks}>마감 할 일 {dueTasks.length}개</button>
+        </nav>
       </section>
 
       <section className="week-strip-card card" aria-labelledby="week-strip-title">
@@ -730,6 +712,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           })}
         </div>
       </section>
+
+      {!activeProfiles.length && <section className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>이름과 역할을 등록하면 일정, 자녀표, 근무표가 가족에 맞게 구성됩니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></section>}
 
       {canEdit && <button className="floating-add" onClick={() => openModal('event')} aria-label="일정 추가"><Plus /></button>}
     </div>

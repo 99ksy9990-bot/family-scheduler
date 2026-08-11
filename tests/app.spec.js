@@ -33,15 +33,26 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   const todayCard = page.locator('.today-card')
   await expect(todayCard.getByText('엄마 오늘 근무', { exact: true })).toBeVisible()
   await expect(todayCard.getByText('오늘 자녀 일정', { exact: true })).toBeVisible()
+  await expect(todayCard.locator('.home-category-chip.work')).toHaveText('근무')
+  await expect(todayCard.locator('.home-category-chip.children')).toHaveText('자녀')
+  await expect(todayCard.getByRole('button', { name: /대화와 준비물/ })).toHaveCount(0)
+  const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
+    const buttons = [...bar.querySelectorAll('button')]
+    return {
+      labels: buttons.map((button) => button.textContent),
+      oneLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
+    }
+  })
+  expect(todaySummary).toEqual({ labels: ['근무', '가족 일정 0개', '자녀 일정 1개', '마감 할 일 0개'], oneLine: true })
+  await expect(page.locator('.home-page > .overview-grid')).toHaveCount(0)
   await expect(page.locator('.home-week-strip .week-day-detail')).toHaveCount(0)
 
   if (!testInfo.project.name.includes('mobile')) {
     const order = await page.evaluate(() => {
       const top = (selector) => document.querySelector(selector).getBoundingClientRect().top
-      return [top('.today-card'), top('.week-strip-card'), top('.overview-grid')]
+      return [top('.today-card'), top('.week-strip-card')]
     })
     expect(order[0]).toBeLessThan(order[1])
-    expect(order[1]).toBeLessThan(order[2])
   }
 })
 
@@ -108,10 +119,8 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
     const rect = (selector) => document.querySelector(selector)?.getBoundingClientRect()
     const today = rect('.home-page > .today-card')
     const week = rect('.home-page > .week-strip-card')
-    const overview = rect('.home-page > .overview-grid')
-    const overviewCards = [...document.querySelectorAll('.overview-grid > .card')].map((element) => element.getBoundingClientRect())
     return {
-      gaps: [week.top - today.bottom, overview.top - week.bottom, overviewCards[1].top - overviewCards[0].bottom],
+      gaps: [week.top - today.bottom],
       scrollWidth: document.documentElement.scrollWidth,
       innerWidth: window.innerWidth,
     }

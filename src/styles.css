@@ -237,7 +237,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .home-page .hero-intro { order: 1; }
 .home-page .today-card { order: 2; }
 .home-page .week-strip-card { order: 3; }
-.home-page .overview-grid { order: 4; }
+.home-page .family-setup-card { order: 4; }
 .hero-intro h1, .page-title-row h1 { font-size: clamp(36px, 5vw, 54px); line-height: 1.08; font-weight: 800; }
 .home-page .hero-intro h1 { text-wrap: pretty; }
 .greeting-family { white-space: nowrap; }
@@ -332,13 +332,22 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .timeline > .empty-copy { grid-column: 1 / -1; }
 .more-events-button { display: flex; margin: 14px auto 0; padding: 8px 13px; color: var(--primary); border: 0; border-radius: 10px; background: #edf6f8; font-weight: 700; }
 .today-card .event-card { min-height: 92px; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 11px 13px; }
-.today-card .event-time { grid-column: 1; grid-row: 1; font-size: 12px; color: var(--primary); }
+.today-card .event-time-row { min-width: 0; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 6px; }
+.today-card .event-time { min-width: 0; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.home-category-chip { flex: 0 0 auto; padding: 3px 6px; color: #5c5477; border-radius: 7px; background: #e9e6f7; font-size: 9px; font-style: normal; font-weight: 800; }
+.home-category-chip.work { color: #526c23; background: #deedbc; }
+.home-category-chip.children { color: #17627a; background: #d5eef6; }
+.home-category-chip.holiday { color: #a1423b; background: #ffded9; }
 .today-card .event-card > .avatar { grid-column: 2; grid-row: 1; width: 32px; height: 32px; border-radius: 11px; }
 .today-card .event-copy { grid-column: 1 / -1; grid-row: 2; gap: 1px; }
-.today-card .event-copy strong { font-size: 17px; }
+.today-card .event-copy strong { display: block; overflow: hidden; font-size: 17px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .event-detail-row > span { font-size: 13px; }
 .today-card .event-actions { flex: 0 0 auto; }
 .today-card .event-actions button { width: 30px; height: 30px; border-radius: 9px; }
+.today-summary-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--line); }
+.today-summary-bar button { min-width: 0; padding: 4px 8px; color: var(--primary-dark); border: 0; border-left: 1px solid var(--line); background: transparent; font-size: 12px; font-weight: 750; white-space: nowrap; }
+.today-summary-bar button:first-child { border-left: 0; }
+.today-summary-bar button:hover { color: var(--primary); }
 .week-strip-card { margin-top: 20px; padding: 24px 26px; }
 .home-week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
 .home-week-strip button { min-width: 0; min-height: 104px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 6px; color: var(--ink); border: 1px solid var(--line); border-radius: 15px; background: #fbfcfa; }
@@ -1309,8 +1318,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .home-page .hero-intro { order: 1; margin-bottom: 2px; }
   .home-page .today-card { order: 2; }
   .home-page .week-strip-card { order: 3; }
-  .home-page .overview-grid { order: 4; }
-  .home-page > .today-card, .home-page > .week-strip-card, .home-page > .overview-grid { margin: 0; }
+  .home-page .family-setup-card { order: 4; }
+  .home-page > .today-card, .home-page > .week-strip-card, .home-page > .family-setup-card { margin: 0; }
   .week-strip-card { padding: 19px 17px; }
   .home-week-strip { grid-template-columns: repeat(7, minmax(68px, 1fr)); gap: 5px; overflow-x: auto; padding-bottom: 5px; scroll-snap-type: x proximity; }
   .home-week-strip button { min-height: 84px; padding: 8px 4px; scroll-snap-align: start; }
@@ -1324,6 +1333,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .today-summary-note { align-items: flex-start; }
   .today-summary-links { gap: 3px 7px; }
   .today-summary-links button { font-size: 12px; }
+  .today-summary-bar { margin-top: 14px; padding-top: 11px; }
+  .today-summary-bar button { padding-inline: 3px; font-size: 8px; letter-spacing: -.035em; }
   .app-update-banner { bottom: 88px; grid-template-columns: minmax(0, 1fr) auto; padding-left: 14px; }
   .app-update-banner .update-close { display: none; }
   .shift-help, .period-card > p, .anniversary-card .section-heading p, .empty-copy { letter-spacing: -.035em; white-space: nowrap; }
