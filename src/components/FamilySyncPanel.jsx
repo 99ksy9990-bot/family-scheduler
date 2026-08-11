@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Cloud, Copy, Download, History, LogOut, ShieldCheck, Upload, Users, X } from 'lucide-react'
+import { Check, Cloud, Copy, Download, History, LogOut, Share2, ShieldCheck, Smartphone, Upload, Users, X } from 'lucide-react'
 import { useModalAccessibility } from '../hooks/useModalAccessibility'
 import { useAppDialog } from '../hooks/useAppDialog'
 
@@ -54,6 +54,15 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
     window.setTimeout(() => setCopied(false), 1600)
   }
 
+  const shareCode = async () => {
+    const code = sync.family.household.invite_code
+    const shareData = { title: 'Family Scheduler 가족 연결', text: `가족 연결 코드: ${code}`, url: window.location.origin }
+    if (navigator.share) return navigator.share(shareData)
+    await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1600)
+  }
+
   const isOwner = sync.session?.user?.id === sync.family?.household?.owner_id
 
   return (
@@ -65,6 +74,7 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
         </div>
 
         <div className={`sync-state sync-${sync.syncStatus}`}><Cloud /><span><strong>{STATUS_LABELS[sync.syncStatus] || '연결 상태 확인 중'}</strong>{sync.error || '각 기기에서 같은 가족 일정을 확인할 수 있습니다.'}{sync.family && <small>마지막 동기화 {formatSyncTime(sync.lastSyncedAt)}</small>}</span></div>
+        <div className="family-persistence-note"><ShieldCheck /><span><strong>가족방은 한 번만 연결하면 됩니다.</strong><small>로그아웃하기 전까지 연결이 유지되고, 앱을 다시 열면 같은 가족 일정을 자동으로 불러옵니다.</small></span></div>
 
         {!sync.session ? <>
           <div className="segmented wide sync-tabs">
@@ -101,10 +111,12 @@ export default function FamilySyncPanel({ open, onClose, sync, onExport, onImpor
           </form>
         </> : <>
           <div className="family-code-card">
-            <div><Users /><span><small>{sync.family.household.name}</small><strong>{sync.family.household.invite_code}</strong></span></div>
-            <button className="secondary-button" onClick={copyCode}>{copied ? <Check /> : <Copy />}{copied ? '복사됨' : '연결 코드 복사'}</button>
+            <div><Users /><span><small>{sync.family.household.name} · 8자리 초대 코드</small><strong>{sync.family.household.invite_code}</strong></span></div>
+            <div className="family-code-actions"><button className="secondary-button" onClick={copyCode}>{copied ? <Check /> : <Copy />}{copied ? '복사됨' : '코드 복사'}</button><button className="secondary-button" onClick={() => run(shareCode)}><Share2 /> 코드 공유</button></div>
           </div>
-          <p className="family-code-help">가족이 각자 계정을 만든 뒤 이 코드를 입력하면 같은 캘린더를 볼 수 있습니다. 새로 참여한 가족은 기본적으로 보기 전용입니다.</p>
+          <p className="family-code-help">가족이 각자 계정을 만든 뒤 이 짧은 코드를 입력하면 같은 캘린더를 볼 수 있습니다. 새로 참여한 가족은 기본적으로 보기 전용입니다.</p>
+
+          <div className="new-device-guide"><Smartphone /><div><strong>새 휴대폰에서 기존 데이터 불러오기</strong><ol><li>Family Scheduler에서 같은 계정으로 로그인</li><li>처음 연결할 때만 위 초대 코드 입력</li><li>가족 일정이 자동으로 내려오면 연결 완료</li></ol></div></div>
 
           <div className="family-member-list">
             <div className="section-heading"><h3>연결된 가족</h3><span>{sync.family.members.length}명</span></div>

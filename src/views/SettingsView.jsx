@@ -55,7 +55,7 @@ export default function SettingsView({ appVersion, profiles, workSettings, sync,
             </button>
             <button className="settings-hub-row" onClick={onOpenFamily}>
               <span className="settings-hub-icon peach"><Download /></span>
-              <span><strong>백업·불러오기</strong><small>가족 일정 파일을 저장하거나 이전 내용을 불러옵니다.</small></span>
+              <span><strong>백업·불러오기</strong><small>일정을 저장하거나 이전 내용을 불러옵니다.</small></span>
               <ChevronRight />
             </button>
           </div>

@@ -32,7 +32,7 @@ test('주요 화면을 이동한다', async ({ page }) => {
 
 test('일정 모달을 Escape로 닫는다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
-  await page.getByRole('button', { name: /추가/ }).last().click()
+  await page.getByRole('button', { name: '가족 일정 추가' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
@@ -84,7 +84,7 @@ test('캘린더 오늘 날짜 숫자는 다른 날짜와 같은 크기로 표시
 
 test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
-  await page.getByRole('button', { name: '자녀', exact: true }).click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
   const dateHeading = page.locator('.child-day-heading h2')
   await expect(dateHeading).toHaveCSS('white-space', 'nowrap')
   const dateLayout = await page.locator('.child-day-card').evaluate((card) => ({ clientWidth: card.clientWidth, scrollWidth: card.scrollWidth }))
@@ -92,6 +92,8 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
   await page.getByRole('button', { name: '자녀 일정 추가' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByLabel('제목')).toBeVisible()
+  await expect(dialog.getByLabel('반복 주기')).toBeHidden()
+  await dialog.getByRole('button', { name: /시간·장소·반복 설정/ }).click()
   await expect(dialog.getByLabel('반복 주기')).toBeVisible()
   await dialog.getByLabel('제목').fill('체험 학습')
   await dialog.getByRole('button', { name: '일정 추가' }).click()
@@ -109,15 +111,76 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
   expect(directEventLayout.titleDisplay).toBe('flex')
   expect(Math.abs(directEventLayout.avatarLeft - directEventLayout.titleLeft)).toBeLessThan(1)
 
-  await page.getByRole('button', { name: '가족', exact: true }).click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
 
-  await page.getByRole('button', { name: '자녀', exact: true }).click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
   const childEventCard = page.locator('.child-direct-events .calendar-summary').filter({ hasText: '체험 학습' })
   await childEventCard.getByRole('button', { name: '체험 학습 삭제' }).click()
   await expect(page.locator('.child-direct-events').getByText('체험 학습', { exact: true })).toHaveCount(0)
-  await page.getByRole('button', { name: '가족', exact: true }).click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
+})
+
+test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일은 분리한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([
+      { id: 'family-one', title: '가족 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' },
+      { id: 'child-one', title: '자녀 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' },
+    ]))
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'shift-one', date: '2026-08-15', member: 'emma', shift: 'day' }]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await expect(page.getByRole('button', { name: '전체', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.locator('[data-date="2026-08-15"]').click()
+  await expect(page.locator('.overview-day-section').filter({ hasText: '공휴일' })).toContainText('광복절')
+  await expect(page.locator('.overview-day-section').filter({ hasText: '가족 일정' })).toContainText('가족 일정')
+  await expect(page.locator('.overview-day-section').filter({ hasText: '자녀 일정' })).toContainText('자녀 일정')
+  await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D · 주간 근무')
+  await expect(page.locator('.overview-day-section.holiday-group')).toContainText('일정 개수에서 제외')
+})
+
+test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', async ({ page }) => {
+  await page.getByRole('button', { name: '할 일', exact: true }).first().click()
+  await page.getByRole('button', { name: '새 할 일' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('제목').fill('매주 분리수거')
+  await dialog.getByLabel('마감일').fill('2026-08-11')
+  await dialog.getByLabel('반복 주기').selectOption('weekly')
+  await dialog.getByRole('button', { name: '할 일 추가' }).click()
+  const card = page.locator('.task-card').filter({ hasText: '매주 분리수거' }).first()
+  await expect(card).toBeVisible()
+  await card.getByRole('button', { name: '매주 분리수거 수정' }).click()
+  await expect(page.getByRole('button', { name: '이번 회차 수정' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '전체 반복 수정' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '반복 중지' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await card.getByRole('button', { name: '완료하기 매주 분리수거' }).click()
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-tasks') || '[]').find((task) => task.title === '매주 분리수거')?.completedDates || [])).toContain('2026-08-11')
+})
+
+test('자녀 캘린더 도트를 데스크톱과 모바일 모두 표시한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'child-dot', title: '도트 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' }]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
+  await expect(page.locator('[data-date="2026-08-11"] .child-schedule-dots')).toHaveCSS('display', 'flex')
+  await expect(page.locator('[data-date="2026-08-11"] .child-schedule-dots i')).toHaveCount(1)
+})
+
+test('이전·다음 달 셀은 내용 없이 비활성화한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'next-month', title: '다음 달 일정', date: '2026-09-01', endDate: '2026-09-01', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' }]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const outsideCell = page.locator('[data-date="2026-09-01"]')
+  await expect(outsideCell).toBeDisabled()
+  await expect(outsideCell.locator('.calendar-overview-markers')).toHaveCount(0)
+  await expect(outsideCell).not.toContainText('다음 달 일정')
 })
 
 test('기존 자녀 전용 일정은 자녀 캘린더로 분리한다', async ({ page }) => {
@@ -135,8 +198,9 @@ test('기존 자녀 전용 일정은 자녀 캘린더로 분리한다', async ({
   })
   await page.reload()
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.locator('.day-panel').getByText('기존 자녀 일정', { exact: true })).toHaveCount(0)
-  await page.getByRole('button', { name: '자녀', exact: true }).click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
   await expect(page.locator('.child-direct-events').getByText('기존 자녀 일정', { exact: true })).toBeVisible()
 })
 

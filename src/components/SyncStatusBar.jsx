@@ -12,8 +12,9 @@ export default function SyncStatusBar({ sync }) {
   const isSynced = sync.syncStatus === 'synced' || sync.syncStatus === 'readonly'
   const transientKey = sync.remoteChange
     ? `remote-${sync.remoteChange.updatedAt || ''}`
-    : isSynced ? `${sync.syncStatus}-${sync.lastSyncedAt || ''}` : ''
+    : isSynced ? sync.syncStatus : ''
   const [hiddenTransientKey, setHiddenTransientKey] = useState('')
+  const [showSaving, setShowSaving] = useState(false)
   const showTransient = Boolean(transientKey && hiddenTransientKey !== transientKey)
 
   useEffect(() => {
@@ -22,6 +23,11 @@ export default function SyncStatusBar({ sync }) {
     const timer = window.setTimeout(() => setHiddenTransientKey(transientKey), 3000)
     return () => window.clearTimeout(timer)
   }, [transientKey])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowSaving(saving), saving ? 900 : 0)
+    return () => window.clearTimeout(timer)
+  }, [saving])
 
   if (!sync.family && !(sync.session && offline)) return null
 
@@ -33,11 +39,11 @@ export default function SyncStatusBar({ sync }) {
     </aside>
   )
 
-  if (offline || saving || hasError) return (
-    <aside className={`sync-banner compact ${offline ? 'offline' : saving ? 'saving' : 'error'}`} role={hasError ? 'alert' : 'status'}>
-      {offline ? <CloudOff /> : saving ? <RefreshCw className="spin" /> : <AlertTriangle />}
+  if (offline || showSaving || hasError) return (
+    <aside className={`sync-banner compact ${offline ? 'offline' : showSaving ? 'saving' : 'error'}`} role={hasError ? 'alert' : 'status'}>
+      {offline ? <CloudOff /> : showSaving ? <RefreshCw className="spin" /> : <AlertTriangle />}
       <span>
-        <strong>{offline ? '오프라인 저장 중' : saving ? '가족 일정 동기화 중' : '동기화 확인 필요'}</strong>
+        <strong>{offline ? '오프라인 저장 중' : showSaving ? '가족 일정 동기화 중' : '동기화 확인 필요'}</strong>
         <small>{offline ? '인터넷이 연결되면 이 기기의 변경을 다시 저장합니다.' : sync.error || '연결 상태를 확인한 뒤 다시 시도해 주세요.'}</small>
       </span>
     </aside>
