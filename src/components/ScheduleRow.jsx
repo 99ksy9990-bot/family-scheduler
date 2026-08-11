@@ -11,6 +11,7 @@ export default function ScheduleRow({
   trailing,
   onClick,
   ariaLabel,
+  rowRef,
 }) {
   const interactiveProps = onClick ? {
     role: 'button',
@@ -28,6 +29,7 @@ export default function ScheduleRow({
   return (
     <article
       className={`schedule-row ${className}`.trim()}
+      ref={rowRef}
       style={{ '--schedule-member': memberColor, '--schedule-tone': memberTone }}
       {...interactiveProps}
     >

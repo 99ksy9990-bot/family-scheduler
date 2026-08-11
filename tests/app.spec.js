@@ -328,7 +328,9 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
 
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
   const childEventCard = page.locator('.child-direct-events .calendar-summary').filter({ hasText: '체험 학습' })
-  await childEventCard.getByRole('button', { name: '체험 학습 삭제' }).click()
+  await childEventCard.click()
+  await page.getByRole('dialog', { name: '체험 학습 작업' }).getByRole('button', { name: '삭제' }).click()
+  await page.getByRole('dialog', { name: '확인해 주세요' }).getByRole('button', { name: '확인' }).click()
   await expect(page.locator('.child-direct-events').getByText('체험 학습', { exact: true })).toHaveCount(0)
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
@@ -354,13 +356,17 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 여행 준비 일정 제목' })
   await expect(familyEventCard.getByRole('button', { name: '가족 여행 준비 일정 제목 대화와 준비물' })).toHaveCount(0)
   const actionRows = await familyEventCard.evaluate((card) => ({
-    actionsInTrailing: card.querySelectorAll('.schedule-row-trailing .event-actions').length,
+    inlineActions: card.querySelectorAll('.event-actions button').length,
     fitsParent: card.getBoundingClientRect().right <= card.parentElement.getBoundingClientRect().right + 1,
     titleOverflowHidden: getComputedStyle(card.querySelector('.schedule-row-copy')).overflow === 'hidden',
-    visibleActionSizes: [...card.querySelectorAll('.event-actions button')].map((button) => Math.round(button.getBoundingClientRect().width)),
-    touchInsets: [...card.querySelectorAll('.event-actions button')].map((button) => getComputedStyle(button, '::after').inset),
   }))
-  expect(actionRows).toEqual({ actionsInTrailing: 1, fitsParent: true, titleOverflowHidden: true, visibleActionSizes: testInfo.project.name.includes('mobile') ? [32, 32] : [30, 30], touchInsets: ['-6px', '-6px'] })
+  expect(actionRows).toEqual({ inlineActions: 0, fitsParent: true, titleOverflowHidden: true })
+  await familyEventCard.click()
+  const eventSheet = page.getByRole('dialog', { name: '가족 여행 준비 일정 제목 작업' })
+  await expect(eventSheet.getByRole('button', { name: '수정' })).toBeVisible()
+  await expect(eventSheet.getByRole('button', { name: '삭제' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(familyEventCard).toBeFocused()
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
     await expect(mobileMarkers.locator('.family')).toHaveText('1')
@@ -437,7 +443,10 @@ test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', asy
   await dialog.getByRole('button', { name: '할 일 추가' }).click()
   const card = page.locator('.task-card').filter({ hasText: '매주 분리수거' }).first()
   await expect(card).toBeVisible()
-  await card.getByRole('button', { name: '매주 분리수거 수정' }).click()
+  await card.click()
+  const taskSheet = page.getByRole('dialog', { name: '매주 분리수거 작업' })
+  await expect(taskSheet.getByRole('button', { name: '완료' })).toBeVisible()
+  await taskSheet.getByRole('button', { name: '수정' }).click()
   await expect(page.getByRole('button', { name: '이번 회차 수정' })).toBeVisible()
   await expect(page.getByRole('button', { name: '전체 반복 수정' })).toBeVisible()
   await expect(page.getByRole('button', { name: '반복 중지' })).toBeVisible()

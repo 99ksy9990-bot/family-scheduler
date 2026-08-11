@@ -3,11 +3,12 @@ import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare, Cloud,
   ChevronLeft, ChevronRight, Clock3, Cog, Focus, GraduationCap, Home, Moon, Pencil,
-  MessageCircle, Phone, Plus, RotateCcw, Search, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2, Upload,
+  Phone, Plus, RotateCcw, Search, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2, Upload,
   UserRoundCheck, X,
 } from 'lucide-react'
 import SyncStatusBar from './components/SyncStatusBar'
 import ScheduleRow from './components/ScheduleRow'
+import ScheduleActionSheet from './components/ScheduleActionSheet'
 import { useAppDialog } from './hooks/useAppDialog'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useFamilySync } from './hooks/useFamilySync'
@@ -534,22 +535,19 @@ function MemberLegend() {
 }
 
 function EventCard({ event, compact = false, calendarSummary = false, onEdit, onDelete, onDiscuss }) {
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const rowRef = useRef(null)
   const { profiles } = useFamilyProfiles()
   const member = memberForId(event.member, profiles)
   const eventMembers = assignedMemberIds(event)
-  const hasActions = Boolean(onEdit || onDelete || onDiscuss)
+  const hasActions = Boolean(onEdit || onDelete)
   const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
-  const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
-  const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
-  const actions = hasActions && <div className="event-actions">
-    {onDiscuss && !calendarSummary && <button onClick={onDiscuss} aria-label={`${event.title} 대화와 준비물`} title="대화·준비물"><MessageCircle /></button>}
-    {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
-    {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
-  </div>
+  void onDiscuss
   const category = event.homeCategory || (event.anniversary ? '기념일' : eventCalendarScope(event) === 'children' ? '자녀' : '가족')
   const detail = [event.location, event.milestoneLabel, event.pickupBy ? `${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : '', event.conflict ? '시간 겹침' : ''].filter(Boolean).join(' · ')
 
-  return <ScheduleRow
+  return <>
+  <ScheduleRow
     className={`event-card ${event.homeCategory ? 'home-event-row' : ''} ${calendarSummary ? 'calendar-summary' : ''} ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`}
     memberColor={member.color}
     memberTone={member.tone}
@@ -559,8 +557,12 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
     meta={detail}
     category={category}
     categoryClassName={event.homeCategory ? `home-category-chip ${event.homeCategoryId || ''}` : ''}
-    trailing={actions}
+    onClick={hasActions ? () => setSheetOpen(true) : undefined}
+    ariaLabel={hasActions ? `${event.title} 작업 열기` : undefined}
+    rowRef={rowRef}
   />
+  <ScheduleActionSheet open={sheetOpen} title={event.title} onClose={() => setSheetOpen(false)} onEdit={onEdit} onDelete={onDelete} returnFocusRef={rowRef} confirmDelete={!event.recurring} />
+  </>
 }
 
 function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, canEdit, onOpenSettings, sync, onOpenFamily }) {
@@ -1103,6 +1105,8 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
   const [periodFilter, setPeriodFilter] = useState('month')
   const [showCompleted, setShowCompleted] = useState(false)
   const [recurringTask, setRecurringTask] = useState(null)
+  const [actionTask, setActionTask] = useState(null)
+  const taskActionTriggerRef = useRef(null)
   const categories = ['긴급', '장보기', '집안일']
   const toggleTask = (task) => setTasks((current) => current.map((source) => {
     if (!task.recurringTask || source.id !== task.sourceTaskId) return source.id === task.id ? { ...source, done: !source.done } : source
@@ -1152,23 +1156,18 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
     const detail = [visibleMeta, dueCopy].filter(Boolean).join(' · ')
     const memberIds = assignedMemberIds(task, 'assignees', 'assignee')
     const member = memberForId(memberIds[0], profiles)
-    const trailing = <span className="task-card-actions">
-        {canEdit && <span className="event-actions">
-          <button onClick={() => task.recurringTask ? setRecurringTask(task) : openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
-          <button className="delete" onClick={() => task.recurringTask ? setRecurringTask(task) : deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
-        </span>}
-      </span>
     return <ScheduleRow
       key={task.id}
       className={`task-card ${task.done ? 'done' : ''}`}
       memberColor={member.color}
       memberTone={member.tone}
-      leading={<><button className="checkbox" onClick={() => toggleTask(task)} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button><AvatarGroup memberIds={memberIds} /></>}
+      leading={<><button className="checkbox" onClick={(event) => { event.stopPropagation(); toggleTask(task) }} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button><AvatarGroup memberIds={memberIds} /></>}
       title={task.title}
       meta={detail}
       category={task.category}
       categoryClassName={task.category === '긴급' ? 'urgent' : ''}
-      trailing={trailing}
+      onClick={canEdit ? (event) => { taskActionTriggerRef.current = event.currentTarget; setActionTask(task) } : undefined}
+      ariaLabel={canEdit ? `${task.title} 작업 열기` : undefined}
     />
   }
 
@@ -1203,6 +1202,17 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
           )
         })}
       </div>
+      <ScheduleActionSheet
+        open={Boolean(actionTask)}
+        title={actionTask?.title || ''}
+        onClose={() => setActionTask(null)}
+        onComplete={actionTask ? () => toggleTask(actionTask) : undefined}
+        completed={Boolean(actionTask?.done)}
+        onEdit={actionTask ? () => actionTask.recurringTask ? setRecurringTask(actionTask) : openModal('task', undefined, actionTask) : undefined}
+        onDelete={actionTask ? () => actionTask.recurringTask ? setRecurringTask(actionTask) : deleteTask(actionTask) : undefined}
+        returnFocusRef={taskActionTriggerRef}
+        confirmDelete={!actionTask?.recurringTask}
+      />
       <RecurringTaskDialog task={recurringTask} onClose={() => setRecurringTask(null)} onEditOccurrence={() => {
         const occurrence = recurringTask
         setRecurringTask(null)

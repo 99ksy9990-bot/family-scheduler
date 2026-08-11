@@ -26,7 +26,7 @@
 
 - ESLint: passed
 - Production build: passed
-- Playwright: 37 passed, 3 conditionally skipped
+- Playwright: 43 passed, 3 conditionally skipped
 - Mobile calendar metrics: viewport `402×874`, card height `508`, grid height `427`, cell height `70`, selected-date panel top `717`, marker font `10px`
 - Modal metrics: modal overflow `hidden`, scroll body overflow `auto`, footer position `static`, viewport fit passed
 
@@ -37,6 +37,8 @@
 3. 이전·다음 달 비활성 셀에는 일정·근무 마커를 표시하지 않는다.
 4. 모달 닫기 후 명시적으로 전달한 트리거 버튼으로 포커스를 복귀시킨다.
 5. 기존 등록 데이터 스키마와 저장 키는 변경하지 않았다.
+6. 일정과 할 일의 수정·삭제는 인라인 아이콘 대신 행 전체 탭으로 여는 공통 하단 작업 시트에서 제공한다.
+7. 삭제 확인은 기존 앱 확인 다이얼로그를 재사용하며, 작업 시트를 Escape로 닫으면 원래 행으로 포커스가 복귀한다.
 
 ## Remaining issues
 
