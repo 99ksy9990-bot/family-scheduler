@@ -96,25 +96,69 @@ const dateAtKstMinutes = (date: string, minutes: number) => {
   return Date.UTC(year, month - 1, day, Math.floor(minutes / 60) - 9, minutes % 60)
 }
 
+const dateParts = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number)
+  return { year, month, day, utc: Date.UTC(year, month - 1, day) }
+}
+
+const addDate = (value: string, amount: number) => {
+  const current = dateParts(value)
+  const next = new Date(current.utc + amount * 24 * 60 * 60 * 1000)
+  return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-${String(next.getUTCDate()).padStart(2, '0')}`
+}
+
+const eventStartsOnDate = (event: Record<string, unknown>, targetDate: string) => {
+  if (typeof event.date !== 'string') return false
+  const recurrence = event.recurrence && typeof event.recurrence === 'object'
+    ? event.recurrence as Record<string, unknown>
+    : null
+  if (!recurrence?.frequency || recurrence.frequency === 'none') return event.date === targetDate
+  if (targetDate < event.date || (typeof recurrence.until === 'string' && targetDate > recurrence.until)) return false
+
+  const start = dateParts(event.date)
+  const target = dateParts(targetDate)
+  const interval = Math.max(1, Number(recurrence.interval) || 1)
+  const days = Math.round((target.utc - start.utc) / (24 * 60 * 60 * 1000))
+  if (recurrence.frequency === 'daily') return days % interval === 0
+  if (recurrence.frequency === 'weekly') return days % (7 * interval) === 0
+  if (recurrence.frequency === 'monthly') {
+    const months = (target.year - start.year) * 12 + target.month - start.month
+    const targetDay = Math.min(start.day, new Date(Date.UTC(target.year, target.month, 0)).getUTCDate())
+    return months >= 0 && months % interval === 0 && target.day === targetDay
+  }
+  if (recurrence.frequency === 'yearly') {
+    const years = target.year - start.year
+    const targetDay = Math.min(start.day, new Date(Date.UTC(target.year, start.month, 0)).getUTCDate())
+    return years >= 0 && years % interval === 0 && target.month === start.month && target.day === targetDay
+  }
+  return false
+}
+
 const notificationCandidates = (state: Record<string, unknown>, now: Date) => {
   const current = koreanNow(now)
   const currentMs = now.getTime()
   const candidates: Array<{ key: string; title: string; body: string; url: string }> = []
   const events = Array.isArray(state.events) ? state.events as Array<Record<string, unknown>> : []
   const tasks = Array.isArray(state.tasks) ? state.tasks as Array<Record<string, unknown>> : []
+  const exceptions = Array.isArray(state.scheduleExceptions) ? state.scheduleExceptions as Array<Record<string, unknown>> : []
+  const reminderDates = [current.date, addDate(current.date, 1)]
 
   events.forEach((event) => {
-    if (event.reminder !== '30-minutes' || typeof event.date !== 'string' || typeof event.time !== 'string') return
+    if (event.reminder !== '30-minutes' || typeof event.time !== 'string') return
     const minutes = parseTime(event.time)
     if (minutes === null) return
-    const startMs = dateAtKstMinutes(event.date, minutes)
-    const triggerMs = startMs - 30 * 60 * 1000
-    if (currentMs < triggerMs || currentMs >= triggerMs + 60 * 1000) return
-    candidates.push({
-      key: `event-${String(event.id)}-${event.date}-${minutes}-30`,
-      title: '30분 뒤 일정',
-      body: `${String(event.title || '가족 일정')} · ${event.time}${event.location ? ` · ${String(event.location)}` : ''}`,
-      url: '/?view=calendar',
+    reminderDates.forEach((occurrenceDate) => {
+      if (!eventStartsOnDate(event, occurrenceDate)) return
+      if (exceptions.some((exception) => exception.scheduleId === event.id && exception.date === occurrenceDate && exception.type === 'skip')) return
+      const startMs = dateAtKstMinutes(occurrenceDate, minutes)
+      const triggerMs = startMs - 30 * 60 * 1000
+      if (currentMs < triggerMs || currentMs >= triggerMs + 60 * 1000) return
+      candidates.push({
+        key: `event-${String(event.id)}-${occurrenceDate}-${minutes}-30`,
+        title: '30분 뒤 일정',
+        body: `${String(event.title || '가족 일정')} · ${event.time}${event.location ? ` · ${String(event.location)}` : ''}`,
+        url: '/?view=calendar',
+      })
     })
   })
 
@@ -242,4 +286,3 @@ Deno.serve(async (req: Request) => {
     return json({ error: error instanceof Error ? error.message : String(error) }, 500)
   }
 })
-
