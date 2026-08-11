@@ -536,6 +536,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   const eventMembers = assignedMemberIds(event)
   const hasActions = Boolean(onEdit || onDelete || onDiscuss)
   const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
+  const showHomeTime = Boolean(event.time && event.time !== '종일')
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
   const discussButton = onDiscuss && <button onClick={onDiscuss} aria-label={`${event.title} 대화와 준비물`} title="대화·준비물"><MessageCircle /></button>
@@ -551,8 +552,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
         <AvatarGroup memberIds={eventMembers} small />
         <div className="home-event-main">
           <strong className="home-event-title">{event.title}</strong>
-          <span className="home-event-separator" aria-hidden="true">·</span>
-          <span className="event-time">{timeLabel}</span>
+          {showHomeTime && <><span className="home-event-separator" aria-hidden="true">·</span><span className="event-time">{timeLabel}</span></>}
         </div>
         <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>
       </article>

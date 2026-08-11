@@ -59,6 +59,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'today-shift', date: '2026-08-11', member: 'emma', shift: 'day' }]))
     localStorage.setItem('family-scheduler-events', JSON.stringify([
       { id: 'today-child', title: '오늘 자녀 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', member: 'leo', members: ['leo'], calendarScope: 'children' },
+      { id: 'today-all-day', title: '오늘 가족 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' },
     ]))
   })
   await page.reload()
@@ -70,6 +71,11 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('오전 6:30 – 오후 3:30')
   await expect(todayCard.locator('.home-category-chip.work')).toHaveText('근무')
   await expect(todayCard.locator('.home-category-chip.children')).toHaveText('자녀')
+  const allDayRow = todayCard.locator('.home-event-row').filter({ hasText: '오늘 가족 일정' })
+  await expect(allDayRow).toBeVisible()
+  await expect(allDayRow.locator('.home-event-separator')).toHaveCount(0)
+  await expect(allDayRow.locator('.event-time')).toHaveCount(0)
+  await expect(allDayRow).not.toContainText('종일')
   await expect(todayCard.getByRole('button', { name: /대화와 준비물/ })).toHaveCount(0)
   await expect(todayCard.getByRole('button', { name: /수정|삭제/ })).toHaveCount(0)
   const homeEventOrder = await todayCard.locator('.home-event-row').first().evaluate((card) => ({
@@ -77,6 +83,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     mainChildren: [...card.querySelector('.home-event-main').children].map((child) => child.className),
     titleToDot: Math.round(card.querySelector('.home-event-separator').getBoundingClientRect().left - card.querySelector('.home-event-title').getBoundingClientRect().right),
     dotToTime: Math.round(card.querySelector('.event-time').getBoundingClientRect().left - card.querySelector('.home-event-separator').getBoundingClientRect().right),
+    sameFontSize: getComputedStyle(card.querySelector('.home-event-title')).fontSize === getComputedStyle(card.querySelector('.event-time')).fontSize,
     oneLine: [...card.children].every((child) => {
       const first = card.children[0].getBoundingClientRect()
       const current = child.getBoundingClientRect()
@@ -87,17 +94,21 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   expect(homeEventOrder.mainChildren).toEqual(['home-event-title', 'home-event-separator', 'event-time'])
   expect(homeEventOrder.titleToDot).toBeLessThanOrEqual(3)
   expect(homeEventOrder.dotToTime).toBeLessThanOrEqual(3)
+  expect(homeEventOrder.sameFontSize).toBe(true)
   expect(homeEventOrder.oneLine).toBe(true)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
     const buttons = [...bar.querySelectorAll('button')]
+    const styles = buttons.map((button) => getComputedStyle(button))
     return {
       labels: buttons.map((button) => button.textContent),
       oneLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
       topBorder: getComputedStyle(bar).borderTopStyle,
       chips: buttons.every((button) => getComputedStyle(button).borderStyle === 'solid' && getComputedStyle(button).backgroundColor !== 'rgba(0, 0, 0, 0)' && getComputedStyle(button).cursor === 'pointer'),
+      oneBackground: new Set(styles.map((style) => style.backgroundColor)).size,
+      oneColor: new Set(styles.map((style) => style.color)).size,
     }
   })
-  expect(todaySummary).toEqual({ labels: ['가족0', '근무1', '자녀1', '할 일0'], oneLine: true, topBorder: 'solid', chips: true })
+  expect(todaySummary).toEqual({ labels: ['가족1', '근무1', '자녀1', '할 일0'], oneLine: true, topBorder: 'solid', chips: true, oneBackground: 1, oneColor: 1 })
   await expect(page.locator('.home-page > .overview-grid')).toHaveCount(0)
   await expect(page.locator('.home-week-strip .week-day-detail')).toHaveCount(0)
 
@@ -288,8 +299,10 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
     actionsInTitleRow: card.querySelectorAll('.event-title-row .event-actions').length,
     fitsParent: card.getBoundingClientRect().right <= card.parentElement.getBoundingClientRect().right + 1,
     titleFitsRow: card.querySelector('.event-title-row').scrollWidth <= card.querySelector('.event-title-row').clientWidth,
+    visibleActionSizes: [...card.querySelectorAll('.event-actions button')].map((button) => Math.round(button.getBoundingClientRect().width)),
+    touchInsets: [...card.querySelectorAll('.event-actions button')].map((button) => getComputedStyle(button, '::after').inset),
   }))
-  expect(actionRows).toEqual({ managementInMetaRow: false, actionsInTitleRow: 1, fitsParent: true, titleFitsRow: true })
+  expect(actionRows).toEqual({ managementInMetaRow: false, actionsInTitleRow: 1, fitsParent: true, titleFitsRow: true, visibleActionSizes: testInfo.project.name.includes('mobile') ? [32, 32] : [30, 30], touchInsets: ['-6px', '-6px'] })
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
     await expect(mobileMarkers.locator('.family')).toHaveText('가 1')

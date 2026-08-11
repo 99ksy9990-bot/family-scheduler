@@ -338,7 +338,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-card .home-event-main { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; }
 .today-card .home-event-title { min-width: 0; flex: 0 1 auto; overflow: hidden; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .home-event-separator { flex: 0 0 auto; color: var(--muted); font-weight: 700; }
-.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; flex: 0 0 auto; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; flex: 0 0 auto; overflow: hidden; color: var(--primary); font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .event-time-row { min-width: 0; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 6px; }
 .today-card .event-time { min-width: 0; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .home-category-chip { flex: 0 0 auto; padding: 3px 6px; color: #5c5477; border-radius: 7px; background: #e9e6f7; font-size: 9px; font-style: normal; font-weight: 800; }
@@ -352,14 +352,10 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-card .event-actions { flex: 0 0 auto; }
 .today-card .event-actions button { width: 30px; height: 30px; border-radius: 9px; }
 .today-summary-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--line); }
-.today-summary-bar button { min-width: 0; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 8px; color: var(--primary-dark); border: 1px solid #cfe0e5; border-radius: 11px; background: #f1f8fa; box-shadow: 0 3px 8px rgba(36, 101, 126, .07); font-size: 12px; font-weight: 750; white-space: nowrap; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.today-summary-bar button { min-width: 0; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 8px; color: var(--ink); border: 1px solid var(--line); border-radius: 11px; background: #fbfcfa; box-shadow: none; font-size: 12px; font-weight: 750; white-space: nowrap; transition: border-color .16s ease, background .16s ease; }
 .today-summary-bar button b { font-size: 1em; }
-.today-summary-bar button.family { color: #60567f; border-color: #ddd8ef; background: #f2f0fb; }
-.today-summary-bar button.work { color: #536c25; border-color: #d4e2b8; background: #f1f7e5; }
-.today-summary-bar button.children { color: #17627a; border-color: #c9e2eb; background: #eaf6f9; }
-.today-summary-bar button.tasks { color: #9a4d45; border-color: #efd4cf; background: #fff1ee; }
-.today-summary-bar button:hover, .today-summary-bar button:focus-visible { border-color: currentColor; box-shadow: 0 5px 12px rgba(36, 101, 126, .13); transform: translateY(-1px); }
-.today-summary-bar button:active { box-shadow: none; transform: translateY(0); }
+.today-summary-bar button:hover, .today-summary-bar button:focus-visible { color: var(--ink); border-color: #9fc7d5; background: #f1f8fa; }
+.today-summary-bar button:active { background: #e7f3f7; }
 .week-strip-card { margin-top: 20px; padding: 24px 26px; }
 .home-week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
 .home-week-strip button { min-width: 0; min-height: 104px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 6px; color: var(--ink); border: 1px solid var(--line); border-radius: 15px; background: #fbfcfa; }
@@ -409,12 +405,13 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .event-detail-row > span { min-width: 0; overflow: hidden; color: var(--muted); font-size: 14px; white-space: nowrap; text-overflow: ellipsis; }
 .event-detail-row.anniversary-detail-row { display: block; }
 .event-detail-row.anniversary-detail-row > span { width: 100%; overflow: visible; white-space: nowrap; text-overflow: clip; }
-.event-actions { display: flex; align-items: center; gap: 5px; }
-.event-actions button { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--primary); border: 0; border-radius: 10px; background: rgba(255, 255, 255, .68); transition: .18s ease; }
+.event-actions { display: flex; align-items: center; gap: 10px; }
+.event-actions button { position: relative; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--primary); border: 0; border-radius: 9px; background: rgba(255, 255, 255, .68); transition: .18s ease; }
+.event-actions button::after { content: ''; position: absolute; inset: -6px; }
 .event-actions button:hover { color: white; background: var(--primary); transform: translateY(-1px); }
 .event-actions button.delete { color: #a34b42; }
 .event-actions button.delete:hover { color: white; background: #b7544a; }
-.event-actions svg { width: 16px; height: 16px; }
+.event-actions svg { width: 15px; height: 15px; }
 .event-card.conflict { box-shadow: inset 0 0 0 2px #d78355; }
 .conflict-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 7px; color: #8c3f25; border-radius: 8px; background: #fff0e7; font-size: 10px; font-style: normal; font-weight: 700; white-space: nowrap; }
 .conflict-badge svg { width: 12px; height: 12px; }
@@ -1289,8 +1286,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .task-columns { grid-template-columns: 1fr; gap: 28px; }
   .task-card { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding-inline: 15px; }
   .task-card-actions { gap: 4px; }
-  .task-card-actions .event-actions { gap: 3px; }
-  .event-actions button, .today-card .event-actions button, .day-panel .event-actions button, .task-card-actions .event-actions button, .anniversary-row .event-actions button, .period-row .event-actions button { width: 44px; height: 44px; }
+  .task-card-actions .event-actions { gap: 10px; }
+  .event-actions button, .today-card .event-actions button, .day-panel .event-actions button, .task-card-actions .event-actions button, .anniversary-row .event-actions button, .period-row .event-actions button { width: 32px; height: 32px; border-radius: 9px; }
   .task-group.groceries { grid-column: auto; }
   .task-group.groceries .task-list { grid-template-columns: 1fr; }
   .calendar-page, .child-calendar-page { padding-top: 20px; }
@@ -1335,7 +1332,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .timeline { grid-template-columns: 1fr; }
   .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
   .today-card .home-event-title { font-size: 13px; }
-  .today-card .home-event-row .event-time { max-width: 116px; font-size: 10px; }
+  .today-card .home-event-row .event-time { max-width: 116px; font-size: 13px; }
   .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 9px; }
   .home-page { display: flex; flex-direction: column; gap: 22px; }
   .home-page .hero-intro { order: 1; margin-bottom: 2px; }
@@ -1388,7 +1385,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .anniversary-kind-field select, .anniversary-year-field select, .anniversary-month-field select, .anniversary-day-field select { padding-left: 9px; padding-right: 25px !important; background-position: right 7px center; background-size: 13px; }
   .leap-month-toggle { grid-column: 1 / -1; }
   .anniversary-list { grid-template-columns: 1fr; }
-  .anniversary-row .event-actions button { width: 33px; height: 33px; border-radius: 9px; }
+  .anniversary-row .event-actions button { width: 32px; height: 32px; border-radius: 9px; }
   .anniversary-copy small { overflow: visible; line-height: 1.35; white-space: normal; text-overflow: clip; }
   .anniversary-copy small .anniversary-milestone, .anniversary-copy small .anniversary-missing-year { display: block; }
   .anniversary-copy small .anniversary-milestone::before, .anniversary-copy small .anniversary-missing-year::before { content: none; }

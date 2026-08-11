@@ -1,8 +1,8 @@
-# Family Scheduler 오늘 일정·캘린더 액션 QA
+# Family Scheduler 종일 표시·일정 액션 크기 QA
 
-- Source visual truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/2E67E86E-DC7E-4E30-B35B-7EDD3A12FC2E/1-사진-1.jpg`
-- Home implementation screenshot: `/Users/santak/Downloads/stitch_/output/playwright/home-today-mobile.png`
-- Calendar implementation screenshot: `/Users/santak/Downloads/stitch_/output/playwright/calendar-event-actions-mobile.png`
+- Source visual truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_zMyaPN/스크린샷 2026-08-11 오후 4.20.34.png`, `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_iBJaOs/스크린샷 2026-08-11 오후 4.21.00.png`
+- Home implementation screenshot: `/Users/santak/Downloads/stitch_/output/playwright/qa-home-mobile-actions.png`
+- Calendar implementation screenshot: `/Users/santak/Downloads/stitch_/output/playwright/qa-calendar-mobile-actions.png`
 - Viewport: Codex in-app browser `402 × 874` CSS px, device scale factor 1
 - Source pixels: `588 × 1280` px
 - Implementation pixels: each `402 × 874` px
@@ -11,23 +11,23 @@
 
 ## Full-view comparison evidence
 
-기존 홈 카드는 시간·유형, 아바타, 제목, 수정·삭제가 여러 행에 나뉘어 일정 내용 공간을 줄였다. 구현 화면은 근무를 `엄 → E · 오후 1:30~오후 10:30 → 근무`, 일반·자녀 일정을 `아바타 → 제목 · 시간 → 유형` 순서로 한 줄에 배치하고 홈 수정·삭제를 제거했다. 화면에는 한글로 쓴 “점” 문구 없이 구분 기호 `·`만 사용한다. 캘린더 상세는 일정명 오른쪽에 수정·삭제를 붙여 전체·가족·자녀 모드가 같은 구조를 사용한다.
+오늘의 일정에서 시간 지정 일정은 `아바타 → 제목 · 시간 → 유형`으로 표시하고, 종일 일정은 `아바타 → 제목 → 유형`만 남겨 불필요한 `종일` 문구를 제거했다. 캘린더와 일정 관리의 수정·삭제는 기존 모바일 44px 버튼에서 32px 버튼과 15px 아이콘으로 축소했다.
 
 ## Focused-region comparison evidence
 
-- 홈 카드: DOM과 캡처에서 네 요소의 중심선이 같고, 카드 및 개별 요소의 가로 넘침이 없다. 홈 카드 내부 버튼 수는 0이다.
-- 홈 요약: 상단 구분선을 유지하고 `가족 n / 근무 n / 자녀 n / 할 일 n`을 색상과 테두리가 있는 네 개의 클릭형 칩으로 배치했다. 네 버튼은 A2Z 11px이며 모두 같은 행에 있고 `402px` 화면에서 카드·버튼 모두 넘치지 않는다.
-- 캘린더 상세: 메타 행의 액션 수는 0, 제목 행의 액션 그룹은 1이며 수정·삭제 두 버튼이 일정명과 같은 행에 있다.
-- 긴 일정명: 제목은 남은 폭에서 말줄임되고 44px 수정·삭제 영역은 카드 안에 고정되어 모바일에서도 우측으로 넘치지 않는다.
+- 홈 카드: 시간 지정 일정은 제목 뒤 시간까지 한 줄이며, 종일 일정에는 구분점과 시간 요소가 생성되지 않는다. 카드 내부 버튼 수는 0이다.
+- 홈 요약: 상단 구분선을 유지하고 `가족 n / 근무 n / 자녀 n / 할 일 n`을 이번 주 일정 셀과 같은 밝은 배경·검은 글자·얇은 테두리로 통일했다. 네 버튼은 A2Z 11px이며 모두 같은 행에 있고 `402px` 화면에서 넘치지 않는다.
+- 캘린더 상세: 메타 행의 액션 수는 0, 제목 행의 액션 그룹은 1이며 수정·삭제 두 버튼이 일정명과 같은 행에 있다. 아이폰 16 Pro 폭에서 버튼은 32px, 아이콘은 15px, 투명 터치 여백은 사방 6px이다.
+- 긴 일정명: 제목은 남은 폭에서 말줄임되고 축소된 수정·삭제 영역은 카드 안에 고정되어 모바일에서도 우측으로 넘치지 않는다.
 - 빈 상태: 자녀 학교·학원 일정의 점선 박스는 제목 아래 17px 간격이며 안내 문장을 한 줄로 표시한다. 첫 가족 등록 안내도 짧은 한 줄 문장으로 통일했다.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: 기존 A2Z 계열을 유지했다. 홈 제목·시간·유형은 한 줄과 말줄임 규칙을 사용하고, 모바일 요약은 8px에서 11px로 확대했다.
-- Spacing and layout rhythm: 홈 카드 높이를 줄이고 아바타·제목·시간·유형을 한 행의 네 열로 정렬했다. 캘린더 액션은 제목 행 오른쪽 끝에 고정했다.
+- Fonts and typography: 기존 A2Z 계열을 유지했다. 홈 일정명과 시간은 PC 15px·모바일 13px로 같은 크기를 사용하고, 모바일 요약은 11px이다.
+- Spacing and layout rhythm: 홈의 종일 일정은 시간 자리를 제거해 제목 폭을 확보했다. 캘린더와 일정 관리 액션은 작은 시각 크기와 별도의 투명 터치 여백을 사용한다.
 - Colors and visual tokens: 구성원별 배경·좌측 선, 근무·자녀 유형 칩의 기존 의미 색상을 유지했다.
 - Image quality and asset fidelity: 새 이미지나 대체 자산은 필요하지 않으며 기존 로고와 Lucide 아이콘을 그대로 사용했다.
-- Copy and content: 근무 일정명은 근무 설정에서 파생한 `E · 오후 근무` 형식이며, 유형은 별도 `근무` 칩으로 유지했다.
+- Copy and content: 근무는 `E · 시간`, 일반·자녀 일정은 `제목 · 시간`을 사용하고, 종일 일정은 시간 문구를 표시하지 않는다.
 
 ## Comparison history
 
@@ -38,6 +38,9 @@
 5. 후속 캡처와 DOM 측정에서 홈 한 줄 정렬, 무버튼 상태, 캘린더 제목 행 액션, 모바일 무넘침을 확인했다.
 6. 긴 일정명과 44px 액션이 함께 있을 때 캘린더 카드가 밀리는 문제를 제목의 축소·말줄임과 카드 최대 폭 제한으로 보정했다.
 7. 초기 가족 등록 및 자녀 학교·학원 빈 상태 안내를 모바일 한 줄로 확인하고 제목과 점선 박스 사이 간격을 17px로 통일했다.
+8. 종일 일정의 시간 요소를 조건부로 제거하고, 모바일 액션 버튼을 32px로 축소한 뒤 아이폰 16 Pro 폭에서 가로 넘침이 0임을 확인했다.
+9. 오늘 요약 네 칩의 카테고리별 색상을 제거하고 동일 배경과 동일 글자색으로 맞춰 이번 주 일정 셀과 시각적 톤을 통일했다.
+10. 오늘 일정 시간의 서체는 유지하면서 일정명과 같은 글자 크기로 맞췄다.
 
 ## Findings
 
