@@ -62,6 +62,26 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth)
 })
 
+test('캘린더 오늘 날짜 숫자는 다른 날짜와 같은 크기로 표시한다', async ({ page }) => {
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const appearance = await page.evaluate(() => {
+    const today = document.querySelector('.calendar-grid button.today')
+    const normal = document.querySelector('.calendar-grid button:not(.today):not(.outside)')
+    const todayNumber = today?.querySelector(':scope > span:first-child')
+    const normalNumber = normal?.querySelector(':scope > span:first-child')
+    return {
+      numberBackground: getComputedStyle(todayNumber).backgroundColor,
+      todayNumberHeight: todayNumber?.getBoundingClientRect().height,
+      normalNumberHeight: normalNumber?.getBoundingClientRect().height,
+      todayCellBackground: getComputedStyle(today).backgroundColor,
+      normalCellBackground: getComputedStyle(normal).backgroundColor,
+    }
+  })
+  expect(appearance.numberBackground).toBe('rgba(0, 0, 0, 0)')
+  expect(Math.abs(appearance.todayNumberHeight - appearance.normalNumberHeight)).toBeLessThan(1)
+  expect(appearance.todayCellBackground).not.toBe(appearance.normalCellBackground)
+})
+
 test('첫 로드 후 오프라인에서도 앱 셸이 열린다', async ({ page, context }) => {
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready
