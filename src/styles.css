@@ -910,6 +910,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .advanced-toggle > svg:first-child { width: 20px; }
 .advanced-toggle > svg:last-child { margin-left: auto; transition: transform .2s ease; }
 .advanced-toggle.active > svg:last-child { transform: rotate(90deg); }
+.modal > .advanced-toggle.active { margin-bottom: 17px; }
 .advanced-toggle span { display: flex; flex-direction: column; gap: 2px; }
 .advanced-toggle small { color: var(--muted); font-size: 10px; }
 .repeat-controls { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(90px, .6fr) minmax(150px, 1fr); gap: 8px; }
@@ -1145,7 +1146,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .app-update-banner .update-close { width: 40px; padding: 0; color: white; background: rgba(255,255,255,.12); }
 .app-update-banner svg { width: 17px; }
 .app-version { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; }
-.form-warning { display: flex; align-items: flex-start; gap: 9px; padding: 11px 13px; color: #7e4822; border: 1px solid #e9c4a5; border-radius: 12px; background: #fff5eb; font-size: 12px; }
+.form-warning { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 17px; padding: 11px 13px; color: #7e4822; border: 1px solid #e9c4a5; border-radius: 12px; background: #fff5eb; font-size: 12px; }
 .form-warning svg { width: 18px; flex: 0 0 18px; }
 .form-warning span { display: flex; flex-direction: column; gap: 2px; }
 .member-picker + small, fieldset > legend small { color: var(--muted); font-size: 10px; font-weight: 600; }

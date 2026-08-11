@@ -38,6 +38,36 @@ test('일정 모달을 Escape로 닫는다', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeHidden()
 })
 
+test('일정 입력 화면의 섹션 간격을 동일하게 유지한다', async ({ page }, testInfo) => {
+  if (!testInfo.project.name.includes('mobile')) await page.setViewportSize({ width: 1100, height: 1700 })
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([
+      { id: 'spacing-conflict', title: '수학 · 영어', date: '2026-08-11', endDate: '2026-08-11', time: '오전 9:00', end: '오전 10:00', member: 'david', members: ['david'], calendarScope: 'family' },
+    ]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.getByRole('button', { name: '가족 일정 추가' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('제목').fill('간격 확인 일정')
+  await dialog.getByRole('button', { name: /시간·장소·반복 설정/ }).click()
+  await dialog.getByRole('button', { name: '시작·종료', exact: true }).click()
+  await expect(dialog.locator('.form-warning')).toBeVisible()
+
+  const gaps = await dialog.evaluate((element) => {
+    const advanced = element.querySelector('.advanced-toggle.active')
+    const dateField = element.querySelector('.event-date-field')
+    const warning = element.querySelector('.form-warning')
+    const reminder = [...element.querySelectorAll('label')].find((label) => label.textContent.startsWith('앱 알림'))
+    return {
+      advancedToDate: Math.round(dateField.getBoundingClientRect().top - advanced.getBoundingClientRect().bottom),
+      warningToReminder: Math.round(reminder.getBoundingClientRect().top - warning.getBoundingClientRect().bottom),
+    }
+  })
+  expect(gaps).toEqual({ advancedToDate: 17, warningToReminder: 17 })
+  if (!testInfo.project.name.includes('mobile')) await dialog.screenshot({ path: 'output/playwright/event-modal-spacing-after.png' })
+})
+
 test('모바일에서도 주요 내비게이션이 보인다', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('mobile'), '모바일 프로젝트 전용 확인')
   await expect(page.getByRole('navigation', { name: '주요 메뉴' }).last()).toBeVisible()

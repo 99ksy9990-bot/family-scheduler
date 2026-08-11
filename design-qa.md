@@ -1,54 +1,41 @@
-# Calendar mode header design QA
+# Family Scheduler 일정 입력 간격 QA
 
-- Source visual truth:
-  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\E88EA125-CFA2-42FA-B2E9-7D5480824A4F\1-사진-1.jpg` — mobile header structure
-  - `C:\Users\99ksy\.codex\codex-remote-attachments\019fd144-df0c-7670-a5d2-0447c45631d2\E88EA125-CFA2-42FA-B2E9-7D5480824A4F\2-사진-2.jpg` — lavender segmented background
-- Normalized source: `design-qa-source-mobile-normalized.png`
-- Implementation screenshot: `design-qa-calendar-mobile.png`
-- Implementation URL: `http://127.0.0.1:5173/`
-- State: 2026년 8월, 가족 캘린더 selected
-- Viewport: 439 × 793 CSS px; captured raster 425 × 768 px; device scale factor 1
-- Source pixels: 588 × 1280 px for each attachment
-- Normalization: removed source device status area, cropped the app-owned region, and resized it to the 425 × 768 implementation capture.
+- Source visual truth: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_tJ1lon/스크린샷 2026-08-11 오후 2.01.30.png`
+- Implementation screenshot: `/Users/santak/Downloads/stitch_/output/playwright/event-modal-spacing-after.png`
+- Focused implementation crop: `/Users/santak/Downloads/stitch_/output/playwright/event-modal-spacing-after-focus.png`
+- Viewport: Desktop Chromium `1100 × 1700` CSS px, device scale factor 1
+- Source pixels: `1100 × 1242` px, inferred 2x capture and normalized to `545 × 621` px
+- Implementation pixels: full modal `560 × 1236` px; focused comparison `560 × 650` px
+- State: 일정 추가, 추가 설정 펼침, 시작·종료 시간 선택, 충돌 안내 표시
 
 ## Full-view comparison evidence
 
-- The month navigation is centered above the segmented control in both source and implementation.
-- The three controls have equal widths and now read `가족`, `근무`, `자녀`.
-- The implementation retains the requested lavender background (`rgb(231, 230, 251)`) while the selected control uses the existing teal primary color.
-- The calendar begins directly beneath the header with the same compact mobile rhythm. Browser-only scrollbar chrome is excluded from design findings.
+The implementation preserves the existing modal width, typography, controls, colors, borders, and input hierarchy. The full modal capture confirms no horizontal overflow or clipped controls at the desktop modal width.
 
-## Focused region comparison evidence
+## Focused-region comparison evidence
 
-- A separate crop was not required because the normalized full-view images render the month title and all three tab labels clearly.
-- DOM measurements confirm the mobile toolbar is 396.6 px wide and 100.3 px high; the segmented control spans the same width and is 46.3 px high.
+The focused comparison covers the advanced-settings control through the app-notification field. The source showed the advanced-settings control touching the period field and the conflict warning touching the notification label. The implementation now applies the same `17px` section rhythm at both boundaries.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: existing A2Z display type and Korean UI weights are preserved; labels remain legible without wrapping or truncation.
-- Spacing and layout rhythm: month row and segmented row share one full-width column with a 12 px gap; all three modes measure identically.
-- Colors and visual tokens: the existing `--lavender` and primary teal tokens are reused as requested.
-- Image quality and asset fidelity: no new raster assets or placeholder graphics were introduced; existing icon components remain sharp.
-- Copy and content: `일반·근무표·자녀표` is replaced with the requested `가족·근무·자녀`.
-
-## Interaction checks
-
-- `가족`, `근무`, and `자녀` each select and render their corresponding content.
-- After selecting `자녀`, leaving the calendar, and clicking `캘린더` again, the selected mode resets to `가족`.
-- Browser console error check: no errors.
+- Fonts and typography: Existing A2Z family, weights, sizes, wrapping, and hierarchy remain unchanged.
+- Spacing and layout rhythm: Advanced settings → period and conflict warning → notification are both measured at `17px`, matching the modal field rhythm.
+- Colors and visual tokens: Existing primary, lavender segmented control, warning, border, and background tokens remain unchanged.
+- Image quality and asset fidelity: No raster or custom image assets are present in this form region; existing Lucide icons remain unchanged.
+- Copy and content: Labels and helper text remain unchanged. Test dates and times differ from the source only as fixture data.
 
 ## Comparison history
 
-- Initial P2: only the child mode used the compact transparent mobile header; the other modes retained an enclosing white card.
-- Fix: generalized the child-mode mobile toolbar rules to all three modes and retained the lavender segmented background.
-- Post-fix evidence: all three modes report the same 396.6 × 100.3 px toolbar geometry and the same lavender background; normalized visual comparison shows the requested hierarchy.
+1. Earlier finding `[P2]`: two section boundaries had no bottom spacing and visually collided with the next control.
+2. Fix: added `17px` below the active advanced-settings control and the conflict warning.
+3. Post-fix evidence: automated geometry check reports `{ advancedToDate: 17, warningToReminder: 17 }`; desktop and mobile Chromium checks pass.
 
 ## Findings
 
-- No actionable P0, P1, or P2 differences remain for the requested header and mode-selection scope.
+No remaining actionable P0, P1, or P2 visual differences for the requested spacing scope.
 
 ## Follow-up polish
 
-- None required for this scope.
+No P3 follow-up required for this scope.
 
 final result: passed

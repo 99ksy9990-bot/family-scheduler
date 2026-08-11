@@ -1729,7 +1729,7 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
     if (isTask || !hasTime || !hasEndTime || !eventDate || !getConflictEventsForDate) return []
     const selectedSet = new Set(selectedMembers)
     return getConflictEventsForDate(eventDate).filter((candidate) => {
-      if (candidate.id === item?.id || candidate.seriesId === item?.id || !candidate.end) return false
+      if (candidate.id === item?.id || (item?.id && candidate.seriesId === item.id) || !candidate.end) return false
       if (!assignedMemberIds(candidate).some((memberId) => selectedSet.has(memberId))) return false
       return timeToMinutes(time) < timeToMinutes(candidate.end) && timeToMinutes(candidate.time) < timeToMinutes(end)
     })
