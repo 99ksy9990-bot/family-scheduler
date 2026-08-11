@@ -545,6 +545,17 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   </div>
   const actions = hasActions && <div className="event-actions">{discussButton}{onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}{onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}</div>
 
+  if (event.homeCategory) {
+    return (
+      <article className={`event-card home-event-row ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
+        <AvatarGroup memberIds={eventMembers} small />
+        <strong className="home-event-title">{event.title}</strong>
+        <span className="event-time">· {timeLabel}</span>
+        <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>
+      </article>
+    )
+  }
+
   if (calendarSummary) {
     return (
       <article className={`event-card calendar-summary ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
@@ -553,10 +564,10 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
             <AvatarGroup memberIds={eventMembers} small />
             <span className="event-time">{timeLabel}</span>
             {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
-            {managementActions && <div className="event-management-action">{managementActions}</div>}
           </div>
           <div className="event-title-row">
             <strong>{event.title}</strong>
+            {managementActions}
           </div>
           {(event.milestoneLabel || event.pickupBy || event.conflict) && <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
             <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
@@ -585,7 +596,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   )
 }
 
-function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, setAnniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, deleteEvent, openRecurringActions, canEdit, notifyUndo, onOpenSettings }) {
+function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, canEdit, onOpenSettings }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
   const { activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
@@ -622,10 +633,9 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     .filter(({ option }) => option)
     .map(({ worker, option }) => ({
       id: `home-shift-${worker.id}-${iso(today)}`,
-      title: `${worker.name} 오늘 근무`,
+      title: `${option.code} · ${option.label}`,
       date: iso(today),
       time: option.time,
-      location: `${option.code} · ${option.label}`,
       member: worker.id,
       members: [worker.id],
       homeShift: true,
@@ -645,19 +655,6 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     }), 60_000)
     return () => window.clearInterval(timer)
   }, [])
-  const removeTodayEvent = (event) => {
-    if (event.recurring && !event.anniversary) {
-      openRecurringActions(event)
-      return
-    }
-    if (event.anniversary) {
-      const removed = anniversaries.find((anniversary) => anniversary.id === event.anniversaryId)
-      setAnniversaries((current) => current.filter((anniversary) => anniversary.id !== event.anniversaryId))
-      if (removed) notifyUndo?.(`‘${event.title}’을 삭제했습니다.`, () => setAnniversaries((current) => [...current, removed]))
-    }
-    else deleteEvent(event.id)
-  }
-
   return (
     <div className="page home-page">
       <section className="hero-intro">
@@ -675,8 +672,6 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           {todayTimelineEvents.slice(0, 6).map((event) => <EventCard
             key={event.id}
             event={event}
-            onEdit={canEdit && !event.holiday && !event.homeShift ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined}
-            onDelete={canEdit && !event.holiday && !event.homeShift ? () => removeTodayEvent(event) : undefined}
           />)}
           {!todayTimelineEvents.length && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
         </div>
@@ -713,7 +708,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         </div>
       </section>
 
-      {!activeProfiles.length && <section className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>이름과 역할을 등록하면 일정, 자녀표, 근무표가 가족에 맞게 구성됩니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></section>}
+      {!activeProfiles.length && <section className="family-setup-card card"><UserRoundCheck /><div><span className="eyebrow">처음 시작하기</span><h2>가족 구성원을 등록해 주세요</h2><p>가족 등록 후 일정·자녀·근무표를 함께 씁니다.</p></div><button className="primary-button" onClick={onOpenSettings}><Plus /> 구성원 등록</button></section>}
 
       {canEdit && <button className="floating-add" onClick={() => openModal('event')} aria-label="일정 추가"><Plus /></button>}
     </div>
@@ -1671,7 +1666,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
               <button className="primary-button" type="submit">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? '수정 완료' : `${season} 일정 추가`}</button>
             </div>
             {scheduleError && <p className="form-error schedule-form-error" role="alert">{scheduleError}</p>}
-          </form></> : <div className="settings-empty"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 학교·학원 일정을 입력할 수 있습니다.</span></div>}
+          </form></> : <div className="settings-empty"><GraduationCap /><strong>등록된 자녀가 없습니다</strong><span>가족 구성원 설정에서 자녀를 추가하면 일정을 입력할 수 있습니다.</span></div>}
         </section>
 
 
@@ -2161,7 +2156,7 @@ export default function App() {
       <SyncStatusBar sync={sync} />
       {focusMode && <FocusModeBanner shiftOption={focusShiftOption} shiftMember={focusShiftMember} eventCount={focusEvents.length} onClose={toggleFocusMode} />}
       <main>
-        {view === 'home' && <HomeView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openCalendarDate={openCalendarDate} openChildCalendarDate={openChildCalendarDate} openTasks={() => changeView('tasks')} openModal={openModal} deleteEvent={deleteEvent} openRecurringActions={setRecurringEvent} canEdit={canEdit} isShared={Boolean(sync.family)} notifyUndo={notifyUndo} onOpenSettings={() => setFamilySettingsOpen(true)} onOpenCollaboration={setCollaborationEvent} />}
+        {view === 'home' && <HomeView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} shifts={shifts} tasks={tasks} scheduleExceptions={scheduleExceptions} openCalendar={openGeneralCalendar} openCalendarDate={openCalendarDate} openChildCalendarDate={openChildCalendarDate} openTasks={() => changeView('tasks')} openModal={openModal} canEdit={canEdit} onOpenSettings={() => setFamilySettingsOpen(true)} />}
         {view === 'calendar' && <CalendarView key={calendarJumpDate || 'calendar'} today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} shifts={shifts} setShifts={setShifts} scheduleExceptions={scheduleExceptions} openModal={openModal} deleteEvent={deleteEvent} mode={calendarMode} setMode={setCalendarMode} openRecurringActions={setRecurringEvent} canEdit={canEdit} notifyUndo={notifyUndo} jumpDate={calendarJumpDate} onOpenCollaboration={setCollaborationEvent} />}
         {view === 'tasks' && <TasksView today={today} tasks={tasks} setTasks={setTasks} openModal={openModal} canEdit={canEdit} notifyUndo={notifyUndo} pushStatus={pushNotifications.status} pushError={pushNotifications.error} onEnableNotifications={pushNotifications.enable} />}
         {view === 'schedules' && <SchedulesView today={today} childSchedules={childSchedules} setChildSchedules={setChildSchedules} childProfiles={childProfiles} setChildProfiles={setChildProfiles} schedulePeriods={schedulePeriods} setSchedulePeriods={setSchedulePeriods} anniversaries={anniversaries} setAnniversaries={setAnniversaries} canEdit={canEdit} notifyUndo={notifyUndo} scheduleEditRequest={scheduleEditRequest} onScheduleEditHandled={() => setScheduleEditRequest(null)} profileEditRequest={profileEditRequest} onProfileEditHandled={() => setProfileEditRequest(null)} />}

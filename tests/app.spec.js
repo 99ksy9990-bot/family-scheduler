@@ -21,6 +21,39 @@ test('홈 화면을 표시한다', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '오늘의 일정' })).toBeVisible()
 })
 
+test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 유지한다', async ({ page }) => {
+  await page.addInitScript((seedProfiles) => localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(seedProfiles.map((profile) => ({ ...profile, active: false })))), profiles)
+  await page.reload()
+  const familySetup = page.locator('.family-setup-card')
+  await expect(familySetup.getByText('가족 등록 후 일정·자녀·근무표를 함께 씁니다.', { exact: true })).toBeVisible()
+  const familySetupLayout = await familySetup.evaluate((card) => {
+    const copy = card.querySelector('p')
+    return {
+      whiteSpace: getComputedStyle(copy).whiteSpace,
+      fits: copy.scrollWidth <= copy.clientWidth && card.scrollWidth <= card.clientWidth,
+    }
+  })
+  expect(familySetupLayout).toEqual({ whiteSpace: 'nowrap', fits: true })
+
+  await page.addInitScript((seedProfiles) => localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(seedProfiles.filter((profile) => profile.type === 'adult'))), profiles)
+  await page.reload()
+  await page.getByRole('button', { name: '일정 관리', exact: true }).first().click()
+  const scheduleCard = page.locator('.schedule-editor-card')
+  const empty = scheduleCard.locator('.settings-empty')
+  await expect(empty.getByText('가족 구성원 설정에서 자녀를 추가하면 일정을 입력할 수 있습니다.', { exact: true })).toBeVisible()
+  const emptyLayout = await scheduleCard.evaluate((card) => {
+    const heading = card.querySelector('.section-heading')
+    const emptyState = card.querySelector('.settings-empty')
+    const copy = emptyState.querySelector('span')
+    return {
+      headingGap: Math.round(emptyState.getBoundingClientRect().top - heading.getBoundingClientRect().bottom),
+      whiteSpace: getComputedStyle(copy).whiteSpace,
+      fits: copy.scrollWidth <= copy.clientWidth && emptyState.scrollWidth <= emptyState.clientWidth,
+    }
+  })
+  expect(emptyLayout).toEqual({ headingGap: 17, whiteSpace: 'nowrap', fits: true })
+})
+
 test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스크톱 순서를 유지한다', async ({ page }, testInfo) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'today-shift', date: '2026-08-11', member: 'emma', shift: 'day' }]))
@@ -31,11 +64,23 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await page.reload()
 
   const todayCard = page.locator('.today-card')
-  await expect(todayCard.getByText('엄마 오늘 근무', { exact: true })).toBeVisible()
+  await expect(todayCard.getByText('D · 주간 근무', { exact: true })).toBeVisible()
   await expect(todayCard.getByText('오늘 자녀 일정', { exact: true })).toBeVisible()
+  await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('· 오전 6:30 – 오후 3:30')
   await expect(todayCard.locator('.home-category-chip.work')).toHaveText('근무')
   await expect(todayCard.locator('.home-category-chip.children')).toHaveText('자녀')
   await expect(todayCard.getByRole('button', { name: /대화와 준비물/ })).toHaveCount(0)
+  await expect(todayCard.getByRole('button', { name: /수정|삭제/ })).toHaveCount(0)
+  const homeEventOrder = await todayCard.locator('.home-event-row').first().evaluate((card) => ({
+    children: [...card.children].map((child) => child.className),
+    oneLine: [...card.children].every((child) => {
+      const first = card.children[0].getBoundingClientRect()
+      const current = child.getBoundingClientRect()
+      return Math.abs((first.top + first.height / 2) - (current.top + current.height / 2)) < 2
+    }),
+  }))
+  expect(homeEventOrder.children).toEqual(['avatar-group', 'home-event-title', 'event-time', 'home-category-chip work'])
+  expect(homeEventOrder.oneLine).toBe(true)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
     const buttons = [...bar.querySelectorAll('button')]
     return {
@@ -213,7 +258,7 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
 test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일은 분리한다', async ({ page }, testInfo) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([
-      { id: 'family-one', title: '가족 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' },
+      { id: 'family-one', title: '가족 여행 준비 일정 제목', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' },
       { id: 'child-one', title: '자녀 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' },
     ]))
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'shift-one', date: '2026-08-15', member: 'emma', shift: 'day' }]))
@@ -223,17 +268,19 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(page.getByRole('button', { name: '전체', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.locator('[data-date="2026-08-15"]').click()
   await expect(page.locator('.overview-day-section').filter({ hasText: '공휴일' })).toContainText('광복절')
-  await expect(page.locator('.overview-day-section').filter({ hasText: '가족 일정' })).toContainText('가족 일정')
+  await expect(page.locator('.overview-day-section').filter({ hasText: '가족 일정' })).toContainText('가족 여행 준비 일정 제목')
   await expect(page.locator('.overview-day-section').filter({ hasText: '자녀 일정' })).toContainText('자녀 일정')
   await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D · 주간 근무')
   await expect(page.locator('.overview-day-section.holiday-group')).toContainText('일정 개수에서 제외')
-  const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 일정' })
-  await expect(familyEventCard.getByRole('button', { name: '가족 일정 대화와 준비물' })).toHaveCount(0)
+  const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 여행 준비 일정 제목' })
+  await expect(familyEventCard.getByRole('button', { name: '가족 여행 준비 일정 제목 대화와 준비물' })).toHaveCount(0)
   const actionRows = await familyEventCard.evaluate((card) => ({
     managementInMetaRow: Boolean(card.querySelector('.event-meta-row .event-management-action .event-actions')),
     actionsInTitleRow: card.querySelectorAll('.event-title-row .event-actions').length,
+    fitsParent: card.getBoundingClientRect().right <= card.parentElement.getBoundingClientRect().right + 1,
+    titleFitsRow: card.querySelector('.event-title-row').scrollWidth <= card.querySelector('.event-title-row').clientWidth,
   }))
-  expect(actionRows).toEqual({ managementInMetaRow: true, actionsInTitleRow: 0 })
+  expect(actionRows).toEqual({ managementInMetaRow: false, actionsInTitleRow: 1, fitsParent: true, titleFitsRow: true })
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
     await expect(mobileMarkers.locator('.family')).toHaveText('가 1')

@@ -331,7 +331,12 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .timeline-count-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .timeline > .empty-copy { grid-column: 1 / -1; }
 .more-events-button { display: flex; margin: 14px auto 0; padding: 8px 13px; color: var(--primary); border: 0; border-radius: 10px; background: #edf6f8; font-weight: 700; }
-.today-card .event-card { min-height: 92px; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 11px 13px; }
+.today-card .event-card { min-height: 58px; padding: 10px 13px; }
+.today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; }
+.today-card .home-event-row .avatar-group { grid-column: 1; padding-left: 0; }
+.today-card .home-event-row .avatar { width: 32px; height: 32px; border-radius: 11px; }
+.today-card .home-event-title { min-width: 0; overflow: hidden; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
+.today-card .home-event-row .event-time { min-width: 0; grid-column: auto; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .event-time-row { min-width: 0; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 6px; }
 .today-card .event-time { min-width: 0; overflow: hidden; color: var(--primary); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .home-category-chip { flex: 0 0 auto; padding: 3px 6px; color: #5c5477; border-radius: 7px; background: #e9e6f7; font-size: 9px; font-style: normal; font-weight: 800; }
@@ -388,6 +393,10 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .event-title-row { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .event-title-row strong { min-width: 0; }
 .event-title-row .event-actions { flex: 0 0 auto; }
+.calendar-summary { min-width: 0; max-width: 100%; overflow: hidden; }
+.calendar-summary .event-copy { min-width: 0; width: 100%; }
+.calendar-summary .event-title-row { width: 100%; }
+.calendar-summary .event-title-row strong { flex: 1 1 auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .event-copy strong { font-size: 18px; }
 .event-detail-row { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .event-detail-row > span { min-width: 0; overflow: hidden; color: var(--muted); font-size: 14px; white-space: nowrap; text-overflow: ellipsis; }
@@ -538,8 +547,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .calendar-summary .event-meta-row .event-time { color: var(--primary); font-size: 13px; white-space: nowrap; }
 .day-panel .calendar-summary .event-meta-row i { font-style: normal; }
 .day-panel .calendar-summary .event-location { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.calendar-summary .event-meta-row .event-management-action { flex: 0 0 auto; margin-left: auto; }
 .day-panel .calendar-summary .event-title-row { min-height: 30px; }
+.day-panel .calendar-summary .event-title-row strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.day-panel .calendar-summary .event-title-row .event-actions { margin-left: auto; }
 .day-panel .empty-state span { max-width: none; white-space: nowrap; }
 .empty-state { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); text-align: center; }
 .empty-state svg { margin-bottom: 5px; }
@@ -1108,7 +1118,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .family-setup-card { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; }
 .family-setup-card > svg { width: 36px; height: 36px; padding: 8px; color: var(--primary); border-radius: 13px; background: #e5f3f7; }
 .family-setup-card h2 { margin: 3px 0 4px; }
-.family-setup-card p { color: var(--muted); font-size: 13px; }
+.family-setup-card h2, .family-setup-card p { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+.family-setup-card p { color: var(--muted); font-size: clamp(9px, 2.6vw, 13px); letter-spacing: -.055em; }
 .family-settings-panel { width: min(980px, 100%); max-height: min(880px, calc(100vh - 32px)); overflow-y: auto; }
 .settings-intro { margin: -9px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.55; }
 .family-profile-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 18px; }
@@ -1125,6 +1136,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .settings-empty svg { width: 28px; color: var(--primary); }
 .settings-empty strong { color: var(--ink); }
 .settings-empty span { font-size: 12px; line-height: 1.5; }
+.schedule-editor-card > .settings-empty { margin-top: 17px; }
+.schedule-editor-card > .settings-empty span { max-width: 100%; overflow: hidden; font-size: clamp(9px, 2.6vw, 12px); letter-spacing: -.06em; white-space: nowrap; text-overflow: clip; }
 .archived-profiles { margin-top: 12px; color: var(--muted); font-size: 12px; }
 .archived-profiles summary { cursor: pointer; font-weight: 700; }
 .archived-profiles button { display: inline-flex; align-items: center; gap: 4px; margin: 8px 6px 0 0; padding: 6px 8px; color: var(--primary); border: 0; border-radius: 8px; background: #e8f4f7; font-size: 11px; }
@@ -1313,7 +1326,10 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .event-time { font-size: 14px; }
   .event-copy strong { font-size: 16px; }
   .timeline { grid-template-columns: 1fr; }
-  .today-card .event-card { grid-template-columns: 1fr auto; }
+  .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 6px; padding-inline: 10px; }
+  .today-card .home-event-title { font-size: 13px; }
+  .today-card .home-event-row .event-time { max-width: 116px; font-size: 10px; }
+  .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 9px; }
   .home-page { display: flex; flex-direction: column; gap: 22px; }
   .home-page .hero-intro { order: 1; margin-bottom: 2px; }
   .home-page .today-card { order: 2; }
@@ -1334,7 +1350,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .today-summary-links { gap: 3px 7px; }
   .today-summary-links button { font-size: 12px; }
   .today-summary-bar { margin-top: 14px; padding-top: 11px; }
-  .today-summary-bar button { padding-inline: 3px; font-size: 8px; letter-spacing: -.035em; }
+  .today-summary-bar button { padding-inline: 1px; font-family: 'A2Z', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: -.06em; }
   .app-update-banner { bottom: 88px; grid-template-columns: minmax(0, 1fr) auto; padding-left: 14px; }
   .app-update-banner .update-close { display: none; }
   .shift-help, .period-card > p, .anniversary-card .section-heading p, .empty-copy { letter-spacing: -.035em; white-space: nowrap; }
