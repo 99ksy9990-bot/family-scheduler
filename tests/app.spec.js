@@ -219,12 +219,12 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D · 주간 근무')
   await expect(page.locator('.overview-day-section.holiday-group')).toContainText('일정 개수에서 제외')
   const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 일정' })
-  await expect(familyEventCard.getByRole('button', { name: '가족 일정 대화와 준비물' })).toBeVisible()
+  await expect(familyEventCard.getByRole('button', { name: '가족 일정 대화와 준비물' })).toHaveCount(0)
   const actionRows = await familyEventCard.evaluate((card) => ({
-    discussInMetaRow: Boolean(card.querySelector('.event-meta-row .event-discuss-action')),
-    deleteInTitleRow: Boolean(card.querySelector('.event-title-row .event-actions .delete')),
+    managementInMetaRow: Boolean(card.querySelector('.event-meta-row .event-management-action .event-actions')),
+    actionsInTitleRow: card.querySelectorAll('.event-title-row .event-actions').length,
   }))
-  expect(actionRows).toEqual({ discussInMetaRow: true, deleteInTitleRow: true })
+  expect(actionRows).toEqual({ managementInMetaRow: true, actionsInTitleRow: 0 })
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
     await expect(mobileMarkers.locator('.family')).toHaveText('가 1')

@@ -529,7 +529,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .calendar-summary .event-meta-row .event-time { color: var(--primary); font-size: 13px; white-space: nowrap; }
 .day-panel .calendar-summary .event-meta-row i { font-style: normal; }
 .day-panel .calendar-summary .event-location { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.calendar-summary .event-meta-row .event-discuss-action { flex: 0 0 auto; margin-left: auto; }
+.calendar-summary .event-meta-row .event-management-action { flex: 0 0 auto; margin-left: auto; }
 .day-panel .calendar-summary .event-title-row { min-height: 30px; }
 .day-panel .empty-state span { max-width: none; white-space: nowrap; }
 .empty-state { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); text-align: center; }

@@ -553,11 +553,10 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
             <AvatarGroup memberIds={eventMembers} small />
             <span className="event-time">{timeLabel}</span>
             {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
-            {discussButton && <div className="event-actions event-discuss-action">{discussButton}</div>}
+            {managementActions && <div className="event-management-action">{managementActions}</div>}
           </div>
           <div className="event-title-row">
             <strong>{event.title}</strong>
-            {managementActions}
           </div>
           {(event.milestoneLabel || event.pickupBy || event.conflict) && <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
             <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
