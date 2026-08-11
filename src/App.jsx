@@ -7,6 +7,7 @@ import {
   UserRoundCheck, X,
 } from 'lucide-react'
 import SyncStatusBar from './components/SyncStatusBar'
+import ScheduleRow from './components/ScheduleRow'
 import { useAppDialog } from './hooks/useAppDialog'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useFamilySync } from './hooks/useFamilySync'
@@ -538,67 +539,28 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   const eventMembers = assignedMemberIds(event)
   const hasActions = Boolean(onEdit || onDelete || onDiscuss)
   const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
-  const showHomeTime = Boolean(event.time && event.time !== '종일')
   const editLabel = event.anniversary ? `${event.title} 기념일 관리` : event.recurring ? `${event.title} 반복 일정 관리` : `${event.title} 수정`
   const editTitle = event.anniversary ? '기념일 관리' : event.recurring ? '반복 일정 관리' : '일정 수정'
-  const discussButton = onDiscuss && <button onClick={onDiscuss} aria-label={`${event.title} 대화와 준비물`} title="대화·준비물"><MessageCircle /></button>
-  const managementActions = (onEdit || onDelete) && <div className="event-actions">
+  const actions = hasActions && <div className="event-actions">
+    {onDiscuss && !calendarSummary && <button onClick={onDiscuss} aria-label={`${event.title} 대화와 준비물`} title="대화·준비물"><MessageCircle /></button>}
     {onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}
     {onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}
   </div>
-  const actions = hasActions && <div className="event-actions">{discussButton}{onEdit && <button onClick={onEdit} aria-label={editLabel} title={editTitle}><Pencil /></button>}{onDelete && <button className="delete" onClick={onDelete} aria-label={`${event.title} 삭제`} title="일정 삭제"><Trash2 /></button>}</div>
+  const category = event.homeCategory || (event.anniversary ? '기념일' : eventCalendarScope(event) === 'children' ? '자녀' : '가족')
+  const detail = [event.location, event.milestoneLabel, event.pickupBy ? `${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : '', event.conflict ? '시간 겹침' : ''].filter(Boolean).join(' · ')
 
-  if (event.homeCategory) {
-    return (
-      <article className={`event-card home-event-row ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-        <AvatarGroup memberIds={eventMembers} />
-        <div className="home-event-main">
-          <strong className="home-event-title">{event.title}</strong>
-          {showHomeTime && <><span className="home-event-separator" aria-hidden="true">·</span><span className="event-time">{timeLabel}</span></>}
-        </div>
-        <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>
-      </article>
-    )
-  }
-
-  if (calendarSummary) {
-    return (
-      <article className={`event-card calendar-summary ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-        <div className="event-copy">
-          <div className="event-meta-row">
-            <AvatarGroup memberIds={eventMembers} />
-            <span className="event-time">{timeLabel}</span>
-            {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
-          </div>
-          <div className="event-title-row">
-            <strong>{event.title}</strong>
-            {managementActions}
-          </div>
-          {(event.milestoneLabel || event.pickupBy || event.conflict) && <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
-            <span>{event.milestoneLabel}{event.pickupBy ? `${event.milestoneLabel ? ' · ' : ''}${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
-            {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
-          </div>}
-        </div>
-      </article>
-    )
-  }
-
-  return (
-    <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-      <div className="event-time-row"><span className="event-time">{timeLabel}</span>{event.homeCategory && <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>}</div>
-      <AvatarGroup memberIds={eventMembers} />
-      <div className="event-copy">
-        <div className="event-title-row">
-          <strong>{event.title}</strong>
-          {actions}
-        </div>
-        <div className={`event-detail-row ${event.anniversary ? 'anniversary-detail-row' : ''}`}>
-          <span>{event.location}{event.milestoneLabel ? ` · ${event.milestoneLabel}` : ''}{event.pickupBy ? ` · ${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''}</span>
-          {event.conflict && <em className="conflict-badge"><AlertTriangle /> 시간 겹침</em>}
-        </div>
-      </div>
-    </article>
-  )
+  return <ScheduleRow
+    className={`event-card ${event.homeCategory ? 'home-event-row' : ''} ${calendarSummary ? 'calendar-summary' : ''} ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`}
+    memberColor={member.color}
+    memberTone={member.tone}
+    leading={<AvatarGroup memberIds={eventMembers} />}
+    title={event.title}
+    time={event.time === '종일' ? '' : timeLabel}
+    meta={detail}
+    category={category}
+    categoryClassName={event.homeCategory ? `home-category-chip ${event.homeCategoryId || ''}` : ''}
+    trailing={actions}
+  />
 }
 
 function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, canEdit, onOpenSettings, sync, onOpenFamily }) {
@@ -1137,6 +1099,7 @@ function RecurringTaskDialog({ task, onClose, onEditOccurrence, onEditSeries, on
 }
 
 function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pushStatus, pushError, onEnableNotifications }) {
+  const { profiles } = useFamilyProfiles()
   const [periodFilter, setPeriodFilter] = useState('month')
   const [showCompleted, setShowCompleted] = useState(false)
   const [recurringTask, setRecurringTask] = useState(null)
@@ -1187,17 +1150,26 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
     const visibleMeta = task.meta && task.meta.replace(/\s/g, '') !== '새로추가됨' ? task.meta : ''
     const dueCopy = task.dueDate ? `${task.dueDate}${task.reminder && task.reminder !== 'none' ? ' 알림' : ''}` : ''
     const detail = [visibleMeta, dueCopy].filter(Boolean).join(' · ')
-    return <article key={task.id} className={`task-card ${task.done ? 'done' : ''}`}>
-      <button className="checkbox" onClick={() => toggleTask(task)} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button>
-      <span className="task-copy"><span className="task-title-row"><strong>{task.title}</strong></span>{detail && <small>{detail}</small>}</span>
-      <span className="task-card-actions">
+    const memberIds = assignedMemberIds(task, 'assignees', 'assignee')
+    const member = memberForId(memberIds[0], profiles)
+    const trailing = <span className="task-card-actions">
         {canEdit && <span className="event-actions">
           <button onClick={() => task.recurringTask ? setRecurringTask(task) : openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
           <button className="delete" onClick={() => task.recurringTask ? setRecurringTask(task) : deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
         </span>}
-        <AvatarGroup memberIds={assignedMemberIds(task, 'assignees', 'assignee')} />
       </span>
-    </article>
+    return <ScheduleRow
+      key={task.id}
+      className={`task-card ${task.done ? 'done' : ''}`}
+      memberColor={member.color}
+      memberTone={member.tone}
+      leading={<><button className="checkbox" onClick={() => toggleTask(task)} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button><AvatarGroup memberIds={memberIds} /></>}
+      title={task.title}
+      meta={detail}
+      category={task.category}
+      categoryClassName={task.category === '긴급' ? 'urgent' : ''}
+      trailing={trailing}
+    />
   }
 
   return (

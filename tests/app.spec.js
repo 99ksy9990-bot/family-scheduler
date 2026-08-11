@@ -51,6 +51,22 @@ test('모든 구성원 아바타를 28px 원형으로 표시한다', async ({ pa
   expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '50%')).toBe(true)
 })
 
+test('홈·캘린더·할 일 행 높이를 56px로 통일한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'row-event', title: '행 높이 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', member: 'emma', members: ['emma'], calendarScope: 'family' }]))
+    localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'row-task', title: '행 높이 할 일', category: '집안일', dueDate: '2026-08-11', assignee: 'emma', assignees: ['emma'], done: false }]))
+  })
+  await page.reload()
+  await expect(page.locator('.today-card .schedule-row').first()).toHaveCSS('height', '56px')
+
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
+  await expect(page.locator('.day-panel .schedule-row').filter({ hasText: '행 높이 일정' })).toHaveCSS('height', '56px')
+
+  await page.getByRole('button', { name: '할 일', exact: true }).first().click()
+  await expect(page.locator('.tasks-page .schedule-row').filter({ hasText: '행 높이 할 일' })).toHaveCSS('height', '56px')
+})
+
 test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 유지한다', async ({ page }) => {
   await page.addInitScript((seedProfiles) => localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(seedProfiles.map((profile) => ({ ...profile, active: false })))), profiles)
   await page.reload()
@@ -110,20 +126,20 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await expect(todayCard.getByRole('button', { name: /수정|삭제/ })).toHaveCount(0)
   const homeEventOrder = await todayCard.locator('.home-event-row').first().evaluate((card) => ({
     children: [...card.children].map((child) => child.className),
-    mainChildren: [...card.querySelector('.home-event-main').children].map((child) => child.className),
+    mainChildren: [...card.querySelector('.schedule-row-copy').children].map((child) => child.className),
     titleToDot: Math.round(card.querySelector('.home-event-separator').getBoundingClientRect().left - card.querySelector('.home-event-title').getBoundingClientRect().right),
     dotToTime: Math.round(card.querySelector('.event-time').getBoundingClientRect().left - card.querySelector('.home-event-separator').getBoundingClientRect().right),
     sameFontSize: getComputedStyle(card.querySelector('.home-event-title')).fontSize === getComputedStyle(card.querySelector('.event-time')).fontSize,
     timeWeight: getComputedStyle(card.querySelector('.event-time')).fontWeight,
-    mainFits: card.querySelector('.home-event-main').scrollWidth <= card.querySelector('.home-event-main').clientWidth,
+    mainFits: card.querySelector('.schedule-row-copy').scrollWidth <= card.querySelector('.schedule-row-copy').clientWidth,
     oneLine: [...card.children].every((child) => {
       const first = card.children[0].getBoundingClientRect()
       const current = child.getBoundingClientRect()
       return Math.abs((first.top + first.height / 2) - (current.top + current.height / 2)) < 2
     }),
   }))
-  expect(homeEventOrder.children).toEqual(['avatar-group', 'home-event-main', 'home-category-chip work'])
-  expect(homeEventOrder.mainChildren).toEqual(['home-event-title', 'home-event-separator', 'event-time'])
+  expect(homeEventOrder.children).toEqual(['schedule-row-leading', 'schedule-row-copy', 'schedule-row-category home-category-chip work'])
+  expect(homeEventOrder.mainChildren).toEqual(['schedule-row-title home-event-title', 'schedule-row-separator home-event-separator', 'schedule-row-time event-time'])
   expect(homeEventOrder.titleToDot).toBeLessThanOrEqual(3)
   expect(homeEventOrder.dotToTime).toBeLessThanOrEqual(3)
   expect(homeEventOrder.sameFontSize).toBe(true)
@@ -297,15 +313,15 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
   const directEventLayout = await page.locator('.child-direct-events .calendar-summary').evaluate((card) => ({
     clientWidth: card.clientWidth,
     scrollWidth: card.scrollWidth,
-    metaDisplay: getComputedStyle(card.querySelector('.event-meta-row')).display,
-    titleDisplay: getComputedStyle(card.querySelector('.event-title-row')).display,
+    rowDisplay: getComputedStyle(card).display,
+    copyDisplay: getComputedStyle(card.querySelector('.schedule-row-copy')).display,
     avatarLeft: card.querySelector('.avatar')?.getBoundingClientRect().left,
-    titleLeft: card.querySelector('.event-title-row')?.getBoundingClientRect().left,
+    titleLeft: card.querySelector('.schedule-row-copy')?.getBoundingClientRect().left,
   }))
   expect(directEventLayout.scrollWidth).toBeLessThanOrEqual(directEventLayout.clientWidth)
-  expect(directEventLayout.metaDisplay).toBe('flex')
-  expect(directEventLayout.titleDisplay).toBe('flex')
-  expect(Math.abs(directEventLayout.avatarLeft - directEventLayout.titleLeft)).toBeLessThan(1)
+  expect(directEventLayout.rowDisplay).toBe('flex')
+  expect(directEventLayout.copyDisplay).toBe('flex')
+  expect(directEventLayout.titleLeft).toBeGreaterThan(directEventLayout.avatarLeft)
 
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
@@ -338,14 +354,13 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 여행 준비 일정 제목' })
   await expect(familyEventCard.getByRole('button', { name: '가족 여행 준비 일정 제목 대화와 준비물' })).toHaveCount(0)
   const actionRows = await familyEventCard.evaluate((card) => ({
-    managementInMetaRow: Boolean(card.querySelector('.event-meta-row .event-management-action .event-actions')),
-    actionsInTitleRow: card.querySelectorAll('.event-title-row .event-actions').length,
+    actionsInTrailing: card.querySelectorAll('.schedule-row-trailing .event-actions').length,
     fitsParent: card.getBoundingClientRect().right <= card.parentElement.getBoundingClientRect().right + 1,
-    titleOverflowHidden: getComputedStyle(card.querySelector('.event-title-row')).overflow === 'hidden',
+    titleOverflowHidden: getComputedStyle(card.querySelector('.schedule-row-copy')).overflow === 'hidden',
     visibleActionSizes: [...card.querySelectorAll('.event-actions button')].map((button) => Math.round(button.getBoundingClientRect().width)),
     touchInsets: [...card.querySelectorAll('.event-actions button')].map((button) => getComputedStyle(button, '::after').inset),
   }))
-  expect(actionRows).toEqual({ managementInMetaRow: false, actionsInTitleRow: 1, fitsParent: true, titleOverflowHidden: true, visibleActionSizes: testInfo.project.name.includes('mobile') ? [32, 32] : [30, 30], touchInsets: ['-6px', '-6px'] })
+  expect(actionRows).toEqual({ actionsInTrailing: 1, fitsParent: true, titleOverflowHidden: true, visibleActionSizes: testInfo.project.name.includes('mobile') ? [32, 32] : [30, 30], touchInsets: ['-6px', '-6px'] })
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
     await expect(mobileMarkers.locator('.family')).toHaveText('1')

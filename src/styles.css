@@ -388,6 +388,35 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   border-radius: 4px 18px 18px 4px;
   background: var(--event-bg);
 }
+.schedule-row {
+  --schedule-member: var(--primary);
+  --schedule-tone: #f5f8f9;
+  position: relative;
+  width: 100%;
+  height: 56px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 12px 18px;
+  overflow: hidden;
+  border: 1px solid #e6ebec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+.schedule-row::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 4px; background: var(--schedule-member); }
+.schedule-row-leading, .schedule-row-trailing { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
+.schedule-row-copy { min-width: 0; display: flex; flex: 1 1 auto; align-items: center; gap: 3px; overflow: hidden; white-space: nowrap; }
+.schedule-row-copy strong, .schedule-row-copy span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.schedule-row-copy strong { flex: 0 1 auto; color: var(--ink); font-size: 14px; }
+.schedule-row-copy span { flex: 0 1 auto; color: var(--muted); font-size: 12px; }
+.schedule-row-copy i { flex: 0 0 auto; color: #9aa4a9; font-style: normal; }
+.schedule-row-category { flex: 0 0 auto; padding: 4px 7px; color: #4c575d; border-radius: 7px; background: #edf1f2; font-size: 10px; font-style: normal; font-weight: 750; white-space: nowrap; }
+.schedule-row-category.urgent { color: #b91c1c; background: #fef2f2; }
+.schedule-row .event-actions { gap: 5px; }
+.schedule-row .event-actions button { width: 30px; height: 30px; }
+.schedule-row.conflict { box-shadow: inset 0 0 0 1.5px #dc2626; }
 .event-time { grid-column: 1; color: #414c52; font-size: 17px; font-weight: 600; white-space: nowrap; }
 .event-card > .avatar { grid-column: 3; }
 .event-copy { grid-column: 2; display: flex; flex-direction: column; gap: 3px; }
@@ -735,7 +764,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .category-icon svg { width: 18px; }
 .count-badge { min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; margin-left: auto; border-radius: 999px; background: var(--group-bg); color: #596268; font-weight: 700; }
 .task-list { display: grid; gap: 11px; }
-.task-card { min-height: 104px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; padding: 18px; border: 1px solid rgba(36, 101, 126, .06); border-top: 4px solid var(--group); border-radius: 18px; background: #fff; box-shadow: 0 7px 28px rgba(36, 101, 126, .055); transition: .2s ease; }
+.task-card { transition: .2s ease; }
 .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(36, 101, 126, .09); }
 .checkbox { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; color: white; border: 2px solid #aeb7ba; border-radius: 8px; background: white; }
 .checkbox svg { width: 17px; }
@@ -1495,6 +1524,24 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .undo-toast { min-width: calc(100% - 24px); grid-template-columns: 1fr auto; gap: 7px; padding-left: 13px; font-size: 12px; }
   .undo-toast .toast-close { display: none; }
   input, select, textarea { font-size: 16px !important; }
+}
+
+/* 공용 일정 행은 화면과 뷰포트에 관계없이 같은 밀도를 유지한다. */
+.schedule-row.event-card,
+.today-card .schedule-row.event-card,
+.day-panel .schedule-row.event-card,
+.child-direct-events .schedule-row.event-card,
+.schedule-row.task-card {
+  height: 56px;
+  min-height: 56px;
+  max-height: 56px;
+  display: flex;
+  grid-template-columns: none;
+  gap: 10px;
+  padding: 12px 14px 12px 18px;
+  border: 1px solid #e6ebec;
+  border-radius: 12px;
+  background: #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {
