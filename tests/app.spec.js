@@ -85,6 +85,10 @@ test('캘린더 오늘 날짜 숫자는 다른 날짜와 같은 크기로 표시
 test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.getByRole('button', { name: '자녀', exact: true }).click()
+  const dateHeading = page.locator('.child-day-heading h2')
+  await expect(dateHeading).toHaveCSS('white-space', 'nowrap')
+  const dateLayout = await page.locator('.child-day-card').evaluate((card) => ({ clientWidth: card.clientWidth, scrollWidth: card.scrollWidth }))
+  expect(dateLayout.scrollWidth).toBeLessThanOrEqual(dateLayout.clientWidth)
   await page.getByRole('button', { name: '자녀 일정 추가' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByLabel('제목')).toBeVisible()
