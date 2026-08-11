@@ -295,22 +295,21 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .avatar {
   --member: var(--sky);
   --member-tone: var(--sky-light);
-  width: 48px;
-  height: 48px;
+  width: 28px;
+  height: 28px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #344149;
-  border: 2px solid var(--member);
-  border-radius: 16px;
+  color: var(--member);
+  border: 1.5px solid var(--member);
+  border-radius: 50%;
   background: var(--member-tone);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
-.avatar-small { width: 38px; height: 38px; border-radius: 13px; font-size: 11px; }
-.avatar-group { display: inline-flex; align-items: center; flex: 0 0 auto; padding-left: 8px; }
-.avatar-group .avatar { margin-left: -8px; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
+.avatar-group { display: inline-flex; align-items: center; flex: 0 0 auto; padding-left: 6px; }
+.avatar-group .avatar { margin-left: -6px; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
 .avatar-group .avatar:first-child { margin-left: 0; }
 .avatar-more { color: var(--primary-dark); border-color: #b7c8ce; background: #edf3f4; }
 
@@ -335,7 +334,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-card .event-card { min-height: 58px; padding: 10px 13px; }
 .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
 .today-card .home-event-row .avatar-group { grid-column: 1; padding-left: 0; }
-.today-card .home-event-row .avatar { width: 32px; height: 32px; border-radius: 11px; }
 .today-card .home-event-main { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; }
 .today-card .home-event-title { min-width: 0; flex: 0 1 auto; overflow: hidden; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .home-event-separator { flex: 0 0 auto; color: var(--muted); font-weight: 700; }
@@ -345,7 +343,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .home-category-chip { flex: 0 0 auto; padding: 3px 6px; color: #5c5477; border-radius: 7px; background: #e9e6f7; font-size: 9px; font-style: normal; font-weight: 800; }
 .home-category-chip.work, .home-category-chip.children { color: #4c575d; background: #edf1f2; }
 .home-category-chip.holiday { color: #a1423b; background: #ffded9; }
-.today-card .event-card > .avatar { grid-column: 2; grid-row: 1; width: 32px; height: 32px; border-radius: 11px; }
+.today-card .event-card > .avatar { grid-column: 2; grid-row: 1; }
 .today-card .event-copy { grid-column: 1 / -1; grid-row: 2; gap: 1px; }
 .today-card .event-copy strong { display: block; overflow: hidden; font-size: 17px; white-space: nowrap; text-overflow: ellipsis; }
 .today-card .event-detail-row > span { font-size: 13px; }
@@ -549,7 +547,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-events { display: grid; gap: 10px; margin-top: 22px; }
 .day-panel .event-card { min-height: 92px; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 11px 13px; }
 .day-panel .event-time { grid-column: 1; grid-row: 1; font-size: 12px; color: var(--primary); }
-.day-panel .avatar { grid-column: 2; grid-row: 1; width: 32px; height: 32px; border-radius: 11px; }
+.day-panel .avatar { grid-column: 2; grid-row: 1; }
 .day-panel .event-copy { grid-column: 1 / -1; grid-row: 2; gap: 1px; }
 .day-panel .event-copy strong { font-size: 17px; }
 .day-panel .event-actions { flex: 0 0 auto; }
@@ -557,7 +555,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .calendar-summary { display: block; }
 .day-panel .calendar-summary .event-copy { display: flex; gap: 7px; }
 .day-panel .calendar-summary .event-meta-row { min-width: 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 600; }
-.day-panel .calendar-summary .event-meta-row .avatar { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px; }
+.day-panel .calendar-summary .event-meta-row .avatar { flex: 0 0 28px; }
 .day-panel .calendar-summary .event-meta-row .event-time { color: var(--primary); font-size: 13px; white-space: nowrap; }
 .day-panel .calendar-summary .event-meta-row i { font-style: normal; }
 .day-panel .calendar-summary .event-location { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -610,7 +608,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .child-schedule-dot-stack { flex-direction: column; gap: 3px; }
 .child-schedule-dot-row { min-height: 7px; display: flex; gap: 4px; }
 .child-profile-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 20px 22px; }
-.child-profile-card > .avatar { width: 52px; height: 52px; border-radius: 17px; }
 .child-profile-copy { min-width: 0; display: grid; gap: 3px; }
 .child-profile-copy h2 { overflow: hidden; font-size: 19px; white-space: nowrap; text-overflow: ellipsis; }
 .child-profile-copy p { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--muted); font-size: 12px; }
@@ -642,7 +639,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .child-direct-events .calendar-summary .event-copy { display: flex; gap: 7px; }
 .child-direct-events .calendar-summary .event-meta-row { min-width: 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 600; }
 .calendar-summary .event-meta-row .avatar-group { padding-left: 0; }
-.child-direct-events .calendar-summary .event-meta-row .avatar { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px; }
+.child-direct-events .calendar-summary .event-meta-row .avatar { flex: 0 0 28px; }
 .child-direct-events .calendar-summary .event-meta-row .event-time { color: var(--primary); font-size: 13px; white-space: nowrap; }
 .child-direct-events .calendar-summary .event-meta-row i { font-style: normal; }
 .child-direct-events .calendar-summary .event-location { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -651,7 +648,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .child-timeline-group + .child-timeline-group { padding-top: 20px; border-top: 1px solid var(--line); }
 .child-timeline-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .child-timeline-group-heading > span:first-child { min-width: 0; display: flex; align-items: center; gap: 8px; }
-.child-timeline-group-heading .avatar { width: 32px; height: 32px; border-radius: 10px; }
 .child-timeline-group-heading .season-badge { min-width: auto; white-space: nowrap; }
 .child-timeline-group .child-timeline { margin-top: 14px; }
 .child-timeline { display: grid; margin-top: 20px; }
@@ -809,7 +805,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .anniversary-form-error { grid-column: 1 / -1; }
 .anniversary-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 10px; }
 .anniversary-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 14px; border: 1px solid #efe5ca; border-radius: 16px; background: #fffdf8; }
-.anniversary-row .avatar { width: 42px; height: 42px; border-radius: 14px; }
 .anniversary-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .anniversary-copy em { padding: 3px 7px; color: #775c26; border-radius: 7px; background: #f7e9bf; font-size: 10px; font-style: normal; }
 .anniversary-title-row { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -840,7 +835,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .period-list { display: grid; gap: 8px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .period-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border-radius: 13px; background: #f7f8f5; }
 .period-row > span:nth-child(3) { min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
-.period-row .avatar { width: 34px; height: 34px; border-radius: 11px; }
 .period-row small { color: var(--muted); }
 .season-badge { min-width: 44px; padding: 6px 8px; color: var(--primary-dark); border-radius: 9px; background: #dff1f7; text-align: center; font-size: 11px; font-weight: 800; }
 .season-badge.vacation { color: #6e5522; background: #f5ebcc; }
@@ -895,7 +889,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .saved-child-profiles .count-badge { color: var(--primary); background: #e5f3f7; }
 .child-profile-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 15px; }
 .saved-child-profile-card { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 18px; }
-.saved-child-profile-card > .avatar { width: 46px; height: 46px; border-radius: 15px; }
 .saved-child-profile-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .saved-child-profile-copy > span { min-width: 0; display: flex; align-items: center; gap: 8px; }
 .saved-child-profile-copy > span strong { color: var(--primary); font-size: 13px; }
@@ -1435,7 +1428,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .child-schedule-list { grid-template-columns: 1fr; }
   .child-week-view { gap: 12px; }
   .child-profile-card { grid-template-columns: auto minmax(0, 1fr); padding: 17px; }
-  .child-profile-card > .avatar { width: 46px; height: 46px; border-radius: 15px; }
   .child-profile-copy h2 { font-size: 16px; }
   .profile-edit-button { grid-column: 1 / -1; width: 100%; justify-content: center; }
   .week-strip { grid-template-columns: 34px minmax(0, 1fr) 34px; gap: 3px; padding: 7px; }
@@ -1453,7 +1445,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .profile-form-actions .primary-button { width: 100%; }
   .child-profile-list { grid-template-columns: 1fr; }
   .saved-child-profile-card { gap: 11px; padding: 15px; }
-  .saved-child-profile-card > .avatar { width: 42px; height: 42px; border-radius: 13px; }
   .saved-child-profile-copy h3 { font-size: 16px; }
   .saved-child-profile-copy small { font-size: 11px; }
   .saved-child-profile-card .profile-list-actions { gap: 3px; }
@@ -1469,7 +1460,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .modal-time-row { grid-template-columns: 1fr; gap: 0; }
   .member-picker { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
   .member-picker button { min-width: 0; gap: 4px; padding: 8px 2px; font-size: 10px; }
-  .member-picker .avatar-small { width: 32px; height: 32px; border-radius: 10px; }
   .modal-actions { position: static; z-index: auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 8px; margin: 14px -4px -22px; padding: 12px 4px max(18px, env(safe-area-inset-bottom)); border-radius: 0 0 22px 22px; background: linear-gradient(rgba(255,255,255,.94), #fff 24%); }
   .modal-actions button { min-width: 0; width: 100%; margin: 0; padding-inline: 10px; white-space: nowrap; }
   .modal-actions .danger-button { grid-column: 1 / -1; width: 100%; margin-right: 0; }

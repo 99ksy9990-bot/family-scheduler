@@ -40,6 +40,17 @@ test('구성원 색을 새 팔레트로 중복 없이 결정적으로 마이그�
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-profiles-v1') || '[]'))).toEqual(first)
 })
 
+test('모든 구성원 아바타를 28px 원형으로 표시한다', async ({ page }) => {
+  await page.getByRole('button', { name: '일정 추가' }).click()
+  const avatars = page.locator('.avatar')
+  await expect(avatars.first()).toBeVisible()
+  const sizes = await avatars.evaluateAll((items) => items.map((item) => {
+    const style = getComputedStyle(item)
+    return { width: style.width, height: style.height, radius: style.borderRadius }
+  }))
+  expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '50%')).toBe(true)
+})
+
 test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 유지한다', async ({ page }) => {
   await page.addInitScript((seedProfiles) => localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify(seedProfiles.map((profile) => ({ ...profile, active: false })))), profiles)
   await page.reload()

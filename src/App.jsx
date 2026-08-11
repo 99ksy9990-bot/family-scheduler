@@ -359,21 +359,21 @@ const overlappingEventCount = (events) => events.reduce((count, event, index) =>
     && timeToMinutes(candidate.time) < timeToMinutes(event.end)
 }).length, 0)
 
-function Avatar({ memberId, small = false }) {
+function Avatar({ memberId }) {
   const { profiles } = useFamilyProfiles()
   const member = memberForId(memberId, profiles)
   return (
-    <span className={`avatar ${small ? 'avatar-small' : ''}`} style={{ '--member': member.color, '--member-tone': member.tone }} title={member.name}>
+    <span className="avatar" style={{ '--member': member.color, '--member-tone': member.tone }} title={member.name}>
       {member.initials}
     </span>
   )
 }
 
-function AvatarGroup({ memberIds, small = false }) {
+function AvatarGroup({ memberIds }) {
   const uniqueIds = [...new Set(memberIds?.length ? memberIds : [FAMILY_MEMBER.id])]
   return <span className="avatar-group" aria-label={`${uniqueIds.length}명 담당`}>
-    {uniqueIds.slice(0, 3).map((memberId) => <Avatar key={memberId} memberId={memberId} small={small} />)}
-    {uniqueIds.length > 3 && <span className={`avatar avatar-more ${small ? 'avatar-small' : ''}`}>+{uniqueIds.length - 3}</span>}
+    {uniqueIds.slice(0, 3).map((memberId) => <Avatar key={memberId} memberId={memberId} />)}
+    {uniqueIds.length > 3 && <span className="avatar avatar-more">+{uniqueIds.length - 3}</span>}
   </span>
 }
 
@@ -500,7 +500,7 @@ function SearchPanel({ open, onClose, today, events, childSchedules, schedulePer
         <div className="search-date-range"><label>시작일<input type="date" value={fromDate} onChange={(change) => setFromDate(change.target.value)} /></label><span>~</span><label>종료일<input type="date" value={toDate} onChange={(change) => setToDate(change.target.value)} /></label></div>
         <div className="search-result-heading"><strong>{query.trim() ? `검색 결과 ${results.length}개` : `기간 내 일정 ${results.length}개`}</strong><small>최대 100개 표시</small></div>
         <div className="search-results">
-          {results.map((event) => <button key={`${event.id}-${event.date}`} onClick={() => onSelect(event)}><AvatarGroup memberIds={assignedMemberIds(event)} small /><span><strong>{event.title}</strong><small>{event.date} · {event.time || '종일'} · {event.memberName}{event.location ? ` · ${event.location}` : ''}</small></span><ChevronRight /></button>)}
+          {results.map((event) => <button key={`${event.id}-${event.date}`} onClick={() => onSelect(event)}><AvatarGroup memberIds={assignedMemberIds(event)} /><span><strong>{event.title}</strong><small>{event.date} · {event.time || '종일'} · {event.memberName}{event.location ? ` · ${event.location}` : ''}</small></span><ChevronRight /></button>)}
           {!results.length && <div className="empty-state"><Search /><strong>찾은 일정이 없습니다</strong><span>검색어 또는 날짜 범위를 바꿔 보세요.</span></div>}
         </div>
       </section>
@@ -551,7 +551,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   if (event.homeCategory) {
     return (
       <article className={`event-card home-event-row ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
-        <AvatarGroup memberIds={eventMembers} small />
+        <AvatarGroup memberIds={eventMembers} />
         <div className="home-event-main">
           <strong className="home-event-title">{event.title}</strong>
           {showHomeTime && <><span className="home-event-separator" aria-hidden="true">·</span><span className="event-time">{timeLabel}</span></>}
@@ -566,7 +566,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
       <article className={`event-card calendar-summary ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
         <div className="event-copy">
           <div className="event-meta-row">
-            <AvatarGroup memberIds={eventMembers} small />
+            <AvatarGroup memberIds={eventMembers} />
             <span className="event-time">{timeLabel}</span>
             {event.location && <><i aria-hidden="true">·</i><span className="event-location">{event.location}</span></>}
           </div>
@@ -586,7 +586,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   return (
     <article className={`event-card ${compact ? 'compact' : ''} ${hasActions ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`} style={{ '--event': member.color, '--event-bg': member.tone }}>
       <div className="event-time-row"><span className="event-time">{timeLabel}</span>{event.homeCategory && <em className={`home-category-chip ${event.homeCategoryId || ''}`}>{event.homeCategory}</em>}</div>
-      <AvatarGroup memberIds={eventMembers} small />
+      <AvatarGroup memberIds={eventMembers} />
       <div className="event-copy">
         <div className="event-title-row">
           <strong>{event.title}</strong>
@@ -822,7 +822,7 @@ function ChildWeekView({ today, events, childSchedules, schedulePeriods, schedul
           {selectedDirectEvents.length > 0 && <section className="child-direct-events"><span className="eyebrow">직접 등록 일정</span><div className="day-events">{selectedDirectEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeEvent(event) : undefined} />)}</div></section>}
           {holidayNames.length === 0 && visibleScheduleGroups.length ? <div className="child-timeline-groups">
             {visibleScheduleGroups.map(({ child, season, schedules }) => <section className="child-timeline-group" key={child.id} style={{ '--child': child.color, '--child-tone': child.tone }}>
-              <header className="child-timeline-group-heading"><span><Avatar memberId={child.id} small /><strong>{child.name}</strong></span><span className={`season-badge ${season === '방학' ? 'vacation' : ''}`}>{season || '기간 미설정'}</span></header>
+              <header className="child-timeline-group-heading"><span><Avatar memberId={child.id} /><strong>{child.name}</strong></span><span className={`season-badge ${season === '방학' ? 'vacation' : ''}`}>{season || '기간 미설정'}</span></header>
               <div className="child-timeline">
                 {schedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
                   <time>{schedule.time}</time>
@@ -1045,7 +1045,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               {canEdit && <div className="overview-add-actions"><button className="small-add" aria-label="가족 일정 추가" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 가족</button>{children.length > 0 && <button className="small-add" aria-label="자녀 일정 추가" onClick={() => openModal('event', iso(selected), undefined, { member: children[0].id, members: [children[0].id], calendarScope: 'children' })}><Plus size={18} /> 자녀</button>}</div>}
             </div>
             <div className="overview-day-groups">
-              {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <div className="overview-shift-row" key={worker.id}><Avatar memberId={worker.id} small /><span><strong>{worker.name}</strong><small>{option ? `${option.code} · ${option.label} · ${option.time}` : '근무 미입력'}</small></span></div>)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
+              {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <div className="overview-shift-row" key={worker.id}><Avatar memberId={worker.id} /><span><strong>{worker.name}</strong><small>{option ? `${option.code} · ${option.label} · ${option.time}` : '근무 미입력'}</small></span></div>)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
               {selectedHolidayEvents.length > 0 && <section className="overview-day-section holiday-group"><header><span>공휴일</span><small>일정 개수에서 제외</small></header>{selectedHolidayEvents.map((event) => <div className="overview-holiday" key={event.id}><CalendarDays /> <strong>{event.title}</strong></div>)}</section>}
               <section className="overview-day-section"><header><span>가족 일정</span><b>{selectedFamilyEvents.length}</b></header><div className="day-events">{selectedFamilyEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onDiscuss={() => onOpenCollaboration(event)} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedFamilyEvents.length && <p className="overview-empty">등록된 가족 일정이 없습니다.</p>}</div></section>
               {children.length > 0 && <section className="overview-day-section"><header><span>자녀 일정</span><b>{selectedChildEvents.length}</b></header><div className="day-events">{selectedChildEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedChildEvents.length && <p className="overview-empty">등록된 자녀 일정이 없습니다.</p>}</div></section>}
@@ -1070,7 +1070,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
             {selectedChildEvents.length > 0 && <button className="related-calendar-link" onClick={() => setMode('children')}><GraduationCap /> 자녀 일정 {selectedChildEvents.length}개 <span>자녀 탭에서 보기</span><ChevronRight /></button>}
             <MemberLegend />
           </> : <>
-            {shiftWorkers.length > 1 && <div className="shift-worker-switcher" aria-label="근무표 구성원 선택">{shiftWorkers.map((worker) => <button key={worker.id} className={selectedShiftMember?.id === worker.id ? 'active' : ''} aria-pressed={selectedShiftMember?.id === worker.id} onClick={() => { setSelectedShiftMemberId(worker.id); setLastShiftChange(null) }}><Avatar memberId={worker.id} small />{worker.name}</button>)}</div>}
+            {shiftWorkers.length > 1 && <div className="shift-worker-switcher" aria-label="근무표 구성원 선택">{shiftWorkers.map((worker) => <button key={worker.id} className={selectedShiftMember?.id === worker.id ? 'active' : ''} aria-pressed={selectedShiftMember?.id === worker.id} onClick={() => { setSelectedShiftMemberId(worker.id); setLastShiftChange(null) }}><Avatar memberId={worker.id} />{worker.name}</button>)}</div>}
             <div className="shift-editor-heading">
               <Avatar memberId={selectedShiftMember?.id || FAMILY_MEMBER.id} />
               <div><span className="eyebrow">{selectedShiftMember?.name || '가족'} 근무표</span><h2>{formatLongDate(selected)}</h2></div>
@@ -1195,7 +1195,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
           <button onClick={() => task.recurringTask ? setRecurringTask(task) : openModal('task', undefined, task)} aria-label={`${task.title} 수정`} title="할 일 수정"><Pencil /></button>
           <button className="delete" onClick={() => task.recurringTask ? setRecurringTask(task) : deleteTask(task)} aria-label={`${task.title} 삭제`} title="할 일 삭제"><Trash2 /></button>
         </span>}
-        <AvatarGroup memberIds={assignedMemberIds(task, 'assignees', 'assignee')} small />
+        <AvatarGroup memberIds={assignedMemberIds(task, 'assignees', 'assignee')} />
       </span>
     </article>
   }
@@ -1623,7 +1623,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
               const periodMember = period.member && period.member !== 'all' ? profiles.find((member) => member.id === period.member) : FAMILY_MEMBER
               return <div className="period-row" key={period.id}>
                 <span className={`season-badge ${period.season === '방학' ? 'vacation' : ''}`}>{period.season}</span>
-                <Avatar memberId={periodMember?.id || 'family'} small />
+                <Avatar memberId={periodMember?.id || 'family'} />
                 <span><strong>{period.member && period.member !== 'all' ? periodMember?.name : '전체 자녀'} · {period.start}</strong><small>~ {period.end}</small></span>
                 <div className="event-actions">
                   {canEdit && <button onClick={() => editPeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 수정`}><Pencil /></button>}
@@ -1639,7 +1639,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
       {managementSection === 'profiles' && <><section ref={profileEditorRef} className={`child-profile-editor card ${!canEdit ? 'readonly-section' : ''}`}>
         <div className="section-heading"><div><span className="eyebrow">학기 중 기본 정보</span><h2>자녀 학교 정보</h2><p>학년·반·번호와 담임선생님 연락처를 자녀표에서 한눈에 확인합니다.</p></div><GraduationCap /></div>
         {children.length ? <><div className="profile-child-picker" aria-label="정보를 편집할 자녀">
-          {children.map((child) => <button key={child.id} type="button" className={currentProfileMember === child.id ? 'active' : ''} aria-pressed={currentProfileMember === child.id} onClick={() => selectProfileMember(child.id)}><Avatar memberId={child.id} small />{child.name}</button>)}
+          {children.map((child) => <button key={child.id} type="button" className={currentProfileMember === child.id ? 'active' : ''} aria-pressed={currentProfileMember === child.id} onClick={() => selectProfileMember(child.id)}><Avatar memberId={child.id} />{child.name}</button>)}
         </div>
         <form className="child-profile-form" onSubmit={submitProfile}>
           <label className="profile-school-field">학교<input value={profileForm.school} onChange={(event) => changeProfileField('school', event.target.value)} placeholder="예: 새봄초등학교" /></label>
@@ -1817,7 +1817,7 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
         <div className="modal-scroll-body">
         <label>제목<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isTask ? '무엇을 해야 하나요?' : '어떤 일정인가요?'} /></label>
         {!isTask && !showAdvanced && <label>날짜<input name="eventDate" type="date" value={eventDate} required onInput={(event) => changeEventStartDate(event.currentTarget.value)} onChange={(event) => changeEventStartDate(event.currentTarget.value)} /></label>}
-        <fieldset><legend>담당자 <small>여러 명 선택 가능</small></legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={selectedMembers.includes(person.id) ? 'active' : ''} aria-pressed={selectedMembers.includes(person.id)} onClick={() => toggleMember(person.id)}><Avatar memberId={person.id} small />{person.name}</button>)}</div></fieldset>
+        <fieldset><legend>담당자 <small>여러 명 선택 가능</small></legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={selectedMembers.includes(person.id) ? 'active' : ''} aria-pressed={selectedMembers.includes(person.id)} onClick={() => toggleMember(person.id)}><Avatar memberId={person.id} />{person.name}</button>)}</div></fieldset>
         {!isTask && <button type="button" className={`advanced-toggle ${showAdvanced ? 'active' : ''}`} aria-expanded={showAdvanced} onClick={() => setShowAdvanced((current) => !current)}><Settings2 /> <span><strong>시간·장소·반복 설정</strong><small>{showAdvanced ? '추가 설정 닫기' : '필요할 때만 펼치기'}</small></span><ChevronRight /></button>}
         {!isTask && showAdvanced && <fieldset className="event-date-field"><legend>일정 기간</legend>
           <div className="field-row event-date-row">
