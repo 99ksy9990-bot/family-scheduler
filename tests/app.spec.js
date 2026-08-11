@@ -108,6 +108,36 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
   expect(directEventLayout.metaDisplay).toBe('flex')
   expect(directEventLayout.titleDisplay).toBe('flex')
   expect(Math.abs(directEventLayout.avatarLeft - directEventLayout.titleLeft)).toBeLessThan(1)
+
+  await page.getByRole('button', { name: '가족', exact: true }).click()
+  await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
+
+  await page.getByRole('button', { name: '자녀', exact: true }).click()
+  const childEventCard = page.locator('.child-direct-events .calendar-summary').filter({ hasText: '체험 학습' })
+  await childEventCard.getByRole('button', { name: '체험 학습 삭제' }).click()
+  await expect(page.locator('.child-direct-events').getByText('체험 학습', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: '가족', exact: true }).click()
+  await expect(page.locator('.day-panel').getByText('체험 학습', { exact: true })).toHaveCount(0)
+})
+
+test('기존 자녀 전용 일정은 자녀 캘린더로 분리한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([{
+      id: 'legacy-child-event',
+      title: '기존 자녀 일정',
+      date: '2026-08-11',
+      endDate: '2026-08-11',
+      time: '종일',
+      type: 'family',
+      member: 'leo',
+      members: ['leo'],
+    }]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await expect(page.locator('.day-panel').getByText('기존 자녀 일정', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: '자녀', exact: true }).click()
+  await expect(page.locator('.child-direct-events').getByText('기존 자녀 일정', { exact: true })).toBeVisible()
 })
 
 test('근무 카드 포커스 테두리는 셀 안쪽에 표시하고 입력 일수 문구는 숨긴다', async ({ page }) => {

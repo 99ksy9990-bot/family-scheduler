@@ -131,17 +131,19 @@ const upgradeSharedState = (state) => {
   if (!state || typeof state !== 'object') return state
   const needsRecovery = Number(state.recoveryVersion || 0) < DATA_RECOVERY_VERSION
   const needsProfiles = Number(state.schemaVersion || 0) < 5 || !Array.isArray(state.profiles)
-  if (!needsRecovery && !needsProfiles) return state
+  const needsCalendarScopes = Number(state.schemaVersion || 0) < 6
+  if (!needsRecovery && !needsProfiles && !needsCalendarScopes) return state
   const hasLegacyData = ['events', 'tasks', 'shifts', 'childSchedules', 'childProfiles', 'schedulePeriods', 'anniversaries']
     .some((key) => Array.isArray(state[key]) && state[key].length > 0)
   const profiles = Array.isArray(state.profiles) ? state.profiles : hasLegacyData ? LEGACY_PROFILES : []
   return {
     ...state,
-    schemaVersion: 5,
+    schemaVersion: 6,
     recoveryVersion: DATA_RECOVERY_VERSION,
     profiles,
     workSettings: state.workSettings || defaultWorkSettingsFor(profiles, state.shifts),
     profileLinks: state.profileLinks && typeof state.profileLinks === 'object' ? state.profileLinks : {},
+    events: normalizeEventCalendarScopes(Array.isArray(state.events) ? state.events : [], profiles),
     shifts: mergeUnique(Array.isArray(state.shifts) ? state.shifts : [], RECOVERED_SHIFTS, (item) => `${item.member}-${item.date}`),
     anniversaries: mergeUnique(Array.isArray(state.anniversaries) ? state.anniversaries : [], RECOVERED_ANNIVERSARIES, (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`),
   }
@@ -268,6 +270,19 @@ const assignedMemberIds = (item, pluralKey = 'members', singularKey = 'member') 
   return plural.length ? [...new Set(plural)] : item?.[singularKey] ? [item[singularKey]] : [FAMILY_MEMBER.id]
 }
 
+const eventCalendarScope = (event) => event?.calendarScope === 'children' || event?.type === 'child' ? 'children' : 'family'
+const isChildCalendarEvent = (event) => event?.type === 'school' || eventCalendarScope(event) === 'children'
+
+const normalizeEventCalendarScopes = (events, profiles = []) => {
+  const childIds = new Set(profiles.filter((profile) => profile.type === 'child').map((profile) => profile.id))
+  return events.map((event) => {
+    if (event.calendarScope === 'family' || event.calendarScope === 'children') return event
+    const memberIds = assignedMemberIds(event)
+    const belongsToChildren = childIds.size > 0 && memberIds.length > 0 && memberIds.every((memberId) => childIds.has(memberId))
+    return { ...event, calendarScope: belongsToChildren ? 'children' : 'family' }
+  })
+}
+
 const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
   const dateValue = iso(date)
   if (holidaysForYear(date.getFullYear()).has(dateValue)) return []
@@ -320,7 +335,7 @@ const timeToMinutes = (value) => {
 
 const generalEventsForDate = (date, events, childSchedules, schedulePeriods, anniversaries = [], scheduleExceptions = []) =>
   eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
-    .filter((event) => !(event.type === 'school' && event.recurring))
+    .filter((event) => !isChildCalendarEvent(event))
 
 const overlappingEventIds = (events) => {
   const conflicts = new Set()
@@ -572,10 +587,10 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
   const todayEvents = rawTodayEvents.map((event) => ({ ...event, conflict: conflicts.has(event.id) }))
   const childIds = new Set(children.map((child) => child.id))
   const childEvents = todayEvents
-    .filter((event) => event.type === 'school' && event.recurring && assignedMemberIds(event).some((memberId) => childIds.has(memberId)))
+    .filter((event) => isChildCalendarEvent(event) && assignedMemberIds(event).some((memberId) => childIds.has(memberId)))
     .sort((first, second) => timeToMinutes(first.time) - timeToMinutes(second.time) || first.title.localeCompare(second.title, 'ko'))
-  const recurringChildEventIds = new Set(childEvents.map((event) => event.id))
-  const generalTodayEvents = todayEvents.filter((event) => !recurringChildEventIds.has(event.id))
+  const childEventIds = new Set(childEvents.map((event) => event.id))
+  const generalTodayEvents = todayEvents.filter((event) => !childEventIds.has(event.id))
   const dueTasks = tasks.filter((task) => !task.done && task.dueDate && task.dueDate <= iso(today))
   const weekStart = addDays(today, -today.getDay())
   const weekDays = Array.from({ length: 7 }, (_, index) => {
@@ -583,8 +598,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
     return {
       date,
-      generalEvents: dayEvents.filter((event) => !(event.type === 'school' && event.recurring)),
-      childEvents: dayEvents.filter((event) => event.type === 'school' && event.recurring),
+      generalEvents: dayEvents.filter((event) => !isChildCalendarEvent(event)),
+      childEvents: dayEvents.filter((event) => isChildCalendarEvent(event)),
     }
   })
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
@@ -710,7 +725,7 @@ function ChildWeekView({ today, events, childSchedules, schedulePeriods, schedul
   const { children } = useFamilyProfiles()
   const childIds = new Set(children.map((child) => child.id))
   const directEventsForDate = (date) => eventsForDate(date, events, [], [], [], scheduleExceptions)
-    .filter((event) => !event.holiday && event.type !== 'school' && assignedMemberIds(event).some((memberId) => childIds.has(memberId)))
+    .filter((event) => !event.holiday && event.type !== 'school' && eventCalendarScope(event) === 'children' && assignedMemberIds(event).some((memberId) => childIds.has(memberId)))
   const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
   const selectedDaySchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
   const selectedDirectEvents = directEventsForDate(selectedDate)
@@ -774,7 +789,7 @@ function ChildWeekView({ today, events, childSchedules, schedulePeriods, schedul
             <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
             <div className="child-day-actions">
               <span className={`season-badge ${selectedSeasons.length === 1 && selectedSeasons[0] === '방학' ? 'vacation' : ''}`}>{selectedSeasonLabel}</span>
-              {canEdit && <button className="small-add" onClick={() => openModal('event', iso(selectedDate), undefined, { member: children[0].id, members: [children[0].id] })}><Plus size={18} /> 자녀 일정 추가</button>}
+              {canEdit && <button className="small-add" onClick={() => openModal('event', iso(selectedDate), undefined, { member: children[0].id, members: [children[0].id], calendarScope: 'children' })}><Plus size={18} /> 자녀 일정 추가</button>}
             </div>
           </div>
 
@@ -1637,7 +1652,7 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
     if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, assignees: selectedMembers, dueDate: submittedDueDate, reminder })
     else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, assignees: selectedMembers, dueDate: submittedDueDate, reminder })
     else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue, type: 'family' })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue, type: 'family', calendarScope: defaults.calendarScope === 'children' ? 'children' : 'family' })
     onAfterSave?.()
     onClose()
   }
@@ -1744,9 +1759,12 @@ export default function App() {
     return NAV.some((item) => item.id === requested) ? requested : 'home'
   })
   const [profiles, setProfiles] = useState(() => load('family-scheduler-profiles-v1', hasLegacyLocalData(LEGACY_STORAGE_KEYS) ? LEGACY_PROFILES : []))
-  const [events, setEvents] = useState(() => loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
-    event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
-  )))
+  const [events, setEvents] = useState(() => normalizeEventCalendarScopes(
+    loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
+      event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
+    )),
+    profiles,
+  ))
   const [tasks, setTasks] = useState(() => loadWithoutLegacySeeds('family-scheduler-tasks', defaultTasks, LEGACY_TASK_IDS))
   const [shifts, setShifts] = useState(() => loadRecoveredCollection(
     'family-scheduler-shifts',
@@ -1797,7 +1815,7 @@ export default function App() {
   usePersistedValue('family-scheduler-work-settings-v1', workSettings)
   usePersistedValue('family-scheduler-profile-links-v1', profileLinks)
   const sharedState = useMemo(() => ({
-    schemaVersion: 5,
+    schemaVersion: 6,
     recoveryVersion: DATA_RECOVERY_VERSION,
     profiles,
     workSettings,
@@ -1904,6 +1922,7 @@ export default function App() {
       members: event.members,
       reminder: event.reminder,
       recurrence: undefined,
+      calendarScope: event.calendarScope,
     }, () => {
       const exception = { id: `skip-${event.scheduleId}-${event.date}`, scheduleId: event.scheduleId, date: event.date, type: 'skip' }
       setScheduleExceptions((current) => current.some((item) => item.id === exception.id) ? current : [...current, exception])
@@ -1991,7 +2010,7 @@ export default function App() {
   const openSearchResult = (event) => {
     setSearchOpen(false)
     setCalendarJumpDate(event.date)
-    setCalendarMode('family')
+    setCalendarMode(isChildCalendarEvent(event) ? 'children' : 'family')
     changeView('calendar')
   }
 
