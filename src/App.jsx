@@ -706,10 +706,15 @@ function buildCalendarDays(cursor) {
   })
 }
 
-function ChildWeekView({ today, childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef, openRecurringActions, canEdit }) {
+function ChildWeekView({ today, events, childSchedules, schedulePeriods, scheduleExceptions, monthDays, selectedDate, onSelectDate, detailRef, openModal, openRecurringActions, removeEvent, canEdit }) {
   const { children } = useFamilyProfiles()
+  const childIds = new Set(children.map((child) => child.id))
+  const directEventsForDate = (date) => eventsForDate(date, events, [], [], [], scheduleExceptions)
+    .filter((event) => !event.holiday && event.type !== 'school' && assignedMemberIds(event).some((memberId) => childIds.has(memberId)))
   const holidayNames = (holidaysForYear(selectedDate.getFullYear()).get(iso(selectedDate)) || []).map((holiday) => holiday.name)
   const selectedDaySchedules = childEventsForDate(selectedDate, childSchedules, schedulePeriods, scheduleExceptions)
+  const selectedDirectEvents = directEventsForDate(selectedDate)
+    .sort((first, second) => timeToMinutes(first.time) - timeToMinutes(second.time) || first.title.localeCompare(second.title, 'ko'))
   const selectedScheduleGroups = children.map((child) => ({
     child,
     season: activeSeasonForDate(selectedDate, schedulePeriods, child.id),
@@ -732,7 +737,14 @@ function ChildWeekView({ today, childSchedules, schedulePeriods, scheduleExcepti
           {monthDays.map(({ day, date, outside }) => {
             const dateHolidays = holidaysForYear(date.getFullYear()).get(iso(date)) || []
             const dateSchedules = outside ? [] : childEventsForDate(date, childSchedules, schedulePeriods, scheduleExceptions)
-            const childDotGroups = children.map((child) => ({ child, schedules: dateSchedules.filter((schedule) => schedule.member === child.id) }))
+            const dateDirectEvents = outside ? [] : directEventsForDate(date)
+            const childDotGroups = children.map((child) => ({
+              child,
+              schedules: [
+                ...dateSchedules.filter((schedule) => schedule.member === child.id),
+                ...dateDirectEvents.filter((event) => assignedMemberIds(event).includes(child.id)),
+              ],
+            }))
               .filter((group) => group.schedules.length)
             const active = iso(date) === iso(selectedDate)
             const isToday = iso(date) === iso(today)
@@ -760,10 +772,15 @@ function ChildWeekView({ today, childSchedules, schedulePeriods, scheduleExcepti
         <article ref={detailRef} className="child-day-card card">
           <div className="child-day-heading">
             <div><span className="eyebrow">선택한 날짜</span><h2>{formatLongDate(selectedDate)}</h2></div>
-            <span className={`season-badge ${selectedSeasons.length === 1 && selectedSeasons[0] === '방학' ? 'vacation' : ''}`}>{selectedSeasonLabel}</span>
+            <div className="child-day-actions">
+              <span className={`season-badge ${selectedSeasons.length === 1 && selectedSeasons[0] === '방학' ? 'vacation' : ''}`}>{selectedSeasonLabel}</span>
+              {canEdit && <button className="small-add" onClick={() => openModal('event', iso(selectedDate), undefined, { member: children[0].id, members: [children[0].id] })}><Plus size={18} /> 자녀 일정 추가</button>}
+            </div>
           </div>
 
-          {holidayNames.length > 0 ? <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div> : visibleScheduleGroups.length ? <div className="child-timeline-groups">
+          {holidayNames.length > 0 && <div className="holiday-empty-state"><CalendarDays /><div><strong>{holidayNames.join(' · ')}</strong><span>공휴일에는 학교·학원 반복 일정이 표시되지 않습니다.</span></div></div>}
+          {selectedDirectEvents.length > 0 && <section className="child-direct-events"><span className="eyebrow">직접 등록 일정</span><div className="day-events">{selectedDirectEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeEvent(event) : undefined} />)}</div></section>}
+          {holidayNames.length === 0 && visibleScheduleGroups.length ? <div className="child-timeline-groups">
             {visibleScheduleGroups.map(({ child, season, schedules }) => <section className="child-timeline-group" key={child.id} style={{ '--child': child.color, '--child-tone': child.tone }}>
               <header className="child-timeline-group-heading"><span><Avatar memberId={child.id} small /><strong>{child.name}</strong></span><span className={`season-badge ${season === '방학' ? 'vacation' : ''}`}>{season || '기간 미설정'}</span></header>
               <div className="child-timeline">
@@ -783,7 +800,7 @@ function ChildWeekView({ today, childSchedules, schedulePeriods, scheduleExcepti
                 </article>)}
               </div>
             </section>)}
-          </div> : <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 학교·학원 일정이 없습니다</strong><span>{selectedSeasons.length ? `${selectedSeasonLabel} ${WEEKDAYS[selectedDate.getDay()]} 일정을 등록해 주세요.` : '먼저 학기·방학 적용 기간을 등록해 주세요.'}</span></div></div>}
+          </div> : holidayNames.length === 0 && selectedDirectEvents.length === 0 && <div className="holiday-empty-state normal"><GraduationCap /><div><strong>등록된 자녀 일정이 없습니다</strong><span>일회성·기간·반복 일정을 바로 추가할 수 있습니다.</span></div></div>}
         </article>
       </div>
     </section>
@@ -813,12 +830,10 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
     const date = new Date(`${shift.date}T00:00:00`)
     return shift.member === selectedShiftMember?.id && date.getFullYear() === cursor.getFullYear() && date.getMonth() === cursor.getMonth()
   })
-  const monthShiftCount = cursorMonthShifts.length
   const monthShiftCounts = shiftOptions.reduce((counts, option) => ({
     ...counts,
     [option.id]: cursorMonthShifts.filter((shift) => shift.shift === option.id).length,
   }), {})
-  const daysInCursorMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()
 
   const moveMonth = (amount) => {
     const next = new Date(cursor.getFullYear(), cursor.getMonth() + amount, 1)
@@ -903,7 +918,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
         </div>
       </section>
 
-      {currentMode === 'children' ? <ChildWeekView today={today} childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openRecurringActions={openRecurringActions} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === 'work' ? 'shift-mode' : ''}`}>
+      {currentMode === 'children' ? <ChildWeekView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openModal={openModal} openRecurringActions={openRecurringActions} removeEvent={removeSelectedEvent} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === 'work' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
@@ -983,7 +998,6 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
             </div>
             <div className="shift-editor-footer">
               <span className="shift-count-summary">
-                <strong>{monthShiftCount}/{daysInCursorMonth}일 입력</strong>
                 <span aria-label="이번 달 근무 개수">{shiftOptions.map((option) => <i key={option.id}><b>{option.code}</b> {monthShiftCounts[option.id]}</i>)}</span>
               </span>
               <div>{lastShiftChange && canEdit && <button onClick={undoLastShift}><RotateCcw /> 직전 입력 취소</button>}{selectedShift && canEdit && <button onClick={clearSelectedShift}>지정 해제</button>}</div>

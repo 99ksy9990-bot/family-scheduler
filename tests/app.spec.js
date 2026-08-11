@@ -82,6 +82,27 @@ test('캘린더 오늘 날짜 숫자는 다른 날짜와 같은 크기로 표시
   expect(appearance.todayCellBackground).not.toBe(appearance.normalCellBackground)
 })
 
+test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한다', async ({ page }) => {
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.getByRole('button', { name: '자녀', exact: true }).click()
+  await page.getByRole('button', { name: '자녀 일정 추가' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByLabel('제목')).toBeVisible()
+  await expect(dialog.getByLabel('반복 주기')).toBeVisible()
+  await dialog.getByLabel('제목').fill('체험 학습')
+  await dialog.getByRole('button', { name: '일정 추가' }).click()
+  await expect(page.getByText('체험 학습', { exact: true })).toBeVisible()
+})
+
+test('근무 카드 포커스 테두리는 셀 안쪽에 표시하고 입력 일수 문구는 숨긴다', async ({ page }) => {
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.getByRole('button', { name: '근무', exact: true }).click()
+  const shiftButton = page.locator('.shift-editor-grid button').first()
+  await shiftButton.focus()
+  await expect(shiftButton).toHaveCSS('outline-offset', '-5px')
+  await expect(page.getByText(/\d+\/\d+일 입력/)).toHaveCount(0)
+})
+
 test('첫 로드 후 오프라인에서도 앱 셸이 열린다', async ({ page, context }) => {
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready
