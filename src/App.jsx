@@ -337,13 +337,13 @@ const timeToMinutes = (value) => {
   return hour * 60 + Number(parsed.minute)
 }
 
-const overlappingEventIds = (events) => {
+const overlappingEventIds = (events, requireSharedMember = true) => {
   const conflicts = new Set()
   events.forEach((event, index) => {
     events.slice(index + 1).forEach((candidate) => {
       const eventMembers = new Set(assignedMemberIds(event))
       const sharesMember = assignedMemberIds(candidate).some((memberId) => eventMembers.has(memberId))
-      if (!sharesMember || !event.end || !candidate.end) return
+      if ((requireSharedMember && !sharesMember) || !event.end || !candidate.end) return
       if (timeToMinutes(event.time) < timeToMinutes(candidate.end) && timeToMinutes(candidate.time) < timeToMinutes(event.end)) {
         conflicts.add(event.id)
         conflicts.add(candidate.id)
@@ -353,10 +353,10 @@ const overlappingEventIds = (events) => {
   return conflicts
 }
 
-const overlappingEventCount = (events) => events.reduce((count, event, index) => count + events.slice(index + 1).filter((candidate) => {
+const overlappingEventCount = (events, requireSharedMember = true) => events.reduce((count, event, index) => count + events.slice(index + 1).filter((candidate) => {
   const eventMembers = new Set(assignedMemberIds(event))
   const sharesMember = assignedMemberIds(candidate).some((memberId) => eventMembers.has(memberId))
-  return sharesMember && event.end && candidate.end
+  return (!requireSharedMember || sharesMember) && event.end && candidate.end
     && timeToMinutes(event.time) < timeToMinutes(candidate.end)
     && timeToMinutes(candidate.time) < timeToMinutes(event.end)
 }).length, 0)
@@ -824,10 +824,11 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
   const selectedHolidayEvents = selectedAllEventsRaw.filter((event) => event.holiday)
   const selectedChildEventsRaw = selectedAllEventsRaw.filter((event) => !event.holiday && isChildCalendarEvent(event))
   const selectedFamilyEventsRaw = selectedAllEventsRaw.filter((event) => !event.holiday && !isChildCalendarEvent(event))
-  const selectedConflicts = overlappingEventIds([...selectedFamilyEventsRaw, ...selectedChildEventsRaw])
+  const selectedConflicts = overlappingEventIds([...selectedFamilyEventsRaw, ...selectedChildEventsRaw], false)
   const withConflict = (items) => items.map((event) => ({ ...event, conflict: selectedConflicts.has(event.id) }))
   const selectedFamilyEvents = withConflict(selectedFamilyEventsRaw)
   const selectedChildEvents = withConflict(selectedChildEventsRaw)
+  const selectedConflictEvents = [...selectedFamilyEventsRaw, ...selectedChildEventsRaw].filter((event) => selectedConflicts.has(event.id))
   const selectedEvents = [...withConflict(selectedHolidayEvents), ...selectedFamilyEvents]
   const selectedShiftMember = shiftWorkers.find((worker) => worker.id === selectedShiftMemberId) || shiftWorkers[0]
   const currentMode = mode === 'work' && (!workSettings.enabled || !shiftWorkers.length)
@@ -936,7 +937,8 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
       {currentMode === 'children' ? <ChildWeekView today={today} events={events} childSchedules={childSchedules} schedulePeriods={schedulePeriods} scheduleExceptions={scheduleExceptions} monthDays={monthDays} selectedDate={selected} onSelectDate={selectCalendarDate} detailRef={dayPanelRef} openModal={openModal} openRecurringActions={openRecurringActions} removeEvent={removeSelectedEvent} canEdit={canEdit} /> : <section className={`calendar-layout ${currentMode === 'work' ? 'shift-mode' : ''}`}>
         <div className="calendar-card card">
           {currentMode === 'all' && <div className="calendar-overview-legend" aria-label="전체 달력 표시 안내">
-            <span className="family"><i />가족</span><span className="children"><i />자녀</span><span className="overload">일정 3개 이상</span><span className="conflict">시간 겹침</span>
+            {[FAMILY_MEMBER, ...profiles.filter((person) => person.active !== false)].map((person) => <span key={person.id}><i style={{ background: person.color }} />{person.name}</span>)}
+            <span className="conflict"><i />시간 겹침</span>
           </div>}
           <div className="weekday-row">{['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <span key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</span>)}</div>
           <div className="calendar-grid">
@@ -957,8 +959,11 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               const familyDayEvents = dayEvents.filter((event) => !event.holiday && !isChildCalendarEvent(event))
               const childDayEvents = dayEvents.filter((event) => !event.holiday && isChildCalendarEvent(event))
               const countableDayEvents = [...familyDayEvents, ...childDayEvents]
-              const conflictCount = overlappingEventCount(countableDayEvents)
-              const isOverloaded = countableDayEvents.length >= 3
+              const overviewEventMarkers = countableDayEvents.map((event) => ({
+                id: event.id,
+                member: memberForId(assignedMemberIds(event)[0] || FAMILY_MEMBER.id, profiles),
+              }))
+              const conflictCount = overlappingEventCount(countableDayEvents, false)
               const scheduledDayEvents = currentMode === 'family' ? familyDayEvents : dayEvents.filter((event) => !event.holiday)
               const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
               const overviewLabel = currentMode === 'all' ? [
@@ -966,24 +971,24 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
                 familyDayEvents.length ? `가족 일정 ${familyDayEvents.length}개` : '',
                 childDayEvents.length ? `자녀 일정 ${childDayEvents.length}개` : '',
                 conflictCount ? `시간 겹침 ${conflictCount}개` : '',
-                isOverloaded ? '일정 과부하' : '',
               ].filter(Boolean).join(', ') : ''
               return (
                 <button
                   key={iso(date)}
                   disabled={outside}
-                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${currentMode === 'work' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''} ${currentMode === 'all' && visibleOverviewShifts.length ? 'overview-has-shift' : ''} ${currentMode === 'all' && conflictCount ? 'has-calendar-conflict' : ''} ${currentMode === 'all' && isOverloaded ? 'is-calendar-overloaded' : ''}`}
+                  className={`${outside ? 'outside' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${weekdayClass} ${dayHoliday ? 'holiday' : ''} ${currentMode === 'work' && shiftOption ? `has-shift shift-${shiftOption.color}` : ''} ${currentMode === 'all' && visibleOverviewShifts.length ? 'overview-has-shift' : ''} ${currentMode === 'all' && conflictCount ? 'has-calendar-conflict' : ''}`}
                   data-date={iso(date)}
                   data-holiday={dayHoliday?.title || undefined}
                   aria-label={`${formatLongDate(date)}${dayHoliday ? `, ${dayHoliday.title}` : ''}${overviewLabel ? `, ${overviewLabel}` : ''}`}
                   onClick={() => selectCalendarDate(date)}
                 >
                   <span>{day}</span>
-                  {currentMode === 'all' && visibleOverviewShifts.length > 0 && <span className="overview-shift-stripes" aria-hidden="true">{visibleOverviewShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={option.color} />)}</span>}
+                  {currentMode === 'all' && visibleOverviewShifts.length > 0 && <span className="overview-shift-codes" aria-hidden="true">{visibleOverviewShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={`shift-code code-${option.code.toLowerCase()}`}>{option.code}</i>)}</span>}
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
-                  {currentMode === 'all' ? (familyDayEvents.length > 0 || childDayEvents.length > 0) && <div className="calendar-overview-markers" aria-hidden="true">
-                    {familyDayEvents.length > 0 && <i className="overview-marker family"><span />{familyDayEvents.length}</i>}
-                    {childDayEvents.length > 0 && <i className="overview-marker children"><span />{childDayEvents.length}</i>}
+                  {currentMode === 'all' ? (overviewEventMarkers.length > 0 || conflictCount > 0) && <div className="calendar-overview-markers" aria-hidden="true">
+                    {overviewEventMarkers.slice(0, 4).map(({ id, member }) => <i key={id} className="overview-member-dot" style={{ background: member.color }} />)}
+                    {overviewEventMarkers.length > 4 && <b className="overview-more-count">+{overviewEventMarkers.length - 4}</b>}
+                    {conflictCount > 0 && <i className="calendar-conflict-indicator" />}
                   </div> : currentMode === 'family' ? <>
                     <div className="day-dots">
                       {scheduledDayEvents.slice(0, 3).map((event) => {
@@ -1009,6 +1014,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               {canEdit && <div className="overview-add-actions"><button className="small-add" aria-label="가족 일정 추가" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 가족</button>{children.length > 0 && <button className="small-add" aria-label="자녀 일정 추가" onClick={() => openModal('event', iso(selected), undefined, { member: children[0].id, members: [children[0].id], calendarScope: 'children' })}><Plus size={18} /> 자녀</button>}</div>}
             </div>
             <div className="overview-day-groups">
+              {selectedConflictEvents.length > 0 && <div className="overview-conflict-banner" role="status"><AlertTriangle /><span><strong>시간이 겹치는 일정이 있습니다</strong><small>{selectedConflictEvents.map((event) => event.title).join(' · ')}</small></span></div>}
               {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <div className="overview-shift-row" key={worker.id}><Avatar memberId={worker.id} /><span><strong>{worker.name}</strong><small>{option ? `${option.code} · ${option.label} · ${option.time}` : '근무 미입력'}</small></span></div>)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
               {selectedHolidayEvents.length > 0 && <section className="overview-day-section holiday-group"><header><span>공휴일</span><small>일정 개수에서 제외</small></header>{selectedHolidayEvents.map((event) => <div className="overview-holiday" key={event.id}><CalendarDays /> <strong>{event.title}</strong></div>)}</section>}
               <section className="overview-day-section"><header><span>가족 일정</span><b>{selectedFamilyEvents.length}</b></header><div className="day-events">{selectedFamilyEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onDiscuss={() => onOpenCollaboration(event)} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedFamilyEvents.length && <p className="overview-empty">등록된 가족 일정이 없습니다.</p>}</div></section>

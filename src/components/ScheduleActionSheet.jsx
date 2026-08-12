@@ -1,4 +1,5 @@
 import { Check, Pencil, Trash2, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useAppDialog } from '../hooks/useAppDialog'
 import { useModalAccessibility } from '../hooks/useModalAccessibility'
 
@@ -16,7 +17,7 @@ export default function ScheduleActionSheet({ open, title, onClose, onEdit, onDe
     run(onDelete)
   }
 
-  return <div className="schedule-sheet-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+  return createPortal(<div className="schedule-sheet-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <section ref={dialogRef} tabIndex="-1" className="schedule-action-sheet" role="dialog" aria-modal="true" aria-label={`${title} 작업`}>
       <header><strong title={title}>{title}</strong><button className="icon-button" onClick={onClose} aria-label="작업 메뉴 닫기"><X /></button></header>
       <div className="schedule-sheet-actions">
@@ -25,5 +26,5 @@ export default function ScheduleActionSheet({ open, title, onClose, onEdit, onDe
         {onDelete && <button className="delete" onClick={remove}><Trash2 />삭제</button>}
       </div>
     </section>
-  </div>
+  </div>, document.body)
 }
