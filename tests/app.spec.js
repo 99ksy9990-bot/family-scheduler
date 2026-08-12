@@ -40,7 +40,7 @@ test('구성원 색을 새 팔레트로 중복 없이 결정적으로 마이그�
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-profiles-v1') || '[]'))).toEqual(first)
 })
 
-test('모든 구성원 아바타를 28px 원형으로 표시한다', async ({ page }) => {
+test('모든 구성원 아바타를 28px 둥근 정사각형으로 표시한다', async ({ page }) => {
   await page.getByRole('button', { name: '일정 추가' }).click()
   const avatars = page.locator('.avatar')
   await expect(avatars.first()).toBeVisible()
@@ -48,7 +48,7 @@ test('모든 구성원 아바타를 28px 원형으로 표시한다', async ({ pa
     const style = getComputedStyle(item)
     return { width: style.width, height: style.height, radius: style.borderRadius }
   }))
-  expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '50%')).toBe(true)
+  expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '8px')).toBe(true)
 })
 
 test('홈·캘린더·할 일 행 높이를 56px로 통일한다', async ({ page }) => {
@@ -347,7 +347,7 @@ test('자녀 캘린더에서 일회성 또는 반복 일정을 바로 등록한�
 test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일은 분리한다', async ({ page }, testInfo) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([
-      { id: 'family-one', title: '가족 여행 준비 일정 제목', date: '2026-08-15', endDate: '2026-08-15', time: '오전 9:00', end: '오전 10:00', member: 'family', members: ['family'], calendarScope: 'family' },
+      { id: 'family-one', title: '가족 여행 준비 일정 제목', date: '2026-08-15', endDate: '2026-08-15', time: '오전 9:00', end: '오전 10:00', member: 'leo', members: ['leo'], calendarScope: 'family' },
       { id: 'child-one', title: '자녀 일정', date: '2026-08-15', endDate: '2026-08-15', time: '오전 9:30', end: '오전 10:30', member: 'leo', members: ['leo'], calendarScope: 'children' },
       { id: 'family-two', title: '아빠 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'david', members: ['david'], calendarScope: 'family' },
       { id: 'child-two', title: '연두 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'mia', members: ['mia'], calendarScope: 'children' },
@@ -362,10 +362,14 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(page.locator('.overview-day-section').filter({ hasText: '공휴일' })).toContainText('광복절')
   await expect(page.locator('.overview-day-section').filter({ hasText: '가족 일정' })).toContainText('가족 여행 준비 일정 제목')
   await expect(page.locator('.overview-day-section').filter({ hasText: '자녀 일정' })).toContainText('자녀 일정')
-  await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D · 주간 근무')
+  await expect(page.locator('.overview-day-section').filter({ hasText: '근무' })).toContainText('D')
   await expect(page.locator('.overview-day-section.holiday-group')).toContainText('일정 개수에서 제외')
-  await expect(page.locator('.overview-conflict-banner')).toContainText('가족 여행 준비 일정 제목 · 자녀 일정')
   const familyEventCard = page.locator('.overview-day-section').filter({ hasText: '가족 일정' }).locator('.calendar-summary').filter({ hasText: '가족 여행 준비 일정 제목' })
+  const childEventCard = page.locator('.overview-day-section').filter({ hasText: '자녀 일정' }).locator('.calendar-summary').filter({ hasText: '자녀 일정' })
+  await expect(page.locator('.overview-conflict-banner')).toHaveCount(0)
+  expect(await familyEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('""')
+  expect(await childEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('""')
+  await expect(familyEventCard).not.toContainText('시간 겹침')
   await expect(familyEventCard.getByRole('button', { name: '가족 여행 준비 일정 제목 대화와 준비물' })).toHaveCount(0)
   const actionRows = await familyEventCard.evaluate((card) => ({
     inlineActions: card.querySelectorAll('.event-actions button').length,
