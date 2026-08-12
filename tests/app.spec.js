@@ -51,20 +51,33 @@ test('모든 구성원 아바타를 28px 둥근 정사각형으로 표시한다'
   expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '8px')).toBe(true)
 })
 
-test('홈·캘린더·할 일 행 높이를 56px로 통일한다', async ({ page }) => {
+test('홈·캘린더·할 일 행 높이와 내부 여백을 68px 규격으로 통일한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'row-event', title: '행 높이 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', member: 'emma', members: ['emma'], calendarScope: 'family' }]))
     localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'row-task', title: '행 높이 할 일', category: '집안일', dueDate: '2026-08-11', assignee: 'emma', assignees: ['emma'], done: false }]))
   })
   await page.reload()
-  await expect(page.locator('.today-card .schedule-row').first()).toHaveCSS('height', '56px')
+  const homeRow = page.locator('.today-card .schedule-row').first()
+  await expect(homeRow).toHaveCSS('height', '68px')
+  const homeRowLayout = await homeRow.evaluate((row) => {
+    const style = getComputedStyle(row)
+    const copyStyle = getComputedStyle(row.querySelector('.schedule-row-copy'))
+    const beforeStyle = getComputedStyle(row, '::before')
+    return {
+      paddingLeft: style.paddingLeft,
+      paddingRight: style.paddingRight,
+      copyGap: copyStyle.gap,
+      accentContent: beforeStyle.content,
+    }
+  })
+  expect(homeRowLayout).toEqual({ paddingLeft: '9px', paddingRight: '7px', copyGap: '6px', accentContent: 'none' })
 
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
-  await expect(page.locator('.day-panel .schedule-row').filter({ hasText: '행 높이 일정' })).toHaveCSS('height', '56px')
+  await expect(page.locator('.day-panel .schedule-row').filter({ hasText: '행 높이 일정' })).toHaveCSS('height', '68px')
 
   await page.getByRole('button', { name: '할 일', exact: true }).first().click()
-  await expect(page.locator('.tasks-page .schedule-row').filter({ hasText: '행 높이 할 일' })).toHaveCSS('height', '56px')
+  await expect(page.locator('.tasks-page .schedule-row').filter({ hasText: '행 높이 할 일' })).toHaveCSS('height', '68px')
 })
 
 test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 유지한다', async ({ page }) => {
@@ -154,6 +167,8 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await expect(page.locator('.home-page > .overview-grid')).toHaveCount(0)
   await expect(page.locator('.home-week-strip .week-day-detail')).toHaveCount(0)
   await expect(page.getByText('이번 주 한눈에 보기', { exact: true })).toHaveCount(0)
+  const homeHeadingStarts = await page.locator('.today-card > .section-heading, .week-strip-card > .section-heading').evaluateAll((headings) => headings.map((heading) => Math.round(heading.getBoundingClientRect().left)))
+  expect(new Set(homeHeadingStarts).size).toBe(1)
 
   if (!testInfo.project.name.includes('mobile')) {
     const order = await page.evaluate(() => {
@@ -431,6 +446,7 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(familyEventCard.locator('.schedule-row-location')).toHaveText('광양교육청')
   await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 오전 10:00')
   await expect(familyEventCard.locator('.schedule-row-repeat')).toHaveText('매주 토요일')
+  await expect(childEventCard.locator('.schedule-row-repeat')).toHaveCount(0)
   const familySecondaryStyle = await familyEventCard.locator('.schedule-row-secondary').evaluate((element) => ({
     color: getComputedStyle(element).color,
     weight: getComputedStyle(element).fontWeight,
@@ -454,15 +470,15 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(familyEventCard).toBeFocused()
   if (testInfo.project.name.includes('mobile')) {
     const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
-    await expect(mobileMarkers.locator('.overview-member-dot')).toHaveCount(4)
-    await expect(mobileMarkers.locator('.overview-more-count')).toHaveText('+1')
+    await expect(mobileMarkers.locator('.overview-count-label.family')).toHaveText('가3')
+    await expect(mobileMarkers.locator('.overview-count-label.children')).toHaveText('자2')
+    await expect(mobileMarkers.locator('.overview-member-dot')).toHaveCount(0)
     await expect(mobileMarkers.locator('.calendar-conflict-indicator')).toHaveCount(1)
     const shiftIcon = page.locator('[data-date="2026-08-15"] .overview-shift-icons .shift-icon.sage')
     await expect(shiftIcon.locator('svg')).toHaveCount(1)
     await expect(shiftIcon).toHaveText('')
-    const markerColors = await mobileMarkers.locator('.overview-member-dot').evaluateAll((markers) => markers.map((marker) => getComputedStyle(marker).backgroundColor))
-    expect(new Set(markerColors).size).toBeGreaterThan(1)
   }
+  await expect(page.locator('.calendar-overview-legend')).toHaveCount(0)
   const firstOverviewGroup = page.locator('.overview-day-groups > .overview-day-section').first()
   await expect(firstOverviewGroup.locator('header')).toContainText('근무')
   await expect(page.locator('[data-date="2026-08-15"]')).toHaveAttribute('aria-label', /시간 겹침 1개/)

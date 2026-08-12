@@ -311,7 +311,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .avatar-more { color: var(--primary-dark); border-color: #b7c8ce; background: #edf3f4; }
 
 .today-card { position: relative; padding: 26px; }
-.today-card > .section-heading { padding-inline: 13px; }
+.today-card > .section-heading { padding-inline: 0; }
 .today-card.is-empty { padding-bottom: 22px; }
 .today-card.is-empty .timeline { margin-top: 12px; }
 .text-button, .small-add {
@@ -382,8 +382,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   align-items: center;
   gap: 18px;
   padding: 14px 18px 14px 22px;
-  border-left: 5px solid var(--event);
-  border-radius: 4px 18px 18px 4px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
   background: var(--event-bg);
 }
 .schedule-row {
@@ -391,22 +391,21 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   --schedule-tone: #f5f8f9;
   position: relative;
   width: 100%;
-  height: 56px;
-  min-height: 56px;
+  height: 68px;
+  min-height: 68px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 14px 7px 18px;
+  padding: 7px 7px 7px 9px;
   overflow: hidden;
   border: 1px solid #e6ebec;
   border-radius: 12px;
   background: #fff;
   box-shadow: none;
 }
-.schedule-row::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 4px; background: var(--schedule-member); }
 .schedule-row-leading, .schedule-row-trailing { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; }
 .schedule-row-leading .avatar-group { padding-left: 0; }
-.schedule-row-copy { min-width: 0; display: flex; flex: 1 1 auto; flex-direction: column; justify-content: center; align-items: stretch; gap: 1px; overflow: hidden; white-space: nowrap; }
+.schedule-row-copy { min-width: 0; display: flex; flex: 1 1 auto; flex-direction: column; justify-content: center; align-items: stretch; gap: 6px; overflow: hidden; white-space: nowrap; }
 .schedule-row-primary, .schedule-row-secondary { min-width: 0; display: flex; align-items: center; gap: 3px; overflow: hidden; white-space: nowrap; }
 .schedule-row-copy strong, .schedule-row-copy span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .schedule-row-primary strong { flex: 0 1 auto; color: var(--ink); font-size: 14px; line-height: 1.15; }
@@ -545,8 +544,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-dots i { width: 7px; height: 7px; border-radius: 50%; }
 .child-month-calendar .child-schedule-dots { display: flex; }
 .calendar-overview-markers { display: flex; flex-wrap: nowrap; align-items: center; gap: 3px; width: 100%; margin-top: 6px; overflow: hidden; }
-.overview-member-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; }
-.overview-more-count { flex: 0 0 auto; color: #667278; font-family: 'A2Z', sans-serif; font-size: 9px; line-height: 1; }
+.overview-count-label { flex: 0 0 auto; color: #667278; font-family: 'A2Z', sans-serif; font-size: 9px; font-weight: 700; line-height: 1; white-space: nowrap; }
+.overview-count-label.family { color: #53606a; }
+.overview-count-label.children { color: #246a82; }
 .calendar-conflict-indicator { width: 6px; height: 6px; flex: 0 0 6px; margin-left: 1px; border-radius: 50%; background: #dc2626; box-shadow: 0 0 0 1px #fff, 0 0 0 2px rgba(220, 38, 38, .25); }
 .overview-shift-icons { display: flex; align-items: center; gap: 3px; margin-top: 4px; }
 .overview-shift-icons .shift-icon { width: 17px; height: 17px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; }
@@ -554,11 +554,6 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .overview-shift-icons .shift-icon.sage { color: #4c5e20; background: #d9e9b3; }
 .overview-shift-icons .shift-icon.blue { color: #125872; background: #c8e8f3; }
 .overview-shift-icons .shift-icon.navy { color: #fff; background: #343b5b; }
-.calendar-overview-legend { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 24px; margin-top: 10px; padding: 4px 4px 0; color: var(--muted); font-size: 10px; font-weight: 700; text-align: center; }
-.calendar-overview-legend span { display: inline-flex; align-items: center; gap: 4px; }
-.calendar-overview-legend i { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; }
-.calendar-overview-legend .conflict { color: #b1433b; }
-.calendar-overview-legend .conflict i { background: #dc2626; }
 .overview-heading { align-items: flex-start; gap: 12px; }
 .overview-heading > div:first-child { min-width: 0; flex: 1 1 auto; padding-left: 0; }
 .overview-heading h2 { white-space: nowrap; }
@@ -1409,10 +1404,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .calendar-grid button .calendar-holiday-name { display: none; }
   .calendar-event-labels { display: none; }
   .day-dots { display: flex; margin-top: 7px; }
-  .calendar-overview-legend { justify-content: center; gap: 6px 8px; flex-wrap: wrap; overflow: visible; margin-top: 8px; padding: 4px 2px 1px; font-size: 9px; white-space: nowrap; }
   .calendar-overview-markers { gap: 2px; margin-top: 5px; }
-  .overview-member-dot { width: 5px; height: 5px; flex-basis: 5px; }
-  .overview-more-count { font-size: 8px; }
+  .overview-count-label { font-size: 8px; }
   .calendar-conflict-indicator { width: 5px; height: 5px; flex-basis: 5px; }
   .overview-shift-icons { gap: 2px; margin-top: 3px; }
   .overview-shift-icons .shift-icon { width: 15px; height: 15px; border-radius: 5px; }
@@ -1431,7 +1424,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .event-time { font-size: 14px; }
   .event-copy strong { font-size: 16px; }
   .timeline { grid-template-columns: 1fr; }
-  .today-card > .section-heading { padding-inline: 10px; }
+  .today-card > .section-heading { padding-inline: 0; }
   .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
   .today-card .home-event-title { font-size: 13px; }
   .today-card .home-event-row .event-time { max-width: none; font-size: 11px; }
@@ -1450,7 +1443,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .family-connect-banner span { font-size: 10px; }
   .family-connect-banner .secondary-button { min-height: 38px; padding: 0 9px; font-size: 11px; }
   .family-connect-banner .icon-button { width: 36px; height: 36px; }
-  .week-strip-card { padding: 19px 17px; }
+  .week-strip-card { padding: 19px 22px; }
   .home-week-strip { grid-template-columns: repeat(7, minmax(68px, 1fr)); gap: 5px; overflow-x: auto; padding-bottom: 5px; scroll-snap-type: x proximity; }
   .home-week-strip button { min-height: 84px; padding: 8px 4px; scroll-snap-align: start; }
   .home-week-strip strong { font-size: 17px; }
@@ -1581,13 +1574,13 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-panel .schedule-row.event-card,
 .child-direct-events .schedule-row.event-card,
 .schedule-row.task-card {
-  height: 56px;
-  min-height: 56px;
-  max-height: 56px;
+  height: 68px;
+  min-height: 68px;
+  max-height: 68px;
   display: flex;
   grid-template-columns: none;
   gap: 10px;
-  padding: 7px 14px 7px 18px;
+  padding: 7px 7px 7px 9px;
   border: 1px solid #e6ebec;
   border-radius: 12px;
   background: #fff;
