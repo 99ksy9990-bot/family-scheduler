@@ -249,6 +249,22 @@ const formatScheduleWeekdays = (schedule) => {
   return weekdays.length === 1 ? WEEKDAYS[weekdays[0]] : weekdays.map((day) => WEEKDAY_SHORT[day]).join('·')
 }
 
+const formatRecurrenceLabel = (item) => {
+  const recurrence = item?.recurrence
+  if (!recurrence || recurrence.frequency === 'none') return ''
+  const interval = Math.max(1, Number(recurrence.interval) || 1)
+  const sourceDate = item.date || item.dueDate
+  const date = sourceDate ? new Date(`${sourceDate}T00:00:00`) : null
+  if (recurrence.frequency === 'daily') return interval === 1 ? '매일' : `${interval}일마다`
+  if (recurrence.frequency === 'weekly') {
+    const weekday = date ? WEEKDAYS[date.getDay()] : '매주'
+    return interval === 1 ? `매주 ${weekday}` : `${interval}주마다 ${weekday}`
+  }
+  if (recurrence.frequency === 'monthly') return date ? (interval === 1 ? `매월 ${date.getDate()}일` : `${interval}개월마다 ${date.getDate()}일`) : '매월'
+  if (recurrence.frequency === 'yearly') return date ? (interval === 1 ? `매년 ${date.getMonth() + 1}월 ${date.getDate()}일` : `${interval}년마다 ${date.getMonth() + 1}월 ${date.getDate()}일`) : '매년'
+  return ''
+}
+
 const parseTime = (value, fallback = '오전 9:00') => {
   const normalized = value === '자정' ? '오전 12:00' : value === '정오' ? '오후 12:00' : value
   const match = /^(오전|오후)\s+(\d{1,2}):(\d{2})$/.exec(normalized || '')
@@ -560,6 +576,7 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   void onDiscuss
   const category = event.homeCategory || (event.anniversary ? '기념일' : eventCalendarScope(event) === 'children' ? '자녀' : '가족')
   const detail = [event.location, event.milestoneLabel, event.pickupBy ? `${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''].filter(Boolean).join(' · ')
+  const recurrenceLabel = event.recurrenceType === 'child' ? formatScheduleWeekdays(event) : formatRecurrenceLabel(event)
 
   return <>
   <ScheduleRow
@@ -568,8 +585,9 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
     memberTone={member.tone}
     leading={<AvatarGroup memberIds={eventMembers} />}
     title={event.title}
+    primaryMeta={detail}
     time={event.time === '종일' ? '' : timeLabel}
-    meta={detail}
+    secondaryMeta={recurrenceLabel}
     category={category}
     categoryClassName={event.homeCategory ? `home-category-chip ${event.homeCategoryId || ''}` : ''}
     onClick={hasActions ? () => setSheetOpen(true) : undefined}
@@ -596,7 +614,7 @@ function ManagedChildScheduleRow({ schedule, canEdit, onEdit, onDelete }) {
       leading={<Avatar memberId={schedule.member} />}
       title={schedule.title}
       time={timeLabel}
-      meta={formatScheduleWeekdays(schedule)}
+      secondaryMeta={formatScheduleWeekdays(schedule)}
       category={schedule.kind}
       onClick={hasActions ? () => setSheetOpen(true) : undefined}
       ariaLabel={hasActions ? `${schedule.title} 작업 열기` : undefined}
@@ -692,7 +710,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
 
       <section className={`today-card card ${todayTimelineEvents.length ? '' : 'is-empty'}`} id="today-schedule">
         <div className="section-heading">
-          <div><span className="eyebrow">오늘 한눈에 보기</span><h2>오늘의 일정</h2></div>
+          <div><h2>오늘의 일정</h2></div>
           <button className="text-button" onClick={openCalendar}>캘린더 보기 <ChevronRight size={16} /></button>
         </div>
         <div className={`timeline timeline-count-${Math.min(todayTimelineEvents.length, 3)}`}>
@@ -713,7 +731,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
 
       <section className="week-strip-card card" aria-labelledby="week-strip-title">
         <div className="section-heading">
-          <div><span className="eyebrow">이번 주 한눈에 보기</span><h2 id="week-strip-title">이번 주 일정</h2></div>
+          <div><h2 id="week-strip-title">이번 주 일정</h2></div>
           <button className="text-button" onClick={openCalendar}>전체 캘린더 <ChevronRight size={16} /></button>
         </div>
         <div className="home-week-strip">
@@ -835,16 +853,25 @@ function ChildWeekView({ today, events, childSchedules, schedulePeriods, schedul
             {visibleScheduleGroups.map(({ child, season, schedules }) => <section className="child-timeline-group" key={child.id} style={{ '--child': child.color, '--child-tone': child.tone }}>
               <header className="child-timeline-group-heading"><span><Avatar memberId={child.id} /><strong>{child.name}</strong></span><span className={`season-badge ${season === '방학' ? 'vacation' : ''}`}>{season || '기간 미설정'}</span></header>
               <div className="child-timeline">
-                {schedules.map((schedule) => <article className="child-timeline-row" key={schedule.id}>
+                {schedules.map((schedule) => <article
+                  className={`child-timeline-row ${canEdit ? 'interactive' : ''}`}
+                  key={schedule.id}
+                  role={canEdit ? 'button' : undefined}
+                  tabIndex={canEdit ? 0 : undefined}
+                  aria-label={canEdit ? `${child.name} ${schedule.title} 수정 및 삭제` : undefined}
+                  onClick={canEdit ? () => openRecurringActions(schedule) : undefined}
+                  onKeyDown={canEdit ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      openRecurringActions(schedule)
+                    }
+                  } : undefined}
+                >
                   <time>{schedule.time}</time>
                   <span className="timeline-mark" />
                   <div>
                     <div className="child-timeline-title-row">
                       <span><em>{schedule.kind}</em><strong>{schedule.title}</strong></span>
-                      {canEdit && <div className="event-actions child-timeline-actions">
-                        <button type="button" onClick={() => openRecurringActions(schedule)} aria-label={`${child.name} ${schedule.title} 수정 범위 선택`} title="일정 수정"><Pencil /></button>
-                        <button type="button" className="delete" onClick={() => openRecurringActions(schedule)} aria-label={`${child.name} ${schedule.title} 삭제 범위 선택`} title="일정 삭제"><Trash2 /></button>
-                      </div>}
                     </div>
                     <small><Clock3 /> {schedule.time}{schedule.end ? ` ~ ${schedule.end}` : ''}</small>
                   </div>
@@ -1025,7 +1052,10 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
                   onClick={() => selectCalendarDate(date)}
                 >
                   <span>{day}</span>
-                  {currentMode === 'all' && visibleOverviewShifts.length > 0 && <span className="overview-shift-codes" aria-hidden="true">{visibleOverviewShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={`shift-code code-${option.code.toLowerCase()}`}>{option.code}</i>)}</span>}
+                  {currentMode === 'all' && visibleOverviewShifts.length > 0 && <span className="overview-shift-icons" aria-hidden="true">{visibleOverviewShifts.slice(0, 2).map(({ worker, option }) => {
+                    const OverviewShiftIcon = option.icon
+                    return <i key={worker.id} className={`shift-icon ${option.color}`}>{OverviewShiftIcon && <OverviewShiftIcon />}</i>
+                  })}</span>}
                   {dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}
                   {currentMode === 'all' ? (overviewEventMarkers.length > 0 || conflictCount > 0) && <div className="calendar-overview-markers" aria-hidden="true">
                     {overviewEventMarkers.slice(0, 4).map(({ id, member }) => <i key={id} className="overview-member-dot" style={{ background: member.color }} />)}
@@ -1204,7 +1234,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
   const renderTaskCard = (task) => {
     const visibleMeta = task.meta && task.meta.replace(/\s/g, '') !== '새로추가됨' ? task.meta : ''
     const dueCopy = task.dueDate ? `${task.dueDate}${task.reminder && task.reminder !== 'none' ? ' 알림' : ''}` : ''
-    const detail = [visibleMeta, dueCopy].filter(Boolean).join(' · ')
+    const recurrenceLabel = formatRecurrenceLabel({ ...task, date: task.dueDate })
     const memberIds = assignedMemberIds(task, 'assignees', 'assignee')
     const member = memberForId(memberIds[0], profiles)
     return <ScheduleRow
@@ -1214,7 +1244,8 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
       memberTone={member.tone}
       leading={<><button className="checkbox" onClick={(event) => { event.stopPropagation(); toggleTask(task) }} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button><AvatarGroup memberIds={memberIds} /></>}
       title={task.title}
-      meta={detail}
+      primaryMeta={visibleMeta}
+      secondaryMeta={[dueCopy, recurrenceLabel].filter(Boolean).join(' · ')}
       category={task.category}
       categoryClassName={task.category === '긴급' ? 'urgent' : ''}
       onClick={canEdit ? (event) => { taskActionTriggerRef.current = event.currentTarget; setActionTask(task) } : undefined}
@@ -1316,11 +1347,17 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
   const [anniversaryForm, setAnniversaryForm] = useState(() => emptyAnniversaryFormFor(today))
   const [anniversaryEditingId, setAnniversaryEditingId] = useState(null)
   const [anniversaryError, setAnniversaryError] = useState('')
+  const [actionAnniversary, setActionAnniversary] = useState(null)
+  const [actionProfile, setActionProfile] = useState(null)
+  const [actionPeriod, setActionPeriod] = useState(null)
   const [profileMember, setProfileMember] = useState(initialProfileMember)
   const [profileForm, setProfileForm] = useState(initialProfile)
   const [profileSaved, setProfileSaved] = useState(false)
   const anniversaryYears = useMemo(() => anniversaryYearsFor(today), [today])
   const profileEditorRef = useRef(null)
+  const anniversaryActionTriggerRef = useRef(null)
+  const profileActionTriggerRef = useRef(null)
+  const periodActionTriggerRef = useRef(null)
   const currentScheduleMember = children.some((child) => child.id === scheduleForm.member) ? scheduleForm.member : primaryChildId
   const currentProfileMember = children.some((child) => child.id === profileMember) ? profileMember : primaryChildId
   const currentPeriodMember = periodForm.member === 'all' || children.some((child) => child.id === periodForm.member) ? periodForm.member : primaryChildId
@@ -1610,7 +1647,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
             {sortedAnniversaries.map((anniversary) => {
               const nextOccurrence = nextAnniversaryOccurrence(anniversary)
               const milestoneLabel = anniversaryMilestoneLabel(anniversary, nextOccurrence)
-              return <article className="anniversary-row" key={anniversary.id}>
+              return <article className={`anniversary-row ${canEdit ? 'actionable' : ''}`} key={anniversary.id} role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} aria-label={canEdit ? `${anniversaryTitle(anniversary)} 작업 열기` : undefined} onClick={canEdit ? (event) => { anniversaryActionTriggerRef.current = event.currentTarget; setActionAnniversary(anniversary) } : undefined} onKeyDown={canEdit ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); anniversaryActionTriggerRef.current = event.currentTarget; setActionAnniversary(anniversary) } } : undefined}>
                 <Avatar memberId="anniversary" />
                 <div className="anniversary-copy">
                   <div className="anniversary-title-row">
@@ -1618,16 +1655,12 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
                       <strong>{anniversaryTitle(anniversary)}</strong>
                       <em>{anniversary.calendarType === 'lunar' ? `음력${anniversary.leapMonth ? ' 윤달' : ''}` : '양력'}</em>
                     </div>
-                    <div className="event-actions">
-                      {canEdit && <button onClick={() => editAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 수정`}><Pencil /></button>}
-                      {canEdit && <button className="delete" onClick={() => deleteAnniversary(anniversary)} aria-label={`${anniversaryTitle(anniversary)} 삭제`}><Trash2 /></button>}
-                    </div>
                   </div>
                   <small>
                     <span>{anniversary.month}월 {anniversary.day}일 · 다음 양력 {formatSolarDate(nextOccurrence)}</span>
                     <span className={milestoneLabel ? 'anniversary-milestone' : 'anniversary-missing-year'}>{milestoneLabel || '연도 미입력'}</span>
                   </small>
-                  {!milestoneLabel && canEdit && <button className="year-inline-button" onClick={() => editAnniversary(anniversary)}>{anniversary.kind === '생일' ? '출생 연도 추가' : '시작 연도 추가'}</button>}
+                  {!milestoneLabel && canEdit && <button className="year-inline-button" onClick={(event) => { event.stopPropagation(); editAnniversary(anniversary) }}>{anniversary.kind === '생일' ? '출생 연도 추가' : '시작 연도 추가'}</button>}
                 </div>
               </article>
             })}
@@ -1654,14 +1687,10 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
           <div className="period-list">
             {[...schedulePeriods].sort((a, b) => `${a.member || 'all'}-${a.start}`.localeCompare(`${b.member || 'all'}-${b.start}`)).map((period) => {
               const periodMember = period.member && period.member !== 'all' ? profiles.find((member) => member.id === period.member) : FAMILY_MEMBER
-              return <div className="period-row" key={period.id}>
+              return <div className={`period-row ${canEdit ? 'actionable' : ''}`} key={period.id} role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} aria-label={canEdit ? `${period.season} ${period.start} 적용 기간 작업 열기` : undefined} onClick={canEdit ? (event) => { periodActionTriggerRef.current = event.currentTarget; setActionPeriod(period) } : undefined} onKeyDown={canEdit ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); periodActionTriggerRef.current = event.currentTarget; setActionPeriod(period) } } : undefined}>
                 <span className={`season-badge ${period.season === '방학' ? 'vacation' : ''}`}>{period.season}</span>
                 <Avatar memberId={periodMember?.id || 'family'} />
                 <span><strong>{period.member && period.member !== 'all' ? periodMember?.name : '전체 자녀'} · {period.start}</strong><small>~ {period.end}</small></span>
-                <div className="event-actions">
-                  {canEdit && <button onClick={() => editPeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 수정`}><Pencil /></button>}
-                  {canEdit && <button className="delete" onClick={() => deletePeriod(period)} aria-label={`${period.season} ${period.start} 적용 기간 삭제`}><Trash2 /></button>}
-                </div>
               </div>
             })}
           </div>
@@ -1692,17 +1721,13 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
             const child = children.find((item) => item.id === profile.member)
             if (!child) return null
             const classInfo = [profile.grade && `${profile.grade}학년`, profile.classNumber && `${profile.classNumber}반`, profile.studentNumber && `${profile.studentNumber}번`].filter(Boolean).join(' · ')
-            return <article className="saved-child-profile-card card" key={profile.member}>
+            return <article className={`saved-child-profile-card card ${canEdit ? 'actionable' : ''}`} key={profile.member} role={canEdit ? 'button' : undefined} tabIndex={canEdit ? 0 : undefined} aria-label={canEdit ? `${child.name} 학교 정보 작업 열기` : undefined} onClick={canEdit ? (event) => { profileActionTriggerRef.current = event.currentTarget; setActionProfile(profile) } : undefined} onKeyDown={canEdit ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); profileActionTriggerRef.current = event.currentTarget; setActionProfile(profile) } } : undefined}>
               <Avatar memberId={profile.member} />
               <div className="saved-child-profile-copy">
                 <span><strong>{child.name}</strong>{classInfo && <em>{classInfo}</em>}</span>
                 <h3>{profile.school || '학교 미입력'}</h3>
-                <small>{profile.teacherName ? `담임 ${profile.teacherName} 선생님` : '담임선생님 미입력'}{profile.teacherPhone && <a href={`tel:${profile.teacherPhone}`}><Phone />{profile.teacherPhone}</a>}</small>
+                <small>{profile.teacherName ? `담임 ${profile.teacherName} 선생님` : '담임선생님 미입력'}{profile.teacherPhone && <a href={`tel:${profile.teacherPhone}`} onClick={(event) => event.stopPropagation()}><Phone />{profile.teacherPhone}</a>}</small>
               </div>
-              {canEdit && <div className="event-actions profile-list-actions">
-                <button onClick={() => editProfile(profile.member)} aria-label={`${child.name} 학교 정보 수정`}><Pencil /></button>
-                <button className="delete" onClick={() => deleteProfile(profile)} aria-label={`${child.name} 학교 정보 삭제`}><Trash2 /></button>
-              </div>}
             </article>
           })}
           {!savedChildProfiles.length && <div className="empty-state card"><GraduationCap /><strong>등록된 자녀 정보가 없습니다</strong><span>위 입력란에서 학교 정보를 저장하면 여기에 표시됩니다.</span></div>}
@@ -1748,6 +1773,31 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
           {!visibleSchedules.length && <div className="empty-state card"><GraduationCap /><strong>{season} 일정이 없습니다</strong><span>위 입력란에서 학교나 학원 일정을 추가하세요.</span></div>}
         </div>
       </section>}</>}
+
+      <ScheduleActionSheet
+        open={Boolean(actionAnniversary)}
+        title={actionAnniversary ? anniversaryTitle(actionAnniversary) : ''}
+        onClose={() => setActionAnniversary(null)}
+        onEdit={actionAnniversary ? () => editAnniversary(actionAnniversary) : undefined}
+        onDelete={actionAnniversary ? () => deleteAnniversary(actionAnniversary) : undefined}
+        returnFocusRef={anniversaryActionTriggerRef}
+      />
+      <ScheduleActionSheet
+        open={Boolean(actionProfile)}
+        title={actionProfile ? `${children.find((child) => child.id === actionProfile.member)?.name || '자녀'} 학교 정보` : ''}
+        onClose={() => setActionProfile(null)}
+        onEdit={actionProfile ? () => editProfile(actionProfile.member) : undefined}
+        onDelete={actionProfile ? () => deleteProfile(actionProfile) : undefined}
+        returnFocusRef={profileActionTriggerRef}
+      />
+      <ScheduleActionSheet
+        open={Boolean(actionPeriod)}
+        title={actionPeriod ? `${actionPeriod.season} ${actionPeriod.start} ~ ${actionPeriod.end}` : ''}
+        onClose={() => setActionPeriod(null)}
+        onEdit={actionPeriod ? () => editPeriod(actionPeriod) : undefined}
+        onDelete={actionPeriod ? () => deletePeriod(actionPeriod) : undefined}
+        returnFocusRef={periodActionTriggerRef}
+      />
     </div>
   )
 }

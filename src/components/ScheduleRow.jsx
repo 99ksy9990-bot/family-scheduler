@@ -4,8 +4,10 @@ export default function ScheduleRow({
   memberTone,
   leading,
   title,
+  primaryMeta,
   time,
   meta,
+  secondaryMeta,
   category,
   categoryClassName = '',
   trailing,
@@ -34,10 +36,15 @@ export default function ScheduleRow({
       {...interactiveProps}
     >
       {leading && <span className="schedule-row-leading">{leading}</span>}
-      <span className="schedule-row-copy" title={[title, time, meta].filter(Boolean).join(' · ')}>
-        <strong className="schedule-row-title home-event-title">{title}</strong>
-        {time && <><i className="schedule-row-separator home-event-separator" aria-hidden="true">·</i><span className="schedule-row-time event-time">{time}</span></>}
-        {meta && <><i aria-hidden="true">·</i><span>{meta}</span></>}
+      <span className="schedule-row-copy" title={[title, primaryMeta, time, secondaryMeta ?? meta].filter(Boolean).join(' · ')}>
+        <span className="schedule-row-primary">
+          <strong className="schedule-row-title home-event-title">{title}</strong>
+          {primaryMeta && <><i aria-hidden="true">·</i><span className="schedule-row-location">{primaryMeta}</span></>}
+        </span>
+        {(time || secondaryMeta || meta) && <span className="schedule-row-secondary">
+          {time && <span className="schedule-row-time event-time">{time}</span>}
+          {(secondaryMeta ?? meta) && <>{time && <i aria-hidden="true">·</i>}<span className="schedule-row-repeat">{secondaryMeta ?? meta}</span></>}
+        </span>}
       </span>
       {category && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
       {trailing && <span className="schedule-row-trailing">{trailing}</span>}
