@@ -1,4 +1,4 @@
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare, Cloud,
@@ -45,7 +45,6 @@ const CALENDAR_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1)
 const CALENDAR_DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
 const TASK_PERIOD_FILTERS = [
   { id: 'all', label: '전체' },
-  { id: 'today', label: '오늘' },
   { id: 'week', label: '이번 주' },
   { id: 'month', label: '이번 달' },
 ]
@@ -574,7 +573,7 @@ function EventCard({ event, compact = false, calendarSummary = false, showRecurr
   const hasActions = Boolean(onEdit || onDelete)
   const timeLabel = event.end && event.time && event.time !== '종일' ? `${event.time} ~ ${event.end}` : event.time || '종일'
   void onDiscuss
-  const category = event.homeCategory || (event.anniversary ? '기념일' : eventCalendarScope(event) === 'children' ? '자녀' : '가족')
+  const category = event.homeCategory || (event.anniversary ? '기념일' : isChildCalendarEvent(event) ? '자녀' : '가족')
   const detail = [event.location, event.milestoneLabel, event.pickupBy ? `${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''].filter(Boolean).join(' · ')
   const recurrenceLabel = event.recurrenceType === 'child' ? formatScheduleWeekdays(event) : formatRecurrenceLabel(event)
 
@@ -634,6 +633,8 @@ function ManagedChildScheduleRow({ schedule, canEdit, onEdit, onDelete }) {
 function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, canEdit, onOpenSettings, sync, onOpenFamily }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
   const [familyNoticeDismissed, setFamilyNoticeDismissed] = useState(() => window.sessionStorage.getItem('family-scheduler-family-notice-dismissed') === '1')
+  const weekStripRef = useRef(null)
+  const todayWeekButtonRef = useRef(null)
   const { activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const conflicts = overlappingEventIds(rawTodayEvents)
@@ -682,6 +683,13 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     homeCategory: event.holiday ? '공휴일' : isChildCalendarEvent(event) ? '자녀' : '가족',
     homeCategoryId: event.holiday ? 'holiday' : isChildCalendarEvent(event) ? 'children' : 'family',
   }))]
+
+  useLayoutEffect(() => {
+    const strip = weekStripRef.current
+    const todayButton = todayWeekButtonRef.current
+    if (!strip || !todayButton || !window.matchMedia('(max-width: 660px)').matches) return
+    strip.scrollLeft = Math.max(0, todayButton.offsetLeft - (strip.clientWidth - todayButton.offsetWidth) / 2)
+  }, [today])
 
   useEffect(() => {
     const timer = window.setInterval(() => setGreeting((current) => {
@@ -734,7 +742,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <div><h2 id="week-strip-title">이번 주 일정</h2></div>
           <button className="text-button" onClick={openCalendar}>전체 캘린더 <ChevronRight size={16} /></button>
         </div>
-        <div className="home-week-strip">
+        <div ref={weekStripRef} className="home-week-strip">
           {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents, workerShifts: dayWorkerShifts }) => {
             const isToday = iso(date) === iso(today)
             const openDay = () => openCalendarDate(date, 'all')
@@ -744,7 +752,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const conflictCount = overlappingEventCount([...dayGeneralEvents.filter((event) => !event.holiday), ...dayChildEvents])
             const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
             const shiftCodes = dayWorkerShifts.map(({ option }) => option.code).join('·')
-            return <button key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ''}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
+            return <button ref={isToday ? todayWeekButtonRef : undefined} key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ''}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
               <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span></strong>
               <span className="week-shifts" aria-hidden="true">{dayWorkerShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={`week-shift-code ${option.color}`}>{option.code}</i>)}{dayWorkerShifts.length > 2 && <i className="week-shift-code more">+{dayWorkerShifts.length - 2}</i>}</span>
               <span className="week-counts"><em>가족 {familyCount}</em><b aria-hidden="true">/</b><em>자녀 {childCount}</em></span>
@@ -1073,6 +1081,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               )
             })}
           </div>
+          {currentMode === 'family' && <MemberLegend />}
         </div>
 
         <aside ref={dayPanelRef} className={`day-panel card ${currentMode === 'work' ? 'shift-day-panel' : ''}`}>
@@ -1105,7 +1114,6 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               {!selectedEvents.length && <div className="empty-state"><CalendarDays /><strong>등록된 일정이 없습니다</strong><span>쉬거나 새 일정을 추가하세요.</span></div>}
             </div>
             {selectedChildEvents.length > 0 && <button className="related-calendar-link" onClick={() => setMode('children')}><GraduationCap /> 자녀 일정 {selectedChildEvents.length}개 <span>자녀 탭에서 보기</span><ChevronRight /></button>}
-            <MemberLegend />
           </> : <>
             {shiftWorkers.length > 1 && <div className="shift-worker-switcher" aria-label="근무표 구성원 선택">{shiftWorkers.map((worker) => <button key={worker.id} className={selectedShiftMember?.id === worker.id ? 'active' : ''} aria-pressed={selectedShiftMember?.id === worker.id} onClick={() => { setSelectedShiftMemberId(worker.id); setLastShiftChange(null) }}><Avatar memberId={worker.id} />{worker.name}</button>)}</div>}
             <div className="shift-editor-heading">
@@ -1196,8 +1204,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
   const weekEnd = addDays(weekStart, 6)
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
   const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  const taskRange = periodFilter === 'today' ? [today, today]
-    : periodFilter === 'week' ? [weekStart, weekEnd]
+  const taskRange = periodFilter === 'week' ? [weekStart, weekEnd]
       : periodFilter === 'month' ? [monthStart, monthEnd] : null
   const periodTasks = tasks.flatMap((task) => {
     if (hasRecurrence(task)) {

@@ -1372,7 +1372,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .settings-hub-row > em { display: none; }
   .settings-hub-row small { min-width: 0; white-space: nowrap; text-overflow: ellipsis; }
   .task-filter-bar { display: flex; flex-wrap: nowrap; gap: 4px; margin-top: -10px; overflow: visible; padding-bottom: 0; }
-  .task-filter-bar button { min-width: 0; min-height: 36px; flex: 1 1 0; padding: 0 2px; overflow: hidden; font-size: 9px; letter-spacing: -.045em; white-space: nowrap; text-overflow: clip; }
+  .task-filter-bar button { min-width: 0; min-height: 38px; flex: 1 1 0; padding: 0 3px; overflow: hidden; font-size: 11px; letter-spacing: -.025em; white-space: nowrap; text-overflow: clip; }
   .task-columns { grid-template-columns: 1fr; gap: 28px; }
   .task-card { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding-inline: 15px; }
   .task-card-actions { gap: 4px; }
@@ -1547,6 +1547,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .family-settings-panel { width: 100%; max-height: calc(100vh - 12px); max-height: calc(100dvh - 12px); border-radius: 26px 26px 0 0; }
   .family-profile-layout { grid-template-columns: 1fr; }
   .family-profile-list-section, .family-profile-form, .shift-settings-section { padding: 15px; border-radius: 15px; }
+  .shift-settings-section > p { max-width: 100%; overflow: hidden; font-size: clamp(9px, 2.65vw, 12px); letter-spacing: -.06em; white-space: nowrap; text-overflow: clip; }
   .family-setup-card { grid-template-columns: auto minmax(0, 1fr); padding: 18px; }
   .family-setup-card .primary-button { grid-column: 1 / -1; width: 100%; }
   .settings-profile-row { padding: 9px; }

@@ -26,6 +26,12 @@
 - 전체 캘린더는 구성원별 점 대신 `가n`, `자n`을 표시하고 충돌이 있을 때만 빨간 점을 추가한다.
 - 전체 캘린더 아래 구성원 범례는 제거했다.
 - 전체 캘린더의 자녀 세부 카드에서는 반복 요일을 숨기고, 일정 관리 화면에서는 그대로 표시한다.
+- 학교·학원 및 자녀 전용 일정은 전체 캘린더에서도 항상 `자녀` 카테고리로 표시한다.
+- 모바일 가족 캘린더 범례는 선택 날짜 상세에서 분리해 월 달력 바로 아래에 표시한다.
+- 가족 할 일 기간 필터에서 `오늘`을 제거하고 남은 네 항목을 `11px` 이상 한 줄로 표시한다.
+- 가족 구성원 수정 시 저장된 색상을 정규화해 정확한 선택 표시와 사용 중 안내를 유지한다.
+- 근무표 안내 문장은 모바일에서 잘리지 않는 한 줄로 표시한다.
+- 모바일 이번 주 일정은 진입 시 오늘 버튼이 항상 보이도록 자동으로 가로 위치를 맞춘다.
 
 ## Click-to-manage behavior
 
@@ -40,13 +46,13 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium: `22 passed`, `3 conditionally skipped`
-- Mobile Chromium: `25 passed`
-- Combined end-to-end result: `47 passed`, `3 conditionally skipped`
+- Desktop Chromium: `24 passed`, `4 conditionally skipped`
+- Mobile Chromium: `27 passed`, `1 conditionally skipped`
+- Combined end-to-end result: `51 passed`, `5 conditionally skipped`
 - Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, left/right padding `9px / 7px`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, `가n`/`자n` replaces member dots, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
-- In-app Browser: local mobile viewport `390 × 844`; home heading starts both measured at `37px`, horizontal overflow is absent
+- In-app Browser: local mobile viewport `390 × 844`; 할 일 필터 `11px` 한 줄, 달력 범례 선행 배치, 근무 안내 한 줄, 오늘 일정 완전 노출, 페이지·달력 가로 넘침 없음, 콘솔 오류 0건
 - Data migration/storage keys: unchanged
 
 ## Review note

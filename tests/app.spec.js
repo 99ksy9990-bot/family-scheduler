@@ -319,6 +319,58 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(212, 81, 75)')
   await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(76, 87, 93)')
   await expect(page.locator('.home-week-strip button.today .week-shift-code')).toHaveText('D')
+  const todayVisibility = await page.locator('.home-week-strip').evaluate((strip) => {
+    const today = strip.querySelector('button.today')
+    const stripRect = strip.getBoundingClientRect()
+    const todayRect = today.getBoundingClientRect()
+    return {
+      fullyVisible: todayRect.left >= stripRect.left && todayRect.right <= stripRect.right,
+      scrollLeft: strip.scrollLeft,
+    }
+  })
+  expect(todayVisibility.fullyVisible).toBe(true)
+  expect(todayVisibility.scrollLeft).toBeGreaterThan(0)
+})
+
+test('모바일 할 일 필터에서 오늘을 제외하고 남은 항목을 읽기 쉽게 표시한다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'done-task', title: '완료 일정', category: '장보기', dueDate: '2026-08-11', assignee: 'david', assignees: ['david'], done: true }]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '할 일', exact: true }).first().click()
+  const filters = page.locator('.task-filter-bar button')
+  await expect(filters).toHaveCount(4)
+  await expect(page.locator('.task-filter-bar').getByRole('button', { name: '오늘', exact: true })).toHaveCount(0)
+  await expect(filters).toHaveText(['전체', '이번 주', '이번 달', '완료 보기 1'])
+  const layout = await filters.evaluateAll((buttons) => ({
+    fontSizes: buttons.map((button) => parseFloat(getComputedStyle(button).fontSize)),
+    oneLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
+    fits: buttons.every((button) => button.scrollWidth <= button.clientWidth),
+  }))
+  expect(layout.fontSizes.every((size) => size >= 11)).toBe(true)
+  expect(layout.oneLine).toBe(true)
+  expect(layout.fits).toBe(true)
+})
+
+test('가족 구성원 수정 시 저장된 색과 근무표 안내를 정확히 표시한다', async ({ page }, testInfo) => {
+  await page.getByRole('button', { name: '설정', exact: true }).first().click()
+  await page.getByRole('button', { name: /가족 구성원 관리/ }).click()
+  const panel = page.getByRole('dialog', { name: '가족 구성원 관리' })
+  await panel.getByRole('button', { name: '초롱 수정' }).click()
+  const selectedColor = panel.locator('.profile-color-field button[aria-pressed="true"]')
+  await expect(selectedColor).toHaveCount(1)
+  await expect(selectedColor).toHaveAttribute('aria-label', /blue 색상/)
+  await expect(selectedColor).not.toHaveAttribute('aria-label', /아빠 사용 중/)
+  if (testInfo.project.name.includes('mobile')) {
+    const shiftHelp = panel.locator('.shift-settings-section > p')
+    await expect(shiftHelp).toHaveText('근무표 사용 구성원이 있을 때만 홈과 캘린더에 근무표가 표시됩니다.')
+    const helpLayout = await shiftHelp.evaluate((copy) => ({
+      whiteSpace: getComputedStyle(copy).whiteSpace,
+      fits: copy.scrollWidth <= copy.clientWidth,
+    }))
+    expect(helpLayout).toEqual({ whiteSpace: 'nowrap', fits: true })
+  }
 })
 
 test('캘린더 오늘 날짜는 네이비 숫자 원으로 표시하고 가로 격자만 유지한다', async ({ page }) => {
@@ -447,6 +499,7 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 오전 10:00')
   await expect(familyEventCard.locator('.schedule-row-repeat')).toHaveText('매주 토요일')
   await expect(childEventCard.locator('.schedule-row-repeat')).toHaveCount(0)
+  await expect(childEventCard.locator('.schedule-row-category')).toHaveText('자녀')
   const familySecondaryStyle = await familyEventCard.locator('.schedule-row-secondary').evaluate((element) => ({
     color: getComputedStyle(element).color,
     weight: getComputedStyle(element).fontWeight,
@@ -538,6 +591,18 @@ test('모바일 캘린더 셀을 키우고 모달 본문만 스크롤한다', as
     }
   })
   expect(modalLayout).toEqual({ modalOverflow: 'hidden', bodyOverflow: 'auto', actionsPosition: 'static', actionsBelowBody: true, fitsViewport: true })
+})
+
+test('모바일 가족 캘린더 범례를 날짜 상세보다 먼저 표시한다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
+  const legend = page.locator('.calendar-card > .member-legend')
+  const dayPanel = page.locator('.day-panel')
+  await expect(legend).toBeVisible()
+  await expect(dayPanel.locator('.member-legend')).toHaveCount(0)
+  const order = await Promise.all([legend, dayPanel].map((locator) => locator.evaluate((element) => element.getBoundingClientRect().top)))
+  expect(order[0]).toBeLessThan(order[1])
 })
 
 test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', async ({ page }) => {

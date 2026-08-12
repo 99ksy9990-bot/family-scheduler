@@ -53,11 +53,16 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
     onClose()
   }
 
-  const startEdit = (profile) => setForm({
-    ...profile,
-    relation: profile.relation || '',
-    usesShift: workSettings.workerIds.includes(profile.id),
-  })
+  const startEdit = (profile) => {
+    const selectedColor = memberColorFor(profile.color) || MEMBER_COLORS[0]
+    setForm({
+      ...profile,
+      color: selectedColor.color,
+      tone: selectedColor.tone,
+      relation: profile.relation || '',
+      usesShift: workSettings.workerIds.includes(profile.id),
+    })
+  }
 
   const resetForm = () => setForm(EMPTY_FORM)
 
@@ -149,12 +154,13 @@ export default function FamilySettingsPanel({ open, onClose, profiles, setProfil
               <label>관계 또는 호칭<input value={form.relation} onChange={(event) => setForm((current) => ({ ...current, relation: event.target.value }))} placeholder="예: 엄마, 할머니" disabled={!canEdit} /></label>
             </div>
             <fieldset className="profile-color-field"><legend>표시 색상</legend><div>{MEMBER_COLORS.map((entry) => {
-              const owners = activeProfiles.filter((profile) => profile.id !== form.id && profile.color.toLowerCase() === entry.color.toLowerCase())
+              const owners = activeProfiles.filter((profile) => profile.id !== form.id && String(profile.color).toLowerCase() === entry.color.toLowerCase())
               const paletteExhausted = activeProfiles.filter((profile) => profile.id !== form.id).length >= MEMBER_COLORS.length
               const disabled = !canEdit || (owners.length > 0 && !paletteExhausted)
               const usage = owners.length ? `${owners[0].name}과 같은 색` : ''
+              const isSelected = String(form.color).toLowerCase() === entry.color.toLowerCase()
               return <span className="profile-color-option" key={entry.id}>
-                <button type="button" className={form.color === entry.color ? 'active' : ''} style={{ background: entry.color }} aria-label={`${entry.id} 색상${owners.length ? `, ${owners[0].name} 사용 중` : ''}`} aria-pressed={form.color === entry.color} onClick={() => setForm((current) => ({ ...current, color: entry.color, tone: entry.tone }))} disabled={disabled}>{form.color === entry.color && <Check />}</button>
+                <button type="button" className={isSelected ? 'active' : ''} style={{ background: entry.color }} aria-label={`${entry.id} 색상${owners.length ? `, ${owners[0].name} 사용 중` : ''}`} aria-pressed={isSelected} onClick={() => setForm((current) => ({ ...current, color: entry.color, tone: entry.tone }))} disabled={disabled}>{isSelected && <Check />}</button>
                 {usage && <small>{paletteExhausted ? usage : `${owners[0].name} 사용 중`}</small>}
               </span>
             })}</div></fieldset>
