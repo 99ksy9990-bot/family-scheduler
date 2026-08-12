@@ -1,7 +1,9 @@
 # Family Scheduler 통합 달력·모바일 입력 QA
 
 - Source visual truth: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/4982EEF6-65D1-4DEE-8701-C849C2E7656C/1-사진-1.jpg`
+- Latest action-sheet reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/F9D8E420-1B50-45EB-B73F-50649EE32AE4/1-사진-1.jpg`
 - Implementation screenshot: `/Users/santak/Downloads/stitch_/output/playwright/qa-calendar-all-mobile-2026-08-12.png`
+- Latest mobile verification: `/Users/santak/Downloads/stitch_/output/qa-current/calendar-action-sheet-402x874.png`
 - Combined comparison: `/Users/santak/Downloads/stitch_/output/playwright/qa-calendar-comparison-2026-08-12.png`
 - Viewport: `402 × 874` CSS px, iPhone 16 Pro 대응 폭
 - State: 2026년 8월 12일, 전체 캘린더, 가족·자녀 일정과 엄마 근무가 함께 등록된 상태
@@ -42,6 +44,10 @@
 7. 삭제 확인은 기존 앱 확인 다이얼로그를 재사용하며, 작업 시트를 Escape로 닫으면 원래 행으로 포커스가 복귀한다.
 8. 하단 작업 시트를 `document.body` 포털로 올려 모바일 내비게이션과 겹치지 않게 했고, 확인 다이얼로그가 항상 작업 시트 위에 표시되도록 레이어 순서를 고정했다.
 9. 전체 달력의 시간 겹침은 담당자가 달라도 같은 시간대의 가족 활동이면 감지해 월간 탐색과 상세 드릴다운에서 함께 알린다.
+10. 근무 상세도 자녀·가족 일정과 동일한 공용 한 줄 행을 사용하며, 일정명은 근무 코드만 표시한다.
+11. 반복 자녀 일정의 이름과 인라인 수정·삭제 버튼을 제거하고 아바타·일정·시간·카테고리만 표시한다. 행을 누르면 공용 작업 시트가 열린다.
+12. 모바일 작업 시트는 하단 내비게이션 위에서 끝나며 `402×874`에서 삭제 버튼 하단 `770px`, 내비게이션 상단 `808.5px`로 겹침이 없다.
+13. 동기화 상태 배너를 고정 오버레이로 바꾸고 페이지 진입 `translateY` 애니메이션을 제거해 저장 상태 변화와 화면 전환 때 본문이 아래로 밀렸다 돌아오지 않는다.
 
 ## Remaining issues
 

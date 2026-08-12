@@ -565,6 +565,39 @@ function EventCard({ event, compact = false, calendarSummary = false, onEdit, on
   </>
 }
 
+function ManagedChildScheduleRow({ schedule, canEdit, onEdit, onDelete }) {
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const rowRef = useRef(null)
+  const { profiles } = useFamilyProfiles()
+  const member = memberForId(schedule.member, profiles)
+  const timeLabel = schedule.end ? `${schedule.time} ~ ${schedule.end}` : schedule.time
+  const hasActions = Boolean(canEdit && (onEdit || onDelete))
+
+  return <>
+    <ScheduleRow
+      className="managed-child-schedule-row"
+      memberColor={member.color}
+      memberTone={member.tone}
+      leading={<Avatar memberId={schedule.member} />}
+      title={schedule.title}
+      time={timeLabel}
+      meta={formatScheduleWeekdays(schedule)}
+      category={schedule.kind}
+      onClick={hasActions ? () => setSheetOpen(true) : undefined}
+      ariaLabel={hasActions ? `${schedule.title} 작업 열기` : undefined}
+      rowRef={rowRef}
+    />
+    <ScheduleActionSheet
+      open={sheetOpen}
+      title={schedule.title}
+      onClose={() => setSheetOpen(false)}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      returnFocusRef={rowRef}
+    />
+  </>
+}
+
 function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, canEdit, onOpenSettings, sync, onOpenFamily }) {
   const [greeting, setGreeting] = useState(() => familyGreeting())
   const [familyNoticeDismissed, setFamilyNoticeDismissed] = useState(() => window.sessionStorage.getItem('family-scheduler-family-notice-dismissed') === '1')
@@ -1015,7 +1048,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
             </div>
             <div className="overview-day-groups">
               {selectedConflictEvents.length > 0 && <div className="overview-conflict-banner" role="status"><AlertTriangle /><span><strong>시간이 겹치는 일정이 있습니다</strong><small>{selectedConflictEvents.map((event) => event.title).join(' · ')}</small></span></div>}
-              {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <div className="overview-shift-row" key={worker.id}><Avatar memberId={worker.id} /><span><strong>{worker.name}</strong><small>{option ? `${option.code} · ${option.label} · ${option.time}` : '근무 미입력'}</small></span></div>)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
+              {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <ScheduleRow key={worker.id} className="overview-work-row" memberColor={worker.color} memberTone={worker.tone} leading={<Avatar memberId={worker.id} />} title={option?.code || '미입력'} time={option?.time || ''} category="근무" />)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
               {selectedHolidayEvents.length > 0 && <section className="overview-day-section holiday-group"><header><span>공휴일</span><small>일정 개수에서 제외</small></header>{selectedHolidayEvents.map((event) => <div className="overview-holiday" key={event.id}><CalendarDays /> <strong>{event.title}</strong></div>)}</section>}
               <section className="overview-day-section"><header><span>가족 일정</span><b>{selectedFamilyEvents.length}</b></header><div className="day-events">{selectedFamilyEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onDiscuss={() => onOpenCollaboration(event)} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedFamilyEvents.length && <p className="overview-empty">등록된 가족 일정이 없습니다.</p>}</div></section>
               {children.length > 0 && <section className="overview-day-section"><header><span>자녀 일정</span><b>{selectedChildEvents.length}</b></header><div className="day-events">{selectedChildEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedChildEvents.length && <p className="overview-empty">등록된 자녀 일정이 없습니다.</p>}</div></section>}
@@ -1693,20 +1726,13 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
       {children.length > 0 && <section className="saved-child-schedules">
         <div className="section-heading"><div><span className="eyebrow">달력에 반복 반영</span><h2>{season} 등록 일정</h2></div><span className="count-badge">{visibleSchedules.length}</span></div>
         <div className="child-schedule-list">
-          {visibleSchedules.map((schedule) => {
-            const child = children.find((item) => item.id === schedule.member)
-            return (
-              <article className="child-schedule-card card" key={schedule.id}>
-                <Avatar memberId={schedule.member} />
-                <div className="child-schedule-copy"><span><em>{schedule.kind}</em>{child?.name}</span><strong>{schedule.title}</strong></div>
-                <div className="event-actions">
-                  {canEdit && <button onClick={() => editSchedule(schedule)} aria-label={`${schedule.title} 수정`}><Pencil /></button>}
-                  {canEdit && <button className="delete" onClick={() => deleteSchedule(schedule)} aria-label={`${schedule.title} 삭제`}><Trash2 /></button>}
-                </div>
-                <small className="child-schedule-meta">{formatScheduleWeekdays(schedule)} · {schedule.time}{schedule.end ? `~${schedule.end}` : ''}</small>
-              </article>
-            )
-          })}
+          {visibleSchedules.map((schedule) => <ManagedChildScheduleRow
+            key={schedule.id}
+            schedule={schedule}
+            canEdit={canEdit}
+            onEdit={canEdit ? () => editSchedule(schedule) : undefined}
+            onDelete={canEdit ? () => deleteSchedule(schedule) : undefined}
+          />)}
           {!visibleSchedules.length && <div className="empty-state card"><GraduationCap /><strong>{season} 일정이 없습니다</strong><span>위 입력란에서 학교나 학원 일정을 추가하세요.</span></div>}
         </div>
       </section>}</>}
