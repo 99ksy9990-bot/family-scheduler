@@ -733,7 +733,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const childCount = dayChildEvents.length
             const conflictCount = overlappingEventCount([...dayGeneralEvents.filter((event) => !event.holiday), ...dayChildEvents])
             const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
-            const visibleShifts = dayWorkerShifts.filter(({ option }) => option.code !== 'OFF')
+            const visibleShifts = dayWorkerShifts
             const primaryShift = visibleShifts[0]
             const ShiftIcon = primaryShift ? (SHIFT_ICONS[primaryShift.option.icon] || CalendarDays) : null
             const shiftCodes = visibleShifts.map(({ option }) => option.code).join('·')
@@ -741,9 +741,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
               <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span>{conflictCount > 0 && <i className="week-conflict-dot" title="시간 겹침" />}</strong>
               <span className="week-summary" aria-hidden="true">
                 <span className={`week-summary-item work ${primaryShift ? primaryShift.option.color : 'is-empty'}`}>
-                  {ShiftIcon && <ShiftIcon />}
-                  <b>{primaryShift?.option.code || '—'}</b>
-                  {visibleShifts.length > 1 && <small>+{visibleShifts.length - 1}</small>}
+                  {primaryShift && <><ShiftIcon /><b>{primaryShift.option.code}</b>{visibleShifts.length > 1 && <small>+{visibleShifts.length - 1}</small>}</>}
                 </span>
                 <span className={`week-summary-item family ${familyCount ? '' : 'is-empty'}`}><Home /><b>{familyCount}</b></span>
                 <span className={`week-summary-item children ${childCount ? '' : 'is-empty'}`}><GraduationCap /><b>{childCount}</b></span>

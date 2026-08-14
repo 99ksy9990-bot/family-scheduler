@@ -161,12 +161,13 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
       labels: buttons.map((button) => button.textContent),
       oneLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
       topBorder: getComputedStyle(bar).borderTopStyle,
-      chips: buttons.every((button) => getComputedStyle(button).borderStyle === 'solid' && getComputedStyle(button).backgroundColor !== 'rgba(0, 0, 0, 0)' && getComputedStyle(button).cursor === 'pointer'),
+      borderless: buttons.every((button) => getComputedStyle(button).borderStyle === 'none' && getComputedStyle(button).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(button).cursor === 'pointer'),
+      touchHeight: buttons.every((button) => button.getBoundingClientRect().height >= 44),
       oneBackground: new Set(styles.map((style) => style.backgroundColor)).size,
       oneColor: new Set(styles.map((style) => style.color)).size,
     }
   })
-  expect(todaySummary).toEqual({ labels: ['1', '1', '1', '0'], oneLine: true, topBorder: 'solid', chips: true, oneBackground: 1, oneColor: 1 })
+  expect(todaySummary).toEqual({ labels: ['1', '1', '1', '0'], oneLine: true, topBorder: 'solid', borderless: true, touchHeight: true, oneBackground: 1, oneColor: 1 })
   await expect(todayCard.locator('.today-summary-bar svg')).toHaveCount(4)
   await todayCard.locator('.home-event-row').filter({ hasText: '오늘 자녀 일정' }).click()
   await expect(page.getByRole('dialog', { name: '오늘 자녀 일정 작업' }).getByRole('button', { name: '수정' })).toBeVisible()
@@ -338,9 +339,11 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
       childCount: button.querySelector('.week-summary-item.children b').textContent,
       detailCount: button.querySelectorAll('.week-day-detail').length,
       fontSize: getComputedStyle(button.querySelector('.week-summary-item.family b')).fontSize,
+      borderless: summaries.every((summary) => getComputedStyle(summary).borderStyle === 'none'),
+      transparent: summaries.every((summary) => getComputedStyle(summary).backgroundColor === 'rgba(0, 0, 0, 0)'),
     }
   })
-  expect(weekSummaryLayout).toMatchObject({ count: 3, sameLine: true, familyCount: '0', childCount: '0', detailCount: 0, fontSize: '11px' })
+  expect(weekSummaryLayout).toMatchObject({ count: 3, sameLine: true, familyCount: '0', childCount: '0', detailCount: 0, fontSize: '11px', borderless: true, transparent: true })
 
   const sunday = page.locator('.home-week-strip button.sunday')
   const saturday = page.locator('.home-week-strip button.saturday')
@@ -349,6 +352,17 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(220, 38, 38)')
   await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(37, 99, 235)')
   await expect(page.locator('.home-week-strip button.today .week-summary-item.work b')).toHaveText('D')
+  await expect(page.locator('.home-week-strip button.today')).toHaveCSS('box-shadow', 'none')
+  await page.evaluate(() => {
+    const shifts = JSON.parse(localStorage.getItem('family-scheduler-shifts') || '[]')
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([...shifts, { id: 'week-off', date: '2026-08-12', member: 'emma', shift: 'off' }]))
+  })
+  await page.reload()
+  const offSummary = page.getByRole('button', { name: /8월 12일 수요일/ }).locator('.week-summary-item.work')
+  await expect(offSummary.locator('b')).toHaveText('OFF')
+  await expect(offSummary.locator('svg')).toHaveCount(1)
+  const emptyWorkSummary = page.getByRole('button', { name: /8월 9일 일요일/ }).locator('.week-summary-item.work')
+  await expect(emptyWorkSummary).toHaveText('')
   const weekVisibility = await page.locator('.home-week-strip').evaluate((strip) => {
     const rows = [...strip.querySelectorAll('button')]
     return {
