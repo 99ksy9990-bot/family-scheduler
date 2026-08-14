@@ -642,6 +642,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
   const weekStart = addDays(today, -today.getDay())
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(weekStart, index)
+    const dateKey = iso(date)
     const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
     const dayWorkerShifts = workSettings.enabled ? shiftWorkers.flatMap((worker) => {
       const shift = shifts.find((item) => item.date === iso(date) && item.member === worker.id)
@@ -653,6 +654,9 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       generalEvents: dayEvents.filter((event) => !isChildCalendarEvent(event)),
       childEvents: dayEvents.filter((event) => isChildCalendarEvent(event)),
       workerShifts: dayWorkerShifts,
+      taskCount: tasks.filter((task) => hasRecurrence(task)
+        ? recurringTaskOccursOn(task, date) && !task.completedDates?.includes(dateKey)
+        : !task.done && task.dueDate === dateKey).length,
     }
   })
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
@@ -673,6 +677,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       homeCategory: '근무',
       homeCategoryId: 'work',
     }))
+  const primaryTodayShift = todayWorkerShifts.find(({ option }) => option)?.option
+  const TodayShiftIcon = primaryTodayShift ? (SHIFT_ICONS[primaryTodayShift.icon] || CalendarDays) : CalendarDays
   const todayTimelineEvents = [...todayShiftEvents, ...[...generalTodayEvents, ...childEvents].map((event) => ({
     ...event,
     homeCategory: event.holiday ? '공휴일' : isChildCalendarEvent(event) ? '자녀' : '가족',
@@ -713,8 +719,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         </div>
         {todayTimelineEvents.length > 6 && <button className="more-events-button" onClick={openCalendar}>+{todayTimelineEvents.length - 6}개 일정 더보기</button>}
         <nav className="today-summary-bar" aria-label="오늘 일정 요약">
+          <button className={`work ${primaryTodayShift?.color || 'is-empty'}`} type="button" aria-label={primaryTodayShift ? `근무 ${primaryTodayShift.code}` : '근무 미입력'} onClick={() => openCalendarDate(today, 'work')}><TodayShiftIcon aria-hidden="true" /><b>{primaryTodayShift?.code || 0}</b>{todayShiftEvents.length > 1 && <small>+{todayShiftEvents.length - 1}</small>}</button>
           <button className="family" type="button" aria-label={`가족 일정 ${generalTodayEvents.length}개`} onClick={() => openCalendarDate(today, 'family')}><Home aria-hidden="true" /><b>{generalTodayEvents.length}</b></button>
-          <button className="work" type="button" aria-label={`근무 ${todayShiftEvents.length}개`} onClick={() => openCalendarDate(today, 'work')}><CalendarDays aria-hidden="true" /><b>{todayShiftEvents.length}</b></button>
           <button className="children" type="button" aria-label={`자녀 일정 ${childEvents.length}개`} onClick={() => openChildCalendarDate(today)}><GraduationCap aria-hidden="true" /><b>{childEvents.length}</b></button>
           <button className="tasks" type="button" aria-label={`마감 할 일 ${dueTasks.length}개`} onClick={openTasks}><CheckSquare aria-hidden="true" /><b>{dueTasks.length}</b></button>
         </nav>
@@ -725,7 +731,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <div><h2 id="week-strip-title">이번 주 일정</h2></div>
         </div>
         <div className="home-week-strip">
-          {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents, workerShifts: dayWorkerShifts }) => {
+          {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents, workerShifts: dayWorkerShifts, taskCount }) => {
             const isToday = iso(date) === iso(today)
             const openDay = () => openCalendarDate(date, 'all')
             const dayHolidays = dayGeneralEvents.filter((event) => event.holiday)
@@ -737,14 +743,15 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const primaryShift = visibleShifts[0]
             const ShiftIcon = primaryShift ? (SHIFT_ICONS[primaryShift.option.icon] || CalendarDays) : null
             const shiftCodes = visibleShifts.map(({ option }) => option.code).join('·')
-            return <button key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ', 근무 없음'}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
+            return <button key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ', 근무 없음'}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개, 할 일 ${taskCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
               <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span>{conflictCount > 0 && <i className="week-conflict-dot" title="시간 겹침" />}</strong>
               <span className="week-summary" aria-hidden="true">
                 <span className={`week-summary-item work ${primaryShift ? primaryShift.option.color : 'is-empty'}`}>
-                  {primaryShift && <><ShiftIcon /><b>{primaryShift.option.code}</b>{visibleShifts.length > 1 && <small>+{visibleShifts.length - 1}</small>}</>}
+                  {primaryShift && <><ShiftIcon />{primaryShift.option.code === 'OFF' && <b>OFF</b>}{visibleShifts.length > 1 && <small>+{visibleShifts.length - 1}</small>}</>}
                 </span>
                 <span className={`week-summary-item family ${familyCount ? '' : 'is-empty'}`}><Home /><b>{familyCount}</b></span>
                 <span className={`week-summary-item children ${childCount ? '' : 'is-empty'}`}><GraduationCap /><b>{childCount}</b></span>
+                <span className={`week-summary-item tasks ${taskCount ? '' : 'is-empty'}`}><CheckSquare /><b>{taskCount}</b></span>
               </span>
             </button>
           })}

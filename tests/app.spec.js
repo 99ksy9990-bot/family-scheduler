@@ -124,7 +124,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await page.reload()
 
   const todayCard = page.locator('.today-card')
-  await expect(todayCard.getByText('D', { exact: true })).toBeVisible()
+  await expect(todayCard.locator('.home-event-row').first().getByText('D', { exact: true })).toBeVisible()
   await expect(todayCard.getByText('오늘 자녀 일정', { exact: true })).toBeVisible()
   await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('오전 6:30 – 오후 3:30')
   await expect(todayCard.locator('.home-event-row').first()).toHaveClass(/timeline-active/)
@@ -159,6 +159,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     const styles = buttons.map((button) => getComputedStyle(button))
     return {
       labels: buttons.map((button) => button.textContent),
+      classes: buttons.map((button) => button.className),
       oneLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
       topBorder: getComputedStyle(bar).borderTopStyle,
       borderless: buttons.every((button) => getComputedStyle(button).borderStyle === 'none' && getComputedStyle(button).backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(button).cursor === 'pointer'),
@@ -167,8 +168,9 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
       oneColor: new Set(styles.map((style) => style.color)).size,
     }
   })
-  expect(todaySummary).toEqual({ labels: ['1', '1', '1', '0'], oneLine: true, topBorder: 'solid', borderless: true, touchHeight: true, oneBackground: 1, oneColor: 1 })
+  expect(todaySummary).toEqual({ labels: ['D', '1', '1', '0'], classes: ['work sage', 'family', 'children', 'tasks'], oneLine: true, topBorder: 'solid', borderless: true, touchHeight: true, oneBackground: 1, oneColor: 2 })
   await expect(todayCard.locator('.today-summary-bar svg')).toHaveCount(4)
+  await expect(todayCard.locator('.today-summary-bar .work svg')).toHaveCount(1)
   await todayCard.locator('.home-event-row').filter({ hasText: '오늘 자녀 일정' }).click()
   await expect(page.getByRole('dialog', { name: '오늘 자녀 일정 작업' }).getByRole('button', { name: '수정' })).toBeVisible()
   await expect(page.getByRole('dialog', { name: '오늘 자녀 일정 작업' }).getByRole('button', { name: '삭제' })).toBeVisible()
@@ -205,6 +207,8 @@ test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중
   await expect(past.locator('.schedule-row-status')).toHaveCount(0)
   await expect(active).toHaveClass(/timeline-active/)
   await expect(active.locator('.schedule-row-status')).toHaveText('진행 중')
+  await expect(active).toHaveCSS('background-color', 'rgb(243, 250, 252)')
+  await expect(active).toHaveCSS('border-color', 'rgb(145, 191, 206)')
   await expect(upcoming).toHaveClass(/timeline-upcoming/)
   await expect(upcoming.locator('.schedule-row-status')).toHaveCount(0)
   expect(Number(await past.evaluate((row) => getComputedStyle(row).opacity))).toBeLessThan(1)
@@ -315,6 +319,7 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   test.skip(!testInfo.project.name.includes('mobile'), '모바일 프로젝트 전용 확인')
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'week-shift', date: '2026-08-11', member: 'emma', shift: 'day' }]))
+    localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'week-task', title: '주간 할 일', dueDate: '2026-08-11', done: false, category: '집안일', assignee: 'family' }]))
   })
   await page.reload()
   const layout = await page.evaluate(() => {
@@ -337,13 +342,14 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
       sameLine: summaries.every((summary) => Math.abs(summary.getBoundingClientRect().top - summaries[0].getBoundingClientRect().top) < 1),
       familyCount: button.querySelector('.week-summary-item.family b').textContent,
       childCount: button.querySelector('.week-summary-item.children b').textContent,
+      taskCount: button.querySelector('.week-summary-item.tasks b').textContent,
       detailCount: button.querySelectorAll('.week-day-detail').length,
       fontSize: getComputedStyle(button.querySelector('.week-summary-item.family b')).fontSize,
       borderless: summaries.every((summary) => getComputedStyle(summary).borderStyle === 'none'),
       transparent: summaries.every((summary) => getComputedStyle(summary).backgroundColor === 'rgba(0, 0, 0, 0)'),
     }
   })
-  expect(weekSummaryLayout).toMatchObject({ count: 3, sameLine: true, familyCount: '0', childCount: '0', detailCount: 0, fontSize: '11px', borderless: true, transparent: true })
+  expect(weekSummaryLayout).toMatchObject({ count: 4, sameLine: true, familyCount: '0', childCount: '0', taskCount: '0', detailCount: 0, fontSize: '11px', borderless: true, transparent: true })
 
   const sunday = page.locator('.home-week-strip button.sunday')
   const saturday = page.locator('.home-week-strip button.saturday')
@@ -351,7 +357,10 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   await expect(saturday.locator('.week-date-label')).toHaveText('15(토)')
   await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(220, 38, 38)')
   await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(37, 99, 235)')
-  await expect(page.locator('.home-week-strip button.today .week-summary-item.work b')).toHaveText('D')
+  const dayWorkSummary = page.getByRole('button', { name: /8월 11일 화요일/ }).locator('.week-summary-item.work')
+  await expect(dayWorkSummary.locator('svg')).toHaveCount(1)
+  await expect(dayWorkSummary.locator('b')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /8월 11일 화요일/ }).locator('.week-summary-item.tasks b')).toHaveText('1')
   await expect(page.locator('.home-week-strip button.today')).toHaveCSS('box-shadow', 'none')
   await page.evaluate(() => {
     const shifts = JSON.parse(localStorage.getItem('family-scheduler-shifts') || '[]')
@@ -363,6 +372,17 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   await expect(offSummary.locator('svg')).toHaveCount(1)
   const emptyWorkSummary = page.getByRole('button', { name: /8월 9일 일요일/ }).locator('.week-summary-item.work')
   await expect(emptyWorkSummary).toHaveText('')
+  const alignedSummaryIcons = await page.locator('.home-week-strip').evaluate((strip) => {
+    const rows = [...strip.querySelectorAll('button')]
+    const lefts = (selector) => rows.map((row) => row.querySelector(selector)?.getBoundingClientRect().left).filter(Number.isFinite).map(Math.round)
+    return {
+      work: new Set(lefts('.week-summary-item.work svg')).size,
+      family: new Set(lefts('.week-summary-item.family svg')).size,
+      children: new Set(lefts('.week-summary-item.children svg')).size,
+      tasks: new Set(lefts('.week-summary-item.tasks svg')).size,
+    }
+  })
+  expect(alignedSummaryIcons).toEqual({ work: 1, family: 1, children: 1, tasks: 1 })
   const weekVisibility = await page.locator('.home-week-strip').evaluate((strip) => {
     const rows = [...strip.querySelectorAll('button')]
     return {

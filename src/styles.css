@@ -361,6 +361,11 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-summary-bar button { min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 8px; color: var(--ink); border: 0; border-radius: 0; background: transparent; box-shadow: none; font-size: 12px; font-weight: 750; white-space: nowrap; transition: color .16s ease, opacity .16s ease; }
 .today-summary-bar button svg { width: 17px; height: 17px; flex: 0 0 17px; stroke-width: 2; }
 .today-summary-bar button b { font-size: 1em; }
+.today-summary-bar button small { font-size: 10px; font-weight: 600; }
+.today-summary-bar .work.sage { color: #536d22; }
+.today-summary-bar .work.blue { color: #155f79; }
+.today-summary-bar .work.navy { color: #343b5b; }
+.today-summary-bar .work.lavender { color: #60657a; }
 .today-summary-bar button:hover, .today-summary-bar button:focus-visible { color: var(--primary); background: transparent; }
 .today-summary-bar button:active { opacity: .62; }
 .week-strip-card { margin-top: 20px; padding: 24px 26px; }
@@ -373,8 +378,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .home-week-strip .week-date-label span { font-size: 11px; font-weight: 600; }
 .home-week-strip .week-date-label.sunday { color: var(--holiday); }
 .home-week-strip .week-date-label.saturday { color: #2563eb; }
-.week-summary { position: relative; width: min(100%, 250px); display: grid; grid-template-columns: minmax(58px, 1.15fr) repeat(2, minmax(48px, .85fr)); align-items: center; justify-self: end; gap: 7px; }
-.week-summary-item { min-width: 0; min-height: 30px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 3px 5px; color: var(--ink); border: 0; border-radius: 0; background: transparent; font-size: 11px; }
+.week-summary { position: relative; width: min(100%, 280px); display: grid; grid-template-columns: minmax(55px, 1.2fr) repeat(3, minmax(42px, .8fr)); align-items: center; justify-self: end; gap: 6px; }
+.week-summary-item { width: 100%; min-width: 0; min-height: 30px; display: grid; grid-auto-flow: column; grid-template-columns: 18px auto; align-items: center; justify-content: start; gap: 5px; padding: 3px 5px; color: var(--ink); border: 0; border-radius: 0; background: transparent; font-size: 11px; }
 .week-summary-item svg { width: 17px; height: 17px; flex: 0 0 17px; stroke-width: 2; }
 .week-summary-item b { font-size: 11px; font-weight: 700; }
 .week-summary-item small { font-size: 11px; }
@@ -384,6 +389,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .week-summary-item.work.lavender { color: #60657a; }
 .week-summary-item.family svg { color: var(--primary); }
 .week-summary-item.children svg { color: #8a6d22; }
+.week-summary-item.tasks svg { color: #58666d; }
 .week-summary-item.is-empty { color: #9aa4a9; background: transparent; }
 .week-conflict-dot { width: 7px; height: 7px; flex: 0 0 7px; margin-left: 3px; border-radius: 50%; background: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, .12); }
 
@@ -1468,7 +1474,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .home-week-strip button { min-height: 54px; grid-template-columns: 67px minmax(0, 1fr); gap: 7px; padding: 6px 2px; }
   .home-week-strip .week-date-label { font-size: 17px; }
   .home-week-strip .week-date-label span { font-size: 11px; }
-  .week-summary { width: 100%; grid-template-columns: minmax(54px, 1.15fr) repeat(2, minmax(45px, .85fr)); gap: 4px; }
+  .week-summary { width: 100%; grid-template-columns: minmax(52px, 1.2fr) repeat(3, minmax(39px, .8fr)); gap: 3px; }
   .week-summary-item { min-height: 30px; gap: 4px; padding-inline: 4px; font-size: 11px; }
   .week-summary-item svg { width: 16px; height: 16px; flex-basis: 16px; }
   .week-summary-item b { font-size: 11px; }
@@ -1606,6 +1612,23 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   border: 1px solid #e6ebec;
   border-radius: 12px;
   background: #fff;
+}
+
+/* 공용 행 규칙보다 오늘 타임라인의 시간 상태를 우선한다. */
+.today-card .schedule-row.event-card.timeline-past {
+  opacity: .5;
+  background: #f7f8f8;
+}
+.today-card .schedule-row.event-card.timeline-active {
+  opacity: 1;
+  border-color: #91bfce;
+  background: #f3fafc;
+  box-shadow: inset 0 0 0 1px rgba(36, 111, 137, .08);
+}
+.today-card .schedule-row.event-card.timeline-upcoming { opacity: 1; }
+.today-card .schedule-row.event-card.conflict {
+  border-color: #dc2626;
+  box-shadow: inset 0 0 0 1px #dc2626;
 }
 
 @media (min-width: 661px) {
