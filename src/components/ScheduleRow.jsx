@@ -3,6 +3,7 @@ export default function ScheduleRow({
   memberColor,
   memberTone,
   leading,
+  timelineTime,
   title,
   primaryMeta,
   time,
@@ -36,6 +37,7 @@ export default function ScheduleRow({
       style={{ '--schedule-member': memberColor, '--schedule-tone': memberTone }}
       {...interactiveProps}
     >
+      {timelineTime !== undefined && <time className="schedule-row-timeline-time">{timelineTime}</time>}
       {leading && <span className="schedule-row-leading">{leading}</span>}
       <span className="schedule-row-copy" title={[title, primaryMeta, time, secondaryMeta ?? meta].filter(Boolean).join(' · ')}>
         <span className="schedule-row-primary">

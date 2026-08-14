@@ -41,6 +41,11 @@
 - 모바일 근무 달력은 근무 아이콘을 숨기지 않으며, 긴 사용자 정의 근무명은 카드 안에서 말줄임되어 문서 폭을 늘리지 않는다.
 - 전체 달력의 가족·자녀 개수가 두 자리여도 자동으로 다음 줄을 사용해 셀 안에서 잘리지 않는다.
 - 가족 할 일은 기본적으로 시간이 없으며 필요할 때 시작 또는 시작·종료 시간을 선택해 저장할 수 있다.
+- 홈 오늘 일정의 시간은 아바타보다 왼쪽의 고정 열에 표시하며, 종일 일정은 빈 시간 열로 정렬만 유지한다.
+- 홈 오늘 일정과 이번 주 일정의 근무 아이콘은 D 해, E 일몰, N 달, OFF 달력으로 정확히 구분한다.
+- 이번 주 일정의 근무 요약은 유형별 색상 배경을 제거하고 아이콘과 코드 색상만 유지한다.
+- 근무 요약 알약의 아이콘 좌우 여백은 같은 값으로 유지한다.
+- 모바일 캘린더는 전체·가족·근무·자녀 보기 모두 같은 상단 구조를 사용하며, 월 제목은 네 탭 전체 폭의 중심에 맞춘다.
 
 ## Click-to-manage behavior
 
@@ -55,13 +60,12 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium: `29 passed`, `4 conditionally skipped`
-- Mobile Chromium: `32 passed`, `1 conditionally skipped`
-- Combined end-to-end result: `61 passed`, `5 conditionally skipped`
-- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, left/right padding `9px / 7px`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal
+- Desktop Chromium + Mobile Chromium: `64 passed`, `6 conditionally skipped`
+- Combined end-to-end result: `64 passed`, `6 conditionally skipped`
+- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, left/right padding `9px / 7px`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 오늘 일정 시간 열이 아바타보다 왼쪽, 네 캘린더 모드 월 제목 중심선 동일
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
-- Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 최신 근무 입력 선택, 근무 유형 아이콘 정렬, 할 일 시작·종료 시간 저장과 목록 표시
+- Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 최신 근무 입력 선택, D/E/N/OFF별 해·일몰·달·달력 아이콘, 근무 알약 좌우 동일 여백, 할 일 시작·종료 시간 저장과 목록 표시
 - In-app Browser: local mobile viewport `446 × 721`; 근무 월 달력 아이콘 표시, 근무 칩 콘텐츠 폭 적용, 근무 선택 카드 내부 수용, 페이지·달력 가로 넘침 없음
 - Data migration/storage keys: unchanged
 

@@ -607,6 +607,7 @@ function EventCard({ event, compact = false, calendarSummary = false, showRecurr
     className={`event-card ${event.homeCategory ? 'home-event-row' : ''} ${event.timelineState ? `timeline-${event.timelineState}` : ''} ${calendarSummary ? 'calendar-summary' : ''} ${compact ? 'compact' : ''} ${hasInteraction ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`}
     memberColor={member.color}
     memberTone={member.tone}
+    timelineTime={event.homeCategory ? (event.time && event.time !== '종일' ? event.time : '') : undefined}
     leading={<AvatarGroup memberIds={eventMembers} />}
     title={event.title}
     primaryMeta={detail}
@@ -708,7 +709,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       homeCategoryId: 'work',
     }))
   const primaryTodayShift = todayWorkerShifts.find(({ option }) => option)?.option
-  const TodayShiftIcon = primaryTodayShift ? (SHIFT_ICONS[primaryTodayShift.icon] || CalendarDays) : CalendarDays
+  const TodayShiftIcon = primaryTodayShift?.icon || CalendarDays
   const todayTimelineEvents = [...todayShiftEvents, ...[...generalTodayEvents, ...childEvents].map((event) => ({
     ...event,
     homeCategory: event.holiday ? '공휴일' : isChildCalendarEvent(event) ? '자녀' : '가족',
@@ -784,7 +785,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
             const visibleShifts = dayWorkerShifts
             const primaryShift = visibleShifts[0]
-            const ShiftIcon = primaryShift ? (SHIFT_ICONS[primaryShift.option.icon] || CalendarDays) : null
+            const ShiftIcon = primaryShift?.option.icon || null
             const shiftCodes = visibleShifts.map(({ option }) => option.code).join('·')
             return <button key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ', 근무 없음'}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개, 할 일 ${taskCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
               <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span>{conflictCount > 0 && <i className="week-conflict-dot" title="시간 겹침" />}</strong>
