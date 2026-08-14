@@ -8,6 +8,7 @@ export default function ScheduleRow({
   time,
   meta,
   secondaryMeta,
+  status,
   category,
   categoryClassName = '',
   trailing,
@@ -41,9 +42,10 @@ export default function ScheduleRow({
           <strong className="schedule-row-title home-event-title">{title}</strong>
           {primaryMeta && <><i aria-hidden="true">·</i><span className="schedule-row-location">{primaryMeta}</span></>}
         </span>
-        {(time || secondaryMeta || meta) && <span className="schedule-row-secondary">
+        {(time || secondaryMeta || meta || status) && <span className="schedule-row-secondary">
           {time && <span className="schedule-row-time event-time">{time}</span>}
           {(secondaryMeta ?? meta) && <>{time && <i aria-hidden="true">·</i>}<span className="schedule-row-repeat">{secondaryMeta ?? meta}</span></>}
+          {status && <><i aria-hidden="true">·</i><span className="schedule-row-status">{status}</span></>}
         </span>}
       </span>
       {category && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
