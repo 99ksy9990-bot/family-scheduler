@@ -188,22 +188,31 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   const timelineSpacing = await todayCard.locator('.timeline').evaluate((timeline) => {
     const row = timeline.querySelector('.home-timeline-row')
     const time = row.querySelector('.schedule-row-timeline-time')
+    const timeBox = time.getBoundingClientRect()
     const point = row.querySelector('.schedule-row-timeline-point').getBoundingClientRect()
     const avatar = row.querySelector('.schedule-row-leading').getBoundingClientRect()
     const copy = row.querySelector('.schedule-row-copy').getBoundingClientRect()
+    const heading = timeline.closest('.today-card').querySelector('.section-heading h2').getBoundingClientRect()
     const timeTextRange = document.createRange()
     timeTextRange.selectNodeContents(time)
     const timeText = timeTextRange.getBoundingClientRect()
     return {
       pointCenter: Math.round(point.left + point.width / 2 - timeline.getBoundingClientRect().left),
       copyWidth: Math.round(copy.width),
-      timeToPointGap: Math.round(point.left - timeText.right),
+      timeStartDelta: Math.round(Math.abs(timeText.left - heading.left)),
+      timeToPointGap: Math.round(point.left - timeBox.right),
       pointToAvatarGap: Math.round(avatar.left - point.right),
+      avatarToCopyGap: Math.round(copy.left - avatar.right),
+      timeContentFits: time.scrollWidth <= time.clientWidth,
     }
   })
-  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(72)
+  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(68)
   expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(153)
-  expect(Math.abs(timelineSpacing.timeToPointGap - timelineSpacing.pointToAvatarGap)).toBeLessThanOrEqual(1)
+  expect(timelineSpacing.timeStartDelta).toBeLessThanOrEqual(1)
+  expect(timelineSpacing.timeToPointGap).toBe(8)
+  expect(timelineSpacing.pointToAvatarGap).toBe(8)
+  expect(timelineSpacing.avatarToCopyGap).toBe(10)
+  expect(timelineSpacing.timeContentFits).toBe(true)
   await expect(todayCard.locator('.home-event-row').filter({ hasText: '오늘 자녀 일정' }).locator('.schedule-row-location')).toHaveText('영어 학원')
   await expect(todayCard.getByText('오늘 한눈에 보기', { exact: true })).toHaveCount(0)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
@@ -226,10 +235,13 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await expect(todayCard.locator('.today-summary-bar .work svg.lucide-sun')).toHaveCount(1)
   const todayWorkSpacing = await todayCard.locator('.today-summary-bar .work').evaluate((button) => {
     const style = getComputedStyle(button)
-    return { left: parseFloat(style.paddingLeft), right: parseFloat(style.paddingRight) }
+    return { left: parseFloat(style.paddingLeft), right: parseFloat(style.paddingRight), radius: parseFloat(style.borderRadius) }
   })
   expect(todayWorkSpacing.left).toBe(todayWorkSpacing.right)
   expect(todayWorkSpacing.left).toBeGreaterThanOrEqual(8)
+  const weeklyWorkRadius = await page.locator('.home-week-strip .week-work-badge').first().evaluate((badge) => parseFloat(getComputedStyle(badge).borderRadius))
+  expect(todayWorkSpacing.radius).toBe(weeklyWorkRadius)
+  expect(todayWorkSpacing.radius).toBe(12)
   await todayCard.locator('.home-event-row').filter({ hasText: '오늘 자녀 일정' }).click()
   await expect(page.getByRole('dialog', { name: '오늘 자녀 일정 작업' }).getByRole('button', { name: '수정' })).toBeVisible()
   await expect(page.getByRole('dialog', { name: '오늘 자녀 일정 작업' }).getByRole('button', { name: '삭제' })).toBeVisible()

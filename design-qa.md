@@ -5,6 +5,7 @@
 - Mobile row reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/7EB7E657-F5D5-4DDE-BF97-1A239A2066C9/1-사진-1.jpg`
 - Work-calendar reference: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_nr5JqS/스크린샷 2026-08-14 오전 11.34.12.png`
 - Home timeline spacing reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/1D3897DA-EF8B-460D-BF1A-56B0442E0932/1-사진-1.jpg`
+- Latest mobile implementation evidence: `/tmp/family-scheduler-timeline-spacing-402-viewport.png`
 - Side-by-side evidence: `/tmp/family-scheduler-qa-comparison.png`
 - Target viewports: desktop Chromium, mobile Chromium `402 × 874`
 - Scope: 홈 오늘 일정, 통합 캘린더 상세, 가족 할 일, 일정 관리의 기념일·자녀 정보·학기/방학
@@ -53,9 +54,9 @@
 - 모바일 근무 달력의 OFF 칩은 텍스트와 아이콘을 모두 유지하면서 셀 내부에 완전히 수용된다.
 - 마감일을 생략한 할 일은 생성일 당일의 `오늘의 일정`과 이번 주 요약에 표시된다.
 - 현재 시각 라벨은 `지금`을 중복 표기하지 않고 시간만 표시하며, 타임라인 축을 왼쪽으로 옮겨 일정 정보 폭을 넓혔다.
-- 오늘 타임라인은 실제 시간 글자 끝과 점 사이, 점과 아바타 사이를 모두 `4px`로 맞추고 축을 `71px` 위치로 이동해 일정 본문 폭을 추가로 확보했다.
+- 오늘 타임라인은 시간 열을 제목과 같은 왼쪽 기준선에 맞춘다. 시간 영역–점과 점–아바타 간격은 기존의 두 배인 `8px`, 아바타–일정 본문은 가족 할 일과 같은 `10px`로 맞추고 축을 `67px` 위치로 옮겼다.
 - OFF처럼 시간이 없는 근무는 `시간 미정` 목록에서 숨기고 오늘 요약에서만 표시한다.
-- 이번 주 근무 배경은 콘텐츠 너비를 유지하면서 다른 배지와 같은 `12px` 둥근 모서리를 사용한다.
+- 오늘 요약과 이번 주 요약의 근무 배경은 공통 토큰으로 `12px` 둥근 모서리를 사용한다.
 
 ## Click-to-manage behavior
 
@@ -72,7 +73,7 @@
 - Production build: passed
 - Desktop Chromium + Mobile Chromium: `66 passed`, `6 conditionally skipped`
 - Combined end-to-end result: `66 passed`, `6 conditionally skipped`
-- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, 일반 행 left/right padding `9px / 7px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 오늘 일정 시간 글자–점과 점–아바타 간격 동일, 타임라인 점 중심 `72px` 이내, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용
+- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, 일반 행 left/right padding `9px / 7px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 시간 왼쪽선–제목 왼쪽선 오차 `1px` 이내, 시간–점 `8px`, 점–아바타 `8px`, 아바타–일정 본문 `10px`, 타임라인 점 중심 `68px` 이내, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
 - Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 생성일 기준 시간 없는 할 일 노출, OFF 근무 본문 중복 제거, 최신 근무 입력 선택, D/E/N/OFF별 해·일몰·달·달력 아이콘, 근무 배경 콘텐츠 폭 적용, 할 일 시작·종료 시간 저장과 목록 표시
