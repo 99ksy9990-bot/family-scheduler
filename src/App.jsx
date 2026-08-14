@@ -606,7 +606,7 @@ function EventCard({ event, compact = false, calendarSummary = false, showRecurr
 
   return <>
   <ScheduleRow
-    className={`event-card ${event.homeCategory ? 'home-event-row' : ''} ${event.timelineState ? `timeline-${event.timelineState}` : ''} ${calendarSummary ? 'calendar-summary' : ''} ${compact ? 'compact' : ''} ${hasInteraction ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`}
+    className={`event-card ${event.homeCategory ? 'home-event-row' : ''} ${event.homeTimeline ? 'home-timeline-row' : event.homeCategory ? 'home-untimed-row' : ''} ${event.timelineState ? `timeline-${event.timelineState}` : ''} ${calendarSummary ? 'calendar-summary' : ''} ${compact ? 'compact' : ''} ${hasInteraction ? 'has-actions' : ''} ${event.conflict ? 'conflict' : ''}`}
     memberColor={member.color}
     memberTone={member.tone}
     timelineTime={event.homeTimeline ? (event.time && event.time !== '종일' ? event.time : '') : undefined}

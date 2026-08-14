@@ -1,3 +1,5 @@
+import { CircleDot } from 'lucide-react'
+
 export default function ScheduleRow({
   className = '',
   memberColor,
@@ -39,6 +41,7 @@ export default function ScheduleRow({
       {...interactiveProps}
     >
       {timelineTime !== undefined && <time className="schedule-row-timeline-time">{timelineTime}</time>}
+      {timelineTime !== undefined && <span className="schedule-row-timeline-point" aria-hidden="true"><CircleDot /></span>}
       {leading && <span className="schedule-row-leading">{leading}</span>}
       <span className="schedule-row-copy" title={[title, primaryMeta, time, secondaryMeta ?? meta].filter(Boolean).join(' · ')}>
         <span className="schedule-row-primary">

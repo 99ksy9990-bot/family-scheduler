@@ -13,7 +13,7 @@
 - 근무·가족·자녀 상세 행은 공통 `ScheduleRow`를 사용한다.
 - 첫 줄은 `아바타 · 일정명 · 장소`, 둘째 줄은 `시간 · 반복 규칙` 순서다.
 - 둘째 줄은 첫 줄보다 정확히 `2px` 작고 `font-weight: 400`, `var(--muted)` 색상이다.
-- 일정 행의 제목/메타 간격은 `6px`, 좌우 내부 여백은 `9px / 7px`, 높이는 `68px`로 통일했다.
+- 일정 행의 제목/메타 간격은 `6px`, 일반 행 좌우 내부 여백은 `9px / 7px`, 높이는 `68px`로 통일했다. 홈 시간 타임라인은 카드 모양을 없애기 위해 좌우 여백을 `0`으로 둔다.
 - AI 템플릿처럼 보이던 구성원 색상 세로 강조선은 홈·캘린더·할 일·일정 관리에서 모두 제거했다.
 - 가족 일정도 시간, 장소, 반복 규칙을 빠뜨리지 않고 표시한다.
 - 가족 할 일도 제목/메타/기한·반복을 같은 2단 구조로 표시한다.
@@ -43,9 +43,12 @@
 - 가족 할 일은 기본적으로 시간이 없으며 필요할 때 시작 또는 시작·종료 시간을 선택해 저장할 수 있다.
 - 홈 오늘 일정의 시간은 아바타보다 왼쪽의 고정 열에 표시하며, 종일 일정은 빈 시간 열로 정렬만 유지한다.
 - 홈 오늘 일정과 이번 주 일정의 근무 아이콘은 D 해, E 일몰, N 달, OFF 달력으로 정확히 구분한다.
-- 이번 주 일정의 근무 요약은 유형별 색상 배경을 제거하고 아이콘과 코드 색상만 유지한다.
+- 이번 주 일정의 근무 요약은 근무 달력과 같은 D/E/N/OFF 유형색 배경과 아이콘을 사용한다.
 - 근무 요약 알약의 아이콘 좌우 여백은 같은 값으로 유지한다.
 - 모바일 캘린더는 전체·가족·근무·자녀 보기 모두 같은 상단 구조를 사용하며, 월 제목은 네 탭 전체 폭의 중심에 맞춘다.
+- 오늘 일정의 시간 지정 항목은 카드 테두리와 배경을 제거하고 `시간 → 타임라인 점 → 아바타 → 일정 정보` 순서의 열린 타임라인으로 표시한다.
+- 현재 시각선과 각 일정의 타임라인 점은 같은 중심축에 맞고, 종료된 일정은 배경 카드 없이 전체 행만 흐려진다.
+- 모바일 근무 달력의 OFF 칩은 텍스트와 아이콘을 모두 유지하면서 셀 내부에 완전히 수용된다.
 
 ## Click-to-manage behavior
 
@@ -62,7 +65,7 @@
 - Production build: passed
 - Desktop Chromium + Mobile Chromium: `64 passed`, `6 conditionally skipped`
 - Combined end-to-end result: `64 passed`, `6 conditionally skipped`
-- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, left/right padding `9px / 7px`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 오늘 일정 시간 열이 아바타보다 왼쪽, 네 캘린더 모드 월 제목 중심선 동일
+- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, 일반 행 left/right padding `9px / 7px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 오늘 일정 시간 열이 아바타보다 왼쪽, 타임라인 점과 현재 시각선 중심 일치, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
 - Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 최신 근무 입력 선택, D/E/N/OFF별 해·일몰·달·달력 아이콘, 근무 알약 좌우 동일 여백, 할 일 시작·종료 시간 저장과 목록 표시

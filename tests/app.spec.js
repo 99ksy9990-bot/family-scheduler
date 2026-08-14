@@ -51,7 +51,7 @@ test('모든 구성원 아바타를 28px 둥근 정사각형으로 표시한다'
   expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '8px')).toBe(true)
 })
 
-test('홈·캘린더·할 일 행 높이와 내부 여백을 68px 규격으로 통일한다', async ({ page }) => {
+test('홈 타임라인은 열린 여백을 쓰고 캘린더·할 일 행은 공통 68px 규격을 유지한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'row-event', title: '행 높이 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', member: 'emma', members: ['emma'], calendarScope: 'family' }]))
     localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'row-task', title: '행 높이 할 일', category: '집안일', dueDate: '2026-08-11', assignee: 'emma', assignees: ['emma'], done: false }]))
@@ -70,7 +70,7 @@ test('홈·캘린더·할 일 행 높이와 내부 여백을 68px 규격으로 �
       accentContent: beforeStyle.content,
     }
   })
-  expect(homeRowLayout).toEqual({ paddingLeft: '9px', paddingRight: '7px', copyGap: '6px', accentContent: 'none' })
+  expect(homeRowLayout).toEqual({ paddingLeft: '0px', paddingRight: '0px', copyGap: '6px', accentContent: 'none' })
 
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
@@ -164,7 +164,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     timelineTimeLeft: card.querySelector('.schedule-row-timeline-time').getBoundingClientRect().left,
     avatarLeft: card.querySelector('.schedule-row-leading').getBoundingClientRect().left,
   }))
-  expect(homeEventOrder.children).toEqual(['schedule-row-timeline-time', 'schedule-row-leading', 'schedule-row-copy', 'schedule-row-category home-category-chip work'])
+  expect(homeEventOrder.children).toEqual(['schedule-row-timeline-time', 'schedule-row-timeline-point', 'schedule-row-leading', 'schedule-row-copy', 'schedule-row-category home-category-chip work'])
   expect(homeEventOrder.mainChildren).toEqual(['schedule-row-primary', 'schedule-row-secondary'])
   expect(homeEventOrder.titleSize - homeEventOrder.timeSize).toBe(2)
   expect(homeEventOrder.timeWeight).toBe('400')
@@ -255,8 +255,25 @@ test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중
   expect(statusStyle.beforeContent).toBe('none')
   await expect(active.locator('.schedule-row-conflict-dot')).toHaveCount(1)
   await expect(active).not.toHaveCSS('box-shadow', /rgb\(220, 38, 38\)/)
-  await expect(active).toHaveCSS('background-color', 'rgb(243, 250, 252)')
-  await expect(active).toHaveCSS('border-color', 'rgb(145, 191, 206)')
+  await expect(active).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(active).toHaveCSS('border-top-style', 'none')
+  await expect(active).toHaveCSS('border-radius', '0px')
+  await expect(active.locator('.schedule-row-timeline-point svg')).toHaveCount(1)
+  const timelineAlignment = await active.evaluate((row) => {
+    const time = row.querySelector('.schedule-row-timeline-time').getBoundingClientRect()
+    const point = row.querySelector('.schedule-row-timeline-point').getBoundingClientRect()
+    const avatar = row.querySelector('.schedule-row-leading').getBoundingClientRect()
+    const copy = row.querySelector('.schedule-row-copy').getBoundingClientRect()
+    const timeline = row.closest('.timeline')
+    const timelineBox = timeline.getBoundingClientRect()
+    const connectorLeft = parseFloat(getComputedStyle(timeline, '::before').left) + timelineBox.left
+    return {
+      ordered: time.right <= point.left && point.right <= avatar.left && avatar.right <= copy.left,
+      connectorDelta: Math.abs(connectorLeft - (point.left + point.width / 2)),
+    }
+  })
+  expect(timelineAlignment.ordered).toBe(true)
+  expect(timelineAlignment.connectorDelta).toBeLessThanOrEqual(1)
   await expect(upcoming).toHaveClass(/timeline-upcoming/)
   await expect(upcoming.locator('.schedule-row-status')).toHaveCount(0)
   await expect(sameTimeOtherMember).toHaveCount(1)
@@ -273,6 +290,7 @@ test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중
   })
   expect(neutralTimelineTime.actual).toBe(neutralTimelineTime.expected)
   expect(Number(await past.evaluate((row) => getComputedStyle(row).opacity))).toBeLessThan(1)
+  await expect(past).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
 })
 
 test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다', async ({ page }) => {
@@ -298,7 +316,7 @@ test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다'
     radius: getComputedStyle(item).borderRadius,
     fitsContent: item.getBoundingClientRect().width < item.parentElement.getBoundingClientRect().width,
   })))
-  expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && badge.radius === '0px' && badge.fitsContent)).toBe(true)
+  expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && parseFloat(badge.radius) >= 10 && badge.fitsContent)).toBe(true)
 })
 
 test('주요 화면을 이동한다', async ({ page }) => {
@@ -942,6 +960,7 @@ test('구형 근무 설정도 근무별 아이콘을 복원하고 모바일에�
     }))
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([
       { id: 'legacy-evening', date: '2026-08-11', member: 'emma', shift: 'evening' },
+      { id: 'legacy-off', date: '2026-08-12', member: 'emma', shift: 'off' },
     ]))
   })
   await page.reload()
@@ -960,6 +979,8 @@ test('구형 근무 설정도 근무별 아이콘을 복원하고 모바일에�
   const shiftCell = page.locator('[data-date="2026-08-11"]')
   const shiftChip = shiftCell.locator('.shift-chip')
   await expect(shiftChip.locator('svg.lucide-sunset')).toBeVisible()
+  const offChip = page.locator('[data-date="2026-08-12"] .shift-chip')
+  await expect(offChip).toHaveText('OFF')
   const layout = await page.evaluate(() => ({
     documentFits: document.documentElement.scrollWidth <= window.innerWidth,
     editorFits: [...document.querySelectorAll('.shift-editor-grid button')].every((button) => {
@@ -970,8 +991,13 @@ test('구형 근무 설정도 근무별 아이콘을 복원하고 모바일에�
       const chip = document.querySelector('[data-date="2026-08-11"] .shift-chip')
       return chip && chip.getBoundingClientRect().width < chip.parentElement.getBoundingClientRect().width * 0.75
     })(),
+    offFits: (() => {
+      const chip = document.querySelector('[data-date="2026-08-12"] .shift-chip')
+      const cell = chip?.closest('button')
+      return Boolean(chip && cell && chip.scrollWidth <= chip.clientWidth && chip.getBoundingClientRect().right <= cell.getBoundingClientRect().right)
+    })(),
   }))
-  expect(layout).toEqual({ documentFits: true, editorFits: true, chipFitsContent: true })
+  expect(layout).toEqual({ documentFits: true, editorFits: true, chipFitsContent: true, offFits: true })
 })
 
 test('전체 캘린더의 두 자리 가족·자녀 개수를 자르지 않고 셀 안에 표시한다', async ({ page }) => {
