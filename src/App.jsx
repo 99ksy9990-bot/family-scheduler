@@ -672,14 +672,14 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     .filter((event) => isChildCalendarEvent(event) && assignedMemberIds(event).some((memberId) => childIds.has(memberId))), children)
   const childEventIds = new Set(childEvents.map((event) => event.id))
   const generalTodayEvents = todayEvents.filter((event) => !childEventIds.has(event.id))
-  const dueTasks = tasks.filter((task) => !task.done && task.dueDate && task.dueDate <= iso(today))
   const todayTasks = tasks.flatMap((task) => {
     if (hasRecurrence(task)) {
       return recurringTaskOccursOn(task, today) && !task.completedDates?.includes(iso(today))
         ? [recurringTaskOccurrence(task, today)]
         : []
     }
-    return !task.done && task.dueDate === iso(today) ? [task] : []
+    const taskDate = task.dueDate || task.createdDate
+    return !task.done && taskDate === iso(today) ? [task] : []
   })
   const weekStart = addDays(today, -today.getDay())
   const weekDays = Array.from({ length: 7 }, (_, index) => {
@@ -698,7 +698,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       workerShifts: dayWorkerShifts,
       taskCount: tasks.filter((task) => hasRecurrence(task)
         ? recurringTaskOccursOn(task, date) && !task.completedDates?.includes(dateKey)
-        : !task.done && task.dueDate === dateKey).length,
+        : !task.done && (task.dueDate || task.createdDate) === dateKey).length,
     }
   })
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
@@ -725,7 +725,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     id: `home-task-${task.id}`,
     sourceTaskId: task.id,
     title: task.title,
-    date: task.dueDate,
+    date: task.dueDate || task.createdDate,
     time: task.time || '종일',
     end: task.end || '',
     member: task.assignee || 'family',
@@ -734,7 +734,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     homeCategory: '할 일',
     homeCategoryId: 'tasks',
   }))
-  const todayHomeEvents = [...todayShiftEvents, ...[...generalTodayEvents, ...childEvents].map((event) => ({
+  const todayHomeEvents = [...todayShiftEvents.filter((event) => event.time), ...[...generalTodayEvents, ...childEvents].map((event) => ({
     ...event,
     homeCategory: event.holiday ? '공휴일' : isChildCalendarEvent(event) ? '자녀' : '가족',
     homeCategoryId: event.holiday ? 'holiday' : isChildCalendarEvent(event) ? 'children' : 'family',
@@ -779,7 +779,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         </div>
         {visibleTodayTimelineEvents.length > 0 && <div className={`timeline timeline-count-${Math.min(todayTimelineEvents.length, 3)}`}>
           {visibleTodayTimelineEvents.map((event, index) => <Fragment key={event.id}>
-            {index === resolvedNowMarkerIndex && <div className="timeline-now-marker" aria-label={`현재 시각 ${currentTimeLabel}`}><time className="timeline-now-time">지금 {currentTimeLabel}</time><span className="timeline-now-dot" aria-hidden="true" /><i /></div>}
+            {index === resolvedNowMarkerIndex && <div className="timeline-now-marker" aria-label={`현재 시각 ${currentTimeLabel}`}><time className="timeline-now-time">{currentTimeLabel}</time><span className="timeline-now-dot" aria-hidden="true" /><i /></div>}
             <EventCard
               event={event}
               showRecurrence={false}
@@ -788,7 +788,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
               onDelete={canEdit && !event.homeShift && !event.holiday && !event.anniversary ? (event.recurring ? () => openRecurringActions(event) : () => deleteEvent(event.id)) : undefined}
             />
           </Fragment>)}
-          {visibleTodayTimelineEvents.length > 0 && resolvedNowMarkerIndex === visibleTodayTimelineEvents.length && <div className="timeline-now-marker" aria-label={`현재 시각 ${currentTimeLabel}`}><time className="timeline-now-time">지금 {currentTimeLabel}</time><span className="timeline-now-dot" aria-hidden="true" /><i /></div>}
+          {visibleTodayTimelineEvents.length > 0 && resolvedNowMarkerIndex === visibleTodayTimelineEvents.length && <div className="timeline-now-marker" aria-label={`현재 시각 ${currentTimeLabel}`}><time className="timeline-now-time">{currentTimeLabel}</time><span className="timeline-now-dot" aria-hidden="true" /><i /></div>}
         </div>}
         {!todayEventCount && <p className="empty-copy">비어 있는 하루예요. 일정을 추가해 보세요.</p>}
         {visibleTodayUntimedEvents.length > 0 && <section className="today-untimed-section" aria-labelledby="today-untimed-title">
@@ -809,7 +809,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
           <button className={`work ${primaryTodayShift?.color || 'is-empty'}`} type="button" aria-label={primaryTodayShift ? `근무 ${primaryTodayShift.code}` : '근무 미입력'} onClick={() => openCalendarDate(today, 'work')}><TodayShiftIcon aria-hidden="true" /><b>{primaryTodayShift?.code || 0}</b>{todayShiftEvents.length > 1 && <small>+{todayShiftEvents.length - 1}</small>}</button>
           <button className="family" type="button" aria-label={`가족 일정 ${generalTodayEvents.length}개`} onClick={() => openCalendarDate(today, 'family')}><Home aria-hidden="true" /><b>{generalTodayEvents.length}</b></button>
           <button className="children" type="button" aria-label={`자녀 일정 ${childEvents.length}개`} onClick={() => openChildCalendarDate(today)}><GraduationCap aria-hidden="true" /><b>{childEvents.length}</b></button>
-          <button className="tasks" type="button" aria-label={`마감 할 일 ${dueTasks.length}개`} onClick={openTasks}><CheckSquare aria-hidden="true" /><b>{dueTasks.length}</b></button>
+          <button className="tasks" type="button" aria-label={`오늘 할 일 ${todayTasks.length}개`} onClick={openTasks}><CheckSquare aria-hidden="true" /><b>{todayTasks.length}</b></button>
         </nav>
       </section>
 

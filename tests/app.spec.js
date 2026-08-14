@@ -122,6 +122,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     ]))
     localStorage.setItem('family-scheduler-tasks', JSON.stringify([
       { id: 'today-task', title: '오늘 할 일', category: '집안일', dueDate: '2026-08-11', assignee: 'david', assignees: ['david'], done: false },
+      { id: 'today-undated-task', title: '오늘 등록한 시간 없는 할 일', category: '장보기', dueDate: '', createdDate: '2026-08-11', assignee: 'david', assignees: ['david'], done: false },
       { id: 'overdue-task', title: '지난 마감 할 일', category: '긴급', dueDate: '2026-08-10', time: '오전 8:00', assignee: 'david', assignees: ['david'], done: false },
     ]))
   })
@@ -133,7 +134,9 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('오전 6:30 – 오후 3:30')
   await expect(todayCard.locator('.home-event-row').first()).toHaveClass(/timeline-active/)
   await expect(todayCard.locator('.home-event-row').first().locator('.schedule-row-status')).toHaveText('진행 중')
-  await expect(todayCard.locator('.timeline-now-marker')).toContainText('지금 오전 9:00')
+  await expect(todayCard.locator('.today-untimed-section').locator('.home-event-row').filter({ hasText: '오늘 등록한 시간 없는 할 일' })).toHaveCount(1)
+  await expect(todayCard.locator('.timeline-now-marker')).toContainText('오전 9:00')
+  await expect(todayCard.locator('.timeline-now-marker')).not.toContainText('지금')
   const timelineLayout = await todayCard.locator('.timeline').evaluate((timeline) => ({
     display: getComputedStyle(timeline).display,
     connector: getComputedStyle(timeline, '::before').content,
@@ -181,7 +184,18 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
       lineAfterDot: dot.right <= line.left,
     }
   })
-  expect(nowMarkerLayout).toEqual({ label: '지금 오전 9:00', timeBeforeDot: true, lineAfterDot: true })
+  expect(nowMarkerLayout).toEqual({ label: '오전 9:00', timeBeforeDot: true, lineAfterDot: true })
+  const timelineSpacing = await todayCard.locator('.timeline').evaluate((timeline) => {
+    const row = timeline.querySelector('.home-timeline-row')
+    const point = row.querySelector('.schedule-row-timeline-point').getBoundingClientRect()
+    const copy = row.querySelector('.schedule-row-copy').getBoundingClientRect()
+    return {
+      pointCenter: Math.round(point.left + point.width / 2 - timeline.getBoundingClientRect().left),
+      copyWidth: Math.round(copy.width),
+    }
+  })
+  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(78)
+  expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(145)
   await expect(todayCard.locator('.home-event-row').filter({ hasText: '오늘 자녀 일정' }).locator('.schedule-row-location')).toHaveText('영어 학원')
   await expect(todayCard.getByText('오늘 한눈에 보기', { exact: true })).toHaveCount(0)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
@@ -293,6 +307,19 @@ test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중
   await expect(past).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
 })
 
+test('시간이 없는 근무는 오늘 일정 본문에서 숨기고 요약에만 표시한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([
+      { id: 'today-off', date: '2026-08-11', member: 'emma', shift: 'off' },
+    ]))
+  })
+  await page.reload()
+
+  const todayCard = page.locator('.today-card')
+  await expect(todayCard.locator('.today-untimed-section').getByText('OFF', { exact: true })).toHaveCount(0)
+  await expect(todayCard.locator('.today-summary-bar .work')).toHaveText('OFF')
+})
+
 test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([
@@ -315,8 +342,10 @@ test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다'
     background: getComputedStyle(item).backgroundColor,
     radius: getComputedStyle(item).borderRadius,
     fitsContent: item.getBoundingClientRect().width < item.parentElement.getBoundingClientRect().width,
+    contentFits: item.scrollWidth <= item.clientWidth,
+    coversLabel: item.getBoundingClientRect().right >= item.querySelector('b').getBoundingClientRect().right,
   })))
-  expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && parseFloat(badge.radius) >= 10 && badge.fitsContent)).toBe(true)
+  expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && badge.radius === '0px' && badge.fitsContent && badge.contentFits && badge.coversLabel)).toBe(true)
 })
 
 test('주요 화면을 이동한다', async ({ page }) => {
