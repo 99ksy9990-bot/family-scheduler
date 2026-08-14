@@ -3,6 +3,7 @@
 - Primary reference: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/codex-clipboard-6ca0193f-bbfe-474a-a69f-67951fb81a2c.png`
 - Action-row reference: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_mGQCJg/스크린샷 2026-08-12 오전 10.12.48.png`
 - Mobile row reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/7EB7E657-F5D5-4DDE-BF97-1A239A2066C9/1-사진-1.jpg`
+- Work-calendar reference: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_nr5JqS/스크린샷 2026-08-14 오전 11.34.12.png`
 - Side-by-side evidence: `/tmp/family-scheduler-qa-comparison.png`
 - Target viewports: desktop Chromium, mobile Chromium `402 × 874`
 - Scope: 홈 오늘 일정, 통합 캘린더 상세, 가족 할 일, 일정 관리의 기념일·자녀 정보·학기/방학
@@ -35,6 +36,10 @@
 - 오늘 일정은 시간순 세로 타임라인으로 표시하고, 지난 일정은 흐리게, 진행 중 일정은 상태와 현재 시각선으로 구분한다.
 - 이번 주 근무 요약은 최신 날짜별 입력을 사용하고 D/E/N/OFF를 근무 유형 아이콘·색상 알약으로 표시한다.
 - 근무표 선택 카드는 흰 바탕을 유지하고 아이콘·근무명 영역에만 유형 색상을 적용한다.
+- 근무 월 달력의 유형 배경도 아이콘과 D/E/N/OFF까지만 감싸고 셀 끝까지 늘어나지 않는다.
+- 예전 저장 데이터에 아이콘 필드가 없어도 D/E/N/OFF 또는 근무 유형 ID로 해·일몰·달·달력 아이콘을 복원한다.
+- 모바일 근무 달력은 근무 아이콘을 숨기지 않으며, 긴 사용자 정의 근무명은 카드 안에서 말줄임되어 문서 폭을 늘리지 않는다.
+- 전체 달력의 가족·자녀 개수가 두 자리여도 자동으로 다음 줄을 사용해 셀 안에서 잘리지 않는다.
 - 가족 할 일은 기본적으로 시간이 없으며 필요할 때 시작 또는 시작·종료 시간을 선택해 저장할 수 있다.
 
 ## Click-to-manage behavior
@@ -50,14 +55,14 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium: `24 passed`, `4 conditionally skipped`
-- Mobile Chromium: `27 passed`, `1 conditionally skipped`
-- Combined end-to-end result: `57 passed`, `5 conditionally skipped`
+- Desktop Chromium: `29 passed`, `4 conditionally skipped`
+- Mobile Chromium: `32 passed`, `1 conditionally skipped`
+- Combined end-to-end result: `61 passed`, `5 conditionally skipped`
 - Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, left/right padding `9px / 7px`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
 - Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 최신 근무 입력 선택, 근무 유형 아이콘 정렬, 할 일 시작·종료 시간 저장과 목록 표시
-- In-app Browser: local mobile viewport `390 × 844`; 할 일 필터 `11px` 한 줄, 달력 범례 선행 배치, 근무 안내 한 줄, 오늘 일정 완전 노출, 페이지·달력 가로 넘침 없음, 콘솔 오류 0건
+- In-app Browser: local mobile viewport `446 × 721`; 근무 월 달력 아이콘 표시, 근무 칩 콘텐츠 폭 적용, 근무 선택 카드 내부 수용, 페이지·달력 가로 넘침 없음
 - Data migration/storage keys: unchanged
 
 ## Review note

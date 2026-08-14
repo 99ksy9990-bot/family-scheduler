@@ -824,6 +824,95 @@ test('근무 카드 포커스 테두리는 셀 안쪽에 표시하고 색 배경
   await expect(page.getByText(/\d+\/\d+일 입력/)).toHaveCount(0)
 })
 
+test('구형 근무 설정도 근무별 아이콘을 복원하고 모바일에서 칩과 편집기가 넘치지 않는다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-work-settings-v1', JSON.stringify({
+      enabled: true,
+      workerIds: ['emma'],
+      shiftTypes: [
+        { id: 'day', code: 'D', label: '주간 근무 이름이 길어져도 안전하게 표시', start: '06:30', end: '15:30', color: 'sage' },
+        { id: 'evening', code: 'E', label: '오후 근무', start: '13:30', end: '22:30', color: 'blue' },
+        { id: 'night', code: 'N', label: '야간 근무', start: '22:00', end: '08:00', color: 'navy' },
+        { id: 'off', code: 'OFF', label: '휴무', start: '', end: '', color: 'lavender' },
+      ],
+    }))
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([
+      { id: 'legacy-evening', date: '2026-08-11', member: 'emma', shift: 'evening' },
+    ]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+
+  const overviewShift = page.locator('[data-date="2026-08-11"] .overview-shift-icons .shift-icon')
+  await expect(overviewShift.locator('svg.lucide-sunset')).toHaveCount(1)
+  await expect(overviewShift.locator('svg.lucide-calendar-days')).toHaveCount(0)
+
+  await page.getByRole('button', { name: '근무', exact: true }).click()
+  await expect(page.locator('.shift-editor-grid .sage .shift-option-label svg.lucide-sun')).toHaveCount(1)
+  await expect(page.locator('.shift-editor-grid .blue .shift-option-label svg.lucide-sunset')).toHaveCount(1)
+  await expect(page.locator('.shift-editor-grid .navy .shift-option-label svg.lucide-moon')).toHaveCount(1)
+  await expect(page.locator('.shift-editor-grid .lavender .shift-option-label svg.lucide-calendar-days')).toHaveCount(1)
+
+  const shiftCell = page.locator('[data-date="2026-08-11"]')
+  const shiftChip = shiftCell.locator('.shift-chip')
+  await expect(shiftChip.locator('svg.lucide-sunset')).toBeVisible()
+  const layout = await page.evaluate(() => ({
+    documentFits: document.documentElement.scrollWidth <= window.innerWidth,
+    editorFits: [...document.querySelectorAll('.shift-editor-grid button')].every((button) => {
+      const label = button.querySelector('.shift-option-label')
+      return label && label.getBoundingClientRect().right <= button.getBoundingClientRect().right
+    }),
+    chipFitsContent: (() => {
+      const chip = document.querySelector('[data-date="2026-08-11"] .shift-chip')
+      return chip && chip.getBoundingClientRect().width < chip.parentElement.getBoundingClientRect().width * 0.75
+    })(),
+  }))
+  expect(layout).toEqual({ documentFits: true, editorFits: true, chipFitsContent: true })
+})
+
+test('전체 캘린더의 두 자리 가족·자녀 개수를 자르지 않고 셀 안에 표시한다', async ({ page }) => {
+  await page.evaluate(() => {
+    const familyEvents = Array.from({ length: 12 }, (_, index) => ({
+      id: `family-count-${index}`,
+      title: `가족 일정 ${index + 1}`,
+      date: '2026-08-11',
+      endDate: '2026-08-11',
+      time: '종일',
+      member: 'emma',
+      members: ['emma'],
+      calendarScope: 'family',
+    }))
+    const childEvents = Array.from({ length: 12 }, (_, index) => ({
+      id: `child-count-${index}`,
+      title: `자녀 일정 ${index + 1}`,
+      date: '2026-08-11',
+      endDate: '2026-08-11',
+      time: '종일',
+      member: 'leo',
+      members: ['leo'],
+      calendarScope: 'children',
+    }))
+    localStorage.setItem('family-scheduler-events', JSON.stringify([...familyEvents, ...childEvents]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const cell = page.locator('[data-date="2026-08-11"]')
+  await expect(cell.locator('.overview-count-label.family b')).toHaveText('12')
+  await expect(cell.locator('.overview-count-label.children b')).toHaveText('12')
+  const markerLayout = await cell.evaluate((button) => {
+    const bounds = button.getBoundingClientRect()
+    const markers = [...button.querySelectorAll('.overview-count-label')]
+    return {
+      allInside: markers.every((marker) => {
+        const rect = marker.getBoundingClientRect()
+        return rect.left >= bounds.left && rect.right <= bounds.right && rect.bottom <= bounds.bottom
+      }),
+      overflowVisible: getComputedStyle(button.querySelector('.calendar-overview-markers')).overflow === 'visible',
+    }
+  })
+  expect(markerLayout).toEqual({ allInside: true, overflowVisible: true })
+})
+
 test('첫 로드 후 오프라인에서도 앱 셸이 열린다', async ({ page, context }) => {
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready

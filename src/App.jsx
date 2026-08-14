@@ -102,12 +102,27 @@ const LEGACY_CHILD_SCHEDULE_IDS = new Set([
 const LEGACY_PERIOD_IDS = new Set(['term-first-2026', 'vacation-summer-2026', 'term-second-2026'])
 
 const SHIFT_ICONS = { sun: Sun, sunset: Sunset, moon: Moon, calendar: CalendarDays }
+const LEGACY_SHIFT_ICON_NAMES = {
+  day: 'sun',
+  evening: 'sunset',
+  night: 'moon',
+  off: 'calendar',
+  D: 'sun',
+  E: 'sunset',
+  N: 'moon',
+  OFF: 'calendar',
+}
+const shiftIconNameFor = (shift) => (
+  SHIFT_ICONS[shift.icon]
+    ? shift.icon
+    : LEGACY_SHIFT_ICON_NAMES[shift.id] || LEGACY_SHIFT_ICON_NAMES[String(shift.code || '').toUpperCase()] || 'calendar'
+)
 const buildShiftOptions = (shiftTypes) => shiftTypes.map((shift) => ({
   ...shift,
   shortLabel: shift.code,
   time: shift.start && shift.end ? `${formatDisplayTime(shift.start)} – ${formatDisplayTime(shift.end)}` : '근무 없음',
   endLabel: shift.end ? `${formatDisplayTime(shift.end)} 종료` : '오늘은 휴무입니다',
-  icon: SHIFT_ICONS[shift.icon] || CalendarDays,
+  icon: SHIFT_ICONS[shiftIconNameFor(shift)],
 }))
 
 const shiftEntryFor = (shifts, dateValue, memberId) => {
