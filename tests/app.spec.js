@@ -300,36 +300,36 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth)
 
   const weekSummaryLayout = await page.locator('.home-week-strip button').first().evaluate((button) => {
-    const counts = [...button.querySelectorAll('.week-counts em')]
+    const summaries = [...button.querySelectorAll('.week-summary-item')]
     return {
-      count: counts.length,
-      sameLine: Math.abs(counts[0].getBoundingClientRect().top - counts[1].getBoundingClientRect().top) < 1,
-      summaryText: button.querySelector('.week-counts').textContent,
+      count: summaries.length,
+      sameLine: summaries.every((summary) => Math.abs(summary.getBoundingClientRect().top - summaries[0].getBoundingClientRect().top) < 1),
+      familyCount: button.querySelector('.week-summary-item.family b').textContent,
+      childCount: button.querySelector('.week-summary-item.children b').textContent,
       detailCount: button.querySelectorAll('.week-day-detail').length,
-      fontFamily: getComputedStyle(button.querySelector('.week-counts')).fontFamily,
+      fontSize: getComputedStyle(button.querySelector('.week-summary-item.family b')).fontSize,
     }
   })
-  expect(weekSummaryLayout).toMatchObject({ count: 2, sameLine: true, summaryText: '가족 0/자녀 0', detailCount: 0 })
-  expect(weekSummaryLayout.fontFamily).toContain('A2Z')
+  expect(weekSummaryLayout).toMatchObject({ count: 3, sameLine: true, familyCount: '0', childCount: '0', detailCount: 0, fontSize: '11px' })
 
   const sunday = page.locator('.home-week-strip button.sunday')
   const saturday = page.locator('.home-week-strip button.saturday')
   await expect(sunday.locator('.week-date-label')).toHaveText('9(일)')
   await expect(saturday.locator('.week-date-label')).toHaveText('15(토)')
-  await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(212, 81, 75)')
-  await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(76, 87, 93)')
-  await expect(page.locator('.home-week-strip button.today .week-shift-code')).toHaveText('D')
-  const todayVisibility = await page.locator('.home-week-strip').evaluate((strip) => {
-    const today = strip.querySelector('button.today')
-    const stripRect = strip.getBoundingClientRect()
-    const todayRect = today.getBoundingClientRect()
+  await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(220, 38, 38)')
+  await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(37, 99, 235)')
+  await expect(page.locator('.home-week-strip button.today .week-summary-item.work b')).toHaveText('D')
+  const weekVisibility = await page.locator('.home-week-strip').evaluate((strip) => {
+    const rows = [...strip.querySelectorAll('button')]
     return {
-      fullyVisible: todayRect.left >= stripRect.left && todayRect.right <= stripRect.right,
-      scrollLeft: strip.scrollLeft,
+      rowCount: rows.length,
+      noHorizontalOverflow: strip.scrollWidth <= strip.clientWidth,
+      allRowsVisible: rows.every((row) => row.getBoundingClientRect().width <= strip.getBoundingClientRect().width),
     }
   })
-  expect(todayVisibility.fullyVisible).toBe(true)
-  expect(todayVisibility.scrollLeft).toBeGreaterThan(0)
+  expect(weekVisibility).toEqual({ rowCount: 7, noHorizontalOverflow: true, allRowsVisible: true })
+  await expect(page.getByRole('button', { name: /전체 캘린더/ })).toHaveCount(0)
+  await expect(page.locator('.home-date-heading h1')).toHaveCount(0)
 })
 
 test('모바일 할 일 필터에서 오늘을 제외하고 남은 항목을 읽기 쉽게 표시한다', async ({ page }, testInfo) => {

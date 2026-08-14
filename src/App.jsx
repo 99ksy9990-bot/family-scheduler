@@ -1,4 +1,4 @@
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare, Cloud,
@@ -150,29 +150,6 @@ const upgradeSharedState = (state) => {
     shifts: mergeUnique(Array.isArray(state.shifts) ? state.shifts : [], RECOVERED_SHIFTS, (item) => `${item.member}-${item.date}`),
     anniversaries: mergeUnique(Array.isArray(state.anniversaries) ? state.anniversaries : [], RECOVERED_ANNIVERSARIES, (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`),
   }
-}
-
-const FAMILY_GREETINGS = {
-  morning: ['좋은 아침이에요', '반가운 아침이에요', '힘찬 아침이에요', '상쾌한 아침이에요'],
-  afternoon: ['좋은 오후예요', '반가운 오후예요', '즐거운 오후예요', '여유로운 오후예요'],
-  evening: ['좋은 저녁이에요', '편안한 저녁이에요', '따뜻한 저녁이에요', '수고한 하루예요'],
-}
-const GREETING_SEQUENCE = (() => {
-  if (typeof window === 'undefined') return 0
-  const storageKey = 'family-scheduler-greeting-sequence'
-  const next = (Number(window.sessionStorage.getItem(storageKey) || -1) + 1) % 4
-  window.sessionStorage.setItem(storageKey, String(next))
-  return next
-})()
-const greetingOptions = (date = new Date()) => {
-  const hour = date.getHours()
-  if (hour < 12) return FAMILY_GREETINGS.morning
-  if (hour < 18) return FAMILY_GREETINGS.afternoon
-  return FAMILY_GREETINGS.evening
-}
-const familyGreeting = (date = new Date()) => {
-  const options = greetingOptions(date)
-  return options[GREETING_SEQUENCE % options.length]
 }
 
 const anniversarySolarOccurrences = (anniversary, solarYear) => {
@@ -631,10 +608,7 @@ function ManagedChildScheduleRow({ schedule, canEdit, onEdit, onDelete }) {
 }
 
 function HomeView({ today, events, childSchedules, schedulePeriods, anniversaries, shifts, tasks, scheduleExceptions, openCalendar, openCalendarDate, openChildCalendarDate, openTasks, openModal, canEdit, onOpenSettings, sync, onOpenFamily }) {
-  const [greeting, setGreeting] = useState(() => familyGreeting())
   const [familyNoticeDismissed, setFamilyNoticeDismissed] = useState(() => window.sessionStorage.getItem('family-scheduler-family-notice-dismissed') === '1')
-  const weekStripRef = useRef(null)
-  const todayWeekButtonRef = useRef(null)
   const { activeProfiles, children, shiftWorkers, shiftOptions, workSettings } = useFamilyProfiles()
   const rawTodayEvents = eventsForDate(today, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const conflicts = overlappingEventIds(rawTodayEvents)
@@ -684,26 +658,10 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     homeCategoryId: event.holiday ? 'holiday' : isChildCalendarEvent(event) ? 'children' : 'family',
   }))]
 
-  useLayoutEffect(() => {
-    const strip = weekStripRef.current
-    const todayButton = todayWeekButtonRef.current
-    if (!strip || !todayButton || !window.matchMedia('(max-width: 660px)').matches) return
-    strip.scrollLeft = Math.max(0, todayButton.offsetLeft - (strip.clientWidth - todayButton.offsetWidth) / 2)
-  }, [today])
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setGreeting((current) => {
-      const options = greetingOptions()
-      return options.includes(current) ? current : familyGreeting()
-    }), 60_000)
-    return () => window.clearInterval(timer)
-  }, [])
   return (
     <div className="page home-page">
-      <section className="hero-intro">
+      <section className="hero-intro home-date-heading" aria-label="오늘 날짜">
         <span className="eyebrow">{formatLongDate(today)}</span>
-        <h1>{greeting}, <span className="greeting-family">우리 가족.</span></h1>
-        <p>우리 가족의 오늘 하루를 한눈에 확인하세요.</p>
       </section>
 
       {!sync.family && !familyNoticeDismissed && <section className="family-connect-banner card" aria-label="가족 연결 안내">
@@ -740,9 +698,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       <section className="week-strip-card card" aria-labelledby="week-strip-title">
         <div className="section-heading">
           <div><h2 id="week-strip-title">이번 주 일정</h2></div>
-          <button className="text-button" onClick={openCalendar}>전체 캘린더 <ChevronRight size={16} /></button>
         </div>
-        <div ref={weekStripRef} className="home-week-strip">
+        <div className="home-week-strip">
           {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents, workerShifts: dayWorkerShifts }) => {
             const isToday = iso(date) === iso(today)
             const openDay = () => openCalendarDate(date, 'all')
@@ -751,11 +708,22 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
             const childCount = dayChildEvents.length
             const conflictCount = overlappingEventCount([...dayGeneralEvents.filter((event) => !event.holiday), ...dayChildEvents])
             const weekdayClass = date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''
-            const shiftCodes = dayWorkerShifts.map(({ option }) => option.code).join('·')
-            return <button ref={isToday ? todayWeekButtonRef : undefined} key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ''}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
+            const visibleShifts = dayWorkerShifts.filter(({ option }) => option.code !== 'OFF')
+            const primaryShift = visibleShifts[0]
+            const ShiftIcon = primaryShift ? (SHIFT_ICONS[primaryShift.option.icon] || CalendarDays) : null
+            const shiftCodes = visibleShifts.map(({ option }) => option.code).join('·')
+            return <button key={iso(date)} className={`${isToday ? 'today' : ''} ${weekdayClass}`} onClick={openDay} aria-label={`${formatLongDate(date)}${shiftCodes ? `, 근무 ${shiftCodes}` : ', 근무 없음'}, 가족 일정 ${familyCount}개, 자녀 일정 ${childCount}개${dayHolidays.length ? `, ${dayHolidays[0].title}` : ''}${conflictCount ? `, 시간 겹침 ${conflictCount}개` : ''}`}>
               <strong className={`week-date-label ${weekdayClass}`}>{date.getDate()}<span>({WEEKDAY_SHORT[date.getDay()]})</span></strong>
-              <span className="week-shifts" aria-hidden="true">{dayWorkerShifts.slice(0, 2).map(({ worker, option }) => <i key={worker.id} className={`week-shift-code ${option.color}`}>{option.code}</i>)}{dayWorkerShifts.length > 2 && <i className="week-shift-code more">+{dayWorkerShifts.length - 2}</i>}</span>
-              <span className="week-counts"><em>가족 {familyCount}</em><b aria-hidden="true">/</b><em>자녀 {childCount}</em></span>
+              <span className="week-summary" aria-hidden="true">
+                <span className={`week-summary-item work ${primaryShift ? primaryShift.option.color : 'is-empty'}`}>
+                  {ShiftIcon && <ShiftIcon />}
+                  <b>{primaryShift?.option.code || '—'}</b>
+                  {visibleShifts.length > 1 && <small>+{visibleShifts.length - 1}</small>}
+                </span>
+                <span className={`week-summary-item family ${familyCount ? '' : 'is-empty'}`}><Home /><b>{familyCount}</b></span>
+                <span className={`week-summary-item children ${childCount ? '' : 'is-empty'}`}><GraduationCap /><b>{childCount}</b></span>
+                {conflictCount > 0 && <i className="week-conflict-dot" title="시간 겹침" />}
+              </span>
             </button>
           })}
         </div>
