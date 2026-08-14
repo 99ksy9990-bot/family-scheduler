@@ -23,7 +23,7 @@
 - 선택 날짜 제목의 인위적인 왼쪽 패딩을 제거했다.
 - 홈의 `오늘 한눈에 보기`, `이번 주 한눈에 보기` 보조 문구를 제거했다.
 - 홈의 `오늘의 일정`과 `이번 주 일정` 제목 시작선은 데스크톱·모바일에서 동일하다. 모바일 `390px` 실측은 모두 왼쪽 `37px`이다.
-- 전체 캘린더는 구성원별 점 대신 `가n`, `자n`을 표시하고 충돌이 있을 때만 빨간 점을 추가한다.
+- 전체 캘린더는 구성원별 점과 `가n`, `자n` 문자를 쓰지 않고, 홈 요약과 동일한 집·자녀 SVG 아이콘과 숫자를 표시하며 충돌이 있을 때만 빨간 점을 추가한다.
 - 전체 캘린더 아래 구성원 범례는 제거했다.
 - 전체 캘린더의 자녀 세부 카드에서는 반복 요일을 숨기고, 일정 관리 화면에서는 그대로 표시한다.
 - 학교·학원 및 자녀 전용 일정은 전체 캘린더에서도 항상 `자녀` 카테고리로 표시한다.
@@ -32,6 +32,10 @@
 - 가족 구성원 수정 시 저장된 색상을 정규화해 정확한 선택 표시와 사용 중 안내를 유지한다.
 - 근무표 안내 문장은 모바일에서 잘리지 않는 한 줄로 표시한다.
 - 모바일 이번 주 일정은 진입 시 오늘 버튼이 항상 보이도록 자동으로 가로 위치를 맞춘다.
+- 오늘 일정은 시간순 세로 타임라인으로 표시하고, 지난 일정은 흐리게, 진행 중 일정은 상태와 현재 시각선으로 구분한다.
+- 이번 주 근무 요약은 최신 날짜별 입력을 사용하고 D/E/N/OFF를 근무 유형 아이콘·색상 알약으로 표시한다.
+- 근무표 선택 카드는 흰 바탕을 유지하고 아이콘·근무명 영역에만 유형 색상을 적용한다.
+- 가족 할 일은 기본적으로 시간이 없으며 필요할 때 시작 또는 시작·종료 시간을 선택해 저장할 수 있다.
 
 ## Click-to-manage behavior
 
@@ -48,10 +52,11 @@
 - Production build: passed
 - Desktop Chromium: `24 passed`, `4 conditionally skipped`
 - Mobile Chromium: `27 passed`, `1 conditionally skipped`
-- Combined end-to-end result: `51 passed`, `5 conditionally skipped`
+- Combined end-to-end result: `57 passed`, `5 conditionally skipped`
 - Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, left/right padding `9px / 7px`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
-- Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, `가n`/`자n` replaces member dots, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
+- Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
+- Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 최신 근무 입력 선택, 근무 유형 아이콘 정렬, 할 일 시작·종료 시간 저장과 목록 표시
 - In-app Browser: local mobile viewport `390 × 844`; 할 일 필터 `11px` 한 줄, 달력 범례 선행 배치, 근무 안내 한 줄, 오늘 일정 완전 노출, 페이지·달력 가로 넘침 없음, 콘솔 오류 0건
 - Data migration/storage keys: unchanged
 
