@@ -187,15 +187,23 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   expect(nowMarkerLayout).toEqual({ label: '오전 9:00', timeBeforeDot: true, lineAfterDot: true })
   const timelineSpacing = await todayCard.locator('.timeline').evaluate((timeline) => {
     const row = timeline.querySelector('.home-timeline-row')
+    const time = row.querySelector('.schedule-row-timeline-time')
     const point = row.querySelector('.schedule-row-timeline-point').getBoundingClientRect()
+    const avatar = row.querySelector('.schedule-row-leading').getBoundingClientRect()
     const copy = row.querySelector('.schedule-row-copy').getBoundingClientRect()
+    const timeTextRange = document.createRange()
+    timeTextRange.selectNodeContents(time)
+    const timeText = timeTextRange.getBoundingClientRect()
     return {
       pointCenter: Math.round(point.left + point.width / 2 - timeline.getBoundingClientRect().left),
       copyWidth: Math.round(copy.width),
+      timeToPointGap: Math.round(point.left - timeText.right),
+      pointToAvatarGap: Math.round(avatar.left - point.right),
     }
   })
-  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(78)
-  expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(145)
+  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(72)
+  expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(153)
+  expect(Math.abs(timelineSpacing.timeToPointGap - timelineSpacing.pointToAvatarGap)).toBeLessThanOrEqual(1)
   await expect(todayCard.locator('.home-event-row').filter({ hasText: '오늘 자녀 일정' }).locator('.schedule-row-location')).toHaveText('영어 학원')
   await expect(todayCard.getByText('오늘 한눈에 보기', { exact: true })).toHaveCount(0)
   const todaySummary = await todayCard.locator('.today-summary-bar').evaluate((bar) => {
@@ -345,7 +353,7 @@ test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다'
     contentFits: item.scrollWidth <= item.clientWidth,
     coversLabel: item.getBoundingClientRect().right >= item.querySelector('b').getBoundingClientRect().right,
   })))
-  expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && badge.radius === '0px' && badge.fitsContent && badge.contentFits && badge.coversLabel)).toBe(true)
+  expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && parseFloat(badge.radius) >= 10 && badge.fitsContent && badge.contentFits && badge.coversLabel)).toBe(true)
 })
 
 test('주요 화면을 이동한다', async ({ page }) => {
