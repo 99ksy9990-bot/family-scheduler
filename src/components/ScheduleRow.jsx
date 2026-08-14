@@ -10,6 +10,7 @@ export default function ScheduleRow({
   meta,
   secondaryMeta,
   status,
+  conflict = false,
   category,
   categoryClassName = '',
   trailing,
@@ -50,6 +51,7 @@ export default function ScheduleRow({
           {status && <><i aria-hidden="true">·</i><span className="schedule-row-status">{status}</span></>}
         </span>}
       </span>
+      {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
       {category && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
       {trailing && <span className="schedule-row-trailing">{trailing}</span>}
     </article>
