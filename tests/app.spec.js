@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
 test('홈 화면을 표시한다', async ({ page }) => {
   await expect(page.getByRole('button', { name: '홈으로 이동' })).toBeVisible()
   await expect(page.getByText('Family Scheduler', { exact: true }).first()).toBeVisible()
-  await expect(page.getByRole('heading', { name: '오늘의 일정' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '8월 11일(화) 일정' })).toBeVisible()
 })
 
 test('구성원 색을 새 팔레트로 중복 없이 결정적으로 마이그레이션한다', async ({ page }) => {
@@ -51,14 +51,14 @@ test('모든 구성원 아바타를 28px 둥근 정사각형으로 표시한다'
   expect(sizes.every((size) => size.width === '28px' && size.height === '28px' && size.radius === '8px')).toBe(true)
 })
 
-test('홈 타임라인은 열린 여백을 쓰고 캘린더·할 일 행은 공통 68px 규격을 유지한다', async ({ page }) => {
+test('홈 타임라인과 캘린더·할 일 행은 공통 56px 규격을 유지한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'row-event', title: '행 높이 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', member: 'emma', members: ['emma'], calendarScope: 'family' }]))
     localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'row-task', title: '행 높이 할 일', category: '집안일', dueDate: '2026-08-11', assignee: 'emma', assignees: ['emma'], done: false }]))
   })
   await page.reload()
   const homeRow = page.locator('.today-card .schedule-row').first()
-  await expect(homeRow).toHaveCSS('height', '68px')
+  await expect(homeRow).toHaveCSS('height', '56px')
   const homeRowLayout = await homeRow.evaluate((row) => {
     const style = getComputedStyle(row)
     const copyStyle = getComputedStyle(row.querySelector('.schedule-row-copy'))
@@ -74,10 +74,10 @@ test('홈 타임라인은 열린 여백을 쓰고 캘린더·할 일 행은 공�
 
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '가족', exact: true }).click()
-  await expect(page.locator('.day-panel .schedule-row').filter({ hasText: '행 높이 일정' })).toHaveCSS('height', '68px')
+  await expect(page.locator('.day-panel .schedule-row').filter({ hasText: '행 높이 일정' })).toHaveCSS('height', '56px')
 
   await page.getByRole('button', { name: '할 일', exact: true }).first().click()
-  await expect(page.locator('.tasks-page .schedule-row').filter({ hasText: '행 높이 할 일' })).toHaveCSS('height', '68px')
+  await expect(page.locator('.tasks-page .schedule-row').filter({ hasText: '행 높이 할 일' })).toHaveCSS('height', '56px')
 })
 
 test('초기 가족·자녀 안내를 한 줄로 표시하고 섹션 간격을 유지한다', async ({ page }) => {
@@ -131,9 +131,12 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   const todayCard = page.locator('.today-card')
   await expect(todayCard.locator('.home-event-row').first().getByText('D', { exact: true })).toBeVisible()
   await expect(todayCard.getByText('오늘 자녀 일정', { exact: true })).toBeVisible()
-  await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('오전 6:30 – 오후 3:30')
+  await expect(todayCard.locator('.home-event-row').first().locator('.event-time')).toHaveText('오전 6:30 ~ 오후 3:30')
   await expect(todayCard.locator('.home-event-row').first()).toHaveClass(/timeline-active/)
-  await expect(todayCard.locator('.home-event-row').first().locator('.schedule-row-status')).toHaveText('진행 중')
+  await expect(todayCard.locator('.home-event-row').first().locator('.schedule-row-status')).toHaveText('진행')
+  await expect(todayCard.getByRole('heading', { name: '8월 11일(화) 일정', exact: true })).toBeVisible()
+  await expect(page.locator('.home-date-heading')).toHaveCount(0)
+  await expect(todayCard.getByRole('button', { name: '캘린더', exact: true })).toBeVisible()
   await expect(todayCard.locator('.today-untimed-section').locator('.home-event-row').filter({ hasText: '오늘 등록한 시간 없는 할 일' })).toHaveCount(1)
   await expect(todayCard.locator('.timeline-now-marker')).toContainText('오전 9:00')
   await expect(todayCard.locator('.timeline-now-marker')).not.toContainText('지금')
@@ -150,7 +153,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await expect(todayCard.locator('.timeline').locator('.home-event-row').filter({ hasText: '오늘 가족 일정' })).toHaveCount(0)
   await expect(todayCard.locator('.today-untimed-section').filter({ hasText: '시간 미정' }).locator('.home-event-row').filter({ hasText: '오늘 가족 일정' })).toHaveCount(1)
   await expect(todayCard.locator('.today-untimed-section').locator('.home-event-row').filter({ hasText: '오늘 할 일' })).toHaveCount(1)
-  await expect(todayCard.getByText('지난 마감 할 일', { exact: true })).toHaveCount(0)
+  await expect(todayCard.locator('.timeline').getByText('지난 마감 할 일', { exact: true })).toHaveCount(1)
   await expect(allDayRow.locator('.event-time')).toHaveCount(0)
   await expect(allDayRow).not.toContainText('종일')
   await expect(todayCard.locator('.schedule-row-repeat')).toHaveCount(0)
@@ -206,8 +209,8 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
       timeContentFits: time.scrollWidth <= time.clientWidth,
     }
   })
-  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(68)
-  expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(153)
+  expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(86)
+  expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(145)
   expect(timelineSpacing.timeStartDelta).toBeLessThanOrEqual(1)
   expect(timelineSpacing.timeToPointGap).toBe(8)
   expect(timelineSpacing.pointToAvatarGap).toBe(8)
@@ -229,7 +232,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
       oneColor: new Set(styles.map((style) => style.color)).size,
     }
   })
-  expect(todaySummary).toEqual({ labels: ['D', '1', '1', '2'], classes: ['work sage', 'family', 'children', 'tasks'], oneLine: true, topBorder: 'solid', workPill: true, otherButtonsTransparent: true, touchHeight: true, oneColor: 2 })
+  expect(todaySummary).toEqual({ labels: ['D', '1', '1', '3'], classes: ['work sage', 'family', 'children', 'tasks'], oneLine: true, topBorder: 'solid', workPill: true, otherButtonsTransparent: true, touchHeight: true, oneColor: 2 })
   await expect(todayCard.locator('.today-summary-bar svg')).toHaveCount(4)
   await expect(todayCard.locator('.today-summary-bar .work svg')).toHaveCount(1)
   await expect(todayCard.locator('.today-summary-bar .work svg.lucide-sun')).toHaveCount(1)
@@ -261,6 +264,34 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   }
 })
 
+test('오늘 일정은 전날 야간 근무를 이어 표시하고 최대 10개까지 보여준다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([
+      { id: 'yesterday-night', date: '2026-08-10', member: 'emma', shift: 'night' },
+    ]))
+    localStorage.setItem('family-scheduler-events', JSON.stringify(Array.from({ length: 11 }, (_, index) => ({
+      id: `today-many-${index}`,
+      title: `오늘 일정 ${index + 1}`,
+      date: '2026-08-11',
+      endDate: '2026-08-11',
+      time: `오전 ${index + 1}:12`,
+      end: `오전 ${index + 1}:42`,
+      member: 'emma',
+      members: ['emma'],
+      calendarScope: 'family',
+    }))))
+  })
+  await page.reload()
+  const todayCard = page.locator('.today-card')
+  await expect(todayCard.locator('.home-event-row')).toHaveCount(10)
+  await expect(todayCard.getByText('N', { exact: true })).toBeVisible()
+  await expect(todayCard.getByText(/오후 10:00 ~ 익일 오전 8:00/)).toBeVisible()
+  await expect(todayCard.getByRole('button', { name: '+2개 일정 더보기' })).toBeVisible()
+  const fourDigitTime = todayCard.locator('.schedule-row-timeline-time').filter({ hasText: '오전 9:12' })
+  await expect(fourDigitTime).toBeVisible()
+  expect(await fourDigitTime.evaluate((time) => time.scrollWidth <= time.clientWidth)).toBe(true)
+})
+
 test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중 일정을 구분한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([
@@ -280,7 +311,7 @@ test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중
   await expect(past).toHaveClass(/timeline-past/)
   await expect(past.locator('.schedule-row-status')).toHaveCount(0)
   await expect(active).toHaveClass(/timeline-active/)
-  await expect(active.locator('.schedule-row-status')).toHaveText('진행 중')
+  await expect(active.locator('.schedule-row-status')).toHaveText('진행')
   const statusStyle = await active.locator('.schedule-row-status').evaluate((status) => ({
     background: getComputedStyle(status).backgroundColor,
     beforeContent: getComputedStyle(status, '::before').content,
@@ -476,7 +507,7 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
       { id: 'week-shift-old', date: '2026-08-11', member: 'emma', shift: 'day' },
       { id: 'week-shift-latest', date: '2026-08-11', member: 'emma', shift: 'night' },
     ]))
-    localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'week-task', title: '주간 할 일', dueDate: '2026-08-11', done: false, category: '집안일', assignee: 'family' }]))
+    localStorage.setItem('family-scheduler-tasks', JSON.stringify([{ id: 'week-task', title: '완료한 주간 할 일', dueDate: '2026-08-11', done: true, category: '집안일', assignee: 'family' }]))
   })
   await page.reload()
   const layout = await page.evaluate(() => {
@@ -489,7 +520,7 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
       innerWidth: window.innerWidth,
     }
   })
-  expect(layout.gaps.every((gap) => Math.abs(gap - 22) < 1)).toBe(true)
+  expect(layout.gaps.every((gap) => Math.abs(gap - 14) < 1)).toBe(true)
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth)
 
   const weekSummaryLayout = await page.locator('.home-week-strip button').first().evaluate((button) => {
@@ -580,10 +611,11 @@ test('모바일 할 일 필터에서 오늘을 제외하고 남은 항목을 읽
 
 test('할 일에 시작 및 종료 시간을 선택적으로 저장하고 목록에 표시한다', async ({ page }) => {
   await page.getByRole('button', { name: '할 일', exact: true }).first().click()
-  await page.getByRole('button', { name: '새 할 일', exact: true }).click()
+  await expect(page.getByRole('button', { name: /긴급 추가|장보기 추가|집안일 추가/ })).toHaveCount(0)
+  await page.getByRole('button', { name: '추가', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: /할 일 추가/ })
   await dialog.getByLabel('제목').fill('학교 픽업')
-  await dialog.getByLabel('마감일').fill('2026-08-11')
+  await dialog.getByLabel('날짜').fill('2026-08-11')
   await dialog.getByRole('button', { name: /알림·반복 설정/ }).click()
   await dialog.getByRole('button', { name: '시작·종료', exact: true }).click()
   await dialog.getByLabel('시작 시간 오전 오후').selectOption('오후')
@@ -619,18 +651,21 @@ test('가족 구성원 수정 시 저장된 색과 근무표 안내를 정확히
   }
 })
 
-test('캘린더 오늘 날짜는 네이비 숫자 원으로 표시하고 가로 격자만 유지한다', async ({ page }) => {
+test('캘린더 오늘 날짜는 다른 날짜와 같은 숫자 크기와 위치를 유지한다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   const appearance = await page.evaluate(() => {
     const today = document.querySelector('.calendar-grid button.today')
     const normal = document.querySelector('.calendar-grid button:not(.today):not(.outside)')
-    const todayNumber = today?.querySelector(':scope > span:first-child')
+    const todayNumber = today?.querySelector('.calendar-day-number')
     const firstCell = document.querySelector('.calendar-grid button')
     const lastCell = document.querySelector('.calendar-grid button:last-child')
     return {
       numberBackground: getComputedStyle(todayNumber).backgroundColor,
       numberColor: getComputedStyle(todayNumber).color,
       numberRadius: getComputedStyle(todayNumber).borderRadius,
+      numberSize: getComputedStyle(todayNumber).fontSize,
+      normalNumberSize: getComputedStyle(normal.querySelector('.calendar-day-number')).fontSize,
+      numberMargin: getComputedStyle(todayNumber).margin,
       todayCellBackground: getComputedStyle(today).backgroundColor,
       normalCellBackground: getComputedStyle(normal).backgroundColor,
       verticalLine: getComputedStyle(firstCell).borderRightWidth,
@@ -638,9 +673,10 @@ test('캘린더 오늘 날짜는 네이비 숫자 원으로 표시하고 가로 
       lastRowLine: getComputedStyle(lastCell).borderBottomWidth,
     }
   })
-  expect(appearance.numberBackground).toBe('rgb(23, 79, 101)')
-  expect(appearance.numberColor).toBe('rgb(255, 255, 255)')
-  expect(appearance.numberRadius).toBe('50%')
+  expect(appearance.numberBackground).toBe('rgba(0, 0, 0, 0)')
+  expect(appearance.numberRadius).toBe('0px')
+  expect(appearance.numberSize).toBe(appearance.normalNumberSize)
+  expect(appearance.numberMargin).toBe('0px')
   expect(appearance.todayCellBackground).not.toBe(appearance.normalCellBackground)
   expect(appearance.verticalLine).toBe('0px')
   expect(appearance.horizontalLine).toBe('1px')
@@ -747,12 +783,12 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   const childEventCard = page.locator('.overview-day-section').filter({ hasText: '자녀 일정' }).locator('.calendar-summary').filter({ hasText: '자녀 일정' })
   const rowStarts = await page.locator('.overview-day-groups .schedule-row-leading').evaluateAll((items) => items.slice(0, 3).map((item) => Math.round(item.getBoundingClientRect().left)))
   expect(new Set(rowStarts).size).toBe(1)
-  await expect(page.locator('.overview-conflict-banner')).toHaveCount(0)
+  await expect(page.locator('.overview-conflict-banner')).toHaveCount(1)
   expect(await familyEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('""')
   expect(await childEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('""')
   await expect(familyEventCard).not.toContainText('시간 겹침')
   await expect(familyEventCard.locator('.schedule-row-location')).toHaveText('광양교육청')
-  await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 오전 10:00')
+  await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 10:00')
   await expect(familyEventCard.locator('.schedule-row-repeat')).toHaveText('매주 토요일')
   await expect(childEventCard.locator('.schedule-row-repeat')).toHaveCount(0)
   await expect(childEventCard.locator('.schedule-row-category')).toHaveText('자녀')
@@ -778,13 +814,12 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await page.keyboard.press('Escape')
   await expect(familyEventCard).toBeFocused()
   if (testInfo.project.name.includes('mobile')) {
-    const mobileMarkers = page.locator('[data-date="2026-08-15"] .calendar-overview-markers')
-    await expect(mobileMarkers.locator('.overview-count-label.family svg')).toHaveCount(1)
-    await expect(mobileMarkers.locator('.overview-count-label.family b')).toHaveText('3')
-    await expect(mobileMarkers.locator('.overview-count-label.children svg')).toHaveCount(1)
-    await expect(mobileMarkers.locator('.overview-count-label.children b')).toHaveText('2')
-    await expect(mobileMarkers.locator('.overview-member-dot')).toHaveCount(0)
-    await expect(mobileMarkers.locator('.calendar-conflict-indicator')).toHaveCount(1)
+    const mobileSlots = page.locator('[data-date="2026-08-15"] .calendar-cell-slots')
+    await expect(mobileSlots.locator('.calendar-cell-family svg')).toHaveCount(1)
+    await expect(mobileSlots.locator('.calendar-cell-family b')).toHaveText('3')
+    await expect(mobileSlots.locator('.calendar-cell-children svg')).toHaveCount(1)
+    await expect(mobileSlots.locator('.calendar-cell-children b')).toHaveText('2')
+    await expect(page.locator('[data-date="2026-08-15"] .calendar-conflict-indicator')).toHaveCount(0)
     const shiftIcon = page.locator('[data-date="2026-08-15"] .overview-shift-icons .shift-icon.sage')
     await expect(shiftIcon.locator('svg')).toHaveCount(1)
     await expect(shiftIcon).toHaveText('')
@@ -841,7 +876,8 @@ test('통합 캘린더는 OFF를 숨기고 근무 탭에는 그대로 유지한�
   await page.reload()
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   const day = page.locator('[data-date="2026-08-11"]')
-  await expect(day.locator('.overview-shift-icons')).toHaveCount(0)
+  await expect(day.locator('.overview-shift-icons')).toHaveClass(/is-empty/)
+  await expect(day.locator('.overview-shift-icons .shift-icon')).toHaveCount(0)
   await expect(day).toHaveAttribute('aria-label', /엄마 근무 OFF/)
   await page.getByRole('button', { name: '근무', exact: true }).click()
   await expect(day.locator('.shift-chip')).toHaveText('OFF')
@@ -912,10 +948,10 @@ test('모바일 가족 캘린더 범례를 날짜 상세보다 먼저 표시한�
 
 test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', async ({ page }) => {
   await page.getByRole('button', { name: '할 일', exact: true }).first().click()
-  await page.getByRole('button', { name: '새 할 일' }).click()
+  await page.getByRole('button', { name: '추가', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('제목').fill('매주 분리수거')
-  await dialog.getByLabel('마감일').fill('2026-08-11')
+  await dialog.getByLabel('날짜').fill('2026-08-11')
   await dialog.getByRole('button', { name: /알림·반복 설정/ }).click()
   await dialog.getByLabel('반복 주기').selectOption('weekly')
   await dialog.getByRole('button', { name: '할 일 추가' }).click()
@@ -933,15 +969,64 @@ test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', asy
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-tasks') || '[]').find((task) => task.title === '매주 분리수거')?.completedDates || [])).toContain('2026-08-11')
 })
 
-test('자녀 캘린더 도트를 데스크톱과 모바일 모두 표시한다', async ({ page }) => {
+test('자녀 캘린더는 자녀별 아바타와 일정 개수를 표시한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'child-dot', title: '도트 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' }]))
   })
   await page.reload()
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
-  await expect(page.locator('[data-date="2026-08-11"] .child-schedule-dots')).toHaveCSS('display', 'flex')
-  await expect(page.locator('[data-date="2026-08-11"] .child-schedule-dots i')).toHaveCount(1)
+  const marker = page.locator('[data-date="2026-08-11"] .child-calendar-counts')
+  await expect(marker).toHaveCSS('display', 'flex')
+  await expect(marker.locator('.child-calendar-count')).toHaveCount(1)
+  await expect(marker.locator('.child-calendar-count')).toHaveText('초1')
+})
+
+test('모바일 월간 전체 캘린더는 82px 고정 4행 셀과 17px 근무 배지를 사용한다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([
+      { id: 'day-shift', date: '2026-08-08', member: 'emma', shift: 'day' },
+      { id: 'off-shift', date: '2026-08-09', member: 'emma', shift: 'off' },
+    ]))
+    localStorage.setItem('family-scheduler-events', JSON.stringify([
+      { id: 'family-one', title: '가족 일정', date: '2026-08-08', endDate: '2026-08-08', time: '종일', member: 'emma', members: ['emma'], calendarScope: 'family' },
+      { id: 'child-one', title: '자녀 일정', date: '2026-08-08', endDate: '2026-08-08', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' },
+    ]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const day = page.locator('[data-date="2026-08-08"]')
+  const slots = day.locator('.calendar-cell-slots')
+  await expect(slots.locator('.calendar-cell-top')).toHaveCount(1)
+  await expect(slots.locator('.calendar-cell-holiday')).toHaveCount(1)
+  await expect(slots.locator('.calendar-cell-family')).toHaveText(/1/)
+  await expect(slots.locator('.calendar-cell-children')).toHaveText(/1/)
+  await expect(day.locator('.overview-shift-icons .shift-icon')).toHaveCount(1)
+  const metrics = await day.evaluate((cell) => {
+    const number = cell.querySelector('.calendar-day-number')
+    const shift = cell.querySelector('.overview-shift-icons .shift-icon')
+    return {
+      height: Math.round(cell.getBoundingClientRect().height),
+      paddingLeft: getComputedStyle(cell).paddingLeft,
+      numberSize: getComputedStyle(number).fontSize,
+      numberWidth: Math.round(number.getBoundingClientRect().width),
+      shiftWidth: Math.round(shift.getBoundingClientRect().width),
+      shiftHeight: Math.round(shift.getBoundingClientRect().height),
+      slots: cell.querySelector('.calendar-cell-slots').children.length,
+    }
+  })
+  expect(metrics).toEqual({ height: 82, paddingLeft: '4px', numberSize: '17px', numberWidth: 23, shiftWidth: 17, shiftHeight: 17, slots: 4 })
+  await expect(page.locator('[data-date="2026-08-09"] .overview-shift-icons')).toHaveClass(/is-empty/)
+})
+
+test('근무 상세 제목은 구성원 아바타와 날짜만 표시한다', async ({ page }) => {
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.getByRole('button', { name: '근무', exact: true }).click()
+  const heading = page.locator('.shift-editor-heading')
+  await expect(heading.locator('.avatar')).toHaveText('엄')
+  await expect(heading.getByRole('heading', { name: '8월 11일 화요일' })).toBeVisible()
+  await expect(heading).not.toContainText('엄마 근무표')
 })
 
 test('이전·다음 달 셀은 내용 없이 비활성화한다', async ({ page }) => {
@@ -1076,17 +1161,17 @@ test('전체 캘린더의 두 자리 가족·자녀 개수를 자르지 않고 �
   await page.reload()
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   const cell = page.locator('[data-date="2026-08-11"]')
-  await expect(cell.locator('.overview-count-label.family b')).toHaveText('12')
-  await expect(cell.locator('.overview-count-label.children b')).toHaveText('12')
+  await expect(cell.locator('.calendar-cell-family b')).toHaveText('12')
+  await expect(cell.locator('.calendar-cell-children b')).toHaveText('12')
   const markerLayout = await cell.evaluate((button) => {
     const bounds = button.getBoundingClientRect()
-    const markers = [...button.querySelectorAll('.overview-count-label')]
+    const markers = [...button.querySelectorAll('.calendar-cell-count')]
     return {
       allInside: markers.every((marker) => {
         const rect = marker.getBoundingClientRect()
         return rect.left >= bounds.left && rect.right <= bounds.right && rect.bottom <= bounds.bottom
       }),
-      overflowVisible: getComputedStyle(button.querySelector('.calendar-overview-markers')).overflow === 'visible',
+      overflowVisible: getComputedStyle(button.querySelector('.calendar-cell-slots')).overflow === 'visible',
     }
   })
   expect(markerLayout).toEqual({ allInside: true, overflowVisible: true })

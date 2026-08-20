@@ -15,7 +15,7 @@
 - 근무·가족·자녀 상세 행은 공통 `ScheduleRow`를 사용한다.
 - 첫 줄은 `아바타 · 일정명 · 장소`, 둘째 줄은 `시간 · 반복 규칙` 순서다.
 - 둘째 줄은 첫 줄보다 정확히 `2px` 작고 `font-weight: 400`, `var(--muted)` 색상이다.
-- 일정 행의 제목/메타 간격은 `6px`, 일반 행 좌우 내부 여백은 `9px / 7px`, 높이는 `68px`로 통일했다. 홈 시간 타임라인은 카드 모양을 없애기 위해 좌우 여백을 `0`으로 둔다.
+- 일정 행은 공통 `ScheduleRow`의 `56px` 규격을 사용하며 인라인 수정·삭제 버튼 없이 행 클릭 작업 시트를 연다.
 - AI 템플릿처럼 보이던 구성원 색상 세로 강조선은 홈·캘린더·할 일·일정 관리에서 모두 제거했다.
 - 가족 일정도 시간, 장소, 반복 규칙을 빠뜨리지 않고 표시한다.
 - 가족 할 일도 제목/메타/기한·반복을 같은 2단 구조로 표시한다.
@@ -57,6 +57,16 @@
 - 오늘 타임라인은 시간 열을 제목과 같은 왼쪽 기준선에 맞춘다. 시간 영역–점과 점–아바타 간격은 기존의 두 배인 `8px`, 아바타–일정 본문은 가족 할 일과 같은 `10px`로 맞추고 축을 `67px` 위치로 옮겼다.
 - OFF처럼 시간이 없는 근무는 `시간 미정` 목록에서 숨기고 오늘 요약에서만 표시한다.
 - 오늘 요약과 이번 주 요약의 근무 배경은 공통 토큰으로 `12px` 둥근 모서리를 사용한다.
+- 홈 오늘 일정은 최대 `10개`까지 표시하고 초과분만 더보기로 안내한다.
+- 전날 시작해 오늘 아침 끝나는 야간 근무를 오늘 타임라인에 이어 표시하며, 시간이 없는 OFF는 본문이 아닌 요약에만 표시한다.
+- 마감일이 오늘보다 지난 미완료 할 일도 오늘의 `시간 미정` 구획과 요약에 유지한다.
+- 모바일 월간 전체 캘린더는 `82px` 고정 셀 안에 날짜·공휴일·가족·자녀 네 슬롯을 항상 유지하고 빈 슬롯은 `visibility: hidden`으로 정렬을 보존한다.
+- 모바일 월간 전체 캘린더의 날짜는 `17px / 700`, D/E/N 배지는 `17 × 17px`, 셀 패딩은 `4px`, 카드 패딩은 `6px`로 검증했다.
+- 오늘 날짜 숫자는 다른 날짜와 동일한 크기와 위치를 유지하고, 선택 상태만 배경으로 구분한다.
+- 자녀 캘린더는 각 자녀의 아바타 이니셜과 일정 개수를 함께 표시한다.
+- 자녀 학교·학원 행은 학원 칩을 일정명 옆에 배치해 세로 높이를 줄였다.
+- 근무 상세 헤더는 구성원 아바타와 날짜만 표시하고 중복된 `엄마 근무표` 문구를 제거했다.
+- 모바일 주요 카드 사이 세로 간격은 화면 좌우 여백과 같은 `14px`로 통일했다.
 
 ## Click-to-manage behavior
 
@@ -71,13 +81,13 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium + Mobile Chromium: `66 passed`, `6 conditionally skipped`
-- Combined end-to-end result: `66 passed`, `6 conditionally skipped`
-- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `68px`, 일반 행 left/right padding `9px / 7px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 시간 왼쪽선–제목 왼쪽선 오차 `1px` 이내, 시간–점 `8px`, 점–아바타 `8px`, 아바타–일정 본문 `10px`, 타임라인 점 중심 `68px` 이내, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용
+- Desktop Chromium + Mobile Chromium: `71 passed`, `7 conditionally skipped`
+- Combined end-to-end result: `71 passed`, `7 conditionally skipped`
+- Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `56px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용, 전체 캘린더 4개 고정 슬롯과 `82px` 셀 높이, `17px` 근무 배지
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
 - Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 생성일 기준 시간 없는 할 일 노출, OFF 근무 본문 중복 제거, 최신 근무 입력 선택, D/E/N/OFF별 해·일몰·달·달력 아이콘, 근무 배경 콘텐츠 폭 적용, 할 일 시작·종료 시간 저장과 목록 표시
-- In-app Browser: local iPhone 16 Pro `402 × 874`; 이번 주 E 근무 배경은 `44.46 × 26px`, 모서리 `12px`이며 아이콘·근무명까지만 감싸고 글자 잘림과 가로 넘침 없음
+- In-app Browser: local iPhone 16 Pro `402 × 874`; 홈과 캘린더에서 문서 가로 넘침이 없고, 월간 전체 캘린더는 모든 셀의 네 슬롯과 동일한 높이를 유지한다.
 - Data migration/storage keys: unchanged
 
 ## Review note

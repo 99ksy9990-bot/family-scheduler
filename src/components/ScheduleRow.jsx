@@ -15,6 +15,7 @@ export default function ScheduleRow({
   conflict = false,
   category,
   categoryClassName = '',
+  categoryInline = false,
   trailing,
   onClick,
   ariaLabel,
@@ -46,6 +47,7 @@ export default function ScheduleRow({
       <span className="schedule-row-copy" title={[title, primaryMeta, time, secondaryMeta ?? meta].filter(Boolean).join(' · ')}>
         <span className="schedule-row-primary">
           <strong className="schedule-row-title home-event-title">{title}</strong>
+          {category && categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
           {primaryMeta && <><i aria-hidden="true">·</i><span className="schedule-row-location">{primaryMeta}</span></>}
         </span>
         {(time || secondaryMeta || meta || status) && <span className="schedule-row-secondary">
@@ -55,7 +57,7 @@ export default function ScheduleRow({
         </span>}
       </span>
       {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
-      {category && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
+      {category && !categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
       {trailing && <span className="schedule-row-trailing">{trailing}</span>}
     </article>
   )
