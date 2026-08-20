@@ -1478,7 +1478,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .overview-add-actions { gap: 5px; }
   .overview-add-actions .small-add { min-width: 0; padding-inline: 10px; }
   .overview-day-section { padding: 12px; }
-  .shift-chip { min-height: 22px; gap: 2px; padding: 3px 4px; font-size: 9px; }
+  .shift-chip { min-height: 22px; gap: 1px; padding: 3px; font-size: 9px; }
   .shift-chip svg { display: block; width: 9px; height: 9px; }
   .shift-editor-grid button { padding: 11px; }
   .shift-editor-grid button .shift-option-label { gap: 6px; padding: 8px 9px; }
