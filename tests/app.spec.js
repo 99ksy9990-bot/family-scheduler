@@ -478,6 +478,11 @@ test('주요 화면을 이동한다', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '가족 일정 관리' })).toBeVisible()
 })
 
+test('캘린더 보기 탭은 전체 근무 가족 자녀 순서로 표시한다', async ({ page }) => {
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await expect(page.locator('.calendar-toolbar .segmented button')).toHaveText(['전체', '근무', '가족', '자녀'])
+})
+
 test('자녀 일정 탭의 전체 등록 개수와 아래 목록 개수가 일치한다', async ({ page }) => {
   const childSchedules = [
     ...Array.from({ length: 5 }, (_, index) => ({
@@ -1091,6 +1096,12 @@ test('모바일 가족 캘린더 범례를 날짜 상세보다 먼저 표시한�
   await expect(dayPanel.locator('.member-legend')).toHaveCount(0)
   const order = await Promise.all([legend, dayPanel].map((locator) => locator.evaluate((element) => element.getBoundingClientRect().top)))
   expect(order[0]).toBeLessThan(order[1])
+  const centers = await Promise.all([legend, page.locator('.calendar-grid')].map((locator) => locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return Math.round(rect.left + rect.width / 2)
+  })))
+  expect(Math.abs(centers[0] - centers[1])).toBeLessThanOrEqual(1)
+  await expect(legend).toHaveCSS('justify-content', 'center')
 })
 
 test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', async ({ page }) => {
@@ -1119,26 +1130,35 @@ test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', asy
 
 test('자녀 캘린더는 자녀별 아바타와 일정 개수를 표시한다', async ({ page }) => {
   await page.evaluate(() => {
-    localStorage.setItem('family-scheduler-events', JSON.stringify([{ id: 'child-dot', title: '도트 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' }]))
+    localStorage.setItem('family-scheduler-events', JSON.stringify([
+      { id: 'child-dot-leo', title: '초롱 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'leo', members: ['leo'], calendarScope: 'children' },
+      { id: 'child-dot-mia', title: '연두 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'mia', members: ['mia'], calendarScope: 'children' },
+    ]))
   })
   await page.reload()
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: '자녀', exact: true }).click()
   const marker = page.locator('[data-date="2026-08-11"] .child-calendar-counts')
   await expect(marker).toHaveCSS('display', 'flex')
-  await expect(marker.locator('.child-calendar-count')).toHaveCount(1)
-  await expect(marker.locator('.child-calendar-count')).toHaveText('초1')
-  const avatarFit = await marker.locator('.child-calendar-count i').evaluate((avatar) => {
-    const style = getComputedStyle(avatar)
-    return {
-      fits: avatar.scrollWidth <= avatar.clientWidth && avatar.scrollHeight <= avatar.clientHeight,
-      width: Number.parseFloat(style.width),
-      fontSize: Number.parseFloat(style.fontSize),
-    }
+  await expect(marker.locator('.child-calendar-count')).toHaveCount(2)
+  await expect(marker.locator('.child-calendar-count')).toHaveText(['초1', '연1'])
+  const markerFit = await marker.evaluate((container) => {
+    const containerRect = container.getBoundingClientRect()
+    return [...container.querySelectorAll('.child-calendar-count')].map((row) => {
+      const rowRect = row.getBoundingClientRect()
+      const avatar = row.querySelector('i')
+      const avatarStyle = getComputedStyle(avatar)
+      return {
+        fullyVisible: rowRect.top >= containerRect.top && rowRect.bottom <= containerRect.bottom,
+        avatarFits: avatar.scrollWidth <= avatar.clientWidth && avatar.scrollHeight <= avatar.clientHeight,
+        avatarWidth: Number.parseFloat(avatarStyle.width),
+        fontSize: Number.parseFloat(avatarStyle.fontSize),
+      }
+    })
   })
-  expect(avatarFit.fits).toBe(true)
-  expect(avatarFit.width).toBeGreaterThanOrEqual(17)
-  expect(avatarFit.fontSize).toBeGreaterThanOrEqual(10)
+  expect(markerFit.every(({ fullyVisible, avatarFits }) => fullyVisible && avatarFits)).toBe(true)
+  expect(markerFit.every(({ avatarWidth }) => avatarWidth >= 17)).toBe(true)
+  expect(markerFit.every(({ fontSize }) => fontSize >= 10)).toBe(true)
 })
 
 test('모바일 월간 전체 캘린더는 82px 고정 4행 셀과 16px 날짜·17px 근무 배지를 사용한다', async ({ page }, testInfo) => {

@@ -595,9 +595,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .day-dots { display: none; gap: 4px; margin-top: 7px; }
 .day-dots i { width: 7px; height: 7px; border-radius: 50%; }
 .child-month-calendar .child-schedule-dots { display: flex; }
-.child-calendar-counts { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 0; }
+.child-calendar-counts { width: 100%; min-height: 33px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 1px; margin-top: 0; overflow: visible; }
 .child-calendar-count { min-width: 0; display: inline-flex; align-items: center; gap: 2px; color: var(--child, var(--primary)); font-size: 10px; font-weight: 500; line-height: 1; }
-.child-calendar-count i { width: 17px; min-width: 17px; height: 17px; flex: 0 0 17px; display: inline-flex; align-items: center; justify-content: center; overflow: visible; border: 1px solid currentColor; border-radius: 5px; font-size: 10px; font-style: normal; font-weight: 700; line-height: 1; }
+.child-calendar-count i { width: 17px; min-width: 17px; height: 16px; flex: 0 0 17px; display: inline-flex; align-items: center; justify-content: center; overflow: visible; border: 1px solid currentColor; border-radius: 5px; font-size: 10px; font-style: normal; font-weight: 700; line-height: 1; }
 .child-calendar-count b { font: inherit; }
 .calendar-overview-markers { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; width: 100%; margin-top: 6px; overflow: visible; }
 .overview-count-label { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 2px; color: #667278; font-family: 'A2Z', sans-serif; font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap; }
@@ -673,7 +673,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .empty-state { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); text-align: center; }
 .empty-state svg { margin-bottom: 5px; }
 .empty-state span { max-width: 210px; font-size: 13px; line-height: 1.5; }
-.member-legend { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--line); }
+.member-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--line); }
 .member-legend span { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
 .member-legend i { width: 8px; height: 8px; border-radius: 50%; }
 .shift-day-panel { min-width: 0; padding: 28px; }

@@ -1144,8 +1144,8 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
         <div className="segmented">
           {[
             ['all', CALENDAR_MODES.all],
-            ['family', CALENDAR_MODES.family],
             ...(workSettings.enabled && shiftWorkers.length ? [['work', CALENDAR_MODES.work]] : []),
+            ['family', CALENDAR_MODES.family],
             ...(children.length ? [['children', CALENDAR_MODES.children]] : []),
           ].map(([modeId, labelText]) => <button key={modeId} aria-pressed={currentMode === modeId} className={currentMode === modeId ? 'active' : ''} onClick={() => setMode(modeId)}>{labelText}</button>)}
         </div>
