@@ -29,6 +29,31 @@ test('홈 화면을 표시한다', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '8월 11일(화) 일정' })).toBeVisible()
 })
 
+test('모든 화면의 콘텐츠 시작 여백을 헤더 아래 절반 간격으로 통일한다', async ({ page }) => {
+  await page.setViewportSize({ width: 402, height: 874 })
+  await page.reload()
+
+  for (const name of ['홈', '캘린더', '할 일', '일정 관리', '설정']) {
+    await page.getByRole('button', { name, exact: true }).first().click()
+    const spacing = await page.locator('main > .page').evaluate((content) => {
+      const header = document.querySelector('.app-header')
+      return {
+        paddingTop: getComputedStyle(content).paddingTop,
+        firstContentGap: Math.round(content.firstElementChild.getBoundingClientRect().top - header.getBoundingClientRect().bottom),
+      }
+    })
+    expect(spacing).toEqual({ paddingTop: '15px', firstContentGap: 15 })
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.getByRole('button', { name: '홈', exact: true }).first().click()
+  const desktopSpacing = await page.locator('main > .page').evaluate((content) => ({
+    paddingTop: getComputedStyle(content).paddingTop,
+    firstContentGap: Math.round(content.firstElementChild.getBoundingClientRect().top - document.querySelector('.app-header').getBoundingClientRect().bottom),
+  }))
+  expect(desktopSpacing).toEqual({ paddingTop: '26px', firstContentGap: 26 })
+})
+
 test('구성원 색을 새 팔레트로 중복 없이 결정적으로 마이그레이션한다', async ({ page }) => {
   const first = migrateMemberProfiles(profiles)
   const second = migrateMemberProfiles(profiles)
@@ -487,6 +512,12 @@ test('자녀 일정 탭의 전체 등록 개수와 아래 목록 개수가 일�
   await expect(page.getByRole('heading', { name: '등록 일정' })).toBeVisible()
   await expect(page.getByText('학기 일정 1', { exact: true })).toBeVisible()
   await expect(page.getByText('방학 일정 1', { exact: true })).toBeVisible()
+  const categoryAlignment = await page.locator('.managed-child-schedule-row').first().evaluate((row) => {
+    const category = row.querySelector('.schedule-row-category').getBoundingClientRect()
+    const cell = row.getBoundingClientRect()
+    return Math.abs((category.top + category.height / 2) - (cell.top + cell.height / 2))
+  })
+  expect(categoryAlignment).toBeLessThanOrEqual(1)
 })
 
 test('기념일·자녀 정보·학기 방학은 행 클릭 후 수정 삭제한다', async ({ page }) => {
@@ -1097,6 +1128,17 @@ test('자녀 캘린더는 자녀별 아바타와 일정 개수를 표시한다',
   await expect(marker).toHaveCSS('display', 'flex')
   await expect(marker.locator('.child-calendar-count')).toHaveCount(1)
   await expect(marker.locator('.child-calendar-count')).toHaveText('초1')
+  const avatarFit = await marker.locator('.child-calendar-count i').evaluate((avatar) => {
+    const style = getComputedStyle(avatar)
+    return {
+      fits: avatar.scrollWidth <= avatar.clientWidth && avatar.scrollHeight <= avatar.clientHeight,
+      width: Number.parseFloat(style.width),
+      fontSize: Number.parseFloat(style.fontSize),
+    }
+  })
+  expect(avatarFit.fits).toBe(true)
+  expect(avatarFit.width).toBeGreaterThanOrEqual(17)
+  expect(avatarFit.fontSize).toBeGreaterThanOrEqual(10)
 })
 
 test('모바일 월간 전체 캘린더는 82px 고정 4행 셀과 16px 날짜·17px 근무 배지를 사용한다', async ({ page }, testInfo) => {
@@ -1198,13 +1240,14 @@ test('근무 입력 카드는 셀 전체에 근무색을 채우고 내용을 가
   await expect(page.getByText(/\d+\/\d+일 입력/)).toHaveCount(0)
 })
 
-test('광복절 대체공휴일은 대체공휴일만 표시하고 공휴일 라인을 셀 가운데에 둔다', async ({ page }) => {
+test('광복절 대체휴일은 대체휴일만 표시하고 공휴일 라인을 셀 가운데에 둔다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   const liberation = page.locator('[data-date="2026-08-15"]')
   const substitute = page.locator('[data-date="2026-08-17"]')
   await expect(liberation.locator('.calendar-cell-holiday')).toHaveText('광복절')
-  await expect(substitute.locator('.calendar-cell-holiday')).toHaveText('대체공휴일')
+  await expect(substitute.locator('.calendar-cell-holiday')).toHaveText('대체휴일')
   await expect(substitute.locator('.calendar-cell-holiday')).not.toContainText('광복절')
+  await expect(substitute.locator('.calendar-cell-holiday')).not.toContainText('대체공휴일')
   const positions = await liberation.evaluate((cell) => {
     const date = cell.querySelector('.calendar-cell-top').getBoundingClientRect()
     const holiday = cell.querySelector('.calendar-cell-holiday').getBoundingClientRect()

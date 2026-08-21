@@ -674,7 +674,6 @@ function ManagedChildScheduleRow({ schedule, canEdit, onEdit, onDelete }) {
       time={timeLabel}
       secondaryMeta={formatScheduleWeekdays(schedule)}
       category={schedule.kind}
-      categoryInline
       onClick={hasActions ? () => setSheetOpen(true) : undefined}
       ariaLabel={hasActions ? `${schedule.title} 작업 열기` : undefined}
       rowRef={rowRef}

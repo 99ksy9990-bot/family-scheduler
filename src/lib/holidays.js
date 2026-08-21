@@ -9,7 +9,7 @@ export const holidaysForYear = (year) => {
     date,
     holidays.map((holiday) => ({
       ...holiday,
-      name: holiday.substitute ? '대체공휴일' : holiday.name,
+      name: holiday.substitute ? '대체휴일' : holiday.name,
     })),
   ]))
   holidayYearCache.set(year, holidayMap)
@@ -24,7 +24,7 @@ export const holidayEventsForDate = (date, holidayMemberId = 'holiday') => (
   title: holiday.name,
   time: '종일',
   end: '',
-  location: holiday.substitute ? '대한민국 대체공휴일' : '대한민국 공휴일',
+  location: holiday.substitute ? '대한민국 대체휴일' : '대한민국 공휴일',
   member: holidayMemberId,
   type: 'holiday',
   holiday: true,
