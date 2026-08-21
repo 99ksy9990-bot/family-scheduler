@@ -134,6 +134,13 @@ const eventStartsOnDate = (event: Record<string, unknown>, targetDate: string) =
   return false
 }
 
+const remindersFor = (item: Record<string, unknown>) => {
+  if (Array.isArray(item.reminders)) {
+    return [...new Set(item.reminders.filter((value): value is string => typeof value === 'string' && Boolean(value)))]
+  }
+  return typeof item.reminder === 'string' && item.reminder !== 'none' ? [item.reminder] : []
+}
+
 const notificationCandidates = (state: Record<string, unknown>, now: Date) => {
   const current = koreanNow(now)
   const currentMs = now.getTime()
@@ -144,39 +151,65 @@ const notificationCandidates = (state: Record<string, unknown>, now: Date) => {
   const reminderDates = [current.date, addDate(current.date, 1)]
 
   events.forEach((event) => {
-    if (event.reminder !== '30-minutes' || typeof event.time !== 'string') return
-    const minutes = parseTime(event.time)
-    if (minutes === null) return
-    reminderDates.forEach((occurrenceDate) => {
-      if (!eventStartsOnDate(event, occurrenceDate)) return
-      if (exceptions.some((exception) => exception.scheduleId === event.id && exception.date === occurrenceDate && exception.type === 'skip')) return
-      const startMs = dateAtKstMinutes(occurrenceDate, minutes)
-      const triggerMs = startMs - 30 * 60 * 1000
-      if (currentMs < triggerMs || currentMs >= triggerMs + 60 * 1000) return
-      candidates.push({
-        key: `event-${String(event.id)}-${occurrenceDate}-${minutes}-30`,
-        title: '30분 뒤 일정',
-        body: `${String(event.title || '가족 일정')} · ${event.time}${event.location ? ` · ${String(event.location)}` : ''}`,
-        url: '/?view=calendar',
+    const reminders = remindersFor(event)
+    if (!reminders.length) return
+    reminders.forEach((reminder) => {
+      if (reminder === 'same-day') {
+        if (current.hour !== 9 || current.minute !== 0 || !eventStartsOnDate(event, current.date)) return
+        if (exceptions.some((exception) => exception.scheduleId === event.id && exception.date === current.date && exception.type === 'skip')) return
+        candidates.push({
+          key: `event-${String(event.id)}-${current.date}-same-day`,
+          title: '오늘 일정',
+          body: `${String(event.title || '가족 일정')}${event.time ? ` · ${String(event.time)}` : ''}${event.location ? ` · ${String(event.location)}` : ''}`,
+          url: '/?view=calendar',
+        })
+        return
+      }
+      if ((reminder !== '30-minutes' && reminder !== '10-minutes') || typeof event.time !== 'string') return
+      const minutes = parseTime(event.time)
+      if (minutes === null) return
+      const offset = reminder === '30-minutes' ? 30 : 10
+      reminderDates.forEach((occurrenceDate) => {
+        if (!eventStartsOnDate(event, occurrenceDate)) return
+        if (exceptions.some((exception) => exception.scheduleId === event.id && exception.date === occurrenceDate && exception.type === 'skip')) return
+        const startMs = dateAtKstMinutes(occurrenceDate, minutes)
+        const triggerMs = startMs - offset * 60 * 1000
+        if (currentMs < triggerMs || currentMs >= triggerMs + 60 * 1000) return
+        candidates.push({
+          key: `event-${String(event.id)}-${occurrenceDate}-${minutes}-${offset}`,
+          title: `${offset}분 뒤 일정`,
+          body: `${String(event.title || '가족 일정')} · ${event.time}${event.location ? ` · ${String(event.location)}` : ''}`,
+          url: '/?view=calendar',
+        })
       })
     })
   })
 
-  if (current.hour === 9 && current.minute === 0) {
-    tasks.forEach((task) => {
-      if (task.done || !task.dueDate || !task.reminder || task.reminder === 'none') return
-      const due = new Date(`${String(task.dueDate)}T00:00:00+09:00`)
-      const trigger = new Date(due)
-      if (task.reminder === 'day-before') trigger.setDate(trigger.getDate() - 1)
-      if (koreanNow(trigger).date !== current.date) return
+  tasks.forEach((task) => {
+    if (task.done) return
+    const taskDate = typeof task.dueDate === 'string' && task.dueDate ? task.dueDate : typeof task.startDate === 'string' ? task.startDate : ''
+    if (!taskDate) return
+    remindersFor(task).forEach((reminder) => {
+      if (reminder === 'same-day') {
+        if (current.hour !== 9 || current.minute !== 0 || taskDate !== current.date) return
+      } else if (reminder === '30-minutes' || reminder === '10-minutes') {
+        if (typeof task.time !== 'string') return
+        const minutes = parseTime(task.time)
+        if (minutes === null) return
+        const offset = reminder === '30-minutes' ? 30 : 10
+        const triggerMs = dateAtKstMinutes(taskDate, minutes) - offset * 60 * 1000
+        if (currentMs < triggerMs || currentMs >= triggerMs + 60 * 1000) return
+      } else if (reminder === 'day-before') {
+        if (current.hour !== 9 || current.minute !== 0 || addDate(current.date, 1) !== taskDate) return
+      } else return
       candidates.push({
-        key: `task-${String(task.id)}-${current.date}-${String(task.reminder)}`,
-        title: task.reminder === 'day-before' ? '내일 마감할 일' : '오늘 마감할 일',
+        key: `task-${String(task.id)}-${taskDate}-${reminder}`,
+        title: reminder === 'day-before' ? '내일 마감할 일' : reminder === 'same-day' ? '오늘 할 일' : `${reminder === '30-minutes' ? 30 : 10}분 뒤 할 일`,
         body: String(task.title || '가족 할 일'),
         url: '/?view=tasks',
       })
     })
-  }
+  })
   return candidates
 }
 

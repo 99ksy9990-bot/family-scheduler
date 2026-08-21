@@ -53,7 +53,7 @@ export default function ScheduleRow({
         {(time || secondaryMeta || meta || status) && <span className="schedule-row-secondary">
           {time && <span className="schedule-row-time event-time">{time}</span>}
           {(secondaryMeta ?? meta) && <>{time && <i aria-hidden="true">·</i>}<span className="schedule-row-repeat">{secondaryMeta ?? meta}</span></>}
-          {status && <><i aria-hidden="true">·</i><span className="schedule-row-status">{status}</span></>}
+          {status && <span className="schedule-row-status">{status}</span>}
         </span>}
       </span>
       {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}

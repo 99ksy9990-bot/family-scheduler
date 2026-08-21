@@ -286,10 +286,55 @@ test('오늘 일정은 전날 야간 근무를 이어 표시하고 최대 10개�
   await expect(todayCard.locator('.home-event-row')).toHaveCount(10)
   await expect(todayCard.getByText('N', { exact: true })).toBeVisible()
   await expect(todayCard.getByText(/오후 10:00 ~ 익일 오전 8:00/)).toBeVisible()
+  await expect(todayCard.locator('.home-event-row').filter({ hasText: 'N' }).locator('.schedule-row-timeline-time')).toHaveText('오전 8:00')
+  expect((await todayCard.locator('.schedule-row-status').allTextContents()).every((text) => !text.includes('·'))).toBe(true)
   await expect(todayCard.getByRole('button', { name: '+2개 일정 더보기' })).toBeVisible()
   const fourDigitTime = todayCard.locator('.schedule-row-timeline-time').filter({ hasText: '오전 9:12' })
   await expect(fourDigitTime).toBeVisible()
   expect(await fourDigitTime.evaluate((time) => time.scrollWidth <= time.clientWidth)).toBe(true)
+})
+
+test('일정과 할 일은 당일·30분 전·10분 전 알림을 중복 선택해 저장한다', async ({ page }) => {
+  await page.getByRole('button', { name: '일정 추가' }).click()
+  let dialog = page.getByRole('dialog')
+  await dialog.getByLabel('제목').fill('중복 알림 일정')
+  await dialog.getByRole('button', { name: /시간·장소·반복 설정/ }).click()
+  await dialog.getByRole('checkbox', { name: '당일 알림' }).check()
+  await dialog.getByRole('checkbox', { name: '30분 전' }).check()
+  await dialog.getByRole('checkbox', { name: '10분 전' }).check()
+  await dialog.getByRole('button', { name: '일정 추가' }).click()
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-events') || '[]').find((event) => event.title === '중복 알림 일정')?.reminders)).toEqual(['same-day', '30-minutes', '10-minutes'])
+
+  await page.getByRole('button', { name: '할 일', exact: true }).first().click()
+  await page.getByRole('button', { name: '추가', exact: true }).click()
+  dialog = page.getByRole('dialog')
+  await dialog.getByLabel('제목').fill('중복 알림 할 일')
+  await dialog.getByRole('button', { name: /시간·알림·반복 설정/ }).click()
+  await dialog.getByRole('checkbox', { name: '당일 알림' }).check()
+  await dialog.getByRole('checkbox', { name: '30분 전' }).check()
+  await dialog.getByRole('checkbox', { name: '10분 전' }).check()
+  await dialog.getByRole('button', { name: '할 일 추가' }).click()
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-tasks') || '[]').find((task) => task.title === '중복 알림 할 일')?.reminders)).toEqual(['same-day', '30-minutes', '10-minutes'])
+})
+
+test('할 일 시작일자와 완료일자를 수정하고 완료 날짜를 과거로 기록한다', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('family-scheduler-tasks', JSON.stringify([{
+    id: 'dated-task', title: '날짜 기록 할 일', category: '집안일', startDate: '2026-08-10', dueDate: '2026-08-11', assignee: 'david', assignees: ['david'], done: false,
+  }])))
+  await page.reload()
+  await page.getByRole('button', { name: '할 일', exact: true }).first().click()
+  const card = page.locator('.task-card').filter({ hasText: '날짜 기록 할 일' })
+  await card.click()
+  await page.getByRole('dialog', { name: '날짜 기록 할 일 작업' }).getByRole('button', { name: '수정' }).click()
+  const dialog = page.getByRole('dialog', { name: '할 일 수정' })
+  await dialog.getByLabel('시작일자').fill('2026-08-09')
+  await dialog.getByLabel('마감일자').fill('2026-08-10')
+  await dialog.getByLabel('완료일자').fill('2026-08-10')
+  await dialog.getByRole('button', { name: '수정 완료' }).click()
+  await expect.poll(async () => page.evaluate(() => {
+    const task = JSON.parse(localStorage.getItem('family-scheduler-tasks') || '[]').find((item) => item.id === 'dated-task')
+    return task && { startDate: task.startDate, dueDate: task.dueDate, completedDate: task.completedDate, done: task.done }
+  })).toEqual({ startDate: '2026-08-09', dueDate: '2026-08-10', completedDate: '2026-08-10', done: true })
 })
 
 test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중 일정을 구분한다', async ({ page }) => {
@@ -484,7 +529,7 @@ test('일정 입력 화면의 섹션 간격을 동일하게 유지한다', async
     const advanced = element.querySelector('.advanced-toggle.active')
     const dateField = element.querySelector('.event-date-field')
     const warning = element.querySelector('.form-warning')
-    const reminder = [...element.querySelectorAll('label')].find((label) => label.textContent.startsWith('앱 알림'))
+    const reminder = element.querySelector('.reminder-field')
     return {
       advancedToDate: Math.round(dateField.getBoundingClientRect().top - advanced.getBoundingClientRect().bottom),
       warningToReminder: Math.round(reminder.getBoundingClientRect().top - warning.getBoundingClientRect().bottom),
@@ -615,7 +660,8 @@ test('할 일에 시작 및 종료 시간을 선택적으로 저장하고 목록
   await page.getByRole('button', { name: '추가', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: /할 일 추가/ })
   await dialog.getByLabel('제목').fill('학교 픽업')
-  await dialog.getByLabel('날짜').fill('2026-08-11')
+  await dialog.getByLabel('시작일자').fill('2026-08-11')
+  await dialog.getByLabel('마감일자').fill('2026-08-11')
   await dialog.getByRole('button', { name: /알림·반복 설정/ }).click()
   await dialog.getByRole('button', { name: '시작·종료', exact: true }).click()
   await dialog.getByLabel('시작 시간 오전 오후').selectOption('오후')
@@ -951,7 +997,8 @@ test('반복 할 일은 이번 회차 완료 상태를 따로 저장한다', asy
   await page.getByRole('button', { name: '추가', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('제목').fill('매주 분리수거')
-  await dialog.getByLabel('날짜').fill('2026-08-11')
+  await dialog.getByLabel('시작일자').fill('2026-08-11')
+  await dialog.getByLabel('마감일자').fill('2026-08-11')
   await dialog.getByRole('button', { name: /알림·반복 설정/ }).click()
   await dialog.getByLabel('반복 주기').selectOption('weekly')
   await dialog.getByRole('button', { name: '할 일 추가' }).click()
@@ -1062,7 +1109,7 @@ test('기존 자녀 전용 일정은 자녀 캘린더로 분리한다', async ({
   await expect(page.locator('.child-direct-events').getByText('기존 자녀 일정', { exact: true })).toBeVisible()
 })
 
-test('근무 카드 포커스 테두리는 셀 안쪽에 표시하고 색 배경은 근무명까지만 표시한다', async ({ page }) => {
+test('근무 입력 카드는 셀 전체에 근무색을 채우고 내용을 가운데 정렬한다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.getByRole('button', { name: '근무', exact: true }).click()
   const shiftButton = page.locator('.shift-editor-grid button').first()
@@ -1073,11 +1120,31 @@ test('근무 카드 포커스 테두리는 셀 안쪽에 표시하고 색 배경
     return {
       buttonBackground: getComputedStyle(button).backgroundColor,
       labelBackground: label ? getComputedStyle(label).backgroundColor : null,
-      labelNarrowerThanButton: label ? label.getBoundingClientRect().width < button.getBoundingClientRect().width : false,
+      alignItems: getComputedStyle(button).alignItems,
+      textAlign: getComputedStyle(button).textAlign,
     }
   })
-  expect(appearance).toEqual({ buttonBackground: 'rgb(255, 255, 255)', labelBackground: 'rgb(217, 233, 179)', labelNarrowerThanButton: true })
+  expect(appearance).toEqual({ buttonBackground: 'rgb(217, 233, 179)', labelBackground: 'rgba(0, 0, 0, 0)', alignItems: 'center', textAlign: 'center' })
   await expect(page.getByText(/\d+\/\d+일 입력/)).toHaveCount(0)
+})
+
+test('광복절 대체공휴일은 대체공휴일만 표시하고 공휴일 라인을 셀 가운데에 둔다', async ({ page }) => {
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  const liberation = page.locator('[data-date="2026-08-15"]')
+  const substitute = page.locator('[data-date="2026-08-17"]')
+  await expect(liberation.locator('.calendar-cell-holiday')).toHaveText('광복절')
+  await expect(substitute.locator('.calendar-cell-holiday')).toHaveText('대체공휴일')
+  await expect(substitute.locator('.calendar-cell-holiday')).not.toContainText('광복절')
+  const positions = await liberation.evaluate((cell) => {
+    const date = cell.querySelector('.calendar-cell-top').getBoundingClientRect()
+    const holiday = cell.querySelector('.calendar-cell-holiday').getBoundingClientRect()
+    const family = cell.querySelector('.calendar-cell-family').getBoundingClientRect()
+    return {
+      upperGap: Math.round(holiday.top - date.bottom),
+      lowerGap: Math.round(family.top - holiday.bottom),
+    }
+  })
+  expect(Math.abs(positions.upperGap - positions.lowerGap)).toBeLessThanOrEqual(1)
 })
 
 test('구형 근무 설정도 근무별 아이콘을 복원하고 모바일에서 칩과 편집기가 넘치지 않는다', async ({ page }) => {

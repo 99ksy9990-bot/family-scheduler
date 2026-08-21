@@ -49,6 +49,20 @@ const TASK_PERIOD_FILTERS = [
   { id: 'week', label: '이번 주' },
   { id: 'month', label: '이번 달' },
 ]
+const REMINDER_OPTIONS = [
+  { id: 'same-day', label: '당일 알림' },
+  { id: '30-minutes', label: '30분 전' },
+  { id: '10-minutes', label: '10분 전' },
+]
+
+const reminderValuesFor = (item = {}) => {
+  if (Array.isArray(item.reminders)) return [...new Set(item.reminders.filter(Boolean))]
+  return item.reminder && item.reminder !== 'none' ? [item.reminder] : []
+}
+
+const taskDisplayDate = (task) => task.done
+  ? (task.completedDate || task.dueDate || task.startDate || task.createdDate)
+  : (task.dueDate || task.startDate || task.createdDate)
 
 const MIN_ANNIVERSARY_YEAR = 1950
 const anniversaryYearsFor = (date) => Array.from(
@@ -694,7 +708,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
         ? [recurringTaskOccurrence(task, today)]
         : []
     }
-    const taskDate = task.dueDate || task.createdDate
+    const taskDate = task.dueDate || task.startDate || task.createdDate
     return !task.done && taskDate && taskDate <= iso(today) ? [task] : []
   })
   const weekStart = addDays(today, -today.getDay())
@@ -714,7 +728,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
       workerShifts: dayWorkerShifts,
       taskCount: tasks.filter((task) => hasRecurrence(task)
         ? recurringTaskOccursOn(task, date) && !task.skippedDates?.includes(dateKey)
-        : (task.dueDate || task.createdDate) === dateKey).length,
+        : taskDisplayDate(task) === dateKey).length,
     }
   })
   const todayWorkerShifts = workSettings.enabled ? shiftWorkers.map((worker) => {
@@ -732,8 +746,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     id: `home-shift-carryover-${worker.id}-${iso(previousDate)}`,
     title: option.code,
     date: iso(today),
-    time: '오전 12:00',
-    timelineTime: '오전 12:00',
+    time: formatDisplayTime(option.end),
+    timelineTime: formatDisplayTime(option.end),
     end: formatDisplayTime(option.end),
     displayTime: formatTimelineRange(formatDisplayTime(option.start), formatDisplayTime(option.end), true),
     member: worker.id,
@@ -762,7 +776,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     id: `home-task-${task.id}`,
     sourceTaskId: task.id,
     title: task.title,
-    date: task.dueDate || task.createdDate,
+    date: taskDisplayDate(task),
     time: task.time || '종일',
     end: task.end || '',
     member: task.assignee || 'family',
@@ -1315,7 +1329,11 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
   const taskActionTriggerRef = useRef(null)
   const categories = ['긴급', '장보기', '집안일']
   const toggleTask = (task) => setTasks((current) => current.map((source) => {
-    if (!task.recurringTask || source.id !== task.sourceTaskId) return source.id === task.id ? { ...source, done: !source.done } : source
+    if (!task.recurringTask || source.id !== task.sourceTaskId) return source.id === task.id ? {
+      ...source,
+      done: !source.done,
+      completedDate: source.done ? '' : (source.completedDate || iso(today)),
+    } : source
     const completedDates = new Set(source.completedDates || [])
     if (completedDates.has(task.occurrenceDate)) completedDates.delete(task.occurrenceDate)
     else completedDates.add(task.occurrenceDate)
@@ -1337,7 +1355,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
       if (periodFilter === 'all') return recurringTaskOccurrencesBetween(task, today, addDays(today, 90)).slice(0, 12)
     }
     if (periodFilter === 'all') return [task]
-    const taskDate = task.dueDate || task.createdDate
+    const taskDate = taskDisplayDate(task)
     return taskDate && iso(taskRange[0]) <= taskDate && taskDate <= iso(taskRange[1]) ? [task] : []
   })
   const completedInPeriod = periodTasks.filter((task) => task.done).length
@@ -1357,7 +1375,9 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
 
   const renderTaskCard = (task) => {
     const visibleMeta = task.meta && task.meta.replace(/\s/g, '') !== '새로추가됨' ? task.meta : ''
-    const dueCopy = task.dueDate ? `${task.dueDate}${task.reminder && task.reminder !== 'none' ? ' 알림' : ''}` : ''
+    const dueCopy = task.dueDate ? `마감 ${task.dueDate}${reminderValuesFor(task).length ? ' 알림' : ''}` : ''
+    const startCopy = task.startDate ? `시작 ${task.startDate}` : ''
+    const completedCopy = task.completedDate ? `완료 ${task.completedDate}` : ''
     const taskTimeCopy = task.time ? `${task.time}${task.end ? ` ~ ${task.end}` : ''}` : ''
     const recurrenceLabel = formatRecurrenceLabel({ ...task, date: task.dueDate })
     const memberIds = assignedMemberIds(task, 'assignees', 'assignee')
@@ -1370,7 +1390,7 @@ function TasksView({ today, tasks, setTasks, openModal, canEdit, notifyUndo, pus
       leading={<><button className="checkbox" onClick={(event) => { event.stopPropagation(); toggleTask(task) }} aria-label={`${task.done ? '다시 열기' : '완료하기'} ${task.title}`}>{task.done && <Check />}</button><AvatarGroup memberIds={memberIds} /></>}
       title={task.title}
       primaryMeta={visibleMeta}
-      secondaryMeta={[taskTimeCopy, dueCopy, recurrenceLabel].filter(Boolean).join(' · ')}
+      secondaryMeta={[taskTimeCopy, startCopy, dueCopy, completedCopy, recurrenceLabel].filter(Boolean).join(' · ')}
       category={task.category}
       categoryClassName={task.category === '긴급' ? 'urgent' : ''}
       onClick={canEdit ? (event) => { taskActionTriggerRef.current = event.currentTarget; setActionTask(task) } : undefined}
@@ -1927,6 +1947,14 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
   )
 }
 
+function ReminderPicker({ value, onChange }) {
+  const selected = new Set(value)
+  const toggle = (id) => onChange(selected.has(id) ? value.filter((item) => item !== id) : [...value, id])
+  return <fieldset className="reminder-field"><legend>알림 <small>중복 선택 가능</small></legend><div className="reminder-options">
+    {REMINDER_OPTIONS.map((option) => <label key={option.id}><input type="checkbox" checked={selected.has(option.id)} onChange={() => toggle(option.id)} /><span>{option.label}</span></label>)}
+  </div></fieldset>
+}
+
 function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDate, onAfterSave, onNavigateAfterSave, onClose, onAddEvent, onUpdateEvent, onDeleteEvent, onAddTask, onUpdateTask, onDeleteTask, returnFocusRef }) {
   const dialogRef = useModalAccessibility(true, onClose, returnFocusRef)
   const { activeProfiles, children } = useFamilyProfiles()
@@ -1945,7 +1973,7 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
   const [hasTime, setHasTime] = useState(() => item || defaults.time ? Boolean((item?.time || defaults.time) && (item?.time || defaults.time) !== '종일') : Boolean(recentEventDefaults.hasTime))
   const [hasEndTime, setHasEndTime] = useState(() => item || defaults.time || defaults.end ? Boolean(item?.end || defaults.end) : Boolean(recentEventDefaults.hasEndTime))
   const [showAdvanced, setShowAdvanced] = useState(() => isTask
-    ? Boolean(item?.time || defaults.time || (item?.reminder && item.reminder !== 'none') || item?.recurrence || (defaults.reminder && defaults.reminder !== 'none') || defaults.recurrence)
+    ? Boolean(item?.time || defaults.time || reminderValuesFor(item).length || item?.recurrence || reminderValuesFor(defaults).length || defaults.recurrence)
     : Boolean(item))
   const [location, setLocation] = useState(item?.location || defaults.location || '')
   const defaultMember = item?.member || item?.assignee || defaults.member || recentEventDefaults.members?.[0] || activeProfiles[0]?.id || FAMILY_MEMBER.id
@@ -1955,8 +1983,10 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
   })
   const member = selectedMembers[0] || FAMILY_MEMBER.id
   const [category, setCategory] = useState(item?.category || defaults.category || '집안일')
+  const [startDate, setStartDate] = useState(item?.startDate || defaults.startDate || (isTask && !item ? iso(today) : ''))
   const [dueDate, setDueDate] = useState(item?.dueDate || defaults.dueDate || '')
-  const [reminder, setReminder] = useState(item?.reminder || defaults.reminder || 'none')
+  const [completedDate, setCompletedDate] = useState(item?.completedDate || defaults.completedDate || '')
+  const [reminders, setReminders] = useState(() => reminderValuesFor(item).length ? reminderValuesFor(item) : reminderValuesFor(defaults))
   const [repeatFrequency, setRepeatFrequency] = useState(item?.recurrence?.frequency || defaults.recurrence?.frequency || 'none')
   const [repeatInterval, setRepeatInterval] = useState(item?.recurrence?.interval || defaults.recurrence?.interval || 1)
   const [repeatUntil, setRepeatUntil] = useState(item?.recurrence?.until || defaults.recurrence?.until || '')
@@ -1993,7 +2023,9 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
     const submitted = new FormData(event.currentTarget)
     const submittedEventDate = String(submitted.get('eventDate') || eventDate)
     const submittedEventEndDate = String(submitted.get('eventEndDate') || (showAdvanced ? eventEndDate : submittedEventDate) || submittedEventDate)
+    const submittedStartDate = String(submitted.get('startDate') || startDate)
     const submittedDueDate = String(submitted.get('dueDate') || dueDate)
+    const submittedCompletedDate = String(submitted.get('completedDate') || completedDate)
     if (!isTask && submittedEventEndDate < submittedEventDate) {
       setEventDateError('종료일자는 시작일자보다 빠를 수 없습니다.')
       return
@@ -2003,10 +2035,11 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
       setEventDateError('반복 할 일은 첫 날짜를 선택해 주세요.')
       return
     }
-    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, assignees: selectedMembers, dueDate: submittedDueDate, time: hasTime ? time : '', end: hasTime && hasEndTime ? end : '', reminder, recurrence: repeatValue })
-    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, assignees: selectedMembers, dueDate: submittedDueDate, time: hasTime ? time : '', end: hasTime && hasEndTime ? end : '', reminder, recurrence: repeatValue, completedDates: [], skippedDates: [] })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder: hasTime ? reminder : 'none', recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope })
+    const reminder = reminders[0] || 'none'
+    if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, assignees: selectedMembers, startDate: submittedStartDate, dueDate: submittedDueDate, completedDate: submittedCompletedDate, done: Boolean(submittedCompletedDate), time: hasTime ? time : '', end: hasTime && hasEndTime ? end : '', reminder, reminders, recurrence: repeatValue })
+    else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, assignees: selectedMembers, startDate: submittedStartDate, dueDate: submittedDueDate, completedDate: submittedCompletedDate, done: Boolean(submittedCompletedDate), time: hasTime ? time : '', end: hasTime && hasEndTime ? end : '', reminder, reminders, recurrence: repeatValue, completedDates: [], skippedDates: [] })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder, reminders, recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder, reminders, recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope })
     if (!isTask) {
       try { window.localStorage.setItem('family-scheduler-recent-event-v1', JSON.stringify({ calendarScope, members: selectedMembers, hasTime, hasEndTime, time, end })) } catch { /* 최근 입력값 저장 실패는 일정 저장을 막지 않습니다. */ }
     }
@@ -2050,10 +2083,14 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
           {hasEndTime && <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>}
         </div>}
         {!isTask && showAdvanced && conflictingEvents.length > 0 && <div className="form-warning" role="status"><AlertTriangle /><span><strong>시간이 겹치는 일정이 있습니다.</strong>{conflictingEvents.slice(0, 2).map((event) => event.title).join(' · ')}</span></div>}
-        {!isTask && showAdvanced && hasTime && <label>앱 알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="30-minutes">30분 전</option></select></label>}
+        {!isTask && showAdvanced && <ReminderPicker value={reminders} onChange={setReminders} />}
         {!isTask && showAdvanced && <label>장소<input value={location} onChange={(event) => setLocation(event.target.value)} /></label>}
         {isTask && <label>분류<select value={category} onChange={(event) => setCategory(event.target.value)}><option>긴급</option><option>장보기</option><option>집안일</option></select></label>}
-        {isTask && <label>날짜<input name="dueDate" type="date" value={dueDate} onInput={(event) => setDueDate(event.currentTarget.value)} onChange={(event) => setDueDate(event.currentTarget.value)} /></label>}
+        {isTask && <fieldset className="task-date-field"><legend>할 일 날짜</legend><div className="task-date-row">
+          <label>시작일자<input name="startDate" type="date" value={startDate} onInput={(event) => setStartDate(event.currentTarget.value)} onChange={(event) => setStartDate(event.currentTarget.value)} /></label>
+          <label>마감일자<input name="dueDate" type="date" value={dueDate} onInput={(event) => setDueDate(event.currentTarget.value)} onChange={(event) => setDueDate(event.currentTarget.value)} /></label>
+          <label>완료일자<input name="completedDate" type="date" value={completedDate} onInput={(event) => setCompletedDate(event.currentTarget.value)} onChange={(event) => setCompletedDate(event.currentTarget.value)} /></label>
+        </div></fieldset>}
         {isTask && <button type="button" className={`advanced-toggle ${showAdvanced ? 'active' : ''}`} aria-expanded={showAdvanced} onClick={() => setShowAdvanced((current) => !current)}><Settings2 /> <span><strong>시간·알림·반복 설정</strong><small>{showAdvanced ? '추가 설정 닫기' : '필요할 때만 펼치기'}</small></span><ChevronRight /></button>}
         {isTask && showAdvanced && <fieldset className="all-day-field"><legend>시간</legend><div className="segmented event-time-mode">
           <button type="button" className={!hasTime ? 'active' : ''} aria-pressed={!hasTime} onClick={() => setHasTime(false)}>시간 없음</button>
@@ -2064,7 +2101,7 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
           <fieldset className="time-field"><legend>시작 시간</legend><TimePicker label="시작 시간" value={time} fallback="오전 9:00" onChange={setTime} /></fieldset>
           {hasEndTime && <fieldset className="time-field"><legend>종료 시간</legend><TimePicker label="종료 시간" value={end} fallback="오전 10:00" onChange={setEnd} /></fieldset>}
         </div>}
-        {isTask && showAdvanced && <label>알림<select value={reminder} onChange={(event) => setReminder(event.target.value)}><option value="none">알림 없음</option><option value="same-day">당일 알림</option><option value="day-before">하루 전 알림</option></select></label>}
+        {isTask && showAdvanced && <ReminderPicker value={reminders} onChange={setReminders} />}
         {showAdvanced && <fieldset className="repeat-field"><legend>{isTask ? '반복 할 일' : '반복'}</legend><div className="repeat-controls">
           <select aria-label="반복 주기" value={repeatFrequency} onChange={(event) => setRepeatFrequency(event.target.value)}>
             <option value="none">반복 안 함</option>{!isTask && <option value="daily">매일</option>}<option value="weekly">매주</option><option value="monthly">매월</option>{!isTask && <option value="yearly">매년</option>}
@@ -2261,7 +2298,16 @@ export default function App() {
       setScheduleExceptions((current) => [...current, ...removedExceptions])
     })
   }
-  const addTask = (task) => setTasks((current) => [...current, { ...task, id: createId('task'), createdDate: iso(new Date()), done: false }])
+  const addTask = (task) => {
+    const createdDate = iso(new Date())
+    setTasks((current) => [...current, {
+      ...task,
+      id: createId('task'),
+      createdDate,
+      startDate: task.startDate || createdDate,
+      done: Boolean(task.completedDate || task.done),
+    }])
+  }
   const updateTask = (updatedTask) => setTasks((current) => current.map((task) => task.id === updatedTask.id ? updatedTask : task))
   const deleteTask = (taskId) => {
     const removed = tasks.find((task) => task.id === taskId)

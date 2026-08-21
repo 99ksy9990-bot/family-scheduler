@@ -5,7 +5,13 @@ const holidayYearCache = new Map()
 
 export const holidaysForYear = (year) => {
   if (holidayYearCache.has(year)) return holidayYearCache.get(year)
-  const holidayMap = new Map(Object.entries(koreanHolidayData[String(year)] || {}))
+  const holidayMap = new Map(Object.entries(koreanHolidayData[String(year)] || {}).map(([date, holidays]) => [
+    date,
+    holidays.map((holiday) => ({
+      ...holiday,
+      name: holiday.substitute ? '대체공휴일' : holiday.name,
+    })),
+  ]))
   holidayYearCache.set(year, holidayMap)
   return holidayMap
 }

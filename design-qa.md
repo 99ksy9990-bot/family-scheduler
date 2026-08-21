@@ -6,6 +6,8 @@
 - Work-calendar reference: `/var/folders/8l/51nrjkvx1cvcwlxhcj_0w4g80000gn/T/TemporaryItems/NSIRD_screencaptureui_nr5JqS/스크린샷 2026-08-14 오전 11.34.12.png`
 - Home timeline spacing reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/1D3897DA-EF8B-460D-BF1A-56B0442E0932/1-사진-1.jpg`
 - Latest mobile implementation evidence: `/tmp/family-scheduler-timeline-spacing-402-viewport.png`
+- Holiday reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/B7D84A29-6395-4898-A776-81296B0CE53A/1-사진-1.jpg`
+- Holiday implementation evidence: `/tmp/family-scheduler-holiday-402.png`
 - Side-by-side evidence: `/tmp/family-scheduler-qa-comparison.png`
 - Target viewports: desktop Chromium, mobile Chromium `402 × 874`
 - Scope: 홈 오늘 일정, 통합 캘린더 상세, 가족 할 일, 일정 관리의 기념일·자녀 정보·학기/방학
@@ -67,6 +69,11 @@
 - 자녀 학교·학원 행은 학원 칩을 일정명 옆에 배치해 세로 높이를 줄였다.
 - 근무 상세 헤더는 구성원 아바타와 날짜만 표시하고 중복된 `엄마 근무표` 문구를 제거했다.
 - 모바일 주요 카드 사이 세로 간격은 화면 좌우 여백과 같은 `14px`로 통일했다.
+- 광복절은 15일 셀의 고정 공휴일 슬롯에 수직 중앙 정렬하고, 17일은 원 공휴일명을 반복하지 않고 `대체공휴일`만 표시한다.
+- 전날 시작한 야간 근무는 오늘 타임라인에서 실제 종료 시각인 `오전 8:00`을 왼쪽 시간 열에 표시한다.
+- 근무 입력 선택지는 셀 전체를 D/E/N/OFF 고유색으로 채우고 아이콘·근무명·시간을 가운데 정렬한다.
+- 일정과 할 일은 `당일 알림`, `30분 전`, `10분 전`을 중복 선택해 저장하며 푸시 예약도 각각 계산한다.
+- 할 일은 시작일자·마감일자·완료일자를 별도로 저장하고 나중에 과거 완료일로 정정할 수 있다.
 
 ## Click-to-manage behavior
 
@@ -81,13 +88,14 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium + Mobile Chromium: `71 passed`, `7 conditionally skipped`
-- Combined end-to-end result: `71 passed`, `7 conditionally skipped`
+- Desktop Chromium + Mobile Chromium: `77 passed`, `7 conditionally skipped`
+- Combined end-to-end result: `77 passed`, `7 conditionally skipped`
 - Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `56px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용, 전체 캘린더 4개 고정 슬롯과 `82px` 셀 높이, `17px` 근무 배지
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
 - Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 생성일 기준 시간 없는 할 일 노출, OFF 근무 본문 중복 제거, 최신 근무 입력 선택, D/E/N/OFF별 해·일몰·달·달력 아이콘, 근무 배경 콘텐츠 폭 적용, 할 일 시작·종료 시간 저장과 목록 표시
 - In-app Browser: local iPhone 16 Pro `402 × 874`; 홈과 캘린더에서 문서 가로 넘침이 없고, 월간 전체 캘린더는 모든 셀의 네 슬롯과 동일한 높이를 유지한다.
+- In-app Browser comparison: 제공된 광복절 참조와 최신 `402 × 874` 구현을 같은 점검 입력에서 비교했고, 15일 광복절과 17일 대체공휴일의 고정 슬롯·말줄임·셀 높이를 확인했다.
 - Data migration/storage keys: unchanged
 
 ## Review note
