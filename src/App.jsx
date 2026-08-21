@@ -1508,8 +1508,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
   const currentPeriodMember = periodForm.member === 'all' || children.some((child) => child.id === periodForm.member) ? periodForm.member : primaryChildId
 
   const visibleSchedules = [...childSchedules]
-    .filter((schedule) => schedule.season === season)
-    .sort((a, b) => `${a.member}-${scheduleWeekdays(a)[0]}-${a.time}`.localeCompare(`${b.member}-${scheduleWeekdays(b)[0]}-${b.time}`))
+    .sort((a, b) => `${a.season}-${a.member}-${scheduleWeekdays(a)[0]}-${a.time}`.localeCompare(`${b.season}-${b.member}-${scheduleWeekdays(b)[0]}-${b.time}`))
   const sortedAnniversaries = [...anniversaries].sort((a, b) => {
     const first = nextAnniversaryOccurrence(a)?.getTime() ?? Number.MAX_SAFE_INTEGER
     const second = nextAnniversaryOccurrence(b)?.getTime() ?? Number.MAX_SAFE_INTEGER
@@ -1906,7 +1905,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
         </section>
 
       {children.length > 0 && <section className="saved-child-schedules">
-        <div className="section-heading"><div><span className="eyebrow">달력에 반복 반영</span><h2>{season} 등록 일정</h2></div><span className="count-badge">{visibleSchedules.length}</span></div>
+        <div className="section-heading"><div><span className="eyebrow">달력에 반복 반영</span><h2>등록 일정</h2></div><span className="count-badge">{visibleSchedules.length}</span></div>
         <div className="child-schedule-list">
           {visibleSchedules.map((schedule) => <ManagedChildScheduleRow
             key={schedule.id}
@@ -1915,7 +1914,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
             onEdit={canEdit ? () => editSchedule(schedule) : undefined}
             onDelete={canEdit ? () => deleteSchedule(schedule) : undefined}
           />)}
-          {!visibleSchedules.length && <div className="empty-state card"><GraduationCap /><strong>{season} 일정이 없습니다</strong><span>위 입력란에서 학교나 학원 일정을 추가하세요.</span></div>}
+          {!visibleSchedules.length && <div className="empty-state card"><GraduationCap /><strong>등록된 일정이 없습니다</strong><span>위 입력란에서 학교나 학원 일정을 추가하세요.</span></div>}
         </div>
       </section>}</>}
 

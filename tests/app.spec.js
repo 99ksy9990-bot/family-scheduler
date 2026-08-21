@@ -453,6 +453,42 @@ test('주요 화면을 이동한다', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '가족 일정 관리' })).toBeVisible()
 })
 
+test('자녀 일정 탭의 전체 등록 개수와 아래 목록 개수가 일치한다', async ({ page }) => {
+  const childSchedules = [
+    ...Array.from({ length: 5 }, (_, index) => ({
+      id: `term-schedule-${index}`,
+      member: index % 2 ? 'mia' : 'leo',
+      kind: '학원',
+      title: `학기 일정 ${index + 1}`,
+      season: '학기',
+      weekdays: [index % 5 + 1],
+      weekday: index % 5 + 1,
+      time: '오후 2:00',
+      end: '오후 3:00',
+    })),
+    ...Array.from({ length: 4 }, (_, index) => ({
+      id: `vacation-schedule-${index}`,
+      member: index % 2 ? 'mia' : 'leo',
+      kind: '학원',
+      title: `방학 일정 ${index + 1}`,
+      season: '방학',
+      weekdays: [index % 5 + 1],
+      weekday: index % 5 + 1,
+      time: '오후 4:00',
+      end: '오후 5:00',
+    })),
+  ]
+  await page.evaluate((items) => localStorage.setItem('family-scheduler-child-schedules-v1', JSON.stringify(items)), childSchedules)
+  await page.reload()
+  await page.getByRole('button', { name: '일정 관리', exact: true }).first().click()
+
+  await expect(page.getByRole('button', { name: /자녀 일정/ })).toContainText('9')
+  await expect(page.locator('.child-schedule-list .managed-child-schedule-row')).toHaveCount(9)
+  await expect(page.getByRole('heading', { name: '등록 일정' })).toBeVisible()
+  await expect(page.getByText('학기 일정 1', { exact: true })).toBeVisible()
+  await expect(page.getByText('방학 일정 1', { exact: true })).toBeVisible()
+})
+
 test('기념일·자녀 정보·학기 방학은 행 클릭 후 수정 삭제한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify([
