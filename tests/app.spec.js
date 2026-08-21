@@ -1016,6 +1016,40 @@ test('모바일 캘린더 상단은 모든 보기에서 같은 구조와 중심�
   expect(new Set(layouts.map(({ titleTop, tabsTop, todayTop }) => `${titleTop}:${tabsTop}:${todayTop}`)).size).toBe(1)
 })
 
+test('전체부터 자녀까지 같은 월간 셀 폼과 1px 작은 날짜를 사용하고 일요일과 공휴일은 빨간색으로 표시한다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+
+  const layouts = []
+  for (const mode of ['전체', '가족', '근무', '자녀']) {
+    await page.locator('.calendar-toolbar .segmented').getByRole('button', { name: mode, exact: true }).click()
+    const grid = page.locator('.calendar-grid')
+    await expect(grid.locator(':scope > button')).toHaveCount(42)
+    await expect(grid.locator('.calendar-cell-slots')).toHaveCount(42)
+    layouts.push(await page.locator('[data-date="2026-08-11"]').evaluate((cell) => {
+      const number = cell.querySelector('.calendar-day-number').getBoundingClientRect()
+      const rect = cell.getBoundingClientRect()
+      return {
+        height: Math.round(rect.height),
+        numberLeft: Math.round(number.left - rect.left),
+        numberTop: Math.round(number.top - rect.top),
+      }
+    }))
+  }
+  expect(new Set(layouts.map(({ height, numberLeft, numberTop }) => `${height}:${numberLeft}:${numberTop}`)).size).toBe(1)
+
+  const normal = page.locator('[data-date="2026-08-10"] .calendar-day-number')
+  const sunday = page.locator('[data-date="2026-08-09"] .calendar-day-number')
+  const holiday = page.locator('[data-date="2026-08-15"] .calendar-day-number')
+  const styles = await Promise.all([normal, sunday, holiday].map((locator) => locator.evaluate((element) => ({
+    color: getComputedStyle(element).color,
+    size: Number.parseFloat(getComputedStyle(element).fontSize),
+  }))))
+  expect(styles[1].color).toBe('rgb(220, 38, 38)')
+  expect(styles[2].color).toBe('rgb(220, 38, 38)')
+  expect(styles.map(({ size }) => size)).toEqual([16, 16, 16])
+})
+
 test('모바일 가족 캘린더 범례를 날짜 상세보다 먼저 표시한다', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
@@ -1065,7 +1099,7 @@ test('자녀 캘린더는 자녀별 아바타와 일정 개수를 표시한다',
   await expect(marker.locator('.child-calendar-count')).toHaveText('초1')
 })
 
-test('모바일 월간 전체 캘린더는 82px 고정 4행 셀과 17px 근무 배지를 사용한다', async ({ page }, testInfo) => {
+test('모바일 월간 전체 캘린더는 82px 고정 4행 셀과 16px 날짜·17px 근무 배지를 사용한다', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('mobile'), '모바일 레이아웃 전용')
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([
@@ -1099,7 +1133,7 @@ test('모바일 월간 전체 캘린더는 82px 고정 4행 셀과 17px 근무 �
       slots: cell.querySelector('.calendar-cell-slots').children.length,
     }
   })
-  expect(metrics).toEqual({ height: 82, paddingLeft: '4px', numberSize: '17px', numberWidth: 23, shiftWidth: 17, shiftHeight: 17, slots: 4 })
+  expect(metrics).toEqual({ height: 82, paddingLeft: '4px', numberSize: '16px', numberWidth: 21, shiftWidth: 17, shiftHeight: 17, slots: 4 })
   await expect(page.locator('[data-date="2026-08-09"] .overview-shift-icons')).toHaveClass(/is-empty/)
 })
 

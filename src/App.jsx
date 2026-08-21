@@ -967,11 +967,14 @@ function ChildWeekView({ today, events, childSchedules, schedulePeriods, schedul
               aria-label={`${formatLongDate(date)}${childDotGroups.length ? `, ${childDotGroups.map(({ child, schedules }) => `${child.name} 일정 ${schedules.length}개`).join(', ')}` : ''}`}
               onClick={() => onSelectDate(date)}
             >
-              <span className="calendar-day-number">{day}</span>
-              <div className="child-calendar-counts" aria-hidden="true">
-                {childDotGroups.slice(0, 2).map(({ child, schedules }) => <span className="child-calendar-count" key={child.id} style={{ '--child': child.color, '--child-tone': child.tone }}>
-                  <i>{child.initials}</i><b>{schedules.length}</b>
-                </span>)}
+              <div className="calendar-cell-slots">
+                <span className="calendar-cell-top"><span className="calendar-day-number">{day}</span></span>
+                <small className={`calendar-cell-holiday calendar-holiday-name ${dateHolidays.length ? '' : 'is-empty'}`}>{dateHolidays[0]?.name || '공휴일 없음'}</small>
+                <div className="calendar-cell-mode-content child-calendar-counts" aria-hidden="true">
+                  {childDotGroups.slice(0, 2).map(({ child, schedules }) => <span className="child-calendar-count" key={child.id} style={{ '--child': child.color, '--child-tone': child.tone }}>
+                    <i>{child.initials}</i><b>{schedules.length}</b>
+                  </span>)}
+                </div>
               </div>
             </button>
           })}
@@ -1202,19 +1205,24 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
                     <small className={`calendar-cell-holiday calendar-holiday-name ${dayHoliday ? '' : 'is-empty'}`}>{dayHoliday?.title || '공휴일 없음'}</small>
                     <span className={`calendar-cell-count calendar-cell-family ${familyDayEvents.length ? '' : 'is-empty'}`}><Home /><b>{familyDayEvents.length}</b></span>
                     <span className={`calendar-cell-count calendar-cell-children ${childDayEvents.length ? '' : 'is-empty'}`}><GraduationCap /><b>{childDayEvents.length}</b></span>
-                  </div> : <><span className="calendar-day-number">{day}</span>{dayHoliday && <small className="calendar-holiday-name">{dayHoliday.title}</small>}</>}
-                  {currentMode === 'family' ? <>
-                    <div className="day-dots">
-                      {scheduledDayEvents.slice(0, 3).map((event) => {
-                        const member = memberForId(event.member, profiles)
-                        return <i key={event.id} style={{ background: member.color }} />
-                      })}
+                  </div> : <div className="calendar-cell-slots">
+                    <span className="calendar-cell-top"><span className="calendar-day-number">{day}</span></span>
+                    <small className={`calendar-cell-holiday calendar-holiday-name ${dayHoliday ? '' : 'is-empty'}`}>{dayHoliday?.title || '공휴일 없음'}</small>
+                    <div className={`calendar-cell-mode-content calendar-cell-${currentMode}`}>
+                      {currentMode === 'family' ? <>
+                        <div className="day-dots">
+                          {scheduledDayEvents.slice(0, 3).map((event) => {
+                            const member = memberForId(event.member, profiles)
+                            return <i key={event.id} style={{ background: member.color }} />
+                          })}
+                        </div>
+                        <div className="calendar-event-labels">
+                          {scheduledDayEvents.slice(0, 2).map((event) => <small key={event.id}>{event.title}</small>)}
+                          {scheduledDayEvents.length > 2 && <small className="more-count">+{scheduledDayEvents.length - 2}</small>}
+                        </div>
+                      </> : currentMode === 'work' && shiftOption && <span className={`shift-chip ${shiftOption.color}`}>{ShiftIcon && <ShiftIcon />}{shiftOption.shortLabel}</span>}
                     </div>
-                    <div className="calendar-event-labels">
-                      {scheduledDayEvents.slice(0, 2).map((event) => <small key={event.id}>{event.title}</small>)}
-                      {scheduledDayEvents.length > 2 && <small className="more-count">+{scheduledDayEvents.length - 2}</small>}
-                    </div>
-                  </> : currentMode === 'work' && shiftOption && <span className={`shift-chip ${shiftOption.color}`}>{ShiftIcon && <ShiftIcon />}{shiftOption.shortLabel}</span>}
+                  </div>}
                 </button>
               )
             })}

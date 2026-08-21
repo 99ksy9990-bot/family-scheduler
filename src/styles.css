@@ -570,30 +570,32 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .calendar-grid button.selected { background: #dbeef6; box-shadow: inset 0 0 0 1.5px var(--primary); }
 .calendar-grid button.today { background: #f3f9fb; }
 .calendar-grid button.today.selected { background: #dbeef6; }
-.calendar-grid button.today > span:first-child { min-width: 0; height: auto; display: inline; margin: 0; border-radius: 0; background: transparent; }
-.calendar-grid button.sunday > span:first-child, .calendar-grid button.holiday > span:first-child { color: var(--holiday); }
-.calendar-grid button.saturday:not(.holiday) > span:first-child { color: #4c575d; }
-.calendar-grid button.outside.sunday > span:first-child,
-.calendar-grid button.outside.saturday > span:first-child,
-.calendar-grid button.outside.holiday > span:first-child { color: #aeb6bb; }
-.calendar-grid button.today.sunday > span:first-child, .calendar-grid button.today.holiday > span:first-child { color: var(--holiday); box-shadow: none; }
-.calendar-grid button.today.saturday:not(.holiday) > span:first-child { color: #4c575d; }
+.calendar-grid button.today .calendar-day-number { min-width: 0; height: 22px; margin: 0; border-radius: 0; background: transparent; }
+.calendar-grid button.sunday:not(.outside) .calendar-day-number,
+.calendar-grid button.holiday:not(.outside) .calendar-day-number { color: var(--holiday); }
+.calendar-grid button.saturday:not(.holiday):not(.outside) .calendar-day-number { color: #4c575d; }
+.calendar-grid button.outside .calendar-day-number { color: #aeb6bb; }
+.calendar-grid button.today.sunday .calendar-day-number,
+.calendar-grid button.today.holiday .calendar-day-number { color: var(--holiday); box-shadow: none; }
+.calendar-grid button.today.saturday:not(.holiday) .calendar-day-number { color: #4c575d; }
 .calendar-grid button small { width: 100%; overflow: hidden; color: #4e5a60; font-size: 10px; white-space: nowrap; text-overflow: ellipsis; }
 .calendar-grid button .calendar-holiday-name { display: block; margin-top: 4px; color: #bd403b; font-size: 9px; font-weight: 800; }
 .calendar-cell-slots { width: 100%; display: grid; grid-template-rows: 22px 13px 14px 14px; align-content: start; gap: 1px; }
 .calendar-cell-top { min-width: 0; height: 22px; display: flex; align-items: center; gap: 3px; }
-.calendar-day-number { position: relative; width: calc(.667em * 2); height: 22px; flex: 0 0 auto; color: inherit; font-size: 17px; font-weight: 700; line-height: 22px; text-align: left; }
+.calendar-day-number { position: relative; width: calc(.667em * 2); height: 22px; flex: 0 0 auto; color: inherit; font-size: 16px; font-weight: 700; line-height: 22px; text-align: left; }
 .calendar-grid button .calendar-cell-holiday { min-width: 0; height: 13px; display: flex; align-items: center; margin: 0; overflow: hidden; color: var(--holiday); font-size: 9px; font-weight: 700; line-height: 13px; letter-spacing: -.04em; white-space: nowrap; text-overflow: ellipsis; }
 .calendar-cell-count { min-width: 0; height: 14px; display: flex; align-items: center; gap: 3px; color: #1d5670; font-size: 11px; font-weight: 500; line-height: 14px; }
 .calendar-cell-count svg { width: 11px; height: 11px; flex: 0 0 11px; }
 .calendar-cell-family { color: #5b7285; }
 .calendar-cell-slots .is-empty { visibility: hidden; }
+.calendar-cell-mode-content { min-width: 0; min-height: 29px; grid-row: 3 / span 2; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; overflow: hidden; }
+.calendar-cell-work .shift-chip { margin-top: 0; }
 .calendar-event-labels { width: 100%; display: grid; gap: 2px; margin-top: auto; }
 .calendar-event-labels .more-count { width: auto; justify-self: start; padding: 2px 5px; color: var(--primary); border-radius: 6px; background: #e6f3f7; font-weight: 800; }
 .day-dots { display: none; gap: 4px; margin-top: 7px; }
 .day-dots i { width: 7px; height: 7px; border-radius: 50%; }
 .child-month-calendar .child-schedule-dots { display: flex; }
-.child-calendar-counts { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 5px; }
+.child-calendar-counts { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 0; }
 .child-calendar-count { min-width: 0; display: inline-flex; align-items: center; gap: 2px; color: var(--child, var(--primary)); font-size: 10px; font-weight: 500; line-height: 1; }
 .child-calendar-count i { min-width: 15px; height: 15px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid currentColor; border-radius: 5px; font-size: 9px; font-style: normal; font-weight: 700; }
 .child-calendar-count b { font: inherit; }
