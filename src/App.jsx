@@ -2,7 +2,7 @@ import { createContext, Fragment, lazy, Suspense, useCallback, useContext, useEf
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import {
   AlertTriangle, Bell, BookOpen, CalendarDays, CalendarRange, Check, CheckSquare, Cloud,
-  ChevronLeft, ChevronRight, Clock3, Cog, Focus, GraduationCap, Home, Moon, Pencil,
+  ChevronDown, ChevronLeft, ChevronRight, Clock3, Cog, Focus, GraduationCap, Home, Moon, Pencil,
   Phone, Plus, RotateCcw, Search, Settings2, ShoppingBasket, Sparkles, Sun, Sunset, Trash2, Upload,
   UserRoundCheck, X,
 } from 'lucide-react'
@@ -252,13 +252,15 @@ const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap(
   }]
 })
 
-const activeSeasonForDate = (date, periods, member) => {
+const activePeriodForDate = (date, periods, member) => {
   const dateValue = iso(date)
   return periods
     .filter((period) => period.start <= dateValue && dateValue <= period.end)
     .filter((period) => !member || !period.member || period.member === 'all' || period.member === member)
-    .sort((a, b) => b.start.localeCompare(a.start) || Number(b.member === member) - Number(a.member === member))[0]?.season
+    .sort((a, b) => b.start.localeCompare(a.start) || Number(b.member === member) - Number(a.member === member))[0]
 }
+
+const activeSeasonForDate = (date, periods, member) => activePeriodForDate(date, periods, member)?.season
 
 const scheduleWeekdays = (schedule) => {
   const values = Array.isArray(schedule.weekdays) ? schedule.weekdays : [schedule.weekday]
@@ -1520,8 +1522,39 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
   const currentProfileMember = children.some((child) => child.id === profileMember) ? profileMember : primaryChildId
   const currentPeriodMember = periodForm.member === 'all' || children.some((child) => child.id === periodForm.member) ? periodForm.member : primaryChildId
 
-  const visibleSchedules = [...childSchedules]
-    .sort((a, b) => `${a.season}-${a.member}-${scheduleWeekdays(a)[0]}-${a.time}`.localeCompare(`${b.season}-${b.member}-${scheduleWeekdays(b)[0]}-${b.time}`))
+  const scheduleSortKey = (schedule) => `${schedule.member}-${scheduleWeekdays(schedule)[0]}-${schedule.time}-${schedule.title}`
+  const sortSchedules = (schedules) => [...schedules].sort((a, b) => scheduleSortKey(a).localeCompare(scheduleSortKey(b), 'ko'))
+  const activePeriodsByMember = new Map(children.map((child) => [child.id, activePeriodForDate(today, schedulePeriods, child.id)]))
+  const currentSchedules = sortSchedules(childSchedules.filter((schedule) => activePeriodsByMember.get(schedule.member)?.season === schedule.season))
+  const currentScheduleIds = new Set(currentSchedules.map((schedule) => schedule.id))
+  const inactiveScheduleGroups = [...childSchedules]
+    .filter((schedule) => !currentScheduleIds.has(schedule.id))
+    .reduce((groups, schedule) => {
+      const dateValue = iso(today)
+      const matchingPeriods = schedulePeriods
+        .filter((period) => period.season === schedule.season)
+        .filter((period) => !period.member || period.member === 'all' || period.member === schedule.member)
+      const period = matchingPeriods
+        .filter((candidate) => candidate.end < dateValue)
+        .sort((a, b) => b.end.localeCompare(a.end) || b.start.localeCompare(a.start))[0]
+        || matchingPeriods
+          .filter((candidate) => candidate.start > dateValue)
+          .sort((a, b) => a.start.localeCompare(b.start))[0]
+      const status = period ? (period.end < dateValue ? 'past' : 'upcoming') : 'unassigned'
+      const key = period ? `${period.id}-${schedule.member}` : `${status}-${schedule.member}-${schedule.season}`
+      const existing = groups.get(key) || { key, period, status, member: schedule.member, season: schedule.season, schedules: [] }
+      existing.schedules.push(schedule)
+      groups.set(key, existing)
+      return groups
+    }, new Map())
+  const sortedInactiveScheduleGroups = [...inactiveScheduleGroups.values()]
+    .map((group) => ({ ...group, schedules: sortSchedules(group.schedules) }))
+    .sort((a, b) => {
+      const statusOrder = { past: 0, upcoming: 1, unassigned: 2 }
+      return statusOrder[a.status] - statusOrder[b.status]
+        || (b.period?.end || '').localeCompare(a.period?.end || '')
+        || `${a.member}-${a.season}`.localeCompare(`${b.member}-${b.season}`, 'ko')
+    })
   const sortedAnniversaries = [...anniversaries].sort((a, b) => {
     const first = nextAnniversaryOccurrence(a)?.getTime() ?? Number.MAX_SAFE_INTEGER
     const second = nextAnniversaryOccurrence(b)?.getTime() ?? Number.MAX_SAFE_INTEGER
@@ -1764,7 +1797,7 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
 
       <nav className="management-tabs card" aria-label="일정 관리 구분">
         {[
-          ['children', '자녀 일정', childSchedules.length],
+          ['children', '자녀 일정', currentSchedules.length],
           ['periods', '학기·방학', schedulePeriods.length],
           ['profiles', '자녀 정보', savedChildProfiles.length],
           ['anniversaries', '기념일', anniversaries.length],
@@ -1918,17 +1951,37 @@ function SchedulesView({ today, childSchedules, setChildSchedules, childProfiles
         </section>
 
       {children.length > 0 && <section className="saved-child-schedules">
-        <div className="section-heading"><div><span className="eyebrow">달력에 반복 반영</span><h2>등록 일정</h2></div><span className="count-badge">{visibleSchedules.length}</span></div>
-        <div className="child-schedule-list">
-          {visibleSchedules.map((schedule) => <ManagedChildScheduleRow
+        <div className="section-heading"><div><span className="eyebrow">현재 기간에 달력 반영</span><h2>등록 일정</h2></div><span className="count-badge">{currentSchedules.length}</span></div>
+        <div className="child-schedule-list current-child-schedule-list">
+          {currentSchedules.map((schedule) => <ManagedChildScheduleRow
             key={schedule.id}
             schedule={schedule}
             canEdit={canEdit}
             onEdit={canEdit ? () => editSchedule(schedule) : undefined}
             onDelete={canEdit ? () => deleteSchedule(schedule) : undefined}
           />)}
-          {!visibleSchedules.length && <div className="empty-state card"><GraduationCap /><strong>등록된 일정이 없습니다</strong><span>위 입력란에서 학교나 학원 일정을 추가하세요.</span></div>}
+          {!currentSchedules.length && <div className="empty-state card"><GraduationCap /><strong>현재 적용 중인 일정이 없습니다</strong><span>현재 학기·방학 기간에 맞는 일정을 추가하세요.</span></div>}
         </div>
+        {sortedInactiveScheduleGroups.length > 0 && <section className="inactive-child-schedules" aria-labelledby="inactive-child-schedules-title">
+          <div className="inactive-child-schedules-heading"><h3 id="inactive-child-schedules-title">지난·예정 일정</h3><span>기간별로 접어 두었습니다.</span></div>
+          {sortedInactiveScheduleGroups.map((group) => {
+            const member = profiles.find((profile) => profile.id === group.member)
+            const statusLabel = group.status === 'past' ? '지난 기간' : group.status === 'upcoming' ? '예정 기간' : '기간 미지정'
+            const rangeLabel = group.period ? `${group.period.start} ~ ${group.period.end}` : '적용 기간을 등록해 주세요.'
+            return <details className={`inactive-child-schedule-group ${group.status === 'past' ? 'past-child-schedule-group' : ''}`} key={group.key}>
+              <summary><span><Avatar memberId={group.member} /><strong>{member?.name || '자녀'} · {group.season}</strong><small>{statusLabel} · {rangeLabel}</small></span><em>{group.schedules.length}</em><ChevronDown aria-hidden="true" /></summary>
+              <div className="child-schedule-list inactive-child-schedule-list">
+                {group.schedules.map((schedule) => <ManagedChildScheduleRow
+                  key={schedule.id}
+                  schedule={schedule}
+                  canEdit={canEdit}
+                  onEdit={canEdit ? () => editSchedule(schedule) : undefined}
+                  onDelete={canEdit ? () => deleteSchedule(schedule) : undefined}
+                />)}
+              </div>
+            </details>
+          })}
+        </section>}
       </section>}</>}
 
       <ScheduleActionSheet

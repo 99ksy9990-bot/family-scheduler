@@ -492,7 +492,7 @@ test('캘린더 보기 탭은 전체 근무 가족 자녀 순서로 표시한다
   await expect(page.locator('.calendar-toolbar .segmented button')).toHaveText(['전체', '근무', '가족', '자녀'])
 })
 
-test('자녀 일정 탭의 전체 등록 개수와 아래 목록 개수가 일치한다', async ({ page }) => {
+test('자녀 일정은 현재 적용 중인 기간만 먼저 보이고 지난 기간은 접어 둔다', async ({ page }) => {
   const childSchedules = [
     ...Array.from({ length: 5 }, (_, index) => ({
       id: `term-schedule-${index}`,
@@ -517,21 +517,51 @@ test('자녀 일정 탭의 전체 등록 개수와 아래 목록 개수가 일�
       end: '오후 5:00',
     })),
   ]
+  const schedulePeriods = [
+    { id: 'leo-vacation-past', member: 'leo', season: '방학', start: '2026-07-01', end: '2026-08-10' },
+    { id: 'mia-vacation-past', member: 'mia', season: '방학', start: '2026-07-01', end: '2026-08-10' },
+    { id: 'leo-term-current', member: 'leo', season: '학기', start: '2026-08-11', end: '2026-12-31' },
+    { id: 'mia-term-current', member: 'mia', season: '학기', start: '2026-08-11', end: '2026-12-31' },
+  ]
   await page.evaluate((items) => localStorage.setItem('family-scheduler-child-schedules-v1', JSON.stringify(items)), childSchedules)
+  await page.evaluate((items) => localStorage.setItem('family-scheduler-periods-v1', JSON.stringify(items)), schedulePeriods)
   await page.reload()
   await page.getByRole('button', { name: '일정 관리', exact: true }).first().click()
 
-  await expect(page.getByRole('button', { name: /자녀 일정/ })).toContainText('9')
-  await expect(page.locator('.child-schedule-list .managed-child-schedule-row')).toHaveCount(9)
+  await expect(page.getByRole('button', { name: /자녀 일정/ })).toContainText('5')
+  await expect(page.locator('.current-child-schedule-list .managed-child-schedule-row')).toHaveCount(5)
   await expect(page.getByRole('heading', { name: '등록 일정' })).toBeVisible()
   await expect(page.getByText('학기 일정 1', { exact: true })).toBeVisible()
-  await expect(page.getByText('방학 일정 1', { exact: true })).toBeVisible()
-  const categoryAlignment = await page.locator('.managed-child-schedule-row').first().evaluate((row) => {
+  const pastGroups = page.locator('.past-child-schedule-group')
+  await expect(pastGroups).toHaveCount(2)
+  await expect(pastGroups.first()).not.toHaveAttribute('open', '')
+  await expect(page.getByText('방학 일정 1', { exact: true })).toBeHidden()
+  await pastGroups.first().locator('summary').click()
+  await expect(pastGroups.first().locator('.managed-child-schedule-row').first()).toBeVisible()
+  const categoryAlignment = await page.locator('.current-child-schedule-list .managed-child-schedule-row').first().evaluate((row) => {
     const category = row.querySelector('.schedule-row-category').getBoundingClientRect()
     const cell = row.getBoundingClientRect()
     return Math.abs((category.top + category.height / 2) - (cell.top + cell.height / 2))
   })
   expect(categoryAlignment).toBeLessThanOrEqual(1)
+})
+
+test('홈 진행 표시는 일정명 옆에 있고 다가오는 7일 날짜는 왼쪽 여백을 확보한다', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('family-scheduler-events', JSON.stringify([
+    { id: 'active-class', title: '진행 중 수업', date: '2026-08-11', endDate: '2026-08-11', time: '오전 8:30', end: '오전 10:00', member: 'leo', members: ['leo'], calendarScope: 'children' },
+  ])))
+  await page.reload()
+
+  const activeRow = page.locator('.today-card .schedule-row').filter({ hasText: '진행 중 수업' })
+  await expect(activeRow.locator('.schedule-row-primary .schedule-row-status')).toHaveText('진행')
+
+  await page.setViewportSize({ width: 402, height: 874 })
+  const dateInset = await page.locator('.home-week-strip button').first().evaluate((row) => {
+    const rowRect = row.getBoundingClientRect()
+    const dateRect = row.querySelector('.week-date-label').getBoundingClientRect()
+    return Math.round(dateRect.left - rowRect.left)
+  })
+  expect(dateInset).toBeGreaterThanOrEqual(8)
 })
 
 test('기념일·자녀 정보·학기 방학은 행 클릭 후 수정 삭제한다', async ({ page }) => {

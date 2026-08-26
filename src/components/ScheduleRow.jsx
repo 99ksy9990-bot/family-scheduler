@@ -47,13 +47,13 @@ export default function ScheduleRow({
       <span className="schedule-row-copy" title={[title, primaryMeta, time, secondaryMeta ?? meta].filter(Boolean).join(' · ')}>
         <span className="schedule-row-primary">
           <strong className="schedule-row-title home-event-title">{title}</strong>
+          {status && <span className="schedule-row-status">{status}</span>}
           {category && categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
           {primaryMeta && <><i aria-hidden="true">·</i><span className="schedule-row-location">{primaryMeta}</span></>}
         </span>
-        {(time || secondaryMeta || meta || status) && <span className="schedule-row-secondary">
+        {(time || secondaryMeta || meta) && <span className="schedule-row-secondary">
           {time && <span className="schedule-row-time event-time">{time}</span>}
           {(secondaryMeta ?? meta) && <>{time && <i aria-hidden="true">·</i>}<span className="schedule-row-repeat">{secondaryMeta ?? meta}</span></>}
-          {status && <span className="schedule-row-status">{status}</span>}
         </span>}
       </span>
       {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
