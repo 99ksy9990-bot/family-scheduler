@@ -710,9 +710,8 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
     const taskDate = task.dueDate || task.startDate || task.createdDate
     return !task.done && taskDate && taskDate <= iso(today) ? [task] : []
   })
-  const weekStart = addDays(today, -today.getDay())
   const weekDays = Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(weekStart, index)
+    const date = addDays(today, index)
     const dateKey = iso(date)
     const dayEvents = eventsForDate(date, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
     const dayWorkerShifts = workSettings.enabled ? shiftWorkers.flatMap((worker) => {
@@ -862,7 +861,7 @@ function HomeView({ today, events, childSchedules, schedulePeriods, anniversarie
 
       <section className="week-strip-card card" aria-labelledby="week-strip-title">
         <div className="section-heading">
-          <div><h2 id="week-strip-title">이번 주 일정</h2></div>
+          <div><h2 id="week-strip-title">다가오는 7일</h2></div>
         </div>
         <div className="home-week-strip">
           {weekDays.map(({ date, generalEvents: dayGeneralEvents, childEvents: dayChildEvents, workerShifts: dayWorkerShifts, taskCount }) => {
@@ -1033,6 +1032,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
   const [cursor, setCursor] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1))
   const [selected, setSelected] = useState(initialDate)
   const [lastShiftChange, setLastShiftChange] = useState(null)
+  const [previewShiftId, setPreviewShiftId] = useState(shiftOptions[0]?.id || '')
   const [selectedShiftMemberId, setSelectedShiftMemberId] = useState(shiftWorkers[0]?.id || '')
   const dayPanelRef = useRef(null)
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
@@ -1050,6 +1050,8 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
     ? 'all'
     : mode === 'children' && !children.length ? 'all' : CALENDAR_MODES[mode] ? mode : 'all'
   const selectedShift = shiftEntryFor(shifts, selected, selectedShiftMember?.id)
+  const previewShiftOption = shiftOptions.find((option) => option.id === (selectedShift?.shift || previewShiftId)) || shiftOptions[0]
+  const PreviewShiftIcon = previewShiftOption?.icon
   const selectedWorkShifts = shiftWorkers.map((worker) => {
     const shift = shiftEntryFor(shifts, selected, worker.id)
     return { worker, shift, option: shiftOptions.find((option) => option.id === shift?.shift) }
@@ -1085,6 +1087,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
 
   const setSelectedShift = (shiftId) => {
     if (!canEdit || !selectedShiftMember) return
+    setPreviewShiftId(shiftId)
     const selectedDate = iso(selected)
     const previous = shiftEntryFor(shifts, selectedDate, selectedShiftMember.id)
     setLastShiftChange({ date: selectedDate, member: selectedShiftMember.id, previous: previous ? { ...previous } : null })
@@ -1268,14 +1271,17 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
             </div>
             <p className="shift-help">{isMonthEnd ? '월말에는 다음 달로 넘어가지 않습니다.' : '근무 선택 후 다음 날짜로 자동 이동합니다.'}</p>
             <div className="shift-editor-grid">
-              {shiftOptions.map(({ id, code, label: optionLabel, time, icon: Icon, color }) => (
+              {shiftOptions.map(({ id, code, icon: Icon, color }) => (
                 <button key={id} className={`${color} ${selectedShift?.shift === id ? 'active' : ''}`} aria-pressed={selectedShift?.shift === id} disabled={!canEdit} onClick={() => setSelectedShift(id)}>
-                  <span className="shift-option-label"><Icon /><strong>{code} · {optionLabel}</strong></span>
-                  <small>{time}</small>
+                  <span className="shift-option-label"><Icon /><strong>{code}</strong></span>
                   {selectedShift?.shift === id && <Check className="shift-check" />}
                 </button>
               ))}
             </div>
+            {previewShiftOption && <div className={`shift-selected-time ${previewShiftOption.color}`} aria-live="polite">
+              <span>{PreviewShiftIcon && <PreviewShiftIcon />}<strong>{previewShiftOption.code} · {previewShiftOption.label}</strong></span>
+              <small>{previewShiftOption.time}</small>
+            </div>}
             <div className="shift-editor-footer">
               <span className="shift-count-summary">
                 <span aria-label="이번 달 근무 개수">{shiftOptions.map((option) => <i key={option.id}><b>{option.code}</b> {monthShiftCounts[option.id]}</i>)}</span>

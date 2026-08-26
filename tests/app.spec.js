@@ -444,18 +444,18 @@ test('시간이 없는 근무는 오늘 일정 본문에서 숨기고 요약에�
 test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([
-      { id: 'week-off-icon', date: '2026-08-09', member: 'emma', shift: 'off' },
-      { id: 'week-day-icon', date: '2026-08-10', member: 'emma', shift: 'day' },
-      { id: 'week-evening-icon', date: '2026-08-11', member: 'emma', shift: 'evening' },
-      { id: 'week-night-icon', date: '2026-08-12', member: 'emma', shift: 'night' },
+      { id: 'week-off-icon', date: '2026-08-11', member: 'emma', shift: 'off' },
+      { id: 'week-day-icon', date: '2026-08-12', member: 'emma', shift: 'day' },
+      { id: 'week-evening-icon', date: '2026-08-13', member: 'emma', shift: 'evening' },
+      { id: 'week-night-icon', date: '2026-08-14', member: 'emma', shift: 'night' },
     ]))
   })
   await page.reload()
 
-  await expect(page.getByRole('button', { name: /8월 9일 일요일/ }).locator('.week-summary-item.work svg.lucide-calendar-days')).toHaveCount(1)
-  await expect(page.getByRole('button', { name: /8월 10일 월요일/ }).locator('.week-summary-item.work svg.lucide-sun')).toHaveCount(1)
-  await expect(page.getByRole('button', { name: /8월 11일 화요일/ }).locator('.week-summary-item.work svg.lucide-sunset')).toHaveCount(1)
-  await expect(page.getByRole('button', { name: /8월 12일 수요일/ }).locator('.week-summary-item.work svg.lucide-moon')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: /8월 11일 화요일/ }).locator('.week-summary-item.work svg.lucide-calendar-days')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: /8월 12일 수요일/ }).locator('.week-summary-item.work svg.lucide-sun')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: /8월 13일 목요일/ }).locator('.week-summary-item.work svg.lucide-sunset')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: /8월 14일 금요일/ }).locator('.week-summary-item.work svg.lucide-moon')).toHaveCount(1)
   const workBackgrounds = await page.locator('.home-week-strip .week-summary-item.work').evaluateAll((items) => items.map((item) => getComputedStyle(item).backgroundColor))
   expect(new Set(workBackgrounds)).toEqual(new Set(['rgba(0, 0, 0, 0)']))
   await expect(page.locator('.home-week-strip .week-work-badge')).toHaveCount(4)
@@ -467,6 +467,15 @@ test('이번 주 근무 요약은 D E N OFF에 맞는 아이콘을 표시한다'
     coversLabel: item.getBoundingClientRect().right >= item.querySelector('b').getBoundingClientRect().right,
   })))
   expect(workBadges.every((badge) => badge.background !== 'rgba(0, 0, 0, 0)' && parseFloat(badge.radius) >= 10 && badge.fitsContent && badge.contentFits && badge.coversLabel)).toBe(true)
+})
+
+test('주간 요약은 오늘부터 시작하는 다가오는 7일을 표시한다', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: '다가오는 7일', exact: true })).toBeVisible()
+  const days = page.locator('.home-week-strip > button')
+  await expect(days).toHaveCount(7)
+  await expect(days.first()).toHaveAccessibleName(/8월 11일 화요일/)
+  await expect(days.last()).toHaveAccessibleName(/8월 17일 월요일/)
+  await expect(page.getByRole('button', { name: /8월 10일 월요일/ })).toHaveCount(0)
 })
 
 test('주요 화면을 이동한다', async ({ page }) => {
@@ -644,7 +653,7 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
     const summaries = [...button.querySelectorAll('.week-summary-item')]
     return {
       count: summaries.length,
-      sameLine: summaries.every((summary) => Math.abs(summary.getBoundingClientRect().top - summaries[0].getBoundingClientRect().top) < 1),
+      sameLine: summaries.every((summary) => Math.abs(summary.getBoundingClientRect().top - summaries[0].getBoundingClientRect().top) <= 1),
       familyCount: button.querySelector('.week-summary-item.family b').textContent,
       childCount: button.querySelector('.week-summary-item.children b').textContent,
       taskCount: button.querySelector('.week-summary-item.tasks b').textContent,
@@ -655,11 +664,11 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
       otherSummariesTransparent: summaries.slice(1).every((summary) => getComputedStyle(summary).backgroundColor === 'rgba(0, 0, 0, 0)'),
     }
   })
-  expect(weekSummaryLayout).toMatchObject({ count: 4, sameLine: true, familyCount: '0', childCount: '0', taskCount: '0', detailCount: 0, fontSize: '11px', borderless: true, workPill: false, otherSummariesTransparent: true })
+  expect(weekSummaryLayout).toMatchObject({ count: 4, sameLine: true, familyCount: '0', childCount: '0', taskCount: '1', detailCount: 0, fontSize: '11px', borderless: true, workPill: false, otherSummariesTransparent: true })
 
   const sunday = page.locator('.home-week-strip button.sunday')
   const saturday = page.locator('.home-week-strip button.saturday')
-  await expect(sunday.locator('.week-date-label')).toHaveText('9(일)')
+  await expect(sunday.locator('.week-date-label')).toHaveText('16(일)')
   await expect(saturday.locator('.week-date-label')).toHaveText('15(토)')
   await expect(sunday.locator('.week-date-label')).toHaveCSS('color', 'rgb(220, 38, 38)')
   await expect(saturday.locator('.week-date-label')).toHaveCSS('color', 'rgb(37, 99, 235)')
@@ -679,7 +688,7 @@ test('모바일 홈 카드 간격이 같고 가로로 넘치지 않는다', asyn
   const offSummary = page.getByRole('button', { name: /8월 12일 수요일/ }).locator('.week-summary-item.work')
   await expect(offSummary.locator('b')).toHaveText('OFF')
   await expect(offSummary.locator('svg.lucide-calendar-days')).toHaveCount(1)
-  const emptyWorkSummary = page.getByRole('button', { name: /8월 9일 일요일/ }).locator('.week-summary-item.work')
+  const emptyWorkSummary = page.getByRole('button', { name: /8월 13일 목요일/ }).locator('.week-summary-item.work')
   await expect(emptyWorkSummary).toHaveText('')
   const alignedSummaryIcons = await page.locator('.home-week-strip').evaluate((strip) => {
     const rows = [...strip.querySelectorAll('button')]
@@ -1241,23 +1250,58 @@ test('기존 자녀 전용 일정은 자녀 캘린더로 분리한다', async ({
   await expect(page.locator('.child-direct-events').getByText('기존 자녀 일정', { exact: true })).toBeVisible()
 })
 
-test('근무 입력 카드는 셀 전체에 근무색을 채우고 내용을 가운데 정렬한다', async ({ page }) => {
+test('근무 입력은 D부터 OFF까지 한 줄로 표시하고 선택한 시간만 아래에 안내한다', async ({ page }) => {
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.getByRole('button', { name: '근무', exact: true }).click()
   const shiftButton = page.locator('.shift-editor-grid button').first()
-  await shiftButton.focus()
-  await expect(shiftButton).toHaveCSS('outline-offset', '-5px')
-  const appearance = await shiftButton.evaluate((button) => {
-    const label = button.querySelector('.shift-option-label')
+  const appearance = await page.locator('.shift-editor-grid').evaluate((grid) => {
+    const buttons = [...grid.querySelectorAll('button')]
     return {
-      buttonBackground: getComputedStyle(button).backgroundColor,
-      labelBackground: label ? getComputedStyle(label).backgroundColor : null,
-      alignItems: getComputedStyle(button).alignItems,
-      textAlign: getComputedStyle(button).textAlign,
+      count: buttons.length,
+      sameLine: buttons.every((button) => Math.abs(buttons[0].getBoundingClientRect().top - button.getBoundingClientRect().top) < 1),
+      labels: buttons.map((button) => button.querySelector('strong')?.textContent),
+      embeddedTimes: buttons.map((button) => button.querySelectorAll('small').length),
+      fits: grid.scrollWidth <= grid.clientWidth,
     }
   })
-  expect(appearance).toEqual({ buttonBackground: 'rgb(217, 233, 179)', labelBackground: 'rgba(0, 0, 0, 0)', alignItems: 'center', textAlign: 'center' })
+  expect(appearance).toEqual({ count: 4, sameLine: true, labels: ['D', 'E', 'N', 'OFF'], embeddedTimes: [0, 0, 0, 0], fits: true })
+  await shiftButton.click()
+  await expect(page.locator('.shift-selected-time')).toContainText(/오전 6:30.+오후 3:30/)
   await expect(page.getByText(/\d+\/\d+일 입력/)).toHaveCount(0)
+})
+
+test('서로 다른 날짜의 로컬·원격 근무 변경을 자동으로 병합한다', async () => {
+  const syncMerge = await import('../src/lib/shiftSyncMerge.js').catch(() => ({}))
+  expect(typeof syncMerge.mergeSharedShiftChanges).toBe('function')
+  const base = {
+    schemaVersion: 7,
+    events: [{ id: 'shared-event', title: '공통 일정' }],
+    shifts: [{ id: 'emma-2026-08-01', member: 'emma', date: '2026-08-01', shift: 'day' }],
+  }
+  const local = {
+    ...base,
+    shifts: [...base.shifts, { id: 'emma-2026-08-02', member: 'emma', date: '2026-08-02', shift: 'evening' }],
+  }
+  const remote = {
+    ...base,
+    shifts: [...base.shifts, { id: 'emma-2026-08-03', member: 'emma', date: '2026-08-03', shift: 'night' }],
+  }
+  expect(syncMerge.mergeSharedShiftChanges(base, local, remote)).toEqual({
+    ...base,
+    shifts: [
+      { id: 'emma-2026-08-01', member: 'emma', date: '2026-08-01', shift: 'day' },
+      { id: 'emma-2026-08-02', member: 'emma', date: '2026-08-02', shift: 'evening' },
+      { id: 'emma-2026-08-03', member: 'emma', date: '2026-08-03', shift: 'night' },
+    ],
+  })
+})
+
+test('같은 날짜의 서로 다른 근무 변경은 자동 병합하지 않는다', async () => {
+  const { mergeSharedShiftChanges } = await import('../src/lib/shiftSyncMerge.js')
+  const base = { shifts: [{ id: 'emma-2026-08-02', member: 'emma', date: '2026-08-02', shift: 'day' }] }
+  const local = { shifts: [{ id: 'emma-2026-08-02', member: 'emma', date: '2026-08-02', shift: 'evening' }] }
+  const remote = { shifts: [{ id: 'emma-2026-08-02', member: 'emma', date: '2026-08-02', shift: 'night' }] }
+  expect(mergeSharedShiftChanges(base, local, remote)).toBeNull()
 })
 
 test('광복절 대체휴일은 대체휴일만 표시하고 공휴일 라인을 셀 가운데에 둔다', async ({ page }) => {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, supabaseEnabled } from '../lib/supabase'
+import { mergeSharedShiftChanges } from '../lib/shiftSyncMerge'
 
 const hasSharedState = (value) => value && typeof value === 'object' && Object.keys(value).length > 0
 const isConflictError = (error) => error?.code === '40001' || error?.message?.includes('SYNC_CONFLICT')
@@ -18,6 +19,11 @@ const stableStringify = (value) => JSON.stringify(value, (_key, nestedValue) => 
     return ordered
   }, {})
 })
+const parseSharedState = (serialized) => {
+  if (!serialized) return null
+  try { return JSON.parse(serialized) }
+  catch { return null }
+}
 
 export function useFamilySync({ localState, onRemoteState }) {
   const [session, setSession] = useState(null)
@@ -28,11 +34,13 @@ export function useFamilySync({ localState, onRemoteState }) {
   const [lastSyncedAt, setLastSyncedAt] = useState(null)
   const [remoteChange, setRemoteChange] = useState(null)
   const [conflict, setConflict] = useState(null)
+  const [saveRevision, setSaveRevision] = useState(0)
   const localStateRef = useRef(localState)
   const remoteStateRef = useRef('')
   const versionRef = useRef(0)
   const pendingLocalSaveRef = useRef(false)
   const pendingSnapshotRef = useRef(null)
+  const inFlightSaveRef = useRef(null)
   const resolvingConflictRef = useRef(null)
   const saveTimerRef = useRef(null)
   const wasOfflineRef = useRef(false)
@@ -77,10 +85,24 @@ export function useFamilySync({ localState, onRemoteState }) {
     if (stateError) throw stateError
     wasOfflineRef.current = false
     setIsOnline(true)
+    const remoteSerialized = stableStringify(stored.state)
+    const latestLocalSnapshot = localStateRef.current || localSnapshot
+    const mergedState = mergeSharedShiftChanges(parseSharedState(remoteStateRef.current), latestLocalSnapshot, stored.state)
     versionRef.current = stored.version
     setFamily((current) => current ? { ...current, version: stored.version } : current)
+    if (mergedState) {
+      const mergedSerialized = stableStringify(mergedState)
+      remoteStateRef.current = remoteSerialized
+      pendingLocalSaveRef.current = mergedSerialized !== remoteSerialized
+      pendingSnapshotRef.current = pendingLocalSaveRef.current ? mergedState : null
+      setConflict(null)
+      onRemoteState(mergedState)
+      setSyncStatus(pendingLocalSaveRef.current ? 'saving' : 'synced')
+      if (pendingLocalSaveRef.current) setSaveRevision((current) => current + 1)
+      return { ...stored, autoMerged: true }
+    }
     setConflict({
-      localState: localSnapshot,
+      localState: latestLocalSnapshot,
       remoteState: stored.state,
       remoteVersion: stored.version,
       updatedAt: stored.updated_at,
@@ -88,7 +110,7 @@ export function useFamilySync({ localState, onRemoteState }) {
     })
     setSyncStatus('conflict')
     return stored
-  }, [])
+  }, [onRemoteState])
 
   const loadFamilyContext = useCallback(async (userId, preferredHouseholdId) => {
     if (!supabase || !userId) return null
@@ -215,6 +237,15 @@ export function useFamilySync({ localState, onRemoteState }) {
           }
           return
         }
+        const inFlightSave = inFlightSaveRef.current
+        if (inFlightSave && serialized === inFlightSave.serialized) {
+          remoteStateRef.current = serialized
+          pendingLocalSaveRef.current = serialized !== localSerialized
+          pendingSnapshotRef.current = pendingLocalSaveRef.current ? localStateRef.current : null
+          setConflict(null)
+          setSyncStatus(pendingLocalSaveRef.current ? 'saving' : (family.membership.can_edit ? 'synced' : 'readonly'))
+          return
+        }
         if (serialized === localSerialized) {
           remoteStateRef.current = serialized
           pendingLocalSaveRef.current = false
@@ -224,6 +255,18 @@ export function useFamilySync({ localState, onRemoteState }) {
           return
         }
         if (pendingLocalSaveRef.current) {
+          const mergedState = mergeSharedShiftChanges(parseSharedState(remoteStateRef.current), localStateRef.current, changed.state)
+          if (mergedState) {
+            const mergedSerialized = stableStringify(mergedState)
+            remoteStateRef.current = serialized
+            pendingLocalSaveRef.current = mergedSerialized !== serialized
+            pendingSnapshotRef.current = pendingLocalSaveRef.current ? mergedState : null
+            setConflict(null)
+            onRemoteState(mergedState)
+            setSyncStatus(pendingLocalSaveRef.current ? 'saving' : (family.membership.can_edit ? 'synced' : 'readonly'))
+            if (pendingLocalSaveRef.current && !inFlightSaveRef.current) setSaveRevision((current) => current + 1)
+            return
+          }
           setConflict({
             localState: pendingSnapshotRef.current || localStateRef.current,
             remoteState: changed.state,
@@ -258,6 +301,11 @@ export function useFamilySync({ localState, onRemoteState }) {
     pendingLocalSaveRef.current = true
     pendingSnapshotRef.current = localState
 
+    if (inFlightSaveRef.current) {
+      setSyncStatus('saving')
+      return undefined
+    }
+
     if (!supabase) {
       window.setTimeout(() => setSyncStatus('local'), 0)
       return undefined
@@ -268,20 +316,24 @@ export function useFamilySync({ localState, onRemoteState }) {
       setSyncStatus('saving')
       const expectedVersion = versionRef.current
       const snapshot = localStateRef.current
+      const request = { serialized: stableStringify(snapshot), expectedVersion }
+      inFlightSaveRef.current = request
       const { data: saved, error: saveError } = await supabase.rpc('save_household_state_v2', {
         target_household_id: family.household.id,
         next_state: snapshot,
         expected_version: expectedVersion,
       }).single()
       if (saveError) {
+        if (inFlightSaveRef.current === request) inFlightSaveRef.current = null
         if (isConflictError(saveError)) {
-          try { await buildConflict(family.household.id, snapshot) }
+          try { await buildConflict(family.household.id, localStateRef.current) }
           catch (loadError) { markConnectionFailure(loadError) }
           return
         }
         markConnectionFailure(saveError)
         return
       }
+      if (inFlightSaveRef.current === request) inFlightSaveRef.current = null
       wasOfflineRef.current = false
       setIsOnline(true)
       const savedSerialized = stableStringify(saved.state)
@@ -293,10 +345,11 @@ export function useFamilySync({ localState, onRemoteState }) {
       setLastSyncedAt(saved.updated_at)
       setError('')
       setSyncStatus(pendingLocalSaveRef.current ? 'saving' : 'synced')
+      if (pendingLocalSaveRef.current) setSaveRevision((current) => current + 1)
     }, 650)
 
     return () => window.clearTimeout(saveTimerRef.current)
-  }, [buildConflict, conflict, family?.household?.id, family?.membership?.can_edit, localState, markConnectionFailure])
+  }, [buildConflict, conflict, family?.household?.id, family?.membership?.can_edit, localState, markConnectionFailure, saveRevision])
 
   useEffect(() => {
     if (!isOnline) {
