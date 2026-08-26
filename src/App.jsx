@@ -315,6 +315,12 @@ const assignedMemberIds = (item, pluralKey = 'members', singularKey = 'member') 
 
 const eventCalendarScope = (event) => event?.calendarScope === 'children' || event?.type === 'child' ? 'children' : 'family'
 const isChildCalendarEvent = (event) => event?.type === 'school' || eventCalendarScope(event) === 'children'
+const childScheduleKind = (event) => {
+  if (event?.kind === '학교' || event?.kind === '학원') return event.kind
+  if (event?.location?.includes('학교')) return '학교'
+  if (event?.location?.includes('학원')) return '학원'
+  return '자녀'
+}
 
 const normalizeEventCalendarScopes = (events, profiles = []) => {
   const childIds = new Set(profiles.filter((profile) => profile.type === 'child').map((profile) => profile.id))
@@ -631,8 +637,8 @@ function EventCard({ event, compact = false, calendarSummary = false, showRecurr
   void onDiscuss
   const detail = [event.location, event.milestoneLabel, event.pickupBy ? `${profiles.find((person) => person.id === event.pickupBy)?.name || '가족'} 픽업` : ''].filter(Boolean).join(' · ')
   const category = event.homeCategory
-    ? (!detail && event.homeCategoryId !== 'children' ? event.homeCategory : '')
-    : (event.anniversary ? '기념일' : isChildCalendarEvent(event) ? '자녀' : '가족')
+    ? (event.homeCategoryId === 'children' ? childScheduleKind(event) : !detail ? event.homeCategory : '')
+    : (event.anniversary ? '기념일' : isChildCalendarEvent(event) ? childScheduleKind(event) : '가족')
   const recurrenceLabel = event.recurrenceType === 'child' ? formatScheduleWeekdays(event) : formatRecurrenceLabel(event)
 
   return <>
@@ -2029,6 +2035,7 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
   const recentEventDefaults = !isTask && !item ? load('family-scheduler-recent-event-v1', {}) : {}
   const requestedCalendarScope = item ? eventCalendarScope(item) : defaults.calendarScope || recentEventDefaults.calendarScope || 'family'
   const [calendarScope, setCalendarScope] = useState(requestedCalendarScope === 'children' && children.length ? 'children' : 'family')
+  const [childKind, setChildKind] = useState(item?.kind === '학교' ? '학교' : item?.kind === '학원' ? '학원' : recentEventDefaults.childKind || '학원')
   const [title, setTitle] = useState(item?.title || defaults.title || '')
   const [eventDate, setEventDate] = useState(item?.date || defaults.date || date || iso(today))
   const [eventEndDate, setEventEndDate] = useState(item?.endDate || defaults.endDate || item?.date || defaults.date || date || iso(today))
@@ -2103,10 +2110,10 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
     const reminder = reminders[0] || 'none'
     if (isTask && isEditing) onUpdateTask({ ...item, title: title.trim(), category, assignee: member, assignees: selectedMembers, startDate: submittedStartDate, dueDate: submittedDueDate, completedDate: submittedCompletedDate, done: Boolean(submittedCompletedDate), time: hasTime ? time : '', end: hasTime && hasEndTime ? end : '', reminder, reminders, recurrence: repeatValue })
     else if (isTask) onAddTask({ title: title.trim(), category, assignee: member, assignees: selectedMembers, startDate: submittedStartDate, dueDate: submittedDueDate, completedDate: submittedCompletedDate, done: Boolean(submittedCompletedDate), time: hasTime ? time : '', end: hasTime && hasEndTime ? end : '', reminder, reminders, recurrence: repeatValue, completedDates: [], skippedDates: [] })
-    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder, reminders, recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope })
-    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder, reminders, recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope })
+    else if (isEditing) onUpdateEvent({ ...item, title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder, reminders, recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope, kind: calendarScope === 'children' ? childKind : undefined })
+    else onAddEvent({ title: title.trim(), date: submittedEventDate, endDate: submittedEventEndDate, time: hasTime ? time : '종일', end: hasTime && hasEndTime ? end : '', location, member, members: selectedMembers, reminder, reminders, recurrence: repeatValue, type: calendarScope === 'children' ? 'child' : 'family', calendarScope, kind: calendarScope === 'children' ? childKind : undefined })
     if (!isTask) {
-      try { window.localStorage.setItem('family-scheduler-recent-event-v1', JSON.stringify({ calendarScope, members: selectedMembers, hasTime, hasEndTime, time, end })) } catch { /* 최근 입력값 저장 실패는 일정 저장을 막지 않습니다. */ }
+      try { window.localStorage.setItem('family-scheduler-recent-event-v1', JSON.stringify({ calendarScope, childKind, members: selectedMembers, hasTime, hasEndTime, time, end })) } catch { /* 최근 입력값 저장 실패는 일정 저장을 막지 않습니다. */ }
     }
     onAfterSave?.(isTask ? submittedDueDate : submittedEventDate)
     if (!isTask) onNavigateAfterSave?.(submittedEventDate, calendarScope)
@@ -2127,6 +2134,10 @@ function Modal({ type, date, today, item, defaults = {}, getConflictEventsForDat
         {!isTask && children.length > 0 && <fieldset className="calendar-scope-field"><legend>일정 종류</legend><div className="segmented wide">
           <button type="button" className={calendarScope === 'family' ? 'active' : ''} aria-pressed={calendarScope === 'family'} onClick={() => changeCalendarScope('family')}>가족</button>
           <button type="button" className={calendarScope === 'children' ? 'active' : ''} aria-pressed={calendarScope === 'children'} onClick={() => changeCalendarScope('children')}>자녀</button>
+        </div></fieldset>}
+        {!isTask && calendarScope === 'children' && <fieldset className="child-kind-field"><legend>자녀 일정 구분</legend><div className="segmented wide">
+          <button type="button" className={childKind === '학교' ? 'active' : ''} aria-pressed={childKind === '학교'} onClick={() => setChildKind('학교')}>학교</button>
+          <button type="button" className={childKind === '학원' ? 'active' : ''} aria-pressed={childKind === '학원'} onClick={() => setChildKind('학원')}>학원</button>
         </div></fieldset>}
         <fieldset><legend>담당자 <small>여러 명 선택 가능</small></legend><div className="member-picker">{selectableMembers.map((person) => <button type="button" key={person.id} className={selectedMembers.includes(person.id) ? 'active' : ''} aria-pressed={selectedMembers.includes(person.id)} onClick={() => toggleMember(person.id)}><Avatar memberId={person.id} />{person.name}</button>)}</div></fieldset>
         {!isTask && <button type="button" className={`advanced-toggle ${showAdvanced ? 'active' : ''}`} aria-expanded={showAdvanced} onClick={() => setShowAdvanced((current) => !current)}><Settings2 /> <span><strong>시간·장소·반복 설정</strong><small>{showAdvanced ? '추가 설정 닫기' : '필요할 때만 펼치기'}</small></span><ChevronRight /></button>}

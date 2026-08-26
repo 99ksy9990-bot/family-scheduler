@@ -332,9 +332,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 }
 .text-button:hover { text-decoration: underline; }
 .timeline { position: relative; display: flex; flex-direction: column; gap: 5px; margin-top: 18px; }
-.timeline::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: 83px; width: 1px; background: #dce5e7; }
+.timeline::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: 81px; width: 1px; background: #dce5e7; }
 .timeline > .empty-copy { position: relative; z-index: 1; width: 100%; }
-.timeline-now-marker { position: relative; z-index: 2; min-height: 30px; display: grid; grid-template-columns: 62px 8px 18px 8px minmax(0, 1fr); align-items: center; color: #dc2626; font-size: 11px; font-weight: 700; }
+.timeline-now-marker { position: relative; z-index: 2; min-height: 30px; display: grid; grid-template-columns: 66px 6px 18px 8px minmax(0, 1fr); align-items: center; color: #dc2626; font-size: 11px; font-weight: 700; }
 .timeline-now-time { grid-column: 1; min-width: 0; padding-left: 0; overflow: hidden; font: inherit; text-align: left; white-space: nowrap; text-overflow: ellipsis; }
 .timeline-now-dot { grid-column: 3; width: 9px; height: 9px; justify-self: center; border: 2px solid #fff; border-radius: 50%; background: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
 .timeline-now-marker i { grid-column: 5; height: 1px; min-width: 0; background: #f09c98; }
@@ -344,7 +344,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-card .home-event-row.timeline-past { opacity: .5; background: #f7f8f8; }
 .today-card .home-event-row.timeline-active { border-color: #91bfce; background: #f3fafc; box-shadow: inset 0 0 0 1px rgba(36,111,137,.08); }
 .today-card .home-event-row.conflict { box-shadow: none; }
-.today-card .schedule-row-status { flex: 0 0 auto; display: inline-flex; align-items: center; padding: 2px 6px; color: #13715f; border-radius: 999px; background: rgba(22,131,111,.12); font-size: inherit; font-weight: 600; }
+.today-card .schedule-row-status { flex: 0 0 auto; display: inline-flex; align-items: center; padding: 2px 6px; color: #13715f; border-radius: 999px; background: rgba(22,131,111,.12); font-size: 11px; font-weight: 600; }
 .today-card .schedule-row-status::before { content: none; }
 .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; }
 .today-card .schedule-row-timeline-time { width: 58px; flex: 0 0 58px; overflow: hidden; color: var(--muted); font-size: 11px; font-weight: 400; line-height: 1.2; white-space: nowrap; text-overflow: ellipsis; }
@@ -1536,8 +1536,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .timeline { grid-template-columns: 1fr; }
   .today-card > .section-heading { padding-inline: 0; }
   .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
-  .today-card .timeline::before { left: 83px; }
-  .today-card .timeline-now-marker { grid-template-columns: 66px 8px 18px 8px minmax(0, 1fr); }
+  .today-card .timeline::before { left: 81px; }
+  .today-card .timeline-now-marker { grid-template-columns: 66px 6px 18px 8px minmax(0, 1fr); }
   .today-card .home-event-title { font-size: 13px; }
   .today-card .home-event-row .event-time { max-width: none; font-size: 11px; }
   .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 11px; }
@@ -1723,7 +1723,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   min-height: 56px;
   max-height: 56px;
   display: grid;
-  grid-template-columns: 66px 8px 18px 8px auto 10px minmax(0, 1fr) auto auto;
+  grid-template-columns: 66px 6px 18px 8px auto 10px minmax(0, 1fr) auto auto;
   gap: 0;
   padding: 7px 0;
   overflow: visible;

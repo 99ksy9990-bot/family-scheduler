@@ -142,7 +142,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([{ id: 'today-shift', date: '2026-08-11', member: 'emma', shift: 'day' }]))
     localStorage.setItem('family-scheduler-events', JSON.stringify([
-      { id: 'today-child', title: '오늘 자녀 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', end: '오후 3:00', location: '영어 학원', member: 'leo', members: ['leo'], calendarScope: 'children' },
+      { id: 'today-child', title: '오늘 자녀 일정', kind: '학원', date: '2026-08-11', endDate: '2026-08-11', time: '오후 2:00', end: '오후 3:00', location: '영어 학원', member: 'leo', members: ['leo'], calendarScope: 'children' },
       { id: 'today-all-day', title: '오늘 가족 일정', date: '2026-08-11', endDate: '2026-08-11', time: '종일', member: 'family', members: ['family'], calendarScope: 'family' },
     ]))
     localStorage.setItem('family-scheduler-tasks', JSON.stringify([
@@ -172,7 +172,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   }))
   expect(timelineLayout).toEqual({ display: 'flex', connector: '""', oneColumn: true })
   await expect(todayCard.locator('.home-category-chip.work')).toHaveText('근무')
-  await expect(todayCard.locator('.home-category-chip.children')).toHaveCount(0)
+  await expect(todayCard.locator('.home-category-chip.children')).toHaveText('학원')
   const allDayRow = todayCard.locator('.home-event-row').filter({ hasText: '오늘 가족 일정' })
   await expect(allDayRow).toBeVisible()
   await expect(todayCard.locator('.timeline').locator('.home-event-row').filter({ hasText: '오늘 가족 일정' })).toHaveCount(0)
@@ -237,7 +237,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(86)
   expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(145)
   expect(timelineSpacing.timeStartDelta).toBeLessThanOrEqual(1)
-  expect(timelineSpacing.timeToPointGap).toBe(8)
+  expect(timelineSpacing.timeToPointGap).toBe(6)
   expect(timelineSpacing.pointToAvatarGap).toBe(8)
   expect(timelineSpacing.avatarToCopyGap).toBe(10)
   expect(timelineSpacing.timeContentFits).toBe(true)
@@ -385,9 +385,11 @@ test('오늘 일정은 현재 시각을 기준으로 지난 일정과 진행 중
   const statusStyle = await active.locator('.schedule-row-status').evaluate((status) => ({
     background: getComputedStyle(status).backgroundColor,
     beforeContent: getComputedStyle(status, '::before').content,
+    fontSize: getComputedStyle(status).fontSize,
   }))
   expect(statusStyle.background).not.toBe('rgba(0, 0, 0, 0)')
   expect(statusStyle.beforeContent).toBe('none')
+  expect(statusStyle.fontSize).toBe('11px')
   await expect(active.locator('.schedule-row-conflict-dot')).toHaveCount(1)
   await expect(active).not.toHaveCSS('box-shadow', /rgb\(220, 38, 38\)/)
   await expect(active).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
@@ -911,7 +913,7 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-events', JSON.stringify([
       { id: 'family-one', title: '가족 여행 준비 일정 제목', date: '2026-08-15', endDate: '2026-08-15', time: '오전 9:00', end: '오전 10:00', location: '광양교육청', recurrence: { frequency: 'weekly', interval: 1 }, member: 'leo', members: ['leo'], calendarScope: 'family' },
-      { id: 'child-one', title: '자녀 일정', date: '2026-08-15', endDate: '2026-08-15', time: '오전 9:30', end: '오전 10:30', member: 'leo', members: ['leo'], calendarScope: 'children' },
+      { id: 'child-one', title: '자녀 일정', kind: '학교', date: '2026-08-15', endDate: '2026-08-15', time: '오전 9:30', end: '오전 10:30', member: 'leo', members: ['leo'], calendarScope: 'children' },
       { id: 'family-two', title: '아빠 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'david', members: ['david'], calendarScope: 'family' },
       { id: 'child-two', title: '연두 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'mia', members: ['mia'], calendarScope: 'children' },
       { id: 'family-three', title: '엄마 일정', date: '2026-08-15', endDate: '2026-08-15', time: '종일', member: 'emma', members: ['emma'], calendarScope: 'family' },
@@ -948,7 +950,7 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 10:00')
   await expect(familyEventCard.locator('.schedule-row-repeat')).toHaveText('매주 토요일')
   await expect(childEventCard.locator('.schedule-row-repeat')).toHaveCount(0)
-  await expect(childEventCard.locator('.schedule-row-category')).toHaveText('자녀')
+  await expect(childEventCard.locator('.schedule-row-category')).toHaveText('학교')
   const familySecondaryStyle = await familyEventCard.locator('.schedule-row-secondary').evaluate((element) => ({
     color: getComputedStyle(element).color,
     weight: getComputedStyle(element).fontWeight,
