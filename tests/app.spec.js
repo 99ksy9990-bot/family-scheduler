@@ -237,7 +237,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(86)
   expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(145)
   expect(timelineSpacing.timeStartDelta).toBeLessThanOrEqual(1)
-  expect(timelineSpacing.timeToPointGap).toBe(6)
+  expect(timelineSpacing.timeToPointGap).toBe(4)
   expect(timelineSpacing.pointToAvatarGap).toBe(8)
   expect(timelineSpacing.avatarToCopyGap).toBe(10)
   expect(timelineSpacing.timeContentFits).toBe(true)
@@ -287,6 +287,36 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
     })
     expect(order[0]).toBeLessThan(order[1])
   }
+})
+
+test('홈 오늘 일정에서 기념일을 가족 일정과 분리해 전체 문구로 표시한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify([
+      { id: 'home-anniversary', name: '우리 가족의 아주 소중한 결혼', kind: '결혼기념일', calendarType: 'solar', month: 8, day: 11, baseYear: 2010 },
+    ]))
+  })
+  await page.reload()
+
+  const todayCard = page.locator('.today-card')
+  const anniversarySection = todayCard.locator('.today-anniversary-section')
+  await expect(anniversarySection.getByRole('heading', { name: '기념일' })).toBeVisible()
+  await expect(anniversarySection.locator('.anniversary-row')).toHaveCount(1)
+  await expect(anniversarySection.getByText('우리 가족의 아주 소중한 결혼 결혼기념일', { exact: true })).toBeVisible()
+  await expect(anniversarySection.getByText('양력', { exact: true })).toBeVisible()
+  await expect(anniversarySection.getByText('매년 양력 8월 11일', { exact: true })).toBeVisible()
+  await expect(anniversarySection.getByText('다음 기념일에 16주년', { exact: true })).toBeVisible()
+  await expect(todayCard.locator('.home-event-row').filter({ hasText: '우리 가족의 아주 소중한 결혼 결혼기념일' })).toHaveCount(0)
+  const copyLayout = await anniversarySection.locator('.anniversary-row').evaluate((row) => {
+    const title = row.querySelector('strong')
+    const detail = row.querySelector('small')
+    return {
+      titleOverflow: getComputedStyle(title).overflow,
+      titleEllipsis: getComputedStyle(title).textOverflow,
+      detailOverflow: getComputedStyle(detail).overflow,
+      detailEllipsis: getComputedStyle(detail).textOverflow,
+    }
+  })
+  expect(copyLayout).toEqual({ titleOverflow: 'visible', titleEllipsis: 'clip', detailOverflow: 'visible', detailEllipsis: 'clip' })
 })
 
 test('오늘 일정은 전날 야간 근무를 이어 표시하고 최대 10개까지 보여준다', async ({ page }) => {
@@ -943,8 +973,10 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   const rowStarts = await page.locator('.overview-day-groups .schedule-row-leading').evaluateAll((items) => items.slice(0, 3).map((item) => Math.round(item.getBoundingClientRect().left)))
   expect(new Set(rowStarts).size).toBe(1)
   await expect(page.locator('.overview-conflict-banner')).toHaveCount(1)
-  expect(await familyEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('""')
-  expect(await childEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('""')
+  expect(await familyEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('none')
+  expect(await childEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('none')
+  await expect(familyEventCard.locator('.schedule-row-conflict-dot')).toHaveCount(1)
+  await expect(childEventCard.locator('.schedule-row-conflict-dot')).toHaveCount(1)
   await expect(familyEventCard).not.toContainText('시간 겹침')
   await expect(familyEventCard.locator('.schedule-row-location')).toHaveText('광양교육청')
   await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 10:00')
@@ -1024,6 +1056,9 @@ test('시간 겹침은 주간 날짜 옆과 오늘 일정에 빨간 도트로만
   }))
   expect(conflictStyle.borderShadow).not.toContain('rgb(220, 38, 38)')
   expect(conflictStyle.dotColor).toBe('rgb(220, 38, 38)')
+  await expect(conflictRow.locator('.schedule-row-conflict-dot')).toHaveCount(1)
+  const categoryDot = await conflictRow.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)
+  expect(categoryDot).toBe('none')
   const weekDay = page.getByRole('button', { name: /8월 11일 화요일/ })
   await expect(weekDay.locator('.week-date-label > .week-conflict-dot')).toHaveCount(1)
 })

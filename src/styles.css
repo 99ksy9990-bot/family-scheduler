@@ -332,9 +332,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 }
 .text-button:hover { text-decoration: underline; }
 .timeline { position: relative; display: flex; flex-direction: column; gap: 5px; margin-top: 18px; }
-.timeline::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: 81px; width: 1px; background: #dce5e7; }
+.timeline::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: 79px; width: 1px; background: #dce5e7; }
 .timeline > .empty-copy { position: relative; z-index: 1; width: 100%; }
-.timeline-now-marker { position: relative; z-index: 2; min-height: 30px; display: grid; grid-template-columns: 66px 6px 18px 8px minmax(0, 1fr); align-items: center; color: #dc2626; font-size: 11px; font-weight: 700; }
+.timeline-now-marker { position: relative; z-index: 2; min-height: 30px; display: grid; grid-template-columns: 66px 4px 18px 8px minmax(0, 1fr); align-items: center; color: #dc2626; font-size: 11px; font-weight: 700; }
 .timeline-now-time { grid-column: 1; min-width: 0; padding-left: 0; overflow: hidden; font: inherit; text-align: left; white-space: nowrap; text-overflow: ellipsis; }
 .timeline-now-dot { grid-column: 3; width: 9px; height: 9px; justify-self: center; border: 2px solid #fff; border-radius: 50%; background: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
 .timeline-now-marker i { grid-column: 5; height: 1px; min-width: 0; background: #f09c98; }
@@ -362,6 +362,12 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .today-untimed-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
 .today-untimed-section h3 { margin: 0 0 9px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .today-untimed-list { display: grid; gap: 5px; }
+.today-anniversary-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.today-anniversary-section > h3 { margin: 0 0 9px; color: #8a6a28; font-size: 12px; font-weight: 600; }
+.today-anniversary-list { grid-template-columns: 1fr; }
+.today-anniversary-section .home-anniversary-row { min-height: 72px; }
+.today-anniversary-section .anniversary-copy strong,
+.today-anniversary-section .anniversary-copy small { overflow: visible; white-space: normal; text-overflow: clip; }
 .today-card .event-card > .avatar { grid-column: 2; grid-row: 1; }
 .today-card .event-copy { grid-column: 1 / -1; grid-row: 2; gap: 1px; }
 .today-card .event-copy strong { display: block; overflow: hidden; font-size: 17px; white-space: nowrap; text-overflow: ellipsis; }
@@ -458,8 +464,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .schedule-row-category.urgent { color: #b91c1c; background: #fef2f2; }
 .schedule-row .event-actions { gap: 5px; }
 .schedule-row .event-actions button { width: 30px; height: 30px; }
-.schedule-row.conflict .schedule-row-category { display: inline-flex; align-items: center; gap: 5px; }
-.schedule-row.conflict .schedule-row-category::before { content: ''; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, .12); }
+.schedule-row.conflict .schedule-row-category { display: inline-flex; align-items: center; gap: 0; }
+.schedule-row.conflict .schedule-row-category::before { content: none; }
 .schedule-row[role="button"] { cursor: pointer; }
 .schedule-row[role="button"]:hover { border-color: #bfd3da; background: #fbfdfd; }
 .schedule-row[role="button"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
@@ -1536,8 +1542,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .timeline { grid-template-columns: 1fr; }
   .today-card > .section-heading { padding-inline: 0; }
   .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
-  .today-card .timeline::before { left: 81px; }
-  .today-card .timeline-now-marker { grid-template-columns: 66px 6px 18px 8px minmax(0, 1fr); }
+  .today-card .timeline::before { left: 79px; }
+  .today-card .timeline-now-marker { grid-template-columns: 66px 4px 18px 8px minmax(0, 1fr); }
   .today-card .home-event-title { font-size: 13px; }
   .today-card .home-event-row .event-time { max-width: none; font-size: 11px; }
   .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 11px; }
@@ -1723,7 +1729,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   min-height: 56px;
   max-height: 56px;
   display: grid;
-  grid-template-columns: 66px 6px 18px 8px auto 10px minmax(0, 1fr) auto auto;
+  grid-template-columns: 66px 4px 18px 8px auto 10px minmax(0, 1fr) auto auto;
   gap: 0;
   padding: 7px 0;
   overflow: visible;
