@@ -9,6 +9,8 @@
 - Holiday reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/B7D84A29-6395-4898-A776-81296B0CE53A/1-사진-1.jpg`
 - Holiday implementation evidence: `/tmp/family-scheduler-holiday-402.png`
 - Side-by-side evidence: `/tmp/family-scheduler-qa-comparison.png`
+- Latest calendar-detail reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/BA018180-1CCF-4A72-A620-6DDC32BF6F74/2-사진-2.jpg`
+- Latest calendar-detail implementation evidence: `/Users/santak/Downloads/stitch_/tmp/calendar-detail-focused-4fc73d1.png`
 - Target viewports: desktop Chromium, mobile Chromium `402 × 874`
 - Scope: 홈 오늘 일정, 통합 캘린더 상세, 가족 할 일, 일정 관리의 기념일·자녀 정보·학기/방학
 
@@ -74,6 +76,8 @@
 - 근무 입력 선택지는 셀 전체를 D/E/N/OFF 고유색으로 채우고 아이콘·근무명·시간을 가운데 정렬한다.
 - 일정과 할 일은 `당일 알림`, `30분 전`, `10분 전`을 중복 선택해 저장하며 푸시 예약도 각각 계산한다.
 - 할 일은 시작일자·마감일자·완료일자를 별도로 저장하고 나중에 과거 완료일로 정정할 수 있다.
+- 캘린더 상세의 기념일은 가족 일정에서 분리해 독립 구획으로 표시하고, 등록 화면과 같이 이름·양력/음력·원 날짜·다음 양력 날짜·나이/주년 정보를 말줄임 없이 노출한다.
+- 학교·학원 일정의 시간 중복 표시는 학교·학원 칩 텍스트 바로 앞의 빨간 도트 한 개로 통합하며, 행 바깥이나 칩 뒤에는 중복 도트를 만들지 않는다.
 
 ## Click-to-manage behavior
 
@@ -88,14 +92,17 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium + Mobile Chromium: `77 passed`, `7 conditionally skipped`
-- Combined end-to-end result: `77 passed`, `7 conditionally skipped`
+- Desktop Chromium + Mobile Chromium: `96 passed`, `8 conditionally skipped`
+- Combined end-to-end result: `96 passed`, `8 conditionally skipped`
 - Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `56px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용, 전체 캘린더 4개 고정 슬롯과 `82px` 셀 높이, `17px` 근무 배지
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
 - Home and task assertions: 세로 타임라인·현재 시각선·진행 상태, 생성일 기준 시간 없는 할 일 노출, OFF 근무 본문 중복 제거, 최신 근무 입력 선택, D/E/N/OFF별 해·일몰·달·달력 아이콘, 근무 배경 콘텐츠 폭 적용, 할 일 시작·종료 시간 저장과 목록 표시
 - In-app Browser: local iPhone 16 Pro `402 × 874`; 홈과 캘린더에서 문서 가로 넘침이 없고, 월간 전체 캘린더는 모든 셀의 네 슬롯과 동일한 높이를 유지한다.
 - In-app Browser comparison: 제공된 광복절 참조와 최신 `402 × 874` 구현을 같은 점검 입력에서 비교했고, 15일 광복절과 17일 대체공휴일의 고정 슬롯·말줄임·셀 높이를 확인했다.
+- Calendar-detail comparison: 제공된 캘린더 상세 참조와 최신 모바일 구현을 같은 점검 입력에서 비교했다. 기념일 독립 구획, 전체 제목, 양력 칩, 날짜·다음 양력·나이 정보가 모두 표시되고, 학교·학원 중복 도트는 카테고리 칩 내부 앞쪽에 한 개만 렌더링된다.
+- Production deployment: Vercel production deployment `dpl_8Zhg3XtZBuXRfF6YatSgYzNrfrag` reached `READY`; public alias `family-scheduler-sooty.vercel.app` was assigned without alias errors.
+- Browser console: 최신 로컬 렌더 경로에서 오류 `0건`.
 - Data migration/storage keys: unchanged
 
 ## Review note
