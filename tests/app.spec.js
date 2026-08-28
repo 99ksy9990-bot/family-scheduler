@@ -319,6 +319,32 @@ test('홈 오늘 일정에서 기념일을 가족 일정과 분리해 전체 문
   expect(copyLayout).toEqual({ titleOverflow: 'visible', titleEllipsis: 'clip', detailOverflow: 'visible', detailEllipsis: 'clip' })
 })
 
+test('캘린더 상세의 기념일을 등록 목록과 같은 전체 정보로 표시한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify([
+      { id: 'calendar-anniversary', name: '성혜', kind: '생일', calendarType: 'solar', month: 8, day: 15, baseYear: 1985 },
+    ]))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
+  await page.locator('[data-date="2026-08-15"]').click()
+
+  const anniversarySection = page.locator('.overview-day-section.calendar-anniversary-group')
+  await expect(anniversarySection.getByRole('heading', { name: '기념일' })).toBeVisible()
+  await expect(anniversarySection.locator('.anniversary-row')).toHaveCount(1)
+  await expect(anniversarySection.getByText('성혜 생일', { exact: true })).toBeVisible()
+  await expect(anniversarySection.getByText('양력', { exact: true })).toBeVisible()
+  await expect(anniversarySection.getByText('8월 15일 · 다음 양력 2026. 8. 15.', { exact: true })).toBeVisible()
+  await expect(anniversarySection.getByText('다음 생일에 만 41세', { exact: true })).toBeVisible()
+  await expect(page.locator('.overview-day-section').filter({ hasText: '가족 일정' })).not.toContainText('성혜 생일')
+
+  const copyLayout = await anniversarySection.locator('.anniversary-row').evaluate((row) => ({
+    titleEllipsis: getComputedStyle(row.querySelector('strong')).textOverflow,
+    detailEllipsis: getComputedStyle(row.querySelector('small')).textOverflow,
+  }))
+  expect(copyLayout).toEqual({ titleEllipsis: 'clip', detailEllipsis: 'clip' })
+})
+
 test('오늘 일정은 전날 야간 근무를 이어 표시하고 최대 10개까지 보여준다', async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem('family-scheduler-shifts', JSON.stringify([
@@ -975,8 +1001,10 @@ test('통합 캘린더에서 가족·자녀·근무를 함께 보고 공휴일�
   await expect(page.locator('.overview-conflict-banner')).toHaveCount(1)
   expect(await familyEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('none')
   expect(await childEventCard.locator('.schedule-row-category').evaluate((category) => getComputedStyle(category, '::before').content)).toBe('none')
-  await expect(familyEventCard.locator('.schedule-row-conflict-dot')).toHaveCount(1)
-  await expect(childEventCard.locator('.schedule-row-conflict-dot')).toHaveCount(1)
+  await expect(familyEventCard.locator('.schedule-row-category .schedule-row-conflict-dot')).toHaveCount(1)
+  await expect(childEventCard.locator('.schedule-row-category .schedule-row-conflict-dot')).toHaveCount(1)
+  await expect(familyEventCard.locator(':scope > .schedule-row-conflict-dot')).toHaveCount(0)
+  await expect(childEventCard.locator(':scope > .schedule-row-conflict-dot')).toHaveCount(0)
   await expect(familyEventCard).not.toContainText('시간 겹침')
   await expect(familyEventCard.locator('.schedule-row-location')).toHaveText('광양교육청')
   await expect(familyEventCard.locator('.schedule-row-time')).toHaveText('오전 9:00 ~ 10:00')

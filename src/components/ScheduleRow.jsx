@@ -48,7 +48,10 @@ export default function ScheduleRow({
         <span className="schedule-row-primary">
           <strong className="schedule-row-title home-event-title">{title}</strong>
           {status && <span className="schedule-row-status">{status}</span>}
-          {category && categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
+          {category && categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>
+            {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
+            {category}
+          </em>}
           {primaryMeta && <><i aria-hidden="true">·</i><span className="schedule-row-location">{primaryMeta}</span></>}
         </span>
         {(time || secondaryMeta || meta) && <span className="schedule-row-secondary">
@@ -56,8 +59,11 @@ export default function ScheduleRow({
           {(secondaryMeta ?? meta) && <>{time && <i aria-hidden="true">·</i>}<span className="schedule-row-repeat">{secondaryMeta ?? meta}</span></>}
         </span>}
       </span>
-      {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
-      {category && !categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>{category}</em>}
+      {conflict && !category && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
+      {category && !categoryInline && <em className={`schedule-row-category ${categoryClassName}`.trim()}>
+        {conflict && <i className="schedule-row-conflict-dot" aria-label="시간 겹침" />}
+        {category}
+      </em>}
       {trailing && <span className="schedule-row-trailing">{trailing}</span>}
     </article>
   )

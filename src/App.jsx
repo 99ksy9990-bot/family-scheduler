@@ -251,6 +251,9 @@ const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap(
     anniversary: true,
     anniversaryCalendarType: anniversary.calendarType,
     anniversaryLeapMonth: Boolean(anniversary.leapMonth),
+    anniversaryMonth: Number(anniversary.month),
+    anniversaryDay: Number(anniversary.day),
+    anniversaryOccurrenceLabel: formatSolarDate(matched),
   }]
 })
 
@@ -699,27 +702,46 @@ function ManagedChildScheduleRow({ schedule, canEdit, onEdit, onDelete }) {
   </>
 }
 
+function AnniversaryDisplayRow({ event, className = '', registeredFormat = false }) {
+  const occurrenceCopy = registeredFormat
+    ? `${event.anniversaryMonth}월 ${event.anniversaryDay}일 · 다음 양력 ${event.anniversaryOccurrenceLabel}`
+    : event.location
+
+  return <article className={`anniversary-row ${className}`.trim()}>
+    <Avatar memberId="anniversary" />
+    <div className="anniversary-copy">
+      <div className="anniversary-title-row">
+        <div className="anniversary-title-copy">
+          <strong>{event.title}</strong>
+          <em>{event.anniversaryCalendarType === 'lunar' ? `음력${event.anniversaryLeapMonth ? ' 윤달' : ''}` : '양력'}</em>
+        </div>
+      </div>
+      <small>
+        <span>{occurrenceCopy}</span>
+        {event.milestoneLabel && <span className="anniversary-milestone">{event.milestoneLabel}</span>}
+      </small>
+    </div>
+  </article>
+}
+
+function CalendarAnniversarySection({ events }) {
+  if (!events.length) return null
+
+  return <section className="overview-day-section calendar-anniversary-group">
+    <header><h3>기념일</h3><b>{events.length}</b></header>
+    <div className="anniversary-list calendar-anniversary-list">
+      {events.map((event) => <AnniversaryDisplayRow key={event.id} event={event} className="calendar-anniversary-row" registeredFormat />)}
+    </div>
+  </section>
+}
+
 function TodayAnniversarySection({ events }) {
   if (!events.length) return null
 
   return <section className="today-anniversary-section" aria-labelledby="today-anniversary-title">
     <h3 id="today-anniversary-title">기념일</h3>
     <div className="anniversary-list today-anniversary-list">
-      {events.map((event) => <article className="anniversary-row home-anniversary-row" key={event.id}>
-        <Avatar memberId="anniversary" />
-        <div className="anniversary-copy">
-          <div className="anniversary-title-row">
-            <div className="anniversary-title-copy">
-              <strong>{event.title}</strong>
-              <em>{event.anniversaryCalendarType === 'lunar' ? `음력${event.anniversaryLeapMonth ? ' 윤달' : ''}` : '양력'}</em>
-            </div>
-          </div>
-          <small>
-            <span>{event.location}</span>
-            {event.milestoneLabel && <span className="anniversary-milestone">{event.milestoneLabel}</span>}
-          </small>
-        </div>
-      </article>)}
+      {events.map((event) => <AnniversaryDisplayRow key={event.id} event={event} className="home-anniversary-row" />)}
     </div>
   </section>
 }
@@ -1076,8 +1098,9 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
   const monthDays = useMemo(() => buildCalendarDays(cursor), [cursor])
   const selectedAllEventsRaw = eventsForDate(selected, events, childSchedules, schedulePeriods, anniversaries, scheduleExceptions)
   const selectedHolidayEvents = selectedAllEventsRaw.filter((event) => event.holiday)
-  const selectedChildEventsRaw = selectedAllEventsRaw.filter((event) => !event.holiday && isChildCalendarEvent(event))
-  const selectedFamilyEventsRaw = selectedAllEventsRaw.filter((event) => !event.holiday && !isChildCalendarEvent(event))
+  const selectedAnniversaryEvents = selectedAllEventsRaw.filter((event) => event.anniversary)
+  const selectedChildEventsRaw = selectedAllEventsRaw.filter((event) => !event.holiday && !event.anniversary && isChildCalendarEvent(event))
+  const selectedFamilyEventsRaw = selectedAllEventsRaw.filter((event) => !event.holiday && !event.anniversary && !isChildCalendarEvent(event))
   const selectedConflicts = overlappingEventIds([...selectedFamilyEventsRaw, ...selectedChildEventsRaw])
   const withConflict = (items) => items.map((event) => ({ ...event, conflict: selectedConflicts.has(event.id) }))
   const selectedFamilyEvents = withConflict(selectedFamilyEventsRaw)
@@ -1280,6 +1303,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               {selectedConflicts.size > 0 && <div className="overview-conflict-banner" role="status"><AlertTriangle /><span><strong>시간이 겹치는 일정이 있습니다</strong><small>아래 일정에서 시간을 확인해 주세요.</small></span></div>}
               {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <ScheduleRow key={worker.id} className="overview-work-row" memberColor={worker.color} memberTone={worker.tone} leading={<Avatar memberId={worker.id} />} title={option?.code || '미입력'} time={option?.time || ''} category="근무" />)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
               {selectedHolidayEvents.length > 0 && <section className="overview-day-section holiday-group"><header><span>공휴일</span><small>일정 개수에서 제외</small></header>{selectedHolidayEvents.map((event) => <div className="overview-holiday" key={event.id}><CalendarDays /> <strong>{event.title}</strong></div>)}</section>}
+              <CalendarAnniversarySection events={selectedAnniversaryEvents} />
               <section className="overview-day-section"><header><span>가족 일정</span><b>{selectedFamilyEvents.length}</b></header><div className="day-events">{selectedFamilyEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onDiscuss={() => onOpenCollaboration(event)} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedFamilyEvents.length && <p className="overview-empty">등록된 가족 일정이 없습니다.</p>}</div></section>
               {children.length > 0 && <section className="overview-day-section"><header><span>자녀 일정</span><b>{selectedChildEvents.length}</b></header><div className="day-events">{selectedChildEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary showRecurrence={false} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedChildEvents.length && <p className="overview-empty">등록된 자녀 일정이 없습니다.</p>}</div></section>}
             </div>
@@ -1288,6 +1312,7 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               <div><h2>{formatLongDate(selected)}</h2></div>
               {canEdit && <button className="small-add" aria-label="일정 추가" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 추가</button>}
             </div>
+            <CalendarAnniversarySection events={selectedAnniversaryEvents} />
             <div className="day-events">
               {selectedEvents.map((event) => <EventCard
                 key={event.id}
