@@ -332,9 +332,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 }
 .text-button:hover { text-decoration: underline; }
 .timeline { position: relative; display: flex; flex-direction: column; gap: 5px; margin-top: 18px; }
-.timeline::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: 79px; width: 1px; background: #dce5e7; }
+.timeline::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: 71px; width: 1px; background: #dce5e7; }
 .timeline > .empty-copy { position: relative; z-index: 1; width: 100%; }
-.timeline-now-marker { position: relative; z-index: 2; min-height: 30px; display: grid; grid-template-columns: 66px 4px 18px 8px minmax(0, 1fr); align-items: center; color: #dc2626; font-size: 11px; font-weight: 700; }
+.timeline-now-marker { position: relative; z-index: 2; min-height: 30px; display: grid; grid-template-columns: 60px 2px 18px 8px minmax(0, 1fr); align-items: center; color: #dc2626; font-size: 11px; font-weight: 700; }
 .timeline-now-time { grid-column: 1; min-width: 0; padding-left: 0; overflow: hidden; font: inherit; text-align: left; white-space: nowrap; text-overflow: ellipsis; }
 .timeline-now-dot { grid-column: 3; width: 9px; height: 9px; justify-self: center; border: 2px solid #fff; border-radius: 50%; background: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
 .timeline-now-marker i { grid-column: 5; height: 1px; min-width: 0; background: #f09c98; }
@@ -634,10 +634,9 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
 .overview-day-section .day-events { gap: 8px; }
 .overview-day-section .event-card { box-shadow: none; }
 .overview-day-section.holiday-group { border-color: #ead8a0; background: #fffaf0; }
-.calendar-anniversary-group { border-color: #efe5ca; background: #fffdf8; }
-.calendar-anniversary-group > header h3 { margin: 0; font-size: inherit; }
 .calendar-anniversary-list { grid-template-columns: 1fr; }
 .calendar-anniversary-row { min-height: 72px; }
+.day-panel .calendar-anniversary-row .avatar { grid-column: 1; grid-row: 1; }
 .calendar-anniversary-row .anniversary-copy strong,
 .calendar-anniversary-row .anniversary-copy small { overflow: visible; white-space: normal; text-overflow: clip; }
 .overview-holiday { display: flex; align-items: center; gap: 8px; color: #8e6818; }
@@ -1548,8 +1547,8 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   .timeline { grid-template-columns: 1fr; }
   .today-card > .section-heading { padding-inline: 0; }
   .today-card .home-event-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; padding-inline: 10px; }
-  .today-card .timeline::before { left: 79px; }
-  .today-card .timeline-now-marker { grid-template-columns: 66px 4px 18px 8px minmax(0, 1fr); }
+  .today-card .timeline::before { left: 71px; }
+  .today-card .timeline-now-marker { grid-template-columns: 60px 2px 18px 8px minmax(0, 1fr); }
   .today-card .home-event-title { font-size: 13px; }
   .today-card .home-event-row .event-time { max-width: none; font-size: 11px; }
   .today-card .home-event-row .home-category-chip { padding: 3px 5px; font-size: 11px; }
@@ -1735,7 +1734,7 @@ h1, h2, h3, strong, button { font-family: 'A2Z', sans-serif; }
   min-height: 56px;
   max-height: 56px;
   display: grid;
-  grid-template-columns: 66px 4px 18px 8px auto 10px minmax(0, 1fr) auto auto;
+  grid-template-columns: 60px 2px 18px 8px auto 10px minmax(0, 1fr) auto auto;
   gap: 0;
   padding: 7px 0;
   overflow: visible;

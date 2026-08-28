@@ -727,12 +727,9 @@ function AnniversaryDisplayRow({ event, className = '', registeredFormat = false
 function CalendarAnniversarySection({ events }) {
   if (!events.length) return null
 
-  return <section className="overview-day-section calendar-anniversary-group">
-    <header><h3>기념일</h3><b>{events.length}</b></header>
-    <div className="anniversary-list calendar-anniversary-list">
-      {events.map((event) => <AnniversaryDisplayRow key={event.id} event={event} className="calendar-anniversary-row" registeredFormat />)}
-    </div>
-  </section>
+  return <div className="anniversary-list calendar-anniversary-list" aria-label="기념일">
+    {events.map((event) => <AnniversaryDisplayRow key={event.id} event={event} className="calendar-anniversary-row" registeredFormat />)}
+  </div>
 }
 
 function TodayAnniversarySection({ events }) {
@@ -1300,10 +1297,10 @@ function CalendarView({ today, events, childSchedules, schedulePeriods, annivers
               {canEdit && <button className="small-add" aria-label="일정 추가" onClick={() => openModal('event', iso(selected))}><Plus size={18} /> 추가</button>}
             </div>
             <div className="overview-day-groups">
+              <CalendarAnniversarySection events={selectedAnniversaryEvents} />
               {selectedConflicts.size > 0 && <div className="overview-conflict-banner" role="status"><AlertTriangle /><span><strong>시간이 겹치는 일정이 있습니다</strong><small>아래 일정에서 시간을 확인해 주세요.</small></span></div>}
               {workSettings.enabled && shiftWorkers.length > 0 && <section className="overview-day-section"><header><span>근무</span><b>{selectedWorkShifts.length}</b></header><div className="overview-shift-list">{selectedWorkShifts.map(({ worker, option }) => <ScheduleRow key={worker.id} className="overview-work-row" memberColor={worker.color} memberTone={worker.tone} leading={<Avatar memberId={worker.id} />} title={option?.code || '미입력'} time={option?.time || ''} category="근무" />)}{!selectedWorkShifts.length && <p className="overview-empty">입력된 근무가 없습니다.</p>}</div></section>}
               {selectedHolidayEvents.length > 0 && <section className="overview-day-section holiday-group"><header><span>공휴일</span><small>일정 개수에서 제외</small></header>{selectedHolidayEvents.map((event) => <div className="overview-holiday" key={event.id}><CalendarDays /> <strong>{event.title}</strong></div>)}</section>}
-              <CalendarAnniversarySection events={selectedAnniversaryEvents} />
               <section className="overview-day-section"><header><span>가족 일정</span><b>{selectedFamilyEvents.length}</b></header><div className="day-events">{selectedFamilyEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary onDiscuss={() => onOpenCollaboration(event)} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedFamilyEvents.length && <p className="overview-empty">등록된 가족 일정이 없습니다.</p>}</div></section>
               {children.length > 0 && <section className="overview-day-section"><header><span>자녀 일정</span><b>{selectedChildEvents.length}</b></header><div className="day-events">{selectedChildEvents.map((event) => <EventCard key={event.id} event={event} compact calendarSummary showRecurrence={false} onEdit={canEdit ? (event.recurring ? () => openRecurringActions(event) : () => openModal('event', event.date, event)) : undefined} onDelete={canEdit ? () => removeSelectedEvent(event) : undefined} />)}{!selectedChildEvents.length && <p className="overview-empty">등록된 자녀 일정이 없습니다.</p>}</div></section>}
             </div>

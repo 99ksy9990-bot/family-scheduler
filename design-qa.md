@@ -11,6 +11,9 @@
 - Side-by-side evidence: `/tmp/family-scheduler-qa-comparison.png`
 - Latest calendar-detail reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/BA018180-1CCF-4A72-A620-6DDC32BF6F74/2-사진-2.jpg`
 - Latest calendar-detail implementation evidence: `/Users/santak/Downloads/stitch_/tmp/calendar-detail-focused-4fc73d1.png`
+- Flat anniversary-row reference: `/tmp/codex-remote-attachments/019fcba5-e320-7763-bfd4-651660a025ea/DB2EEAAC-985C-4D60-8FA8-788A9B3F6932/1-사진-1.jpg` (`589 × 1280`)
+- Flat calendar-detail implementation: `/Users/santak/Downloads/stitch_/tmp/calendar-detail-flat-final.jpg` (`387 × 841` screenshot, CSS viewport `402 × 874`, DPR `2`)
+- Focused anniversary reference crop: `/Users/santak/Downloads/stitch_/tmp/anniversary-registration-reference-crop.jpg` (`535 × 180`)
 - Target viewports: desktop Chromium, mobile Chromium `402 × 874`
 - Scope: 홈 오늘 일정, 통합 캘린더 상세, 가족 할 일, 일정 관리의 기념일·자녀 정보·학기/방학
 
@@ -78,6 +81,8 @@
 - 할 일은 시작일자·마감일자·완료일자를 별도로 저장하고 나중에 과거 완료일로 정정할 수 있다.
 - 캘린더 상세의 기념일은 가족 일정에서 분리해 독립 구획으로 표시하고, 등록 화면과 같이 이름·양력/음력·원 날짜·다음 양력 날짜·나이/주년 정보를 말줄임 없이 노출한다.
 - 학교·학원 일정의 시간 중복 표시는 학교·학원 칩 텍스트 바로 앞의 빨간 도트 한 개로 통합하며, 행 바깥이나 칩 뒤에는 중복 도트를 만들지 않는다.
+- 날짜 상세의 기념일은 근무·공휴일·가족·자녀보다 먼저 표시하고, 별도 구역 박스나 제목 박스 없이 등록 목록과 같은 기념일 행 한 겹만 사용한다.
+- 홈 타임라인의 시간 열은 `60px`, 시간–점 간격은 `2px`, 축 중심은 `71px`로 줄였다. 가장 긴 기준 문자열 `오후 12:12`는 말줄임 없이 수용한다.
 
 ## Click-to-manage behavior
 
@@ -92,8 +97,8 @@
 
 - ESLint: passed
 - Production build: passed
-- Desktop Chromium + Mobile Chromium: `96 passed`, `8 conditionally skipped`
-- Combined end-to-end result: `96 passed`, `8 conditionally skipped`
+- Desktop Chromium + Mobile Chromium: `98 passed`, `8 conditionally skipped`
+- Combined end-to-end result: `98 passed`, `8 conditionally skipped`
 - Layout assertions: title/secondary text `2px` difference, secondary weight `400`, common avatar start, row height `56px`, 홈 타임라인 padding `0`, title/meta gap `6px`, family time/location/recurrence visibility, desktop month/Today alignment, selected-date offset `0`, home heading starts equal, 네 캘린더 모드 월 제목 중심선 동일, 모바일 OFF 칩 셀 내부 수용, 전체 캘린더 4개 고정 슬롯과 `82px` 셀 높이, `17px` 근무 배지
 - Action assertions: anniversary, child profile, semester/vacation rows expose no inline actions and open edit/delete action sheets
 - Calendar assertions: D/E/N uses a shift icon with no code text, OFF stays hidden only in the combined view, 집·자녀 SVG 아이콘과 숫자가 문자 카운트를 대체하고, combined-view legend is absent, combined-view child details omit weekday recurrence, recurring child rows expose no inline actions and open the recurring action dialog
@@ -103,6 +108,9 @@
 - Calendar-detail comparison: 제공된 캘린더 상세 참조와 최신 모바일 구현을 같은 점검 입력에서 비교했다. 기념일 독립 구획, 전체 제목, 양력 칩, 날짜·다음 양력·나이 정보가 모두 표시되고, 학교·학원 중복 도트는 카테고리 칩 내부 앞쪽에 한 개만 렌더링된다.
 - Production deployment: Vercel production deployment `dpl_8Zhg3XtZBuXRfF6YatSgYzNrfrag` reached `READY`; public alias `family-scheduler-sooty.vercel.app` was assigned without alias errors.
 - Browser console: 최신 로컬 렌더 경로에서 오류 `0건`.
+- Latest mobile calendar detail: `402 × 874`, DPR `2`; 기념일이 `.overview-day-groups`의 첫 요소이고 `.overview-day-section` 안에 중첩되지 않으며 문서 가로 넘침이 없다.
+- Focused comparison history: 첫 캡처에서 `.day-panel .avatar` 공통 규칙 때문에 기념일 아바타가 오른쪽으로 이동한 P2를 발견했다. `.day-panel .calendar-anniversary-row .avatar`를 첫 열로 복원하고 테스트에 아바타–본문 `12px` 간격을 추가했으며, 재캡처에서 등록 목록과 같은 `아바타 → 제목/양력 → 날짜/기념 정보` 순서를 확인했다.
+- Required fidelity surfaces: A2Z 제목/본문 위계와 줄바꿈, 12px 아바타 간격과 단일 16px 카드 라운드, 기존 기념일 색 토큰, 기존 기념일 아이콘 자산, 등록 문구 전체 표시를 확인했다. 새 이미지 자산은 필요하지 않았다.
 - Data migration/storage keys: unchanged
 
 ## Review note

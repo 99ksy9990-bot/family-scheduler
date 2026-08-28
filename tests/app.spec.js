@@ -237,7 +237,7 @@ test('홈 오늘 일정에 근무와 자녀 일정을 함께 표시하고 데스
   expect(timelineSpacing.pointCenter).toBeLessThanOrEqual(86)
   expect(timelineSpacing.copyWidth).toBeGreaterThanOrEqual(145)
   expect(timelineSpacing.timeStartDelta).toBeLessThanOrEqual(1)
-  expect(timelineSpacing.timeToPointGap).toBe(4)
+  expect(timelineSpacing.timeToPointGap).toBe(2)
   expect(timelineSpacing.pointToAvatarGap).toBe(8)
   expect(timelineSpacing.avatarToCopyGap).toBe(10)
   expect(timelineSpacing.timeContentFits).toBe(true)
@@ -324,13 +324,18 @@ test('캘린더 상세의 기념일을 등록 목록과 같은 전체 정보로 
     localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify([
       { id: 'calendar-anniversary', name: '성혜', kind: '생일', calendarType: 'solar', month: 8, day: 15, baseYear: 1985 },
     ]))
+    localStorage.setItem('family-scheduler-shifts', JSON.stringify([
+      { id: 'calendar-anniversary-shift', date: '2026-08-15', member: 'emma', shift: 'day' },
+    ]))
   })
   await page.reload()
   await page.getByRole('button', { name: '캘린더', exact: true }).first().click()
   await page.locator('[data-date="2026-08-15"]').click()
 
-  const anniversarySection = page.locator('.overview-day-section.calendar-anniversary-group')
-  await expect(anniversarySection.getByRole('heading', { name: '기념일' })).toBeVisible()
+  const dayGroups = page.locator('.overview-day-groups')
+  const anniversarySection = dayGroups.locator(':scope > .calendar-anniversary-list')
+  await expect(dayGroups.locator(':scope > :first-child')).toHaveClass(/calendar-anniversary-list/)
+  await expect(dayGroups.locator('.overview-day-section.calendar-anniversary-group')).toHaveCount(0)
   await expect(anniversarySection.locator('.anniversary-row')).toHaveCount(1)
   await expect(anniversarySection.getByText('성혜 생일', { exact: true })).toBeVisible()
   await expect(anniversarySection.getByText('양력', { exact: true })).toBeVisible()
@@ -341,8 +346,42 @@ test('캘린더 상세의 기념일을 등록 목록과 같은 전체 정보로 
   const copyLayout = await anniversarySection.locator('.anniversary-row').evaluate((row) => ({
     titleEllipsis: getComputedStyle(row.querySelector('strong')).textOverflow,
     detailEllipsis: getComputedStyle(row.querySelector('small')).textOverflow,
+    avatarBeforeCopy: row.querySelector('.avatar').getBoundingClientRect().right <= row.querySelector('.anniversary-copy').getBoundingClientRect().left,
+    avatarCopyGap: Math.round(row.querySelector('.anniversary-copy').getBoundingClientRect().left - row.querySelector('.avatar').getBoundingClientRect().right),
   }))
-  expect(copyLayout).toEqual({ titleEllipsis: 'clip', detailEllipsis: 'clip' })
+  expect(copyLayout).toEqual({ titleEllipsis: 'clip', detailEllipsis: 'clip', avatarBeforeCopy: true, avatarCopyGap: 12 })
+  const listLayout = await anniversarySection.evaluate((list) => {
+    const style = getComputedStyle(list)
+    return {
+      background: style.backgroundColor,
+      borderWidth: style.borderWidth,
+      padding: style.padding,
+    }
+  })
+  expect(listLayout).toEqual({ background: 'rgba(0, 0, 0, 0)', borderWidth: '0px', padding: '0px' })
+})
+
+test('홈 타임라인은 오후 12:12를 자르지 않고 시간과 선 사이를 최소 간격으로 유지한다', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-events', JSON.stringify([
+      { id: 'timeline-long-time', title: '점심 일정', date: '2026-08-11', endDate: '2026-08-11', time: '오후 12:12', end: '오후 1:00', member: 'emma', members: ['emma'], calendarScope: 'family' },
+    ]))
+  })
+  await page.reload()
+
+  const row = page.locator('.today-card .home-timeline-row').filter({ hasText: '점심 일정' })
+  const spacing = await row.evaluate((item) => {
+    const time = item.querySelector('.schedule-row-timeline-time')
+    const timeBox = time.getBoundingClientRect()
+    const point = item.querySelector('.schedule-row-timeline-point').getBoundingClientRect()
+    return {
+      label: time.textContent,
+      fits: time.scrollWidth <= time.clientWidth,
+      gap: Math.round(point.left - timeBox.right),
+      pointCenter: Math.round(point.left + point.width / 2 - item.getBoundingClientRect().left),
+    }
+  })
+  expect(spacing).toEqual({ label: '오후 12:12', fits: true, gap: 2, pointCenter: 71 })
 })
 
 test('오늘 일정은 전날 야간 근무를 이어 표시하고 최대 10개까지 보여준다', async ({ page }) => {
