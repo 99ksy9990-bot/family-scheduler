@@ -20,9 +20,10 @@ import { useCurrentTime } from './hooks/useCurrentTime'
 import { addDays, formatLongDate, formatSolarDate, iso, startOfToday, validSolarDate } from './lib/dates'
 import { holidayEventsForDate, holidaysForYear } from './lib/holidays'
 import { inspectBackup } from './lib/backup'
-import { hasLegacyLocalData, load, loadRecoveredCollection, loadWithoutLegacySeeds, mergeUnique } from './lib/persistence'
+import { load } from './lib/persistence'
+import { loadLegacyState, upgradeSharedState, assignedMemberIds, emptyChildProfile, DEFAULT_SHIFT_TYPES, DATA_RECOVERY_VERSION } from './lib/legacyState'
 import { hasRecurrence, isRecurrenceStart, recurringEventForDate } from './lib/recurrence'
-import { MEMBER_COLORS, SYSTEM_COLORS, migrateMemberProfiles } from './lib/colors'
+import { SYSTEM_COLORS } from './lib/colors'
 
 const FamilySyncPanel = lazy(() => import('./components/FamilySyncPanel'))
 const FamilySettingsPanel = lazy(() => import('./components/FamilySettingsPanel'))
@@ -30,12 +31,6 @@ const EventCollaborationPanel = lazy(() => import('./components/EventCollaborati
 const SettingsView = lazy(() => import('./views/SettingsView'))
 
 const FAMILY_MEMBER = { id: 'family', name: '가족', type: 'system', initials: '가', color: SYSTEM_COLORS.family, tone: '#EFF6F8' }
-const LEGACY_PROFILES = [
-  { id: 'david', name: '아빠', type: 'adult', relation: '아빠', initials: '아', color: MEMBER_COLORS[0].color, tone: MEMBER_COLORS[0].tone, active: true },
-  { id: 'emma', name: '엄마', type: 'adult', relation: '엄마', initials: '엄', color: MEMBER_COLORS[1].color, tone: MEMBER_COLORS[1].tone, active: true },
-  { id: 'leo', name: '초롱', type: 'child', relation: '자녀', initials: '초', color: MEMBER_COLORS[2].color, tone: MEMBER_COLORS[2].tone, active: true },
-  { id: 'mia', name: '연두', type: 'child', relation: '자녀', initials: '연', color: MEMBER_COLORS[3].color, tone: MEMBER_COLORS[3].tone, active: true },
-]
 const ANNIVERSARY_MEMBER = { id: 'anniversary', name: '기념일', initials: '기', color: SYSTEM_COLORS.anniversary, tone: '#FFFBEB' }
 const HOLIDAY_MEMBER = { id: 'holiday', name: '공휴일', initials: '휴', color: SYSTEM_COLORS.holiday, tone: '#FEF2F2' }
 const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
@@ -70,13 +65,6 @@ const anniversaryYearsFor = (date) => Array.from(
   (_, index) => date.getFullYear() - index,
 )
 
-const DEFAULT_SHIFT_TYPES = [
-  { id: 'day', code: 'D', label: '주간 근무', start: '06:30', end: '15:30', color: 'sage', icon: 'sun' },
-  { id: 'evening', code: 'E', label: '오후 근무', start: '13:30', end: '22:30', color: 'blue', icon: 'sunset' },
-  { id: 'night', code: 'N', label: '야간 근무', start: '22:00', end: '08:00', color: 'navy', icon: 'moon' },
-  { id: 'off', code: 'OFF', label: '휴무', start: '', end: '', color: 'lavender', icon: 'calendar' },
-]
-
 const FamilyProfilesContext = createContext(null)
 const useFamilyProfiles = () => useContext(FamilyProfilesContext)
 
@@ -86,34 +74,6 @@ const memberForId = (memberId, profiles = []) => {
   if (memberId === FAMILY_MEMBER.id) return FAMILY_MEMBER
   return profiles.find((member) => member.id === memberId) || FAMILY_MEMBER
 }
-
-const DATA_RECOVERY_VERSION = 2
-const RECOVERED_SHIFTS = []
-const RECOVERED_ANNIVERSARIES = []
-
-const defaultEvents = []
-const defaultChildSchedules = []
-const defaultSchedulePeriods = []
-const defaultAnniversaries = []
-const defaultTasks = []
-const defaultShifts = []
-const defaultScheduleExceptions = []
-const emptyChildProfile = (member) => ({
-  member,
-  school: '',
-  grade: '',
-  classNumber: '',
-  studentNumber: '',
-  teacherName: '',
-  teacherPhone: '',
-})
-
-const LEGACY_EVENT_IDS = new Set([1, 4, 6, 7])
-const LEGACY_TASK_IDS = new Set([1, 2, 3, 4, 5, 6, 7])
-const LEGACY_CHILD_SCHEDULE_IDS = new Set([
-  'leo-term-soccer', 'leo-term-piano', 'mia-term-art', 'leo-vacation-swim', 'mia-vacation-art',
-])
-const LEGACY_PERIOD_IDS = new Set(['term-first-2026', 'vacation-summer-2026', 'term-second-2026'])
 
 const SHIFT_ICONS = { sun: Sun, sunset: Sunset, moon: Moon, calendar: CalendarDays }
 const LEGACY_SHIFT_ICON_NAMES = {
@@ -154,48 +114,11 @@ const uniqueLatestShifts = (shifts) => {
   return [...latest.values()]
 }
 
-const LEGACY_STORAGE_KEYS = [
-  'family-scheduler-events', 'family-scheduler-tasks', 'family-scheduler-shifts',
-  'family-scheduler-child-schedules-v1', 'family-scheduler-child-profiles-v1',
-  'family-scheduler-periods-v1', 'family-scheduler-anniversaries-v1',
-]
-
-const defaultWorkSettingsFor = (profiles, shifts = []) => {
-  const profileIds = new Set(profiles.map((profile) => profile.id))
-  const shiftMemberIds = [...new Set(shifts.map((shift) => shift.member).filter((id) => profileIds.has(id)))]
-  const workerIds = shiftMemberIds.length ? shiftMemberIds : profileIds.has('emma') ? ['emma'] : []
-  return { enabled: workerIds.length > 0, workerIds, shiftTypes: DEFAULT_SHIFT_TYPES }
-}
-
 const createId = (prefix) => (
   typeof crypto !== 'undefined' && crypto.randomUUID
     ? `${prefix}-${crypto.randomUUID()}`
     : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 )
-
-const upgradeSharedState = (state) => {
-  if (!state || typeof state !== 'object') return state
-  const needsRecovery = Number(state.recoveryVersion || 0) < DATA_RECOVERY_VERSION
-  const needsProfiles = Number(state.schemaVersion || 0) < 5 || !Array.isArray(state.profiles)
-  const needsCalendarScopes = Number(state.schemaVersion || 0) < 6
-  const needsMemberColors = Number(state.schemaVersion || 0) < 7
-  if (!needsRecovery && !needsProfiles && !needsCalendarScopes && !needsMemberColors) return state
-  const hasLegacyData = ['events', 'tasks', 'shifts', 'childSchedules', 'childProfiles', 'schedulePeriods', 'anniversaries']
-    .some((key) => Array.isArray(state[key]) && state[key].length > 0)
-  const sourceProfiles = Array.isArray(state.profiles) ? state.profiles : hasLegacyData ? LEGACY_PROFILES : []
-  const profiles = needsMemberColors ? migrateMemberProfiles(sourceProfiles) : sourceProfiles
-  return {
-    ...state,
-    schemaVersion: 7,
-    recoveryVersion: DATA_RECOVERY_VERSION,
-    profiles,
-    workSettings: state.workSettings || defaultWorkSettingsFor(profiles, state.shifts),
-    profileLinks: state.profileLinks && typeof state.profileLinks === 'object' ? state.profileLinks : {},
-    events: normalizeEventCalendarScopes(Array.isArray(state.events) ? state.events : [], profiles),
-    shifts: mergeUnique(Array.isArray(state.shifts) ? state.shifts : [], RECOVERED_SHIFTS, (item) => `${item.member}-${item.date}`),
-    anniversaries: mergeUnique(Array.isArray(state.anniversaries) ? state.anniversaries : [], RECOVERED_ANNIVERSARIES, (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`),
-  }
-}
 
 const anniversarySolarOccurrences = (anniversary, solarYear) => {
   if (anniversary.calendarType === 'solar') {
@@ -313,11 +236,6 @@ const formatDisplayTime = (value) => {
   return `${parsed.meridiem} ${parsed.hour}:${parsed.minute}`
 }
 
-const assignedMemberIds = (item, pluralKey = 'members', singularKey = 'member') => {
-  const plural = Array.isArray(item?.[pluralKey]) ? item[pluralKey].filter(Boolean) : []
-  return plural.length ? [...new Set(plural)] : item?.[singularKey] ? [item[singularKey]] : [FAMILY_MEMBER.id]
-}
-
 const eventCalendarScope = (event) => event?.calendarScope === 'children' || event?.type === 'child' ? 'children' : 'family'
 const isChildCalendarEvent = (event) => event?.type === 'school' || eventCalendarScope(event) === 'children'
 const childScheduleKind = (event) => {
@@ -325,16 +243,6 @@ const childScheduleKind = (event) => {
   if (event?.location?.includes('학교')) return '학교'
   if (event?.location?.includes('학원')) return '학원'
   return '자녀'
-}
-
-const normalizeEventCalendarScopes = (events, profiles = []) => {
-  const childIds = new Set(profiles.filter((profile) => profile.type === 'child').map((profile) => profile.id))
-  return events.map((event) => {
-    if (event.calendarScope === 'family' || event.calendarScope === 'children') return event
-    const memberIds = assignedMemberIds(event)
-    const belongsToChildren = childIds.size > 0 && memberIds.length > 0 && memberIds.every((memberId) => childIds.has(memberId))
-    return { ...event, calendarScope: belongsToChildren ? 'children' : 'family' }
-  })
 }
 
 const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
@@ -2301,36 +2209,18 @@ export default function App() {
     const requested = new URLSearchParams(window.location.search).get('view')
     return NAV.some((item) => item.id === requested) ? requested : 'home'
   })
-  const [profiles, setProfiles] = useState(() => migrateMemberProfiles(load('family-scheduler-profiles-v1', hasLegacyLocalData(LEGACY_STORAGE_KEYS) ? LEGACY_PROFILES : [])))
-  const [events, setEvents] = useState(() => normalizeEventCalendarScopes(
-    loadWithoutLegacySeeds('family-scheduler-events', defaultEvents, LEGACY_EVENT_IDS).map((event) => (
-      event.member === 'mia' && event.title === '미아 생일' ? { ...event, title: '연두 생일' } : event
-    )),
-    profiles,
-  ))
-  const [tasks, setTasks] = useState(() => loadWithoutLegacySeeds('family-scheduler-tasks', defaultTasks, LEGACY_TASK_IDS))
-  const [shifts, setShifts] = useState(() => loadRecoveredCollection(
-    'family-scheduler-shifts',
-    defaultShifts,
-    RECOVERED_SHIFTS,
-    (item) => `${item.member}-${item.date}`,
-    'family-scheduler-shifts-recovery-version',
-    DATA_RECOVERY_VERSION,
-  ))
-  const [workSettings, setWorkSettings] = useState(() => load('family-scheduler-work-settings-v1', defaultWorkSettingsFor(profiles, shifts)))
-  const [profileLinks, setProfileLinks] = useState(() => load('family-scheduler-profile-links-v1', {}))
-  const [childSchedules, setChildSchedules] = useState(() => loadWithoutLegacySeeds('family-scheduler-child-schedules-v1', defaultChildSchedules, LEGACY_CHILD_SCHEDULE_IDS))
-  const [childProfiles, setChildProfiles] = useState(() => load('family-scheduler-child-profiles-v1', profiles.filter((profile) => profile.type === 'child').map((profile) => emptyChildProfile(profile.id))))
-  const [schedulePeriods, setSchedulePeriods] = useState(() => loadWithoutLegacySeeds('family-scheduler-periods-v1', defaultSchedulePeriods, LEGACY_PERIOD_IDS))
-  const [anniversaries, setAnniversaries] = useState(() => loadRecoveredCollection(
-    'family-scheduler-anniversaries-v1',
-    defaultAnniversaries,
-    RECOVERED_ANNIVERSARIES,
-    (item) => `${item.name}-${item.kind}-${item.calendarType}-${item.month}-${item.day}`,
-    'family-scheduler-anniversaries-recovery-version',
-    DATA_RECOVERY_VERSION,
-  ))
-  const [scheduleExceptions, setScheduleExceptions] = useState(() => load('family-scheduler-schedule-exceptions-v1', defaultScheduleExceptions))
+  const [initialState] = useState(() => loadLegacyState())
+  const [profiles, setProfiles] = useState(initialState.profiles)
+  const [events, setEvents] = useState(initialState.events)
+  const [tasks, setTasks] = useState(initialState.tasks)
+  const [shifts, setShifts] = useState(initialState.shifts)
+  const [workSettings, setWorkSettings] = useState(initialState.workSettings)
+  const [profileLinks, setProfileLinks] = useState(initialState.profileLinks)
+  const [childSchedules, setChildSchedules] = useState(initialState.childSchedules)
+  const [childProfiles, setChildProfiles] = useState(initialState.childProfiles)
+  const [schedulePeriods, setSchedulePeriods] = useState(initialState.schedulePeriods)
+  const [anniversaries, setAnniversaries] = useState(initialState.anniversaries)
+  const [scheduleExceptions, setScheduleExceptions] = useState(initialState.scheduleExceptions)
   const [modal, setModal] = useState(null)
   const modalTriggerRef = useRef(null)
   const [focusMode, setFocusMode] = useState(false)

@@ -20,3 +20,5 @@ lumina_family_calendar
 /design-qa-*.png
 /playwright-report/
 /test-results/
+
+/tests/fixtures/real-backup.json

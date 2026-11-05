@@ -1,16 +1,16 @@
-export const load = (key, fallback) => {
+export const load = (key, fallback, storage = localStorage) => {
   try {
-    const stored = localStorage.getItem(key)
+    const stored = storage.getItem(key)
     return stored ? JSON.parse(stored) : fallback
   } catch {
     return fallback
   }
 }
 
-export const hasLegacyLocalData = (keys) => keys.some((key) => localStorage.getItem(key))
+export const hasLegacyLocalData = (keys, storage = localStorage) => keys.some((key) => storage.getItem(key))
 
-export const loadWithoutLegacySeeds = (key, fallback, legacyIds) => (
-  load(key, fallback).filter((item) => !legacyIds.has(item.id))
+export const loadWithoutLegacySeeds = (key, fallback, legacyIds, storage = localStorage) => (
+  load(key, fallback, storage).filter((item) => !legacyIds.has(item.id))
 )
 
 export const mergeUnique = (current, recovered, identity) => {
@@ -18,11 +18,11 @@ export const mergeUnique = (current, recovered, identity) => {
   return [...current, ...recovered.filter((item) => !identities.has(identity(item)))]
 }
 
-export const loadRecoveredCollection = (key, fallback, recovered, identity, markerKey, recoveryVersion) => {
-  const current = load(key, fallback)
-  const marker = Number(localStorage.getItem(markerKey) || 0)
+export const loadRecoveredCollection = (key, fallback, recovered, identity, markerKey, recoveryVersion, storage = localStorage, persistRecovery = true) => {
+  const current = load(key, fallback, storage)
+  const marker = Number(storage.getItem(markerKey) || 0)
   if (marker >= recoveryVersion) return current
   const merged = mergeUnique(current, recovered, identity)
-  localStorage.setItem(markerKey, String(recoveryVersion))
+  if (persistRecovery) storage.setItem(markerKey, String(recoveryVersion))
   return merged
 }
