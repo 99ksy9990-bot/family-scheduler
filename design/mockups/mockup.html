@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오늘우리 시안</title>
+<style>
+@font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-Regular.woff2) format("woff2");font-weight:400}
+@font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-Bold.woff2) format("woff2");font-weight:700}
+:root{
+ --paper:oklch(97% .012 95);--card:oklch(99% .006 95);--ink:oklch(22% .014 255);--muted:oklch(50% .014 255);--rule:oklch(90% .014 95);
+ --pear:oklch(90% .14 96);--pear-deep:oklch(74% .15 92);--sky:oklch(93% .04 236);--hill:oklch(88% .07 140);--hill2:oklch(83% .09 145);
+ --dad:oklch(40% .09 265);--mom:oklch(66% .15 35);--big:oklch(64% .11 300);--little:oklch(68% .11 160);
+ --dad-t:oklch(94% .025 265);--mom-t:oklch(95% .03 35);--big-t:oklch(95% .03 300);--little-t:oklch(95% .035 160);
+ --hol:oklch(58% .19 27);
+}
+*{box-sizing:border-box}html,body{margin:0;overflow-x:clip}
+body{background:#ddd;font-family:SUITE,system-ui,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums;word-break:keep-all}
+.phones{display:flex;gap:24px;padding:24px;flex-wrap:wrap}
+.phone{width:393px;height:852px;background:var(--paper);position:relative;overflow:hidden;border-radius:0}
+.safe{padding:59px 18px 0}
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.top b{font-size:22px}.top small{font-size:13px;color:var(--muted)}
+/* family stage */
+.stage{position:relative;height:208px;border-radius:28px;background:linear-gradient(var(--sky),var(--paper) 140%);overflow:hidden}
+.stage .sun{position:absolute;right:14px;top:10px;width:54px}
+.stage .hill{position:absolute;left:-20px;right:-20px;bottom:-60px;height:120px;border-radius:50%;background:var(--hill)}
+.stage .hill.b{left:120px;right:-80px;bottom:-70px;background:var(--hill2)}
+.fam{position:absolute;left:8px;right:8px;bottom:12px;display:grid;grid-template-columns:repeat(4,1fr);text-align:center}
+.who{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bub{font-size:12px;font-weight:600;background:var(--card);border-radius:12px;padding:5px 8px;position:relative;line-height:1.25;min-height:40px;display:flex;align-items:center;box-shadow:0 1px 0 var(--rule)}
+.bub:after{content:"";position:absolute;bottom:-5px;left:50%;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:var(--card)}
+.who img{width:66px;height:66px;border-radius:50%;border:3px solid;background:var(--card)}
+.who span{font-size:13px;font-weight:700}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center;padding:4px 0 6px}
+.strip .who{gap:2px}.strip img{width:60px;height:60px;border-radius:50%;border:3px solid;background:var(--card)}
+.strip span{font-size:14px;font-weight:700}.strip small{font-size:12px;color:var(--muted);white-space:nowrap}
+/* timeline */
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 8px}
+.sec b{font-size:17px}.sec small{color:var(--muted);font-size:13px}
+.ev{display:grid;grid-template-columns:52px 36px 1fr;gap:10px;align-items:center;padding:10px 12px;border-radius:18px;margin-bottom:8px}
+.ev time{font-size:15px;font-weight:700}.ev time i{display:block;font-style:normal;font-size:12px;font-weight:400;color:var(--muted)}
+.ev img{width:36px;height:36px;border-radius:50%}
+.ev p{margin:0;font-size:15px;font-weight:700}.ev p em{display:block;font-style:normal;font-size:12px;font-weight:400;color:var(--muted)}
+.ev.done{opacity:.5}
+.now{display:flex;align-items:center;gap:8px;margin:2px 0 8px;font-size:12px;font-weight:700;color:var(--mom)}
+.now:after{content:"";flex:1;height:2px;background:var(--mom);border-radius:2px}
+/* tabbar */
+.tabs{position:absolute;left:0;right:0;bottom:0;height:84px;padding:8px 10px 34px;background:var(--card);border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(5,1fr);font-size:11px;text-align:center;color:var(--muted)}
+.tabs div{display:flex;flex-direction:column;align-items:center;gap:2px}.tabs div:before{content:"";width:22px;height:22px;border-radius:7px;background:var(--rule)}
+.tabs .on{color:var(--ink);font-weight:700}.tabs .on:before{background:var(--pear-deep)}
+.fab{position:absolute;right:18px;bottom:100px;width:56px;height:56px;border-radius:50%;background:var(--pear);border-bottom:4px solid var(--pear-deep);font-size:30px;display:grid;place-items:center}
+/* calendar */
+.mhead{display:flex;align-items:center;gap:8px;margin-bottom:10px}.mhead b{font-size:22px;flex:1}
+.pill{font-size:13px;padding:7px 12px;border-radius:99px;background:var(--card);border:1px solid var(--rule)}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:0}
+.dow{font-size:12px;color:var(--muted);text-align:center;padding:2px 0 6px}.dow.sun,.d.sun .n{color:var(--hol)}
+.d{height:58px;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:3px 1px 0;border-top:1px solid var(--rule);min-width:0}.d .n{align-self:center}.lb{font-size:10px;line-height:14px;height:14px;border-radius:4px;padding:0 3px;white-space:nowrap;overflow:hidden;color:var(--ink)}.more{font-size:10px;color:var(--muted);text-align:center;line-height:12px}
+.d .n{width:26px;height:26px;display:grid;place-items:center;font-size:14px;font-weight:600;border-radius:50%}
+.d.out .n{color:oklch(78% .01 255)}
+.d.today .n{background:var(--pear);font-weight:700}
+.d.sel{background:var(--dad-t);border-radius:10px}
+.d.hol .n{color:var(--hol)}
+.dots{display:flex;gap:2px}.dots i{width:6px;height:6px;border-radius:50%}
+.hl{font-size:9px;color:var(--hol);line-height:1;margin-top:-2px}
+</style></head><body><div class="phones">
+
+<!-- 오늘 -->
+<section class="phone"><div class="safe">
+ <div class="top"><b>11월 5일 목요일</b><small>가족 연결됨</small></div>
+ <div class="strip">
+  <div class="who"><img src="dad_basic.png" style="border-color:var(--dad)" alt=""><span>아빠</span><small>쉬는 날</small></div>
+  <div class="who"><img src="mom_done.png" style="border-color:var(--mom)" alt=""><span>엄마</span><small>근무 끝</small></div>
+  <div class="who"><img src="big_busy.png" style="border-color:var(--big)" alt=""><span>초롱</span><small>수업 ~16:10</small></div>
+  <div class="who"><img src="little_basic.png" style="border-color:var(--little)" alt=""><span>연두</span><small>영어 15:00</small></div>
+ </div>
+ <div class="sec"><b>오늘 일정 6</b><small>시간순</small></div>
+ <div class="ev done" style="background:var(--mom-t)"><time>00:00<i>08:00</i></time><img src="mom_done.png" alt=""><p>야간 근무<em>엄마</em></p></div>
+ <div class="ev done" style="background:var(--little-t)"><time>08:40<i>13:50</i></time><img src="little_done.png" alt=""><p>5교시 수업<em>연두 · 학교</em></p></div>
+ <div class="now">지금 14:20</div>
+ <div class="ev" style="background:var(--big-t)"><time>08:40<i>16:10</i></time><img src="big_busy.png" alt=""><p>수업<em>초롱 · 학교</em></p></div>
+ <div class="ev" style="background:var(--little-t)"><time>15:00<i>16:00</i></time><img src="little_basic.png" alt=""><p>영어<em>연두 · 학원</em></p></div>
+</div>
+<div class="fab">+</div>
+<nav class="tabs"><div class="on">오늘</div><div>달력</div><div>할 일</div><div>놀이</div><div>설정</div></nav>
+</section>
+
+<!-- 달력 -->
+<section class="phone"><div class="safe">
+ <div class="mhead"><b>2026년 11월</b><small style='font-size:12px;color:var(--muted)'>A 이름표</small><span class="pill">월 · 주</span><span class="pill">오늘</span></div>
+ <div class="grid" id="g"></div>
+ <div class="sec"><b>11월 5일 목요일</b><small>6개</small></div>
+ <div class="ev" style="background:var(--mom-t)"><time>00:00<i>08:00</i></time><img src="mom_busy.png" alt=""><p>야간 근무<em>엄마</em></p></div>
+ <div class="ev" style="background:var(--little-t)"><time>08:40<i>13:50</i></time><img src="little_busy.png" alt=""><p>5교시 수업<em>연두</em></p></div>
+</div>
+<div class="fab">+</div>
+<nav class="tabs"><div>오늘</div><div class="on">달력</div><div>할 일</div><div>놀이</div><div>설정</div></nav>
+</section>
+<!-- 달력 -->
+<section class="phone"><div class="safe">
+ <div class="mhead"><b>2026년 11월</b><small style='font-size:12px;color:var(--muted)'>A2 사람 이름</small><span class="pill">월 · 주</span><span class="pill">오늘</span></div>
+ <div class="grid" id="g3"></div>
+ <div class="sec"><b>11월 5일 목요일</b><small>6개</small></div>
+ <div class="ev" style="background:var(--mom-t)"><time>00:00<i>08:00</i></time><img src="mom_busy.png" alt=""><p>야간 근무<em>엄마</em></p></div>
+ <div class="ev" style="background:var(--little-t)"><time>08:40<i>13:50</i></time><img src="little_busy.png" alt=""><p>5교시 수업<em>연두</em></p></div>
+</div>
+<div class="fab">+</div>
+<nav class="tabs"><div>오늘</div><div class="on">달력</div><div>할 일</div><div>놀이</div><div>설정</div></nav>
+</section>
+<!-- 일정 추가 -->
+<section class="phone"><div class="safe" style="opacity:.35"><div class="top"><b>11월 5일 목요일</b></div></div>
+<div class="sheet">
+ <div class="grab"></div>
+ <div class="sh-top"><b>일정 추가</b><span class="x">✕</span></div>
+ <input class="big" placeholder="무슨 일정인가요?" value="연두 치과">
+ <div class="row"><span class="lbl">날짜</span><span class="chip">11월 5일 (목)</span></div>
+ <div class="row"><span class="lbl">시간</span><span class="chip">15:00</span><span class="to">~</span><span class="chip">16:00</span></div>
+ <div class="row sw"><span class="lbl">하루 종일</span><i class="tog"></i></div>
+ <div class="row sw"><span class="lbl">여러 날</span><i class="tog"></i></div>
+ <div class="lbl" style="margin:14px 0 8px">누구 일정인가요?</div>
+ <div class="pick"><span><img src="dad_basic.png" alt="">아빠</span><span class="on"><img src="mom_basic.png" alt="">엄마</span><span><img src="big_basic.png" alt="">초롱</span><span class="on"><img src="little_basic.png" alt="">연두</span></div>
+ <div class="row"><span class="lbl">장소</span><span class="ph">선택 사항</span></div>
+ <div class="row"><span class="lbl">반복</span><span class="seg"><b>안 함</b><i>매주</i><i>매월</i><i>매년</i></span></div>
+ <div class="row"><span class="lbl">알림</span><span class="seg"><i>없음</i><b>30분 전</b><i>당일</i></span></div>
+ <div class="save">저장</div>
+</div></section>
+<style>
+.sheet{position:absolute;left:0;right:0;bottom:0;top:110px;background:var(--card);border-radius:28px 28px 0 0;padding:8px 18px 0;box-shadow:0 -1px 0 var(--rule)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--rule);margin:0 auto 10px}
+.sh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.sh-top b{font-size:19px}
+.x{width:36px;height:36px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:15px;color:var(--muted)}
+.big{width:100%;font:700 20px SUITE;border:0;border-bottom:2px solid var(--pear-deep);background:none;padding:8px 2px;margin-bottom:6px;color:var(--ink)}
+.row{display:flex;align-items:center;gap:8px;min-height:48px;border-bottom:1px solid var(--rule)}
+.lbl{font-size:15px;font-weight:600;flex:1}.row .lbl{flex:1}
+.chip{font-size:15px;font-weight:700;background:var(--paper);border-radius:10px;padding:7px 12px}.to{color:var(--muted)}
+.ph{color:var(--muted);font-size:15px}
+.tog{width:46px;height:28px;border-radius:14px;background:var(--rule);position:relative}.tog:after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--card)}
+.pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.pick span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;font-weight:600;padding:6px 0;border-radius:14px;color:var(--muted)}
+.pick img{width:48px;height:48px;border-radius:50%;filter:grayscale(.9);opacity:.6}
+.pick .on{background:var(--pear);color:var(--ink)}.pick .on img{filter:none;opacity:1}
+.seg{display:flex;background:var(--paper);border-radius:10px;padding:2px;font-size:13px}.seg i,.seg b{font-style:normal;padding:6px 9px;border-radius:8px}.seg b{background:var(--card);box-shadow:0 1px 2px oklch(0% 0 0/.1)}
+.save{position:absolute;left:18px;right:18px;bottom:34px;height:54px;border-radius:16px;background:var(--pear);border-bottom:4px solid var(--pear-deep);display:grid;place-items:center;font-size:17px;font-weight:700}
+</style>
+
+<!-- 달력 B -->
+<section class="phone"><div class="safe">
+ <div class="mhead"><b>2026년 11월</b><small style='font-size:12px;color:var(--muted)'>B 표시 없음</small><span class="pill">월 · 주</span><span class="pill">오늘</span></div>
+ <div class="grid" id="g2"></div>
+ <div class="sec"><b>11월 5일 목요일</b><small>6개</small></div>
+ <div class="ev" style="background:var(--mom-t)"><time>00:00<i>08:00</i></time><img src="mom_busy.png" alt=""><p>야간 근무<em>엄마</em></p></div>
+ <div class="ev" style="background:var(--little-t)"><time>08:40<i>13:50</i></time><img src="little_busy.png" alt=""><p>5교시 수업<em>연두</em></p></div>
+</div>
+<div class="fab">+</div>
+<nav class="tabs"><div>오늘</div><div class="on">달력</div><div>할 일</div><div>놀이</div><div>설정</div></nav>
+</section>
+</div>
+<script>
+const T={dad:'var(--dad-t)',mom:'var(--mom-t)',big:'var(--big-t)',little:'var(--little-t)'};
+const S=[['mom','근무N'],['little','영어'],['big','수업'],['dad','휴무'],['little','수학'],['mom','근무D']];
+const NM={dad:'아빠',mom:'엄마',big:'초롱',little:'연두'};
+function build(id,labels,names){const g=document.getElementById(id);
+ '일월화수목금토'.split('').forEach((d,i)=>g.insertAdjacentHTML('beforeend',`<div class="dow ${i==0?'sun':''}">${d}</div>`));
+ for(let i=0;i<35;i++){const day=i+1;const out=day>30;const n=out?day-30:day;
+  const cls=['d',i%7==0?'sun':'',out?'out':'',day==5?'today sel':''].join(' ');
+  let inner='';
+  if(labels&&!out){const k=(day*7)%4;const ev=Array.from({length:k},(_,j)=>S[(day+j)%S.length]);
+   inner=ev.slice(0,2).map(([m,t])=>`<span class="lb" style="background:${T[m]}">${names?NM[m]:t}</span>`).join('')+(ev.length>2?`<span class="more">+${ev.length-2}</span>`:'');}
+  g.insertAdjacentHTML('beforeend',`<div class="${cls}"><span class="n">${n}</span>${inner}</div>`);}}
+build('g',true);build('g2',false);build('g3',true,true);document.querySelectorAll('#g2 .d:not(.out)').forEach(d=>{const n=+d.querySelector('.n').textContent;if((n*7)%4)d.classList.add('has')});
+</script>
+</body></html>
+<style>#g2 .d{height:44px}</style><style>#g2 .d .n{font-weight:400;color:var(--muted)}#g2 .d.has .n{font-weight:700;color:var(--ink)}#g2 .d.sun .n{color:var(--hol)}#g2 .d.sun:not(.has) .n{opacity:.6}#g2 .d.out .n{color:oklch(85% .01 255);font-weight:400}</style><style>
+#g .d{height:72px;overflow:hidden;gap:2px}
+#g .d .n{width:24px;height:24px;font-size:14px}
+#g .lb{font-size:11px;font-weight:600;line-height:16px;height:16px;flex:none;border-radius:4px;padding:0 3px;text-overflow:clip}
+#g .more{font-size:11px;line-height:13px;flex:none;font-weight:600}
+</style><style>
+#g3 .d{height:72px;overflow:hidden;gap:2px}#g3 .d .n{width:24px;height:24px;font-size:14px}
+#g3 .lb{font-size:11px;font-weight:600;line-height:16px;height:16px;flex:none;border-radius:4px;padding:0 3px}
+#g3 .more{font-size:11px;line-height:13px;flex:none;font-weight:600}</style>
