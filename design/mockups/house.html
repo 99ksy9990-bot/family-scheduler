@@ -21,12 +21,12 @@ body{background:var(--bg);font-family:var(--font);color:var(--label);font-varian
 .phone::after{width:280px;height:280px;background:var(--blob2);top:260px;right:-100px}
 .blob{width:260px;height:260px;background:var(--blob3);bottom:60px;left:-60px}
 .tile,.list{backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--glass-line);box-shadow:0 8px 24px rgba(30,30,60,.08)}
-header{padding:62px 20px 0}
+header{padding:58px 20px 0}
 header p{font-size:15px;font-weight:600;color:var(--label-2)}
 header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
-.sec{font-size:20px;font-weight:700;padding:22px 20px 10px}
+.sec{font-size:20px;font-weight:700;padding:18px 20px 8px}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:0 16px}
-.tile{border:0;font:inherit;color:inherit;text-align:left;background:var(--card);border-radius:22px;padding:14px;height:150px;display:flex;flex-direction:column;position:relative;cursor:pointer}
+.tile{border:0;font:inherit;color:inherit;text-align:left;background:var(--card);border-radius:22px;padding:14px;height:140px;display:flex;flex-direction:column;position:relative;cursor:pointer}
 .tile:focus-visible{outline:3px solid var(--tint);outline-offset:2px}
 .tile img{width:58px;height:58px}
 .tile b{font-size:17px;font-weight:700;margin-top:auto}
@@ -42,7 +42,7 @@ header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
 .row small{font-size:13px;color:var(--label-2)}
 .row time{font-size:17px;color:var(--label-2)}
 .row.next time{color:var(--tint);font-weight:600}
-.tabs{position:absolute;bottom:0;left:0;right:0;height:83px;background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;justify-content:space-around;padding-top:7px}
+.tabs{position:absolute;bottom:8px;left:16px;right:16px;height:62px;background:var(--card);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--glass-line);box-shadow:0 8px 24px rgba(30,30,60,.12);border-radius:31px;display:flex;justify-content:space-around;align-items:center}
 .tabs a{font-size:10px;font-weight:600;color:var(--label-2);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:64px}
 .tabs a.on{color:var(--tint)}
 .tabs a:focus-visible{outline:2px solid var(--tint);border-radius:6px}
@@ -63,6 +63,7 @@ header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
   <div class="row next"><img src="little_basic.png" alt=""><div><b>피아노</b><small>연두</small></div><time>16:00</time></div>
   <div class="row"><img src="big_basic.png" alt=""><div><b>영어학원</b><small>초롱</small></div><time>18:00</time></div>
   <div class="row"><img src="mom_basic.png" alt=""><div><b>가족 저녁</b><small>모두</small></div><time>19:30</time></div>
+  <div class="row"><img src="dad_basic.png" alt=""><div><b>분리수거</b><small>아빠</small></div><time>21:00</time></div>
  </div>
  <nav class="tabs">
   <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>우리집</a>
