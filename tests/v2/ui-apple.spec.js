@@ -11,7 +11,16 @@ test('우리집 이름·불투명 타일·유리 아이콘·떠 있는 알약', 
   expect(page.viewportSize().height - (await nav.boundingBox()).y - 62).toBe(8)
   expect(await nav.evaluate((element) => getComputedStyle(element).backdropFilter)).toContain('blur(24px)')
   expect(await tile.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 255, 255)')
-  expect(await nav.locator('.glass-icon').first().evaluate((element) => element.getBoundingClientRect().width)).toBe(40)
+  await expect(nav.locator('.glass-icon')).toHaveCount(0)
+  expect(await nav.locator('svg').first().evaluate((element) => element.getBoundingClientRect().width)).toBe(26)
+  for (const scheme of ['light', 'dark']) {
+    await page.emulateMedia({ colorScheme: scheme })
+    const selected = nav.locator('[aria-current="page"]')
+    await expect.poll(() => selected.evaluate((element) => getComputedStyle(element).color)).toBe('rgb(10, 132, 255)')
+    expect(await selected.locator('svg').evaluate((element) => getComputedStyle(element).stroke)).toBe('rgb(10, 132, 255)')
+    expect(await selected.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
+  }
+  await page.emulateMedia({ colorScheme: 'light' })
   expect(await tile.locator('.glass-icon').evaluate((element) => element.getBoundingClientRect().width)).toBe(66)
   expect(await tile.locator('.glass-icon').evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient')
   await expect(page.locator('.glass-background')).toHaveCount(0)

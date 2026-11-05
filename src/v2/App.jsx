@@ -39,7 +39,7 @@ export default function App() {
 
     </main>
     {canEdit && tab !== 'settings' && <button className="add-button" onClick={() => tab === 'tasks' ? setTaskFormOpen(true) : onAdd(tab === 'calendar' ? calendarDate || iso(today) : iso(today))} aria-label={tab === 'tasks' ? '할 일 추가' : '일정 추가'}><Plus size={28} /></button>}
-    <nav className="bottom-nav" aria-label="주 메뉴">{tabs.map(([id, name]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}><span className="glass-icon"><TabIcon name={id} /></span><span>{name}</span></button>)}</nav>
+    <nav className="bottom-nav" aria-label="주 메뉴">{tabs.map(([id, name]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}><TabIcon name={id} /><span>{name}</span></button>)}</nav>
     {formDate && <EventForm key={formDate} date={formDate} profiles={state.profiles} onSave={addEvent} onClose={() => setFormDate(null)} />}
   </div>
 }

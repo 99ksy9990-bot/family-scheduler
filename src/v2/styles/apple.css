@@ -23,9 +23,9 @@
 .house-row.next time { color: var(--tint-label); font-weight: 600; }
 .bottom-nav { position: fixed; z-index: var(--z-sticky-nav); bottom: max(8px, calc(env(safe-area-inset-bottom) - 26px)); left: max(16px, calc((100vw - 480px) / 2 + 16px)); right: max(16px, calc((100vw - 480px) / 2 + 16px)); height: 62px; border-radius: 31px; border: 1px solid var(--sep); box-shadow: var(--glass-shadow); display: flex; justify-content: space-around; align-items: center; padding: 0 8px; }
 .bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; min-height: 54px; gap: 2px; padding: 0; font-size: 10px; font-weight: 600; line-height: 12px; border: 0; background: none; color: var(--label-2); border-radius: 14px; }
-.bottom-nav button[aria-current='page'] { background: none; color: var(--tint-label); }
-.bottom-nav svg { position: relative; z-index: 1; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.bottom-nav button[aria-current='page'] svg { color: var(--badge-light); fill: none; stroke: currentColor; }
+.bottom-nav button[aria-current='page'] { background: none; color: var(--tint); }
+.bottom-nav svg { position: relative; z-index: 1; width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bottom-nav button[aria-current='page'] svg { color: var(--tint); fill: none; stroke: currentColor; }
 .bottom-nav button:focus-visible { outline: 2px solid var(--tint); }
 .calendar-panel { padding: 0; background: none; border: 0; }
 .calendar-toolbar { display: flex; align-items: center; gap: 2px; margin-bottom: 10px; }
@@ -77,14 +77,10 @@
 .house-tile[data-character='mom'] .glass-icon { --orb-t: rgba(255,122,89,.22); --orb-shadow: rgba(255,122,89,.35); }
 .house-tile[data-character='big'] .glass-icon { --orb-t: rgba(191,90,242,.22); --orb-shadow: rgba(191,90,242,.35); }
 .house-tile[data-character='little'] .glass-icon { --orb-t: rgba(48,176,122,.22); --orb-shadow: rgba(48,176,122,.35); }
-.bottom-nav .glass-icon { width: 40px; height: 40px; border-radius: 14px; --orb-shadow: rgba(0,0,0,.06); }
-.bottom-nav button[aria-current='page'] .glass-icon { background-color: var(--icon-selected); background-image: linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,0) 55%,rgba(255,255,255,.06)); --orb-shadow: rgba(10,132,255,.45); }
-.bottom-nav button[aria-current='page'] .glass-icon::after { opacity: .08; }
 .house-badge { box-shadow: inset 0 1px 1px rgba(255,255,255,.6),0 3px 8px rgba(0,0,0,.15); }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
   .v2-app .glass-icon { background: var(--solid-card); box-shadow: none; border-color: var(--sep); }
   .v2-app .glass-icon::after { display: none; }
-  .v2-app .bottom-nav button[aria-current='page'] .glass-icon { background: var(--icon-selected); box-shadow: none; }
 }
 .house-tile .glass-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,255,255,.35) 55%,rgba(255,255,255,.6)); }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .v2-app .house-tile .glass-icon { background-image: none; } }
