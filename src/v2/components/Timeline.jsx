@@ -1,4 +1,5 @@
-import { CalendarPlus, CalendarDays, BriefcaseBusiness, Cake, GraduationCap, Sun } from 'lucide-react'
+import { CalendarDays, BriefcaseBusiness, Cake, GraduationCap, Sun } from 'lucide-react'
+import CharacterAvatar from './CharacterAvatar'
 import { assignedMemberIds } from '../../lib/legacyState'
 
 export function DataState({ loading, error, onRetry, children }) {
@@ -7,16 +8,16 @@ export function DataState({ loading, error, onRetry, children }) {
   return children
 }
 
-export default function Timeline({ rows, profiles, onAdd, canEdit = true }) {
-  if (!rows.length) return <div className="empty-state"><CalendarDays aria-hidden="true" /><div><h3>아직 일정이 없어요</h3><p>가족과 함께할 일정을 하나 남겨 보세요.</p></div>{canEdit && <button onClick={onAdd}><CalendarPlus size={18} /> 일정 추가</button>}</div>
+export default function Timeline({ rows, profiles }) {
+  if (!rows.length) return <div className="empty-state"><CalendarDays aria-hidden="true" /><div><h3>아직 일정이 없어요</h3><p>오른쪽 + 버튼으로 가족 일정을 남겨 보세요.</p></div></div>
   return <ol className="timeline" aria-label="시간순 일정">
     {rows.map((row) => {
       const Icon = row.type === 'shift' ? BriefcaseBusiness : row.anniversary ? Cake : row.holiday ? Sun : row.type === 'school' || row.type === 'child' ? GraduationCap : CalendarDays
-      const names = assignedMemberIds(row).map((id) => profiles.find((p) => p.id === id)?.name || (id === 'family' ? '가족 모두' : '')).filter(Boolean)
+      const members = assignedMemberIds(row).map((id) => profiles.find((profile) => profile.id === id) || (id === 'family' ? { id, name: '가족 모두' } : null)).filter(Boolean)
       return <li key={row.id} className={`timeline-row ${row.holiday ? 'holiday-row' : ''}`}>
         <div className="timeline-time"><time>{row.displayStart || '종일'}</time>{row.displayEnd && <small>{row.crossesMidnight ? '다음 날 ' : ''}{row.displayEnd}</small>}</div>
         <div className="timeline-marker"><Icon size={19} aria-hidden="true" /></div>
-        <div className="timeline-body"><h3>{row.title}</h3><p>{[names.join(' · '), row.location].filter(Boolean).join(' · ') || (row.anniversary ? '가족 기념일' : '함께 기억해요')}</p></div>
+        <div className="timeline-body"><h3>{row.title}</h3><div className="timeline-meta">{members.map((profile) => <span className="timeline-member" key={profile.id}><CharacterAvatar profile={profile} small /><span>{profile.name}</span></span>)}{row.location && <span>{row.location}</span>}{!members.length && !row.location && <span>{row.anniversary ? '가족 기념일' : '함께 기억해요'}</span>}</div></div>
       </li>
     })}
   </ol>

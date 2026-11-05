@@ -91,7 +91,7 @@ test('공용 불러오기: 시드 제거·프로필 색상·달력 분류·근�
   expect(storage.writes).toEqual([])
   expect([...storage.values]).toEqual(before)
   expect(migrated.profiles).toHaveLength(4)
-  expect(migrated.profiles.every((profile) => profile.characterId === null)).toBe(true)
+  expect(migrated.profiles.map((profile) => profile.characterId)).toEqual(['dad', 'mom', 'big', 'little'])
   expect(migrated.events).toEqual([{ id: 'kept', member: 'mia', title: '연두 생일', zzz: 1, calendarScope: 'children' }])
   expect(migrated.tasks).toEqual([{ id: 'kept-task' }])
   expect(migrated.childSchedules).toEqual([{ id: 'custom' }])
@@ -135,4 +135,15 @@ test('공용 클라우드 보정: 구형 상태 정리·확장 필드 보존·�
   expect(upgraded.profiles).toHaveLength(4)
   expect(upgradeSharedState(upgraded)).toBe(upgraded)
   expect(original).toEqual({ events: [{ id: 'e', member: 'mia' }], zzz: 1 })
+})
+
+
+test('프로필 id에 따른 기본 캐릭터·기존 선택 유지·알 수 없는 id', () => {
+  const profiles = [{ id: 'david' }, { id: 'emma' }, { id: 'leo' }, { id: 'mia' },
+    { id: 'other' }, { id: 'toString' }, { id: 'david', characterId: 'custom' },
+    { id: 'leo', characterId: null }, { id: 'mia', characterId: '' }]
+  const migrated = fromLegacy({ profiles })
+  expect(migrated.profiles.map((profile) => profile.characterId)).toEqual(['dad', 'mom', 'big', 'little', null, null, 'custom', 'big', ''])
+  expect(profiles[0]).toEqual({ id: 'david' })
+  expect(fromLegacy(migrated)).toEqual(migrated)
 })

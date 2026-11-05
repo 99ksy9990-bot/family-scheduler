@@ -20,11 +20,15 @@ test.beforeEach(async ({ page, context }, testInfo) => {
 })
 
 test('첫 화면 일정·캐릭터·24시간 표기·5개 탭·가로 넘침 없음', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: '오늘우리', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '오늘', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '오후 일정', exact: true })).toBeInViewport()
   await expect(page.locator('.timeline-time time')).toHaveText('14:00')
-  await expect(page.locator('.character img')).toHaveAttribute('src', '/characters/dad_basic.png')
+  await expect(page.locator('.family-person .character img')).toHaveAttribute('src', '/characters/dad_basic.png')
   await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(5)
+  await expect(page.getByRole('button', { name: '일정 추가', exact: true })).toHaveCount(1)
+  expect(await page.locator('.family-person .character img').evaluate((img) => img.getBoundingClientRect().width)).toBe(72)
+  expect(await page.locator('.timeline-member .character img').evaluate((img) => img.getBoundingClientRect().width)).toBe(24)
+  await expect(page.getByText('좋은 하루, 우리 가족')).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   const frame = await page.locator('.v2-app').boundingBox()
   expect(frame.width).toBeLessThanOrEqual(480)
@@ -89,6 +93,7 @@ test('빈 상태·손상 데이터 오류·재시도', async ({ page }) => {
   })
   await page.reload()
   await expect(page.getByRole('heading', { name: '아직 일정이 없어요' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '일정 추가', exact: true })).toHaveCount(1)
   await page.clock.runFor(500)
   await page.evaluate(() => localStorage.setItem('family-scheduler-profiles-v1', 'null'))
   await page.reload()
@@ -96,6 +101,7 @@ test('빈 상태·손상 데이터 오류·재시도', async ({ page }) => {
   await page.evaluate(() => localStorage.setItem('family-scheduler-profiles-v1', '[]'))
   await page.getByRole('button', { name: '다시 시도' }).first().click()
   await expect(page.getByRole('heading', { name: '아직 일정이 없어요' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '일정 추가', exact: true })).toHaveCount(1)
 })
 
 test('오프라인에서 화면·글꼴·캐릭터 유지', async ({ page, context }) => {
@@ -107,7 +113,7 @@ test('오프라인에서 화면·글꼴·캐릭터 유지', async ({ page, conte
   await context.setOffline(true)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.getByRole('heading', { name: '오후 일정', exact: true })).toBeVisible()
-  expect(await page.locator('.character img').evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true)
+  expect(await page.locator('.family-person .character img').evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true)
   expect(await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('17px SUITE') })).toBe(true)
   await context.setOffline(false)
 })

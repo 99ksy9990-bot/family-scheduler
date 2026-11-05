@@ -8,7 +8,7 @@ import Sheet from '../../components/Sheet'
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
-export default function Calendar({ today, state, onAdd, canEdit, loading, error, onRetry }) {
+export default function Calendar({ today, state, loading, error, onRetry }) {
   const [cursor, setCursor] = useState(today)
   const [selected, setSelected] = useState(today)
   const [mode, setMode] = useState('month')
@@ -45,6 +45,6 @@ export default function Calendar({ today, state, onAdd, canEdit, loading, error,
         <p className="calendar-hint">날짜를 누르면 그날의 일정을 볼 수 있어요.</p>
       </DataState>
     </section>
-    {sheetOpen && <Sheet title={formatLongDate(selected)} onClose={() => setSheetOpen(false)}><DataState loading={loading} error={error} onRetry={onRetry}><Timeline rows={selectedRows} profiles={state.profiles} onAdd={() => { setSheetOpen(false); onAdd(iso(selected)) }} canEdit={canEdit} /></DataState></Sheet>}
+    {sheetOpen && <Sheet title={formatLongDate(selected)} onClose={() => setSheetOpen(false)}><DataState loading={loading} error={error} onRetry={onRetry}><Timeline rows={selectedRows} profiles={state.profiles} /></DataState></Sheet>}
   </div>
 }
