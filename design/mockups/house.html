@@ -1,63 +1,70 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>오늘우리 집 시안</title>
+<title>우리집 시안</title>
 <style>
 @font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-Regular.woff2) format("woff2");font-weight:400}
 @font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-SemiBold.woff2) format("woff2");font-weight:600}
 @font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-Bold.woff2) format("woff2");font-weight:700}
 :root{
- --ink:oklch(28% 0.03 265);--ink-2:oklch(50% 0.02 265);--bg:oklch(97% 0.015 85);
- --roof:oklch(62% 0.12 35);--roof-d:oklch(52% 0.12 35);--wall:oklch(99% 0.005 85);--line:oklch(88% 0.02 70);
- --dad:oklch(92% 0.04 265);--mom:oklch(93% 0.05 35);--big:oklch(93% 0.04 300);--little:oklch(94% 0.05 160);
- --dad-s:oklch(36% 0.08 265);--mom-s:oklch(56% 0.15 35);--big-s:oklch(50% 0.09 300);--little-s:oklch(48% 0.09 160);
- --sun:oklch(88% 0.14 90);--grass:oklch(84% 0.08 140);
+ --font:SUITE,-apple-system,system-ui,sans-serif;
+ --bg:#f2f2f7;--card:#fff;--label:#000;--label-2:rgba(60,60,67,.6);--label-3:rgba(60,60,67,.3);
+ --sep:rgba(60,60,67,.12);--tint:#0a84ff;--bar:rgba(249,249,249,.86);
+ --dad:#5e5ce6;--mom:#ff7a59;--big:#bf5af2;--little:#30b07a;
 }
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--label:#fff;--label-2:rgba(235,235,245,.6);--label-3:rgba(235,235,245,.3);--sep:rgba(84,84,88,.6);--bar:rgba(22,22,24,.86)}}
 *{box-sizing:border-box;margin:0}
 html,body{overflow-x:clip}
-body{background:var(--bg);font-family:SUITE,system-ui,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums;word-break:keep-all}
+body{background:var(--bg);font-family:var(--font);color:var(--label);font-variant-numeric:tabular-nums;word-break:keep-all;-webkit-font-smoothing:antialiased}
 .phone{width:393px;height:852px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
-.top{display:flex;justify-content:space-between;align-items:baseline;padding:58px 20px 6px}
-.top h1{font-size:22px;font-weight:700}
-.top span{font-size:15px;color:var(--ink-2)}
-.house{margin:10px 16px 0;position:relative}
-.roof{height:70px;background:var(--roof);clip-path:polygon(50% 0,100% 100%,0 100%);margin:0 -8px;position:relative}
-.chim{position:absolute;right:62px;top:14px;width:22px;height:40px;background:var(--roof-d)}
-.rooms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;background:var(--line);padding:6px;border-radius:0 0 18px 18px}
-.room{border:0;font:inherit;color:inherit;text-align:left;border-radius:12px;padding:10px 12px 12px;height:168px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;cursor:pointer}
-.room:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
-.room img{width:96px;height:96px;position:absolute;top:8px;left:50%;transform:translateX(-50%)}
-.room b{font-size:16px}
-.room small{font-size:13px;color:var(--ink-2);display:block;margin-top:2px}
-.r-dad{background:var(--dad)}.r-mom{background:var(--mom)}.r-big{background:var(--big)}.r-little{background:var(--little)}
-.r-dad b{color:var(--dad-s)}.r-mom b{color:var(--mom-s)}.r-big b{color:var(--big-s)}.r-little b{color:var(--little-s)}
-.ground{height:10px;background:var(--grass);margin:0 -16px;border-radius:0}
-.next{margin:16px 16px 0;background:var(--wall);border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:center}
-.next img{width:44px;height:44px}
-.next p{font-size:13px;color:var(--ink-2)}
-.next h2{font-size:17px;font-weight:700}
-.next time{margin-left:auto;font-size:20px;font-weight:700}
-.later{margin:10px 16px 0;font-size:14px;color:var(--ink-2);display:flex;flex-direction:column;gap:8px;padding:0 4px}
-.later div{display:flex;gap:10px}.later time{width:44px;color:var(--ink)}
-.tabs{position:absolute;bottom:0;left:0;right:0;height:84px;background:var(--wall);display:flex;justify-content:space-around;padding-top:10px;border-top:1px solid var(--line)}
-.tabs a{font-size:12px;color:var(--ink-2);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px}
-.tabs a i{width:24px;height:24px;border-radius:7px;border:2px solid currentColor}
-.tabs a.on{color:var(--ink);font-weight:700}.tabs a.on i{background:var(--sun);border-color:var(--ink)}
-.tabs a:focus-visible{outline:2px solid var(--ink)}
+header{padding:62px 20px 0}
+header p{font-size:15px;font-weight:600;color:var(--label-2)}
+header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
+.sec{font-size:20px;font-weight:700;padding:22px 20px 10px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:0 16px}
+.tile{border:0;font:inherit;color:inherit;text-align:left;background:var(--card);border-radius:22px;padding:14px;height:150px;display:flex;flex-direction:column;position:relative;cursor:pointer}
+.tile:focus-visible{outline:3px solid var(--tint);outline-offset:2px}
+.tile img{width:58px;height:58px}
+.tile b{font-size:17px;font-weight:700;margin-top:auto}
+.tile small{font-size:13px;color:var(--label-2);margin-top:2px}
+.tile .dot{position:absolute;top:16px;right:16px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;color:#fff}
+.d-dad{background:var(--dad)}.d-big{background:var(--big)}
+.list{margin:0 16px;background:var(--card);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:11px 16px;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;left:60px;right:0;height:.5px;background:var(--sep)}
+.row img{width:32px;height:32px}
+.row div{flex:1;min-width:0}
+.row b{font-size:17px;font-weight:600;display:block}
+.row small{font-size:13px;color:var(--label-2)}
+.row time{font-size:17px;color:var(--label-2)}
+.row.next time{color:var(--tint);font-weight:600}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:83px;background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;justify-content:space-around;padding-top:7px}
+.tabs a{font-size:10px;font-weight:600;color:var(--label-2);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:64px}
+.tabs a.on{color:var(--tint)}
+.tabs a:focus-visible{outline:2px solid var(--tint);border-radius:6px}
+.tabs svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs a.on svg{fill:currentColor;stroke:currentColor}
 </style></head><body>
 <div class="phone">
- <div class="top"><h1>우리 집</h1><span>11월 6일 금요일</span></div>
- <div class="house">
-  <div class="roof"><div class="chim"></div></div>
-  <div class="rooms">
-   <button class="room r-dad"><img src="dad_busy.png" alt=""><b>아빠</b><small>근무 D 15:30까지</small></button>
-   <button class="room r-mom"><img src="mom_basic.png" alt=""><b>엄마</b><small>집에 있어요</small></button>
-   <button class="room r-big"><img src="big_busy.png" alt=""><b>초롱</b><small>학교 15:40까지</small></button>
-   <button class="room r-little"><img src="little_basic.png" alt=""><b>연두</b><small>다음 피아노 16:00</small></button>
-  </div>
+ <header><p>11월 6일 금요일</p><h1>우리집</h1></header>
+ <div class="sec">지금</div>
+ <div class="grid">
+  <button class="tile"><span class="dot d-dad">근무 중</span><img src="dad_busy.png" alt=""><b>아빠</b><small>15:30까지</small></button>
+  <button class="tile"><img src="mom_basic.png" alt=""><b>엄마</b><small>집</small></button>
+  <button class="tile"><span class="dot d-big">학교</span><img src="big_busy.png" alt=""><b>초롱</b><small>15:40까지</small></button>
+  <button class="tile"><img src="little_basic.png" alt=""><b>연두</b><small>피아노 16:00</small></button>
  </div>
- <div class="ground"></div>
- <div class="next"><img src="little_basic.png" alt=""><div><p>다음 일정</p><h2>연두 피아노</h2></div><time>16:00</time></div>
- <div class="later"><div><time>18:00</time>초롱 영어학원</div><div><time>19:30</time>가족 저녁</div></div>
- <nav class="tabs"><a class="on" href="#"><i></i>우리 집</a><a href="#"><i></i>달력</a><a href="#"><i></i>할 일</a><a href="#"><i></i>놀이</a><a href="#"><i></i>설정</a></nav>
+ <div class="sec">오늘 남은 일정</div>
+ <div class="list">
+  <div class="row next"><img src="little_basic.png" alt=""><div><b>피아노</b><small>연두</small></div><time>16:00</time></div>
+  <div class="row"><img src="big_basic.png" alt=""><div><b>영어학원</b><small>초롱</small></div><time>18:00</time></div>
+  <div class="row"><img src="mom_basic.png" alt=""><div><b>가족 저녁</b><small>모두</small></div><time>19:30</time></div>
+ </div>
+ <nav class="tabs">
+  <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>우리집</a>
+  <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>달력</a>
+  <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>할 일</a>
+  <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="5"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17 14h.01"/></svg>놀이</a>
+  <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>설정</a>
+ </nav>
 </div>
 </body></html>
