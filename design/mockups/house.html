@@ -7,7 +7,7 @@
 @font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-Bold.woff2) format("woff2");font-weight:700}
 :root{
  --font:SUITE,-apple-system,system-ui,sans-serif;
- --bg:#eef0f7;--card:rgba(255,255,255,.55);--glass-line:rgba(255,255,255,.7);--blob1:#a5b4fc;--blob2:#fdba9a;--blob3:#86efc4;--label:#000;--label-2:rgba(60,60,67,.6);--label-3:rgba(60,60,67,.3);
+ --bg:#f2f2f7;--card:rgba(255,255,255,.55);--glass-line:rgba(255,255,255,.7);--blob1:#a5b4fc;--blob2:#fdba9a;--blob3:#86efc4;--label:#000;--label-2:rgba(60,60,67,.6);--label-3:rgba(60,60,67,.3);
  --sep:rgba(60,60,67,.12);--tint:#0a84ff;--bar:rgba(249,249,249,.86);
  --dad:#5e5ce6;--mom:#ff7a59;--big:#bf5af2;--little:#30b07a;
 }
@@ -16,10 +16,6 @@
 html,body{overflow-x:clip}
 body{background:var(--bg);font-family:var(--font);color:var(--label);font-variant-numeric:tabular-nums;word-break:keep-all;-webkit-font-smoothing:antialiased}
 .phone{width:393px;height:852px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg);isolation:isolate}
-.phone::before,.phone::after,.blob{content:"";position:absolute;border-radius:50%;filter:blur(60px);z-index:-1;opacity:.75}
-.phone::before{width:300px;height:300px;background:var(--blob1);top:-60px;left:-80px}
-.phone::after{width:280px;height:280px;background:var(--blob2);top:260px;right:-100px}
-.blob{width:260px;height:260px;background:var(--blob3);bottom:60px;left:-60px}
 .tile,.list{backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--glass-line);box-shadow:0 8px 24px rgba(30,30,60,.08)}
 header{padding:58px 20px 0}
 header p{font-size:15px;font-weight:600;color:var(--label-2)}
@@ -49,14 +45,14 @@ header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
 .tabs svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tabs a.on svg{fill:currentColor;stroke:currentColor}
 </style></head><body>
-<div class="phone"><div class="blob"></div>
+<div class="phone">
  <header><p>11월 6일 금요일</p><h1>우리집</h1></header>
  <div class="sec">지금</div>
  <div class="grid">
-  <button class="tile"><span class="dot d-dad">근무 중</span><img src="dad_busy.png" alt=""><b>아빠</b><small>15:30까지</small></button>
-  <button class="tile"><img src="mom_basic.png" alt=""><b>엄마</b><small>집</small></button>
-  <button class="tile"><span class="dot d-big">학교</span><img src="big_busy.png" alt=""><b>초롱</b><small>15:40까지</small></button>
-  <button class="tile"><img src="little_basic.png" alt=""><b>연두</b><small>피아노 16:00</small></button>
+  <button class="tile"><span class="dot d-dad">근무 중</span><span class="gl c-dad"><img src="dad_busy.png" alt=""></span><b>아빠</b><small>15:30까지</small></button>
+  <button class="tile"><span class="gl c-mom"><img src="mom_basic.png" alt=""></span><b>엄마</b><small>집</small></button>
+  <button class="tile"><span class="dot d-big">학교</span><span class="gl c-big"><img src="big_busy.png" alt=""></span><b>초롱</b><small>15:40까지</small></button>
+  <button class="tile"><span class="gl c-little"><img src="little_basic.png" alt=""></span><b>연두</b><small>피아노 16:00</small></button>
  </div>
  <div class="sec">오늘 남은 일정</div>
  <div class="list">
@@ -66,11 +62,30 @@ header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
   <div class="row"><img src="dad_basic.png" alt=""><div><b>분리수거</b><small>아빠</small></div><time>21:00</time></div>
  </div>
  <nav class="tabs">
-  <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>우리집</a>
-  <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>달력</a>
-  <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>할 일</a>
-  <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="5"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17 14h.01"/></svg>놀이</a>
-  <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>설정</a>
+  <a class="on" href="#"><i class="gl"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></i>우리집</a>
+  <a href="#"><i class="gl"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></i>달력</a>
+  <a href="#"><i class="gl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></i>할 일</a>
+  <a href="#"><i class="gl"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="5"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17 14h.01"/></svg></i>놀이</a>
+  <a href="#"><i class="gl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></i>설정</a>
  </nav>
 </div>
 </body></html>
+<style>
+/* glass icons */
+.tile,.list{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;border:0}
+.gl{position:relative;display:grid;place-items:center;border-radius:50%;
+ background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,255,255,.35) 55%,rgba(255,255,255,.6));
+ box-shadow:inset 0 1px 1px rgba(255,255,255,1),inset 0 -2px 6px rgba(0,0,0,.08),0 6px 14px var(--c,rgba(0,0,0,.12));
+ border:1px solid rgba(255,255,255,.9)}
+.gl::after{content:"";position:absolute;inset:3px 10% 55% 10%;border-radius:50% 50% 40% 40%;background:linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,0));pointer-events:none}
+.tile .gl{width:66px;height:66px;background-color:var(--t)}
+.tile .gl img{width:56px;height:56px}
+.c-dad{--t:rgba(94,92,230,.22);--c:rgba(94,92,230,.35)}.c-mom{--t:rgba(255,122,89,.22);--c:rgba(255,122,89,.35)}
+.c-big{--t:rgba(191,90,242,.22);--c:rgba(191,90,242,.35)}.c-little{--t:rgba(48,176,122,.22);--c:rgba(48,176,122,.35)}
+.tabs a i.gl{width:40px;height:40px;border-radius:14px;background-color:rgba(120,120,128,.10);--c:rgba(0,0,0,.06)}
+.tabs a.on i.gl{background-color:rgba(10,132,255,.85);--c:rgba(10,132,255,.45);color:#fff}
+.tabs a.on svg{fill:none;stroke:#fff}
+.tabs svg{width:22px;height:22px;position:relative;z-index:1}
+.tabs a{gap:2px}
+.dot{box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 3px 8px rgba(0,0,0,.15)}
+</style><style>.tile .gl::after{opacity:.35;inset:2px 18% 72% 18%}</style>
