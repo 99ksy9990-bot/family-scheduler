@@ -1,0 +1,8 @@
+tests/fixtures
+docs/v2/shots
+design
+.hallmark
+.serena
+test-results
+playwright-report
+.env.local
