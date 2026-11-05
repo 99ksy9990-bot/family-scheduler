@@ -1,12 +1,12 @@
 {
-  "name": "오늘우리",
-  "short_name": "오늘우리",
-  "description": "우리 가족의 오늘을 함께하는 오늘우리",
+  "name": "우리집",
+  "short_name": "우리집",
+  "description": "우리 가족의 오늘을 함께하는 우리집",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f7f7f2",
-  "theme_color": "#f7f7f2",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
   "icons": [
     {
       "src": "/app-icon-192.png",

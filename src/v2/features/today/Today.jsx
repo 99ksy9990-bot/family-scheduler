@@ -1,23 +1,31 @@
+import { useState } from 'react'
 import CharacterAvatar from '../../components/CharacterAvatar'
-import { memberStatus } from '../../data/schedule'
 import Timeline, { DataState } from '../../components/Timeline'
+import Sheet from '../../components/Sheet'
+import { houseStatus, remainingSchedule, rowsForMember } from '../../data/house'
+import { assignedMemberIds } from '../../../lib/legacyState'
 
 export default function Today({ today, now, state, rows, loading, error, onRetry }) {
-  return <div className="today-page">
-    <section className="family-section" aria-labelledby="family-heading">
-      <h2 id="family-heading" className="visually-hidden">우리 가족의 하루</h2>
-      <DataState loading={loading} error={error} onRetry={onRetry}>
-        <div className="family-strip">{state.profiles.filter((profile) => profile.active !== false).map((profile) => {
-          const status = memberStatus(profile, rows, state.tasks, now)
-          return <article className="family-person" key={profile.id} aria-label={`${profile.name} ${status.label}`}>
-            <CharacterAvatar profile={profile} expression={status.expression} size={60} /><h3>{profile.name}</h3><p title={status.label}>{status.shortLabel || status.label}</p>
-          </article>
-        })}{!state.profiles.length && <p className="data-message">등록된 가족이 없어요. 가족 관리는 다음 단계에서 준비할게요.</p>}</div>
-      </DataState>
+  const [selected, setSelected] = useState(null)
+  const profiles = state.profiles.filter((profile) => profile.active !== false)
+  const remaining = remainingSchedule(rows, today, now)
+  const nextTimed = remaining.find((row) => row.displayStart)
+  return <div className="house-page">
+    <section aria-labelledby="now-heading"><h2 id="now-heading" className="house-section-title">지금</h2>
+      <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
+        const status = houseStatus(profile, rows, state.tasks, today, now)
+        return <button className="house-tile" data-character={profile.characterId || 'unknown'} key={profile.id} onClick={() => setSelected(profile)} aria-label={`${profile.name}의 오늘 일정, ${status.label}`}>
+          {status.badge && <span className="house-badge">{status.badge}</span>}<CharacterAvatar profile={profile} expression={status.expression} size={66} glass /><strong>{profile.name}</strong><small>{status.detail}</small>
+        </button>
+      })}</div>{!profiles.length && <p className="data-message">설정에서 가족 구성원을 등록해 주세요.</p>}</DataState>
     </section>
-    <section className="schedule-section" aria-labelledby="today-heading">
-      <div className="section-heading"><h2 id="today-heading">오늘 일정 <span data-testid="today-count">{rows.length}</span></h2><span className="quiet">시간순</span></div>
-      <DataState loading={loading} error={error} onRetry={onRetry}><Timeline rows={rows} profiles={state.profiles} date={today} now={now} showNow /></DataState>
+    <section aria-labelledby="remaining-heading"><h2 id="remaining-heading" className="house-section-title">오늘 남은 일정<span className="visually-hidden" data-testid="today-count">{remaining.length}</span></h2>
+      <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <ol className="house-list" aria-label="오늘 남은 일정">{remaining.map((row) => {
+        const members = assignedMemberIds(row).map((id) => state.profiles.find((profile) => profile.id === id) || (id === 'family' ? { name: '모두' } : null)).filter(Boolean)
+        const profile = members[0] || { name: row.holiday ? '공휴일' : '기념일' }
+        return <li key={row.id} className={`house-row${row.id === nextTimed?.id ? ' next' : ''}`}><CharacterAvatar profile={profile} size={32} /><div><h3>{row.title}</h3><small>{members.map((member) => member.name).join(' · ') || profile.name}</small></div><time>{row.displayStart || '종일'}</time></li>
+      })}</ol> : <div className="empty-state"><h3>오늘 남은 일정이 없어요</h3><p>가족 타일을 누르면 지난 일정도 볼 수 있어요.</p></div>}</DataState>
     </section>
+    {selected && <Sheet title={`${selected.name}의 오늘 일정`} onClose={() => setSelected(null)}><Timeline rows={rowsForMember(rows, selected.id)} profiles={state.profiles} date={today} now={now} /></Sheet>}
   </div>
 }

@@ -1,31 +1,28 @@
 :root {
-  color-scheme: light;
-  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px; --space-4xl: 144px;
-  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem; --text-2xl: 1.728rem; --text-3xl: 2.074rem;
-  --text-display-s: 1.44rem; --text-display: 1.728rem; --text-section: 1.2rem; --text-title: 1rem; --text-lead: 1rem;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in: cubic-bezier(0.7, 0, 0.84, 0); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
-  --color-error: oklch(52% 0.19 27); --color-success: oklch(50% 0.12 150);
-  --container: 1440px; --gutter: 64px; --gap-columns: 32px; --section-gap-s: 120px; --section-gap: 144px; --section-gap-l: 176px;
-  --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
-  --color-paper: oklch(97% 0.012 95); --color-paper-2: oklch(94.5% 0.018 95); --color-paper-3: oklch(91% 0.022 95);
-  --color-ink: oklch(20% 0.014 255); --color-ink-2: oklch(29% 0.014 255); --color-muted: oklch(47% 0.014 255);
-  --color-rule: oklch(87% 0.016 95);
-  --color-accent: oklch(87% 0.175 96); --color-accent-deep: oklch(72% 0.16 92); --color-accent-ink: oklch(20% 0.014 255);
-  --color-accent-2: oklch(50% 0.17 250); --color-accent-3: oklch(70% 0.2 22);
-  --color-mint: oklch(82% 0.15 152); --color-mint-deep: oklch(48% 0.12 155); --color-focus: oklch(50% 0.17 250);
-  --color-card: oklch(98.8% 0.007 95); --color-edge: oklch(83% 0.04 88); --color-fringe: oklch(99.2% 0.006 95);
-  --color-kraft: oklch(63% 0.085 62); --color-sand: oklch(77% 0.1 76); --color-sugar: oklch(89% 0.035 236);
-  --color-hill-1: oklch(94.5% 0.03 118); --color-hill-2: oklch(91.5% 0.045 135); --color-leaf: oklch(64% 0.15 150);
-  --font-display: "SUITE", "SUITE Variable", ui-sans-serif, system-ui, sans-serif; /* 사용자 지정: SUITE (Hum의 Chillax 대체) */ --font-body: var(--font-display);
-  --font-outlier: var(--font-display); /* 숫자는 별도 글꼴 대신 SUITE tnum(고정폭) */
-  --num: tabular-nums; /* 사용: font-variant-numeric: var(--num) */
-  /* 가족 대표색 (캐릭터 시안2 기준) */
-  --color-dad: oklch(36% 0.08 265); --color-mom: oklch(66% 0.15 35);
-  --color-big: oklch(68% 0.09 300); --color-little: oklch(76% 0.09 160);
-  --radius-card: 24px; --radius-stock: 16px; --radius-input: 14px; --radius-pill: 999px; --rule-hair: 1px;
-  --shadow-card: 0 1px 2px oklch(20% 0.014 255 / 0.06), 0 12px 28px -14px oklch(20% 0.014 255 / 0.22);
-  --shadow-paper: drop-shadow(0 0 0.6px oklch(20% 0.014 255 / 0.32)) drop-shadow(1.5px 2.5px 1.5px oklch(20% 0.014 255 / 0.1)) drop-shadow(6px 14px 16px oklch(20% 0.014 255 / 0.13));
-  --tracking-display: -0.03em; --display-weight: 600;
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: light dark;
+  --font: SUITE, -apple-system, system-ui, sans-serif;
+  --bg: #f2f2f7; --card: #fff; --solid-card: #fff;
+  --glass-line: rgba(255,255,255,.7); --glass-shadow: 0 8px 24px rgba(30,30,60,.08);
+  --label: #000; --label-2: #454550; --label-3: #50505b;
+  --sep: rgba(60,60,67,.12); --tint: #0a84ff; --tint-label: #0055ac; --control: #0064ce; --on-control: #fff;
+  --bar: rgba(249,249,249,.86); --fill: rgba(120,120,128,.12); --error: #ad1534;
+  --dad: #5e5ce6; --mom: #ff7a59; --big: #bf5af2; --little: #30b07a;
+  --icon-selected: #0064ce; --icon-line: rgba(255,255,255,.9); --badge-light: #fff; --badge-dark: #101014; --switch-thumb: #fff;
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-3xl: 96px;
+  --text-xs: .75rem; --text-sm: .875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem;
+  --font-body: var(--font); --font-display: var(--font); --num: tabular-nums;
+  --radius-card: 22px; --radius-stock: 14px; --radius-input: 12px; --radius-pill: 999px;
+  --dur-micro: 120ms; --z-raised: 10; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+  --color-paper: var(--bg); --color-paper-2: var(--fill); --color-paper-3: var(--fill);
+  --color-card: var(--card); --color-ink: var(--label); --color-muted: var(--label-2); --color-rule: var(--sep);
+  --color-accent: var(--control); --color-accent-deep: var(--control); --color-accent-ink: var(--on-control); --color-accent-2: var(--tint-label); --color-accent-3: var(--error);
+  --color-focus: var(--tint); --color-error: var(--error); --color-dad: var(--dad); --color-mom: var(--mom); --color-big: var(--big); --color-little: var(--little); --shadow-card: var(--glass-shadow);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b12; --card: #1c1c1e; --solid-card: #1c1c1e;
+    --glass-line: rgba(255,255,255,.12); --glass-shadow: 0 8px 24px rgba(0,0,0,.18);
+    --label: #fff; --label-2: #c7c7d0; --label-3: #b8b8c3; --sep: rgba(84,84,88,.6);
+    --bar: rgba(22,22,24,.86); --fill: rgba(120,120,128,.22); --tint-label: #79baff; --control: #0a84ff; --on-control: #000; --error: #ff9ba5;
+  }
 }

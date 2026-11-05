@@ -1,0 +1,93 @@
+.house-tile,.house-list,.task-list,.settings-content[aria-label='설정 목록'],.timeline,.bottom-nav { background: var(--card); border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+.house-section-title { font-size: 20px; line-height: 24px; font-weight: 700; padding: 18px 4px 8px; }
+.house-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.house-tile { height: 140px; padding: 14px; border-radius: 22px; display: flex; flex-direction: column; align-items: flex-start; position: relative; text-align: left; color: var(--label); }
+.house-tile:hover { background: var(--card); }
+.house-tile strong { font-size: 17px; line-height: 20px; font-weight: 700; margin-top: auto; }
+.house-tile small { font-size: 13px; line-height: 16px; color: var(--label-2); margin-top: 2px; white-space: nowrap; }
+.house-badge { position: absolute; top: 16px; right: 16px; max-width: calc(100% - 96px); padding: 3px 8px; border-radius: 999px; background: var(--control); color: var(--on-control); font-size: 12px; line-height: 15px; font-weight: 600; }
+.house-tile[data-character='dad'] .house-badge { background: var(--dad); color: var(--badge-light); }
+.house-tile[data-character='mom'] .house-badge { background: var(--mom); color: var(--badge-dark); }
+.house-tile[data-character='big'] .house-badge { background: var(--big); color: var(--badge-dark); }
+.house-tile[data-character='little'] .house-badge { background: var(--little); color: var(--badge-dark); }
+.character[class*='character-size-'] { width: var(--avatar-size); height: var(--avatar-size); border: 0; background: none; margin: 0; flex-shrink: 0; }
+.character[class*='character-size-'] img,.character[class*='character-size-'] .character-initial { width: 100%; height: 100%; object-fit: contain; }
+.character-initial { color: var(--label); }
+.house-list { list-style: none; padding: 0; margin: 0; border-radius: 14px; overflow: hidden; }
+.house-row { display: flex; align-items: center; gap: 12px; padding: 11px 16px; position: relative; }
+.house-row + .house-row::before,.task-row + .task-row::before,.settings-entry + .settings-entry::before { content: ''; position: absolute; top: 0; left: 60px; right: 0; height: .5px; background: var(--sep); }
+.house-row > div:not(.character) { flex: 1; min-width: 0; }
+.house-row h3 { display: block; font-size: 17px; font-weight: 600; line-height: 20px; }
+.house-row small { color: var(--label-2); font-size: 13px; line-height: 16px; }
+.house-row time { color: var(--label-2); font-size: 17px; white-space: nowrap; }
+.house-row.next time { color: var(--tint-label); font-weight: 600; }
+.bottom-nav { position: fixed; z-index: var(--z-sticky-nav); bottom: max(8px, calc(env(safe-area-inset-bottom) - 26px)); left: max(16px, calc((100vw - 480px) / 2 + 16px)); right: max(16px, calc((100vw - 480px) / 2 + 16px)); height: 62px; border-radius: 31px; border: 1px solid var(--sep); box-shadow: var(--glass-shadow); display: flex; justify-content: space-around; align-items: center; padding: 0 8px; }
+.bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; min-height: 54px; gap: 2px; padding: 0; font-size: 10px; font-weight: 600; line-height: 12px; border: 0; background: none; color: var(--label-2); border-radius: 14px; }
+.bottom-nav button[aria-current='page'] { background: none; color: var(--tint-label); }
+.bottom-nav svg { position: relative; z-index: 1; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bottom-nav button[aria-current='page'] svg { color: var(--badge-light); fill: none; stroke: currentColor; }
+.bottom-nav button:focus-visible { outline: 2px solid var(--tint); }
+.calendar-panel { padding: 0; background: none; border: 0; }
+.calendar-toolbar { display: flex; align-items: center; gap: 2px; margin-bottom: 10px; }
+.calendar-toolbar h2 { flex: 1; min-width: 0; font-size: 22px; line-height: 30px; white-space: nowrap; }
+.calendar-toolbar button { font-size: 13px; padding: 4px 8px; min-width: 44px; border-radius: 99px; }
+.calendar-toolbar .icon-button { border: 0; background: none; }
+.calendar-toolbar .calendar-mode { min-width: 66px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); }
+.weekday { color: var(--label-2); text-align: center; font-size: 12px; padding: 2px 0 6px; }
+.calendar-day { min-width: 0; height: 44px; min-height: 44px; padding: 3px 1px 0; border: 0; border-top: .5px solid var(--sep); border-radius: 0; background: none; display: flex; align-items: center; flex-direction: column; box-shadow: none; }
+.day-number { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 14px; font-weight: 400; color: var(--label-2); }
+.calendar-day:is(.sunday,.holiday-day) .day-number,.weekday.sunday { color: var(--error); }
+.calendar-day[aria-pressed='true'] { background: var(--fill); border-radius: 10px; color: var(--label); }
+.calendar-day[data-today='true'] .day-number { background: var(--control); color: var(--on-control); }
+.calendar-day.outside .day-number { color: var(--label-3); }
+.selected-schedule { margin-top: 18px; }
+.selected-schedule .section-heading h2 { font-size: 20px; }
+.timeline { border-radius: 14px; overflow: hidden; }
+.event-card { display: grid; grid-template-columns: 52px 36px minmax(0,1fr); gap: 12px; align-items: center; padding: 11px 16px; position: relative; }
+.event-card + .event-card::before { content: ''; position: absolute; top: 0; left: 80px; right: 0; height: .5px; background: var(--sep); }
+.timeline-time { font-size: 15px; font-weight: 600; line-height: 18px; }
+.timeline-time small { display: block; color: var(--label-2); font-size: 12px; font-weight: 400; line-height: 16px; }
+.timeline-body { min-width: 0; }
+.timeline-body h3 { font-size: 17px; font-weight: 600; line-height: 21px; }
+.event-detail { color: var(--label-2); font-size: 13px; line-height: 16px; }
+.now-line { padding: 8px 16px; color: var(--tint-label); font-size: 13px; }
+.task-list { border-radius: 14px; overflow: hidden; }
+.task-row { background: none; border: 0; border-radius: 0; position: relative; padding: 11px 16px; }
+.settings-content[aria-label='설정 목록'] { gap: 0; border-radius: 14px; overflow: hidden; }
+.settings-entry { position: relative; border: 0; background: none; border-radius: 0; }
+.settings-entry:hover { background: var(--fill); }
+.settings-card { border: 0; background: var(--card); border-radius: 14px; }
+.connection-state { color: var(--label-2); font-size: 15px; }
+.event-sheet .sheet-heading .icon-button { background: var(--fill); color: var(--label-2); }
+.ui-segments { background: var(--fill); }
+.ui-segments button[aria-pressed='true'] { background: var(--solid-card); color: var(--label); }
+.event-sheet .schedule-save button { background: var(--control); color: var(--on-control); border-radius: 14px; box-shadow: none; }
+.schedule-owners button:not([aria-pressed='true']) { color: var(--label-2); }
+.schedule-fields { scrollbar-width: none; }
+.schedule-fields::-webkit-scrollbar { display: none; }
+[data-view='today'] .add-button { position: absolute; top: calc(max(16px, env(safe-area-inset-top) - 1px) + 24px); right: 16px; bottom: auto; width: 44px; height: 44px; }
+
+.glass-icon { position: relative; display: grid; place-items: center; border-radius: 50%; background-color: var(--orb-t, var(--fill)); background-image: linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.35) 55%, rgba(255,255,255,.6)); box-shadow: inset 0 1px 1px rgba(255,255,255,1), inset 0 -2px 6px rgba(0,0,0,.08), 0 6px 14px var(--orb-shadow, rgba(0,0,0,.12)); border: 1px solid var(--icon-line); }
+.glass-icon::after { content: ''; position: absolute; inset: 3px 10% 55%; border-radius: 50% 50% 40% 40%; background: linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,0)); pointer-events: none; }
+.house-tile .glass-icon { background-color: var(--orb-t); border: 1px solid var(--icon-line); }
+.house-tile .glass-icon img { width: 56px; height: 56px; }
+.house-tile .glass-icon::after { opacity: .35; inset: 2px 18% 72%; }
+.house-tile[data-character='dad'] .glass-icon { --orb-t: rgba(94,92,230,.22); --orb-shadow: rgba(94,92,230,.35); }
+.house-tile[data-character='mom'] .glass-icon { --orb-t: rgba(255,122,89,.22); --orb-shadow: rgba(255,122,89,.35); }
+.house-tile[data-character='big'] .glass-icon { --orb-t: rgba(191,90,242,.22); --orb-shadow: rgba(191,90,242,.35); }
+.house-tile[data-character='little'] .glass-icon { --orb-t: rgba(48,176,122,.22); --orb-shadow: rgba(48,176,122,.35); }
+.bottom-nav .glass-icon { width: 40px; height: 40px; border-radius: 14px; --orb-shadow: rgba(0,0,0,.06); }
+.bottom-nav button[aria-current='page'] .glass-icon { background-color: var(--icon-selected); background-image: linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,0) 55%,rgba(255,255,255,.06)); --orb-shadow: rgba(10,132,255,.45); }
+.bottom-nav button[aria-current='page'] .glass-icon::after { opacity: .08; }
+.house-badge { box-shadow: inset 0 1px 1px rgba(255,255,255,.6),0 3px 8px rgba(0,0,0,.15); }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .v2-app .glass-icon { background: var(--solid-card); box-shadow: none; border-color: var(--sep); }
+  .v2-app .glass-icon::after { display: none; }
+  .v2-app .bottom-nav button[aria-current='page'] .glass-icon { background: var(--icon-selected); box-shadow: none; }
+}
+.house-tile .glass-icon { background-image: linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,255,255,.35) 55%,rgba(255,255,255,.6)); }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .v2-app .house-tile .glass-icon { background-image: none; } }
+/* 떠 있는 탭 알약은 추가 2의 반투명 표면을 유지한다. 카드에는 유리를 적용하지 않는다. */
+.bottom-nav { background: var(--bar); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6); }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .bottom-nav { background: var(--solid-card); -webkit-backdrop-filter: none; backdrop-filter: none; } }

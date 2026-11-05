@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const statusLabels = { local: '이 기기에 저장', connecting: '가족 연결 중', saving: '저장 중', synced: '가족과 동기화됨', readonly: '보기 전용', offline: '오프라인', conflict: '변경 충돌', error: '연결 확인 필요' }
+const statusLabels = { local: '아직 가족방에 연결되지 않았어요. 로그인하면 가족 일정을 불러올 수 있어요.', connecting: '가족 연결 중', saving: '저장 중', synced: '가족과 동기화됨', readonly: '보기 전용', offline: '오프라인', conflict: '변경 충돌', error: '연결 확인 필요' }
 
 export default function Connection({ sync, state, updateState, canEdit }) {
   const [mode, setMode] = useState('signin')
@@ -29,7 +29,7 @@ export default function Connection({ sync, state, updateState, canEdit }) {
   }
   const owner = sync.session?.user.id === sync.family?.household.owner_id
   return <div className="settings-content">
-    <p className="data-message" role="status">{statusLabels[sync.syncStatus] || '연결 상태 확인 중'}{sync.family ? ` · ${sync.family.household.name}` : ''}</p>
+    <p className="connection-state" role="status">{statusLabels[sync.syncStatus] || '연결 상태 확인 중'}{sync.family ? ` · ${sync.family.household.name}` : ''}</p>
     <p>같은 가족 계정으로 로그인하면 저장된 가족 일정을 불러와요. 새로 참여하면 기본적으로 보기 전용이에요.</p>
     {sync.error && <p className="error" role="alert">{sync.error}</p>}
     {!sync.session ? <><div className="segmented"><button aria-pressed={mode === 'signin'} onClick={() => setMode('signin')}>로그인</button><button aria-pressed={mode === 'signup'} onClick={() => setMode('signup')}>회원가입</button></div>

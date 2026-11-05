@@ -11,7 +11,7 @@ export default function Backup({ state, updateState, canEdit, sync }) {
   const exportFile = () => {
     const file = new Blob([JSON.stringify({ ...toLegacy(state), exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(file)
-    const link = document.createElement('a'); link.href = url; link.download = `오늘우리-${new Date().toISOString().slice(0, 10)}.json`; link.click()
+    const link = document.createElement('a'); link.href = url; link.download = `우리집-${new Date().toISOString().slice(0, 10)}.json`; link.click()
     window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
   const inspect = async (event) => {

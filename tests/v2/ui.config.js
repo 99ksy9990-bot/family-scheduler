@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: '.', testMatch: ['ui.spec.js', 'ui-3b.spec.js'], forbidOnly: Boolean(process.env.CI), workers: 2,
+  testDir: '.', testMatch: ['ui.spec.js', 'ui-3b.spec.js', 'ui-apple.spec.js'], forbidOnly: Boolean(process.env.CI), workers: 2,
   reporter: 'list', use: { baseURL: 'http://127.0.0.1:4176', timezoneId: 'Asia/Seoul', trace: 'off' },
   projects: [
     { name: 'iphone', use: { ...devices['iPhone 13'], viewport: { width: 393, height: 852 }, browserName: 'chromium' } },
