@@ -152,6 +152,35 @@ body{background:#ddd;font-family:SUITE,system-ui,sans-serif;color:var(--ink);fon
 <div class="fab">+</div>
 <nav class="tabs"><div>오늘</div><div class="on">달력</div><div>할 일</div><div>놀이</div><div>설정</div></nav>
 </section>
+
+<!-- 할 일 -->
+<section class="phone" id="todo"><div class="safe">
+ <div class="top"><b>할 일</b><small>4개 남음</small></div>
+ <div class="chips"><b>전체</b><i>긴급</i><i>장보기</i><i>집안일</i><i class="add">+ 분류</i></div>
+ <div class="grp">오늘까지</div>
+ <div class="tk"><span class="ck"></span><p>초롱 영재원 픽업<em>긴급 · 오늘 17:00</em></p><img src="dad_basic.png" alt=""></div>
+ <div class="tk"><span class="ck"></span><p>창덕마트 열무<em>장보기</em></p><img src="dad_basic.png" alt=""></div>
+ <div class="tk"><span class="ck"></span><p>교복 드라이 맡기기<em>집안일 · 매주 월</em></p><img src="big_basic.png" alt=""></div>
+ <div class="grp">언젠가</div>
+ <div class="tk"><span class="ck"></span><p>주방 등 교체<em>집안일</em></p><img src="dad_basic.png" alt=""></div>
+ <div class="grp">끝낸 일</div>
+ <div class="tk dn"><span class="ck on">✓</span><p>주유<em>긴급</em></p><img src="dad_done.png" alt=""></div>
+ <div class="tk dn"><span class="ck on">✓</span><p>포도 픽업<em>장보기</em></p><img src="mom_done.png" alt=""></div>
+</div>
+<div class="fab">+</div>
+<nav class="tabs"><div>오늘</div><div>달력</div><div class="on">할 일</div><div>놀이</div><div>설정</div></nav>
+</section>
+<style>
+.chips{display:flex;gap:6px;margin:4px 0 10px;overflow-x:auto}.chips b,.chips i{font-style:normal;font-size:14px;padding:7px 13px;border-radius:99px;background:var(--card);border:1px solid var(--rule);white-space:nowrap}
+.chips b{background:var(--ink);color:var(--paper);border-color:var(--ink)}.chips .add{color:var(--muted);border-style:dashed}
+.grp{font-size:13px;font-weight:700;color:var(--muted);margin:14px 2px 6px}
+.tk{display:grid;grid-template-columns:28px 1fr 32px;gap:12px;align-items:center;background:var(--card);border-radius:16px;padding:11px 12px;margin-bottom:6px}
+.ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;font-size:14px;font-weight:700}
+.ck.on{background:var(--little);border-color:var(--little);color:var(--card)}
+.tk p{margin:0;font-size:15px;font-weight:700}.tk p em{display:block;font-style:normal;font-size:12px;font-weight:400;color:var(--muted)}
+.tk img{width:32px;height:32px;border-radius:50%}
+.tk.dn p{color:var(--muted);text-decoration:line-through;font-weight:400}
+</style>
 </div>
 <script>
 const T={dad:'var(--dad-t)',mom:'var(--mom-t)',big:'var(--big-t)',little:'var(--little-t)'};
