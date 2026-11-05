@@ -1,7 +1,7 @@
 // node --test src/v2/features/games/pairs.test.js
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { flip, isDone, newDeck, closeMismatch } from './pairs.js'
+import { flip, isDone, newDeck, closeMismatch } from './pairsLogic.js'
 
 test('짝 맞추면 matched, 틀리면 열린 채 대기', () => {
   const deck = newDeck('easy', () => 0.3)

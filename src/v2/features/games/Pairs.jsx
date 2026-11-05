@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LEVELS, closeMismatch, flip, isDone, newDeck } from './pairs'
+import { LEVELS, closeMismatch, flip, isDone, newDeck } from './pairsLogic'
 import './games.css'
 
 const freshGame = (lv) => ({ deck: newDeck(lv), open: [], moves: 0, startedAt: Date.now() })

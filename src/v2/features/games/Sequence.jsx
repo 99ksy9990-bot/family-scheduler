@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PADS, SPEED, press, stage, start } from './sequence'
+import { PADS, SPEED, press, stage, start } from './sequenceLogic'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }

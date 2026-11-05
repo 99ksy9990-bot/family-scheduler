@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { press, stage, start } from './sequence.js'
+import { press, stage, start } from './sequenceLogic.js'
 
 test('맞히면 길어지고, 쉬움은 한 번 봐줌, 보통은 끝', () => {
   let s = start(() => 0) // [0]
