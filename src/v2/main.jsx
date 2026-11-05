@@ -1,4 +1,15 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import ErrorBoundary from '../components/ErrorBoundary'
+import App from './App'
+import './styles/tokens.css'
+import './styles/base.css'
+import './styles/app.css'
 
-// 화면은 3단계부터 연결한다. 기존 기기·클라우드 데이터에는 쓰지 않는다.
-createRoot(document.getElementById('root')).render(null)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((error) => console.error('Service worker registration failed', error))
+  })
+}
+
+createRoot(document.getElementById('root')).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>)

@@ -1,7 +1,7 @@
 {
-  "name": "Family Scheduler",
-  "short_name": "Family Scheduler",
-  "description": "가족의 일정과 할 일을 함께 관리하는 패밀리 스케줄러",
+  "name": "오늘우리",
+  "short_name": "오늘우리",
+  "description": "우리 가족의 오늘을 함께하는 오늘우리",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

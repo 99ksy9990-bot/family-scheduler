@@ -1,4 +1,4 @@
-import koreanHolidayData from '../data/korean-holidays.json'
+import koreanHolidayData from '../data/korean-holidays.json' with { type: 'json' }
 import { iso } from './dates'
 
 const holidayYearCache = new Map()
