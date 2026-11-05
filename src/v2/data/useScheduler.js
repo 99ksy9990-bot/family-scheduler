@@ -10,7 +10,12 @@ const keys = {
   workSettings: 'work-settings-v1', profileLinks: 'profile-links-v1',
 }
 const load = () => {
-  try { return { state: { schemaVersion: 7, recoveryVersion: 2, ...readLegacyStorage(localStorage) }, error: '' } }
+  try {
+    const extra = JSON.parse(localStorage.getItem('family-scheduler-v2-metadata') || '{}')
+    if (!extra || typeof extra !== 'object' || Array.isArray(extra)) throw new Error('invalid metadata')
+    const metadata = Object.fromEntries(Object.entries(extra).filter(([field]) => !Object.hasOwn(keys, field)))
+    return { state: { schemaVersion: 7, recoveryVersion: 2, ...readLegacyStorage(localStorage), ...metadata }, error: '' }
+  }
   catch { return { state: null, error: '저장된 가족 정보를 읽지 못했어요. 원본 데이터는 그대로 있어요.' } }
 }
 
@@ -28,18 +33,24 @@ export function useScheduler() {
       try {
         const state = toLegacy(loaded.state)
         for (const [field, key] of Object.entries(keys)) localStorage.setItem(`family-scheduler-${key}`, JSON.stringify(state[field]))
+        localStorage.setItem('family-scheduler-v2-metadata', JSON.stringify(Object.fromEntries(Object.entries(state).filter(([field]) => !Object.hasOwn(keys, field)))))
         setSaveError('')
       } catch { setSaveError('기기에 저장하지 못했어요. 저장 공간을 확인해 주세요.') }
     }, 300)
     return () => window.clearTimeout(timer)
   }, [loaded.state])
+  const updateState = (update) => {
+    if (!canEdit || !loaded.state) return false
+    setLoaded((current) => ({ ...current, state: typeof update === 'function' ? update(current.state) : update }))
+    return true
+  }
   const addEvent = (event) => {
     if (!canEdit || !loaded.state) return false
     setLoaded((current) => ({ ...current, state: { ...current.state,
       events: [...current.state.events, { ...event, id: `event-${crypto.randomUUID()}` }] } }))
     return true
   }
-  return { state: loaded.state, error: loaded.error || saveError || sync.error, sync, canEdit, addEvent,
+  return { state: loaded.state, error: loaded.error || saveError || sync.error, sync, canEdit, addEvent, updateState,
     retry: () => {
       setLoaded((current) => current.state ? { ...current, state: { ...current.state } } : load())
       Promise.resolve(sync.refresh()).catch(() => setSaveError('가족 연결을 다시 확인해 주세요.'))
