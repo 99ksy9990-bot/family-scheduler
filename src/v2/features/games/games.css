@@ -28,3 +28,8 @@
 .tap-hole:focus-visible{outline:3px solid var(--tint)}
 @keyframes tap-up{from{transform:translateY(60%)}to{transform:none}}
 @media (prefers-reduced-motion:reduce){.tap-face{animation:none}}
+.catch-area{position:relative;height:min(560px,62vh);border-radius:22px;background:linear-gradient(#cfe6ff,#f2f8ff);overflow:hidden;container-type:size;touch-action:none}
+.catch-area:focus-visible{outline:3px solid var(--tint)}
+.catch-item{position:absolute;left:0;top:0;width:12cqw;will-change:transform}
+.catch-basket{position:absolute;left:0;bottom:2cqh;height:38cqh;width:auto;will-change:transform}
+.catch-lives{display:flex;gap:4px}.catch-lives img{width:24px;height:24px}
