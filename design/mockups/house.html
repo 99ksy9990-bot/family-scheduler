@@ -7,15 +7,20 @@
 @font-face{font-family:SUITE;src:url(../../public/fonts/SUITE-Bold.woff2) format("woff2");font-weight:700}
 :root{
  --font:SUITE,-apple-system,system-ui,sans-serif;
- --bg:#f2f2f7;--card:#fff;--label:#000;--label-2:rgba(60,60,67,.6);--label-3:rgba(60,60,67,.3);
+ --bg:#eef0f7;--card:rgba(255,255,255,.55);--glass-line:rgba(255,255,255,.7);--blob1:#a5b4fc;--blob2:#fdba9a;--blob3:#86efc4;--label:#000;--label-2:rgba(60,60,67,.6);--label-3:rgba(60,60,67,.3);
  --sep:rgba(60,60,67,.12);--tint:#0a84ff;--bar:rgba(249,249,249,.86);
  --dad:#5e5ce6;--mom:#ff7a59;--big:#bf5af2;--little:#30b07a;
 }
-@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--label:#fff;--label-2:rgba(235,235,245,.6);--label-3:rgba(235,235,245,.3);--sep:rgba(84,84,88,.6);--bar:rgba(22,22,24,.86)}}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0b12;--card:rgba(40,40,48,.5);--glass-line:rgba(255,255,255,.12);--blob1:#3730a3;--blob2:#9a3412;--blob3:#065f46;--label:#fff;--label-2:rgba(235,235,245,.6);--label-3:rgba(235,235,245,.3);--sep:rgba(84,84,88,.6);--bar:rgba(22,22,24,.86)}}
 *{box-sizing:border-box;margin:0}
 html,body{overflow-x:clip}
 body{background:var(--bg);font-family:var(--font);color:var(--label);font-variant-numeric:tabular-nums;word-break:keep-all;-webkit-font-smoothing:antialiased}
-.phone{width:393px;height:852px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
+.phone{width:393px;height:852px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg);isolation:isolate}
+.phone::before,.phone::after,.blob{content:"";position:absolute;border-radius:50%;filter:blur(60px);z-index:-1;opacity:.75}
+.phone::before{width:300px;height:300px;background:var(--blob1);top:-60px;left:-80px}
+.phone::after{width:280px;height:280px;background:var(--blob2);top:260px;right:-100px}
+.blob{width:260px;height:260px;background:var(--blob3);bottom:60px;left:-60px}
+.tile,.list{backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--glass-line);box-shadow:0 8px 24px rgba(30,30,60,.08)}
 header{padding:62px 20px 0}
 header p{font-size:15px;font-weight:600;color:var(--label-2)}
 header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
@@ -44,7 +49,7 @@ header h1{font-size:34px;font-weight:700;letter-spacing:-.4px;margin-top:2px}
 .tabs svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tabs a.on svg{fill:currentColor;stroke:currentColor}
 </style></head><body>
-<div class="phone">
+<div class="phone"><div class="blob"></div>
  <header><p>11월 6일 금요일</p><h1>우리집</h1></header>
  <div class="sec">지금</div>
  <div class="grid">
