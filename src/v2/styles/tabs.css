@@ -112,3 +112,10 @@ main { padding-top: 12px; }
 .app-heading, .demo-banner + .app-heading { padding-top: 20px; }
 .demo-banner { margin-top: 12px; }
 .header-add { top: 14px; }
+/* 글자 입력칸: 아이폰처럼 커서만 보이고 네모 테두리 없음 (사용자 2026-11-06). 칩 모양 입력은 눌렀을 때 연한 파랑 배경. */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible,
+textarea:focus, textarea:focus-visible, select:focus, select:focus-visible { outline: none; box-shadow: none; }
+.input-chip:focus, .time-pill:focus, input[type='date']:focus, input[type='time']:focus { background: rgba(10,132,255,.14); color: var(--tint); }
+/* 버튼은 손가락 터치 땐 테두리 없음, 키보드로 이동할 때만 표시 */
+button:focus:not(:focus-visible), [role='switch']:focus:not(:focus-visible) { outline: none; }
