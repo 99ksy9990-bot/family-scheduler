@@ -21,6 +21,7 @@ export function mergeProgress(a, b) {
     comp: Math.max(a.comp || 0, b.comp || 0),
     seen: [...new Set([...(a.seen || []), ...(b.seen || [])])],
     day: mergeWeek(a.day, b.day), // 오늘의 이벤트·출석
+    attend: !a.attend || !b.attend ? a.attend || b.attend : weekNo({ id: a.attend.last }) === weekNo({ id: b.attend.last }) ? { last: a.attend.last, run: Math.max(a.attend.run, b.attend.run) } : weekNo({ id: a.attend.last }) > weekNo({ id: b.attend.last }) ? a.attend : b.attend,
   }
 }
 export function mergeAllProgress(a = {}, b = {}) {

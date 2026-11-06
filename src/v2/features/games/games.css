@@ -220,3 +220,5 @@
 .clean-stage-no.hard { background: #d93a40; } .clean-hard-tag { color: #c0262d !important; font-weight: 700; }
 .clean-week button:focus-visible { outline: 3px solid var(--tint); }
 .clean-week + .clean-week { margin-top: 8px; }
+.game-result-actions { flex-wrap: wrap; } .game-result-actions .primary-button:first-child:nth-last-child(3) { flex-basis: 100%; }
+.clean-dots { display: block; margin-top: 2px; font-size: 11px; letter-spacing: 3px; color: var(--tint); font-weight: 400; }

@@ -15,7 +15,7 @@ const MISSIONS = [
   { type: 'star3', goal: 2, reward: 5, text: '별 3개로 2번 깨기' }, { type: 'combo', goal: 3, reward: 5, text: '특수 블록 3번 합치기' },
   { type: 'drop', goal: 3, reward: 4, text: '오리 3마리 구출' }, { type: 'ice', goal: 10, reward: 4, text: '얼음 10개 깨기' },
 ]
-const CHECKIN = 2 // 출석 별
+const CHECKIN = 2, WEEK_BONUS = 10 // 출석 별, 7일 연속이면 별 10개 더
 const dayId = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
 const missionOf = (d = new Date()) => MISSIONS[Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5) % MISSIONS.length]
 const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 게임 중에 별로 사는 아이템
@@ -143,7 +143,7 @@ function specialFx(host, e) {
 }
 const Face = ({ player, mood = 'basic', size = 56 }) => <img className="clean-face" src={`/characters/${player}_${mood}.png`} alt="" width={size} height={size} />
 
-export default function Clean({ player, onFinish, progress, onProgress }) {
+export default function Clean({ player, onFinish, progress, onProgress, autoStart }) {
   // 가족 데이터에 저장(폰이 바뀌어도 유지), 예전 폰 저장값은 처음 한 번 가져옴
   const [unlocked, setUnlocked] = useState(() => Math.max(progress?.unlocked || 0, readProgress(player)))
   const [stars, setStars] = useState(() => ({ ...readStars(player), ...progress?.stars }))
@@ -152,6 +152,9 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [bonus, setBonus] = useState(() => progress?.bonus || 0) // 이벤트로 받은 별
   const [day, setDay] = useState(() => (progress?.day?.id === dayId() ? progress.day : { id: dayId(), n: 0, claimed: false, checkin: false }))
   const mission = missionOf()
+  const [attend, setAttend] = useState(() => progress?.attend || { last: '', run: 0 }) // 연속 출석
+  const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return dayId(d) })()
+  const runNow = attend.last === dayId() || attend.last === yesterday ? attend.run : 0
   const [tip, setTip] = useState(null)
   const [seen, setSeen] = useState(() => progress?.seen || []) // 이미 본 설명 (단계 번호)
   // 별 계산을 바꾸면서 줄어든 별을 한 번 보상 (예전부터 하던 사람만)
@@ -187,7 +190,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const earned = Object.entries(stars).reduce((a, [i, n]) => a + n * (STAGES[i]?.hard ? 2 : 1), 0) + GIFT * Math.floor(unlocked / GIFT_EVERY) + bonus + comp
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
   const wallet = Math.max(0, earned - spent - bought) // 예전 계산으로 쓴 별이 많아도 0 아래로는 안 감
-  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, day, ...next }) }
+  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, day, attend, ...next }) }
   const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk)
   const startStage = (i) => {
     const st = begin(i)
@@ -197,6 +200,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     dustNow.current = 0; setTip(FIRST[i] && !seen.includes(i) ? FIRST[i] : null)
     setS(st); setItems({ hammer: ITEMS.hammer + perks.reduce((a, p) => a + (p.hammer || 0), 0), shuffle: ITEMS.shuffle + perks.reduce((a, p) => a + (p.shuffle || 0), 0) }); setHammer(false); setBroom(false); setEraser(false); setCheer('')
   }
+  // 결과 화면에서 '다음 단계'를 누르면 방 화면 없이 바로 시작
+  useEffect(() => { if (!autoStart || unlocked >= STAGES.length) return; const t = setTimeout(() => startStage(unlocked)); return () => clearTimeout(t) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!s) {
     const roomIndex = ROOMS.findIndex((r) => r.tasks.some((t) => !done.includes(t.id)))
@@ -226,7 +231,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
-      <div className="clean-week"><span><small>오늘 출석</small><span>매일 들어오면 별 {CHECKIN}개</span></span>{day.checkin ? <em>받았어요</em> : <button onClick={() => { const d = { ...day, checkin: true }; const b = bonus + CHECKIN; setDay(d); setBonus(b); save({ day: d, bonus: b }); setCheer(`출석 고마워! 별 ${CHECKIN}개!`) }}>★{CHECKIN} 받기</button>}</div>
+      <div className="clean-week"><span><small>오늘 출석 · 연속 {runNow}일</small><span>매일 별 {CHECKIN}개, 7일째엔 {WEEK_BONUS}개 더 <b className="clean-dots" aria-hidden="true">{'●'.repeat(runNow % 7 || (runNow ? 7 : 0)).padEnd(7, '○')}</b></span></span>{day.checkin ? <em>받았어요</em> : <button onClick={() => { const run = runNow + 1; const extra = run % 7 === 0 ? WEEK_BONUS : 0; const a = { last: dayId(), run }; const d = { ...day, checkin: true }; const b = bonus + CHECKIN + extra; setAttend(a); setDay(d); setBonus(b); save({ day: d, bonus: b, attend: a }); setCheer(extra ? `7일 연속 출석! 별 ${CHECKIN + extra}개!` : `출석 고마워! 별 ${CHECKIN}개!`) }}>★{CHECKIN}{runNow % 7 === 6 ? `+${WEEK_BONUS}` : ''} 받기</button>}</div>
       <div className="clean-week"><span><small>오늘의 이벤트</small><span>{mission.text} <b>{Math.min(day.n, mission.goal)}/{mission.goal}</b></span></span>{day.claimed ? <em>받았어요</em> : <button disabled={day.n < mission.goal} onClick={() => { const d = { ...day, claimed: true }; const b = bonus + mission.reward; setDay(d); setBonus(b); save({ day: d, bonus: b }); setCheer(`이벤트 선물 별 ${mission.reward}개!`) }}>★{mission.reward} 받기</button>}</div>
     </div>
   }
