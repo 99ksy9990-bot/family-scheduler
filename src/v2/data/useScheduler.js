@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useFamilySync } from '../../hooks/useFamilySync'
+import { decodeConnect } from './connectLink'
 import { upgradeSharedState } from '../../lib/legacyState'
 import { readLegacyStorage, fromLegacy, toLegacy } from './migrate'
 
@@ -26,6 +27,14 @@ export function useScheduler() {
     setLoaded((current) => ({ state: fromLegacy({ ...current.state, ...upgradeSharedState(incoming) }), error: '' }))
   }, [])
   const sync = useFamilySync({ localState: loaded.state, onRemoteState })
+  // 연결 링크로 열면 바로 로그인하고 주소에서 로그인 정보를 지움
+  useEffect(() => {
+    const match = window.location.hash.match(/^#connect=(.+)$/)
+    if (!match || !sync.enabled) return
+    history.replaceState(null, '', window.location.pathname + window.location.search)
+    const creds = decodeConnect(match[1])
+    if (creds && !sync.session) sync.signIn(creds.email, creds.password).catch(() => {})
+  }, [sync.enabled]) // eslint-disable-line react-hooks/exhaustive-deps
   // 관리자 기기에서 앱을 열면, 초대 코드로 들어온 가족에게 편집 권한을 자동으로 줌 (서버 기본값이 '보기 전용'이라서)
   const ownerId = sync.family?.household.owner_id
   const viewOnly = sync.session?.user.id === ownerId ? (sync.family?.members || []).filter((m) => !m.can_edit).map((m) => m.user_id).join(',') : ''
