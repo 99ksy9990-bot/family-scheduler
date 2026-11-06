@@ -81,3 +81,7 @@ main { padding-top: 12px; }
 .player-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 12px; }
 .player-options button { display: grid; justify-items: center; gap: 4px; border: 0; background: var(--card); border-radius: 22px; padding: 16px; }
 .game-player { font-size: 13px; color: var(--label-2); margin-bottom: 8px; }
+.header-add { top: -6px; bottom: auto; background: none; color: var(--tint, #0a84ff); box-shadow: none; border-radius: 10px; }
+.header-add svg { width: 28px; height: 28px; stroke-width: 2.4; }
+.header-add:active { opacity: .5; }
+.header-add:focus-visible { outline: 3px solid var(--tint, #0a84ff); outline-offset: 2px; }
