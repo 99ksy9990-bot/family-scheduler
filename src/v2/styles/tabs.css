@@ -97,3 +97,6 @@ main { padding-top: 12px; }
 /* 정사각형 칸 (사용자 2026-11-06) */
 .month-grid .calendar-day { height: auto; min-height: 0; aspect-ratio: 1; }
 #selected-heading { scroll-margin-top: 12px; }
+/* 아이폰 상단 흐림 영역(상태바 아래 가장자리 효과로 추정) 밖으로 머리 내리기 */
+.app-heading, .demo-banner + .app-heading { padding-top: max(16px, calc(env(safe-area-inset-top) + 28px)); }
+.header-add { top: calc(max(16px, calc(env(safe-area-inset-top) + 28px)) - 6px); }
