@@ -35,6 +35,22 @@ test('가족 선택·게임 완료·gameScores 기록·판수·재불러오기 �
   await expect(page.locator('.game-tile').first()).toContainText('최고 6초')
 })
 
+test('연속 두 판·최고 기록과 무관한 증가·날짜 변경 후 초기화', async ({ page }) => {
+  await finishPairs(page, await openPairs(page, '가족'))
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.app-date')).toHaveText('오늘 1판')
+  await finishPairs(page, await openPairs(page, '가족'))
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.app-date')).toHaveText('오늘 2판')
+  await page.clock.runFor(500)
+  const scores = await page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-v2-metadata')).gameScores)
+  expect(scores.pairs.p.playsToday).toBe(2)
+  await page.clock.setFixedTime(new Date('2026-11-06T10:00:00+09:00'))
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.locator('.app-date')).toHaveText('오늘 0판')
+  await expect(page.locator('.game-tile').first()).toContainText('최고 6초')
+})
+
 test.describe('예시 게임', () => {
   test.use({ connected: false })
   test('다섯 게임 모두 선택·시작·하늘 선물의 선택 캐릭터 전달', async ({ page }) => {

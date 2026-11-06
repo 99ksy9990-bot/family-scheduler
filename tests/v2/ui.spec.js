@@ -3,7 +3,7 @@ import { test, expect } from './ui-fixture.js'
 test('첫 화면 일정·캐릭터·24시간 표기·4개 탭·가로 넘침 없음', async ({ page }) => {
   await expect(page.locator('.app-heading h1')).toHaveText('우리집')
   await expect(page.getByRole('heading', { name: '오후 일정', exact: true })).toBeInViewport()
-  await expect(page.locator('.house-row time')).toHaveText('14:00')
+  await expect(page.locator('.house-row .time-start')).toHaveText('14:00')
   await expect(page.locator('.house-tile .character img')).toHaveAttribute('src', '/characters/dad_basic.png')
   await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
   await expect(page.locator('.header-add')).toHaveCount(1)

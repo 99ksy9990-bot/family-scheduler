@@ -31,10 +31,16 @@ const test = base.extend({
       if (table === 'household_members') data = [member]
       if (table === 'households') data = { id: 'test-household', name: '검사용 가족', owner_id: 'test-user', invite_code: 'TEST' }
       if (table === 'household_states') {
-        const state = await page.evaluate(() => {
+        let state
+        try { state = await page.evaluate(() => {
           const keys = { profiles: 'profiles-v1', events: 'events', tasks: 'tasks', shifts: 'shifts', childSchedules: 'child-schedules-v1', childProfiles: 'child-profiles-v1', schedulePeriods: 'periods-v1', anniversaries: 'anniversaries-v1', scheduleExceptions: 'schedule-exceptions-v1', workSettings: 'work-settings-v1', profileLinks: 'profile-links-v1' }
           return Object.fromEntries(Object.entries(keys).filter(([, key]) => localStorage.getItem(`family-scheduler-${key}`)).map(([field, key]) => [field, JSON.parse(localStorage.getItem(`family-scheduler-${key}`))]))
         })
+        } catch (error) {
+          if (!/Execution context was destroyed|Target page, context or browser has been closed/.test(error.message)) throw error
+          await route.abort().catch(() => {})
+          return
+        }
         data = { state, version: 1, updated_at: '2026-11-05T00:00:00Z' }
       }
       if (table === 'save_household_state_v2') data = { state: route.request().postDataJSON().next_state, version: 2 }

@@ -17,3 +17,5 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 createRoot(document.getElementById('root')).render(<StrictMode><ErrorBoundary appName="우리집"><App /></ErrorBoundary></StrictMode>)
 
 import './styles/tabs.css'
+
+import './styles/person.css'

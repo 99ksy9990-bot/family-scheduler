@@ -37,3 +37,18 @@ test('표정: 바쁨·기본·완료, 미완료 할 일과 반복 완료일 반�
   expect(memberStatus(profile, ended, [task], now).expression).toBe('basic')
   expect(memberStatus(profile, ended, [{ ...task, recurrence: { frequency: 'daily' }, completedDates: ['2026-11-05'] }], now).expression).toBe('done')
 })
+
+test('연속 N은 전날 마침과 오늘 시작으로 구분하고 근무 중 상태는 끝 시각 사용', async () => {
+  const { groupShiftRows } = await import('../../src/v2/data/shiftGroups.js')
+  const { houseStatus } = await import('../../src/v2/data/house.js')
+  const day = new Date(2026, 10, 5)
+  const consecutive = { ...state, events: [], childSchedules: [], anniversaries: [], profiles: [{ id: 'mom', name: '엄마' }],
+    shifts: [{ member: 'mom', date: '2026-11-04', shift: 'night' }, { member: 'mom', date: '2026-11-05', shift: 'night' }],
+    workSettings: { enabled: true, workerIds: ['mom'], shiftTypes: [{ id: 'night', code: 'N', start: '22:00', end: '07:00' }] } }
+  const rows = scheduleForDate(consecutive, day)
+  expect(rows.map((row) => row.title)).toEqual(['근무 N 마침', '근무 N'])
+  expect(rows[0]).toMatchObject({ carryover: true, displayEnd: '07:00', sourceDate: '2026-11-04' })
+  expect(rows[1]).toMatchObject({ crossesMidnight: true, displayStart: '22:00' })
+  expect(groupShiftRows(rows)).toHaveLength(1)
+  expect(houseStatus(consecutive.profiles[0], rows, [], day, new Date(2026, 10, 5, 6))).toMatchObject({ badge: '근무 중', detail: '07:00까지' })
+})
