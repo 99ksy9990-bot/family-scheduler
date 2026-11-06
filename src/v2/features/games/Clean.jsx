@@ -65,8 +65,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       setUnlocked(next); setStars(nextStars); onProgress?.({ unlocked: next, stars: nextStars }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
       const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
       if (el) confetti(el)
-      onFinish?.({ level: 'normal', score: s.stage + 1 })
-    } else if (r.state.done === 'lose') onFinish?.({ level: 'normal', score: s.stage })
+      onFinish?.({ level: 'normal', score: s.stage + 1, tried: s.stage + 1, win: true })
+    } else if (r.state.done === 'lose') onFinish?.({ level: 'normal', score: s.stage, tried: s.stage + 1, win: false })
   }
 
   const tap = (i) => {
