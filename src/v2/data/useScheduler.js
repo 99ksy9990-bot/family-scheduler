@@ -26,6 +26,13 @@ export function useScheduler() {
     setLoaded((current) => ({ state: fromLegacy({ ...current.state, ...upgradeSharedState(incoming) }), error: '' }))
   }, [])
   const sync = useFamilySync({ localState: loaded.state, onRemoteState })
+  // 관리자 기기에서 앱을 열면, 초대 코드로 들어온 가족에게 편집 권한을 자동으로 줌 (서버 기본값이 '보기 전용'이라서)
+  const ownerId = sync.family?.household.owner_id
+  const viewOnly = sync.session?.user.id === ownerId ? (sync.family?.members || []).filter((m) => !m.can_edit).map((m) => m.user_id).join(',') : ''
+  useEffect(() => {
+    if (!viewOnly) return
+    ;(async () => { for (const id of viewOnly.split(',')) { try { await sync.updatePermission(id, true) } catch { /* 다음에 다시 시도 */ } } })()
+  }, [viewOnly]) // eslint-disable-line react-hooks/exhaustive-deps
   const canEdit = !sync.family || Boolean(sync.family.membership?.can_edit)
   useEffect(() => {
     if (!loaded.state || !sync.session) return
