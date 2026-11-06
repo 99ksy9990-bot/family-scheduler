@@ -12,12 +12,18 @@ export function pop(host, x, y, text, tone = 'good') {
   if (!host) return
   const n = document.createElement('span')
   n.className = `fx-pop fx-${tone}`; n.textContent = text
-  n.style.left = `${x}px`; n.style.top = `${y}px`
+  // 동시에 여러 개면 위아래로 비켜서 겹치지 않게
+  n.style.top = `${y - host.querySelectorAll('.fx-pop').length * 38}px`
   host.appendChild(n)
-  const a = n.animate(calm() ? [{ opacity: 1 }, { opacity: 0 }] : [
-    { transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 },
-    { transform: 'translate(-50%,-90%) scale(1.25)', opacity: 1, offset: 0.25 },
-    { transform: 'translate(-50%,-220%) scale(1)', opacity: 0 }], { duration: 800, easing: 'cubic-bezier(.2,.8,.3,1)' })
+  // 글자가 판 밖으로 잘리지 않게 가로 위치를 안쪽으로
+  const half = n.offsetWidth / 2 + 4
+  n.style.left = `${Math.min(Math.max(x, half), Math.max(half, host.clientWidth - half))}px`
+  // 천천히 커졌다가 잠깐 멈춰서 읽을 시간을 준 뒤 올라가며 사라짐
+  const a = n.animate(calm() ? [{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }] : [
+    { transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 },
+    { transform: 'translate(-50%,-80%) scale(1.15)', opacity: 1, offset: 0.15 },
+    { transform: 'translate(-50%,-90%) scale(1)', opacity: 1, offset: 0.7 },
+    { transform: 'translate(-50%,-160%) scale(1)', opacity: 0 }], { duration: 1500, easing: 'ease-out' })
   a.onfinish = () => n.remove()
 }
 
