@@ -56,3 +56,8 @@
 .choice-chip input:focus-visible + span, .choice-chip.as-button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
 .task-line .input-chip { width: auto; min-width: 0; border: 0; font-size: 17px; background: var(--fill); border-radius: 8px; padding: 4px 8px; min-height: 36px; color: var(--label); font-variant-numeric: tabular-nums; }
 .task-form-group { flex-shrink: 0; margin: 0; } .task-form-group .schedule-title { border-bottom: 0; padding: 4px 0; }
+.end-add { border: 0; background: none; color: var(--tint); font-size: 17px; padding: 8px 0; min-height: 44px; } .end-clear { border: 0; background: var(--fill); color: var(--label-2); width: 28px; height: 28px; min-height: 28px; border-radius: 50%; font-size: 17px; line-height: 1; padding: 0; margin-left: 4px; }
+/* 담당 가족 칩 한 줄 */
+.task-form-group [aria-label='담당 가족'] { flex-wrap: nowrap; gap: 6px; width: 100%; }
+.task-form-group [aria-label='담당 가족'] .choice-chip { flex: 1; min-width: 0; }
+.task-form-group [aria-label='담당 가족'] .choice-chip span { width: 100%; justify-content: center; padding: 7px 4px; }

@@ -19,7 +19,7 @@ export default function Tasks({ state, updateState, canEdit, today }) {
   const categories = [...new Set([...state.taskCategories, ...state.tasks.map((task) => task.category).filter(Boolean)])]
   const profilesFor = (task) => {
     const ids = assignedMemberIds(task, 'assignees', 'assignee')
-    if (ids.includes('family')) return state.profiles.filter((profile) => profile.active !== false).length ? state.profiles.filter((profile) => profile.active !== false) : [{ id: 'family', name: '가족 모두' }]
+    if (ids.includes('family')) return state.profiles.filter((profile) => profile.active !== false).length ? state.profiles.filter((profile) => profile.active !== false) : [{ id: 'family', name: '가족' }]
     return [...new Set(ids)].map((id) => state.profiles.find((profile) => profile.id === id) || { id, name: '가족' })
   }
   const rows = taskRows(state.tasks, today, category, true)

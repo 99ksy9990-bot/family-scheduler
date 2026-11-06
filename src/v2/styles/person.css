@@ -120,3 +120,22 @@
 @media (prefers-reduced-motion: reduce) { .ios-switch::after { transition: none; } }
 .shift-brush button, .shift-brush button[aria-pressed='true'] { background: var(--card); color: var(--label); border-color: transparent; }
 .skip-day { flex: none; border: 0; background: var(--fill); color: var(--tint); font-size: 12px; font-weight: 600; border-radius: 999px; padding: 6px 10px; min-height: 32px; margin-right: 6px; } .skip-day:focus-visible { outline: 3px solid var(--tint); }
+.member-hide-group { margin-top: 28px; }
+/* 기록 편집(시간표·학기·기념일·근무·학교): 아이폰 묶음 목록 모양. 네모 입력칸 대신 행 + 오른쪽 칩 */
+.settings-content .event-form.settings-card { background: var(--card); border: 0; border-radius: 14px; padding: 0 16px; gap: 0; box-shadow: none; }
+.settings-content .event-form > label, .settings-content .event-form > fieldset { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 6px 0; border: 0; border-bottom: .5px solid var(--sep); border-radius: 0; margin: 0; font-size: 17px; color: var(--label); }
+.settings-content .event-form > fieldset { flex-wrap: wrap; padding: 10px 0; }
+.settings-content .event-form > fieldset legend { float: left; font-size: 17px; padding: 0; margin-bottom: 8px; width: 100%; }
+.settings-content .event-form input:not([type='checkbox']), .settings-content .event-form select { width: auto; max-width: 60%; min-height: 36px; border: 0; border-radius: 8px; background: var(--fill); color: var(--label); padding: 4px 10px; font-size: 17px; text-align: right; -webkit-appearance: none; appearance: none; font-variant-numeric: tabular-nums; }
+.settings-content .event-form input[type='text'], .settings-content .event-form input:not([type]) { flex: 1; text-align: right; background: none; padding-right: 0; }
+.settings-content .event-form .check-label { position: relative; display: inline-flex; min-height: 0; padding: 0; border: 0; margin: 0 6px 6px 0; }
+.settings-content .event-form .check-label input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.settings-content .event-form fieldset .check-label { font-size: 15px; font-weight: 600; padding: 7px 12px; border-radius: 999px; background: var(--fill); cursor: pointer; }
+.settings-content .event-form fieldset .check-label:has(input:checked) { background: var(--tint); color: #fff; }
+.settings-content .event-form > label.check-label { justify-content: space-between; width: 100%; }
+.settings-content .event-form > label.check-label input { position: static; opacity: 1; width: 22px; height: 22px; accent-color: var(--tint); }
+.settings-content .event-form > .primary-button, .settings-content .event-form > button { margin: 10px 0; min-height: 48px; border-radius: 12px; border: 0; width: 100%; font-size: 17px; }
+.settings-content .event-form > button:not(.primary-button):not(.danger-button) { background: var(--fill); color: var(--label); }
+.settings-content .event-form > .danger-button { background: none; color: #ff3b30; }
+.settings-content .event-form > .error { padding: 8px 0; }
+.settings-content .event-form fieldset .check-label { padding: 7px 0; width: 38px; justify-content: center; margin-right: 4px; } .settings-content .event-form input::placeholder { color: var(--label-3); }

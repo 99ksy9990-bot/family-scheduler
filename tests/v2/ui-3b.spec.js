@@ -7,6 +7,8 @@ test('선택일로 추가·자정 넘는 자동 종료·고정 저장 버튼·Es
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByLabel('날짜', { exact: true })).toHaveValue('2026-11-12')
   await dialog.getByLabel('시작 시간').fill('23:30')
+  await expect(dialog.getByLabel('종료 시간')).toHaveCount(0) // 새 일정은 종료 시각 없음
+  await dialog.getByRole('button', { name: '+ 종료 시각' }).click()
   await expect(dialog.getByLabel('종료 시간')).toHaveValue('00:30')
   await expect(dialog.getByRole('switch', { name: '여러 날' })).toHaveAttribute('aria-checked', 'true')
   await expect(dialog.getByLabel('종료일')).toHaveValue('2026-11-13')

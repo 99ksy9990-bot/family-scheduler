@@ -11,7 +11,7 @@ export default function Family({ state, updateState, canEdit, initialProfile, in
   const [editing, setEditing] = useState(() => state.profiles.find((profile) => profile.id === initialProfile) || null)
   const [message, setMessage] = useState('')
   const profiles = state.profiles
-  const members = [['family', '가족 모두'], ...profiles.map((profile) => [profile.id, profile.name])]
+  const members = [['family', '가족'], ...profiles.map((profile) => [profile.id, profile.name])]
   const memberField = { key: 'member', label: '담당 가족', options: members, defaultValue: members[0]?.[0] }
   const childMember = { ...memberField, options: profiles.filter((profile) => profile.type === 'child').map((profile) => [profile.id, profile.name]), defaultValue: profiles.find((profile) => profile.type === 'child')?.id, required: true }
   const periodMember = { ...childMember, options: [['all', '모든 자녀'], ...childMember.options], defaultValue: 'all' }

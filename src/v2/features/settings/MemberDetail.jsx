@@ -76,7 +76,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
       <GroupedRow title="이름" value={<input className="member-name" defaultValue={profile.name} disabled={!canEdit} aria-label="이름" onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== profile.name && set({ name: e.target.value.trim(), initials: e.target.value.trim().slice(0, 1) })} />} />
     </GroupedList></section>
 
-    {canEdit && <GroupedList label="숨기기"><li className="grouped-row"><button className="grouped-action member-hide" onClick={hide}>구성원 숨기기</button></li></GroupedList>}
+    {canEdit && <GroupedList label="숨기기" className="member-hide-group"><li className="grouped-row"><button className="grouped-action member-hide" onClick={hide}>구성원 숨기기</button></li></GroupedList>}
     {undo && <div role="status" className="undo-toast">{profile.name}님을 숨겼어요. 일정은 그대로 남아요.<button onClick={() => { set({ active: true }); setUndo(false) }}>되돌리기</button></div>}
   </div>
 }
