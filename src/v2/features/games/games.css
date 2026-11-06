@@ -99,6 +99,12 @@
 .clean-stage b { font-size: 24px; } .clean-stage small { font-size: 12px; color: var(--label-2); }
 .clean-stage:disabled { background: var(--fill); color: var(--label-3); cursor: not-allowed; }
 .clean-stage:not(:disabled):focus-visible { outline: 3px solid var(--tint); }
+.clean-decor-title { margin: 20px 0 8px; font-size: 17px; display: flex; justify-content: space-between; align-items: baseline; } .clean-decor-title small { font-size: 14px; color: var(--label-2); font-weight: 500; }
+.clean-decor { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.clean-decor-item { border-radius: 16px; background: var(--fill); padding: 12px 6px; display: grid; justify-items: center; gap: 4px; text-align: center; color: var(--label-3); word-break: keep-all; }
+.clean-decor-item img { width: 40px; height: 40px; filter: grayscale(1); opacity: .35; }
+.clean-decor-item b { font-size: 13px; } .clean-decor-item small { font-size: 12px; }
+.clean-decor-item.open { background: var(--card); color: var(--label); } .clean-decor-item.open img { filter: none; opacity: 1; }
 .clean-hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .clean-moves { display: grid; justify-items: center; min-width: 56px; padding: 4px 10px; border-radius: 14px; background: var(--tint); color: var(--on-tint); }
 .clean-moves b { font-size: 22px; line-height: 1.1; } .clean-moves small { font-size: 11px; }

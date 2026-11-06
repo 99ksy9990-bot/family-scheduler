@@ -5,6 +5,11 @@ import './games.css'
 
 const IMG = ['star', 'heart', 'sun', 'ribbon', 'pencil', 'house'].map((n) => `/game/tiles/${n}.png`)
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
+// 별을 모으면 집 꾸밈이 하나씩 열림 (k = IMG 번호)
+const DECOR = [
+  { name: '현관 리본', k: 3, need: 3 }, { name: '거실 햇살', k: 2, need: 7 }, { name: '방 하트 쿠션', k: 1, need: 12 },
+  { name: '공부방 연필꽂이', k: 4, need: 18 }, { name: '지붕 별 장식', k: 0, need: 26 }, { name: '반짝 우리집', k: 5, need: 36 },
+]
 const starKey = (player) => `family-scheduler-clean-stars-${player}`
 const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }
 const progressKey = (player) => `family-scheduler-clean-progress-${player}`
@@ -18,10 +23,13 @@ export default function Clean({ player, onFinish }) {
   const [flash, setFlash] = useState(() => new Set())
   const area = useRef(null)
   const start = useRef(null)
+  const totalStars = Object.values(stars).reduce((a, b) => a + b, 0)
 
   if (!s) return <div className="clean-map">
     <p className="quiet">먼지를 닦고 물건을 모아 집을 깨끗하게! 단계를 깨면 다음 단계가 열려요.</p>
     <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className="clean-stage" disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => setS(begin(i))}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
+    <h3 className="clean-decor-title">우리집 꾸미기 <small>모은 별 ★{totalStars}</small></h3>
+    <div className="clean-decor">{DECOR.map((d) => { const open = totalStars >= d.need; return <div key={d.name} className={`clean-decor-item${open ? ' open' : ''}`} aria-label={`${d.name} ${open ? '꾸밈 완료' : `별 ${d.need}개 필요`}`}><img src={IMG[d.k]} alt="" /><b>{d.name}</b><small>{open ? '완료' : `★${d.need}`}</small></div> })}</div>
   </div>
 
   const doSwap = (i, j) => {
