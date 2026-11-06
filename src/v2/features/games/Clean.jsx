@@ -28,7 +28,6 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [hint, setHint] = useState(null)
   // 5초 동안 안 움직이면 바꿀 수 있는 두 칸을 깜빡여 알려 줌
   useEffect(() => {
-    setHint(null)
     if (!s || s.done) return
     const t = setTimeout(() => setHint(findMove(s.board)), 5000)
     return () => clearTimeout(t)
@@ -44,7 +43,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
 
   const doSwap = (i, j) => {
     const r = play(s, i, j)
-    setSel(null)
+    setSel(null); setHint(null)
     const el = area.current
     if (!r) { shake(el?.querySelector(`[data-i="${i}"]`)); buzz(20); return }
     setS(r.state)
@@ -101,7 +100,14 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       </button>)}
     </div>
     <button className="clean-hint-button" disabled={!!s.done} onClick={() => setHint(findMove(s.board))}>힌트</button>
-    <p className="quiet clean-help">줄무늬 먼지 칸 위에서 맞추면 닦여요. 4개 → 로켓 · 네모 → 프로펠러 · ㄱ·T → 폭탄 · 5개 → 무지개. 특수끼리 바꾸면 합체!</p>
+    <ul className="clean-help">
+      <li><b>먼지</b> 줄무늬 칸 위에서 맞추면 닦여요</li>
+      <li><b>4개 한 줄</b> 로켓: 한 줄을 지워요</li>
+      <li><b>네모 4개</b> 프로펠러: 목표로 날아가요</li>
+      <li><b>ㄱ·T 모양</b> 폭탄: 주변을 터뜨려요</li>
+      <li><b>5개 한 줄</b> 무지개: 같은 그림을 모두 지워요</li>
+      <li><b>특수끼리</b> 바꾸면 합체해서 더 크게 터져요</li>
+    </ul>
     {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)}` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>단계 고르기</button></div>}
   </div>
 }

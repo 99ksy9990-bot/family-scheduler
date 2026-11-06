@@ -130,7 +130,8 @@
 .clean-cell[data-sp='rainbow'] { background: conic-gradient(#ff5e7e, #ffcc00, #30d158, #0a84ff, #bf5af2, #ff5e7e); }
 .clean-cell.flash img { animation: clean-in .35s ease-out; }
 @keyframes clean-in { from { transform: scale(.4); opacity: .2; } to { transform: scale(1); opacity: 1; } }
-.clean-help { margin-top: 8px; font-size: 13px; text-align: center; }
+.clean-help { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 15px; color: var(--label-2); text-align: left; word-break: keep-all; }
+.clean-help b { display: inline-block; min-width: 76px; color: var(--label); }
 @media (prefers-reduced-motion: reduce) { .clean-cell.flash img { animation: none; } .clean-cell.sel { transform: none; } }
 .clean-cell[data-sp='prop']::after { content: ''; position: absolute; inset: 0; border-radius: 10px; pointer-events: none; box-shadow: inset 0 0 0 3px #30b07a; background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(48,176,122,.35)); }
 .clean-stars { color: #f5a623; letter-spacing: 1px; }
