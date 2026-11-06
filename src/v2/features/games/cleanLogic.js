@@ -30,12 +30,14 @@ const BASE = [
   { moves: 30, dust: { rows: [0, 7], hp: 1 }, collect: [[2, 25], [3, 25]] },
   { moves: 34, dust: { rows: [0, 7], hp: 2 }, collect: [[0, 20], [5, 20]] },
 ]
-// 25~48단계: 앞 24단계를 더 두껍고 많게 (먼지 hp+1 최대 3, 모을 개수 +5, 이동 +2)
-export const STAGES = [...BASE, ...BASE.map((st) => ({
-  moves: st.moves + 2,
-  ...(st.dust && { dust: { rows: st.dust.rows, hp: Math.min(3, st.dust.hp + 1) } }),
-  ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 5]) }),
-}))]
+// 25~48단계: 앞 24단계를 조금 어렵게 (먼지 hp+1 최대 2, 모을 개수 +3, 이동 +4)
+const HARD = BASE.map((st) => ({
+  moves: st.moves + 4,
+  ...(st.dust && { dust: { rows: st.dust.rows, hp: Math.min(2, st.dust.hp + 1) } }),
+  ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 3]) }),
+}))
+// 쉽게 조정: 이동 1.5배, 모을 개수 0.7배
+export const STAGES = [...BASE, ...HARD].map((st) => ({ ...st, moves: Math.round(st.moves * 1.5), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
