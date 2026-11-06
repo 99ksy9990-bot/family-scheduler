@@ -10,7 +10,7 @@ const fill = () => Array.from({ length: N * N }, (_, i) => T((i + Math.floor(i /
 test('시작 판: 줄 없음, 움직일 수 있음, 먼지 배치', () => {
   const s = begin(1, seeded(3))
   assert.ok(hasMove(s.board))
-  assert.equal(s.dust.filter(Boolean).length, 2 * N)
+  assert.equal(s.dust.filter(Boolean).length, 2 * N - 2) // 아래 모서리 두 칸은 뚫림
   assert.equal(s.moves, STAGES[1].moves)
 })
 
@@ -73,4 +73,18 @@ test('48단계·뒤 24단계는 먼지 최대 2겹', () => {
   assert.equal(STAGES.length, 48)
   assert.ok(STAGES.every((st) => !st.dust || st.dust.hp <= 2))
   assert.ok(begin(47).moves > 0)
+})
+
+test('뚫린 칸·상자: 안 움직임, 옆에서 맞추면 상자 깨짐, 망치·섞기', async () => {
+  const { smash, shuffle, isFixed } = await import('./cleanLogic.js')
+  const s = begin(2, seeded(71)) // 3단계: 가운데 뚫림 + 상자
+  assert.ok(isFixed(s.board[24]) && s.board[22].fix === 'box')
+  assert.equal(play(s, 22, 21), null)
+  assert.equal(goals(s).find((g) => g.kind === 'box').left, 4)
+  const r = smash(s, 15, seeded(73)) // 상자(22) 바로 위 칸 깨기
+  assert.ok(goals(r.state).find((g) => g.kind === 'box').left < 4)
+  assert.equal(r.state.moves, s.moves)
+  const t = shuffle(s, seeded(79))
+  assert.ok(hasMove(t.board) && t.board[24].fix === 'hole' && t.board.filter((x) => x.fix === 'box').length === 4)
+  for (let i = 0; i < 20; i++) { const m = (() => { for (let a = 0; a < N * N; a++) for (const b of [a + 1, a + N]) { const x = play(t, a, b, seeded(i + 1)); if (x) return x } })(); if (m) assert.ok(m.state.board.every(Boolean)) }
 })

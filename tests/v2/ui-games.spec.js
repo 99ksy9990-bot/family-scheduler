@@ -55,11 +55,11 @@ test.describe('예시 게임', () => {
   test.use({ connected: false })
   test('여덟 게임 모두 선택·시작·하늘 선물의 선택 캐릭터 전달', async ({ page }) => {
     await page.getByRole('navigation').getByRole('button', { name: '놀이', exact: true }).click()
-    for (const [index, selector] of ['.pairs-grid', '.catch-area', '.tap-grid', '.seq-grid', '.stack-area', '.merge-area', '.match-grid', '.clean-stages'].entries()) {
+    for (const [index, selector] of ['.pairs-grid', '.catch-area', '.tap-grid', '.seq-grid', '.stack-area', '.merge-area', '.match-grid', '.clean-room'].entries()) {
       await page.locator('.game-tile').nth(index).click()
       const dialog = page.getByRole('dialog')
       await dialog.getByRole('button', { name: '연두', exact: true }).click()
-      if (!['.merge-area', '.clean-stages'].includes(selector)) await dialog.getByRole('button', { name: /^쉬움/ }).click()
+      if (!['.merge-area', '.clean-room'].includes(selector)) await dialog.getByRole('button', { name: /^쉬움/ }).click()
       await expect(dialog.locator(selector)).toBeVisible()
       if (index === 1) await expect(dialog.locator('.catch-basket')).toHaveAttribute('src', '/game/little_basket.png')
       await page.keyboard.press('Escape')

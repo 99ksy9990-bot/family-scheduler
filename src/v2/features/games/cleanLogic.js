@@ -1,5 +1,6 @@
 // 우리집 대청소: 단계별 목표(먼지 닦기·물건 모으기)를 정해진 이동 안에 끝내는 셋 맞추기.
-// 판: N×N, 칸 = { k: 0~5 종류, sp: null|'row'|'col'|'bomb'|'rainbow' }, dust[i] = 먼지 남은 횟수(0~2)
+// 판: N×N, 칸 = { k: 0~5 종류, sp: null|'row'|'col'|'bomb'|'rainbow'|'prop' } 또는 고정 칸 { k: -1, fix: 'hole'|'box', hp }
+// dust[i] = 먼지 남은 횟수, 상자는 옆에서 맞추거나 터뜨리면 hp가 줄고 0이면 사라짐
 export const N = 7
 export const KINDS = 6
 
@@ -37,7 +38,10 @@ const HARD = BASE.map((st) => ({
   ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 3]) }),
 }))
 // 쉽게 조정: 이동 1.5배, 모을 개수 0.7배
-export const STAGES = [...BASE, ...HARD].map((st) => ({ ...st, ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+// 판 모양(뚫린 칸)과 상자 줄: 단계 번호로 돌아가며
+const SHAPES = [[], [0, 6, 42, 48], [24], [14, 21, 28, 20, 27, 34], [0, 1, 5, 6], [21, 27]]
+const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 ? 2 : 1 } : null)
+export const STAGES = [...BASE, ...HARD].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
@@ -45,19 +49,28 @@ const pick = (rand) => Math.floor(rand() * KINDS)
 
 export function begin(stageIndex, rand = Math.random) {
   const st = STAGES[stageIndex]
+  const fixed = Array.from({ length: N * N }, (_, i) => (st.holes?.includes(i) ? { k: -1, fix: 'hole' } : st.boxes?.cells.includes(i) ? { k: -1, fix: 'box', hp: st.boxes.hp } : null))
+  const board = deal(fixed, rand)
+  const dust = Array.from({ length: N * N }, (_, i) => (!fixed[i] && st.dust && rc(i)[0] >= st.dust.rows[0] && rc(i)[0] <= st.dust.rows[1] ? st.dust.hp : 0))
+  return { stage: stageIndex, board, dust, moves: st.moves, collected: Array(KINDS).fill(0), score: 0, done: null }
+}
+
+// 고정 칸은 두고 나머지를 줄 없이 새로 채움 (움직일 수 있을 때까지)
+function deal(fixed, rand) {
   let board
   do {
     board = []
     for (let i = 0; i < N * N; i++) {
+      if (fixed[i]) { board.push(fixed[i]); continue }
       const [r, c] = rc(i)
       let k
       do k = pick(rand); while ((c >= 2 && board[i - 1].k === k && board[i - 2].k === k) || (r >= 2 && board[i - N].k === k && board[i - 2 * N].k === k))
       board.push({ k, sp: null })
     }
   } while (!hasMove(board))
-  const dust = Array.from({ length: N * N }, (_, i) => (st.dust && rc(i)[0] >= st.dust.rows[0] && rc(i)[0] <= st.dust.rows[1] ? st.dust.hp : 0))
-  return { stage: stageIndex, board, dust, moves: st.moves, collected: Array(KINDS).fill(0), score: 0, done: null }
+  return board
 }
+export const isFixed = (t) => !!t?.fix
 
 // 가로·세로 3개 이상 줄 찾기 → [{ cells, dir }]
 function runs(b) {
@@ -101,7 +114,7 @@ const swapped = (b, i, j) => { const n = [...b]; [n[i], n[j]] = [n[j], n[i]]; re
 // 바꿀 수 있는 두 칸 [i, j] (힌트용), 없으면 null
 export function findMove(b) {
   for (let i = 0; i < N * N; i++) {
-    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && (b[i]?.sp || b[j]?.sp || runs(swapped(b, i, j)).length)) return [i, j]
+    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && !isFixed(b[i]) && !isFixed(b[j]) && (b[i]?.sp || b[j]?.sp || runs(swapped(b, i, j)).length)) return [i, j]
   }
   return null
 }
@@ -123,18 +136,22 @@ function blast(b, i, target = null, s = null) {
   if (sp === 'row') return Array.from({ length: N }, (_, x) => r * N + x)
   if (sp === 'col') return Array.from({ length: N }, (_, x) => x * N + c)
   if (sp === 'bomb') return square(r, c, 1)
-  if (sp === 'rainbow') { const k = target ?? b.find((t) => t && !t.sp)?.k; return b.map((t, x) => (t && t.k === k ? x : -1)).filter((x) => x >= 0).concat(i) }
+  if (sp === 'rainbow') { const k = target ?? b.find((t) => t && !t.sp && t.k >= 0)?.k; return b.map((t, x) => (t && t.k === k ? x : -1)).filter((x) => x >= 0).concat(i) }
   return [i]
 }
 
 // 칸들을 지우면서 그 안의 특수 블록도 연쇄로 터뜨림
 function clearCells(s, cells, events) {
-  const queue = [...cells]; const gone = new Set()
+  const queue = [...cells]; const gone = new Set(); const hitBox = new Set()
   while (queue.length) {
     const i = queue.pop(); if (gone.has(i) || !s.board[i]) continue
+    if (isFixed(s.board[i])) { if (s.board[i].fix === 'box') hitBox.add(i); continue }
     gone.add(i)
     if (s.board[i].sp) { events.push({ type: s.board[i].sp, i }); for (const x of blast(s.board, i, null, s)) if (!gone.has(x)) queue.push(x) }
   }
+  // 지운 칸 옆 상자도 한 번씩 맞음
+  for (const i of gone) { const [r, c] = rc(i); for (const [y, x] of [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]) if (y >= 0 && x >= 0 && y < N && x < N && s.board[y * N + x]?.fix === 'box') hitBox.add(y * N + x) }
+  for (const i of hitBox) { const hp = s.board[i].hp - 1; s.board[i] = hp > 0 ? { ...s.board[i], hp } : null; s.boxes = (s.boxes || 0) + (hp > 0 ? 0 : 1); events.push({ type: 'box', i }) }
   for (const i of gone) {
     s.collected[s.board[i].k]++
     if (s.dust[i]) { s.dust[i]--; events.push({ type: 'dust', i }) }
@@ -146,8 +163,9 @@ function clearCells(s, cells, events) {
 
 function fall(s, rand) {
   for (let c = 0; c < N; c++) {
-    const col = []; for (let r = N - 1; r >= 0; r--) if (s.board[r * N + c]) col.push(s.board[r * N + c])
-    for (let r = N - 1, x = 0; r >= 0; r--, x++) s.board[r * N + c] = col[x] || { k: pick(rand), sp: null }
+    // 고정 칸(뚫린 칸·상자)은 그 자리에 두고, 블록은 그 사이로 떨어짐
+    const col = []; for (let r = N - 1; r >= 0; r--) { const t = s.board[r * N + c]; if (t && !isFixed(t)) col.push(t) }
+    for (let r = N - 1, x = 0; r >= 0; r--) if (!isFixed(s.board[r * N + c])) s.board[r * N + c] = col[x++] || { k: pick(rand), sp: null }
   }
 }
 
@@ -167,7 +185,7 @@ function combo(s, i, j, events) {
 
 // 바꾸기 한 번. 무효면 null. → 새 상태 + events(효과용)
 export function play(state, i, j, rand = Math.random) {
-  if (state.done || !adjacent(i, j)) return null
+  if (state.done || !adjacent(i, j) || isFixed(state.board[i]) || isFixed(state.board[j])) return null
   const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
   const events = []
   const a = s.board[i]; const bb = s.board[j]
@@ -192,7 +210,11 @@ export function play(state, i, j, rand = Math.random) {
     if (!groups(s.board).length) return null
   }
   s.moves--
-  let prefer = [i, j]
+  return settle(s, events, [i, j], rand)
+}
+
+// 터진 뒤 떨어지고 연쇄, 끝났는지 판정
+function settle(s, events, prefer, rand) {
   for (let chain = 0; chain < 30; chain++) {
     fall(s, rand)
     const gs = groups(s.board, prefer); if (!gs.length) break
@@ -206,19 +228,33 @@ export function play(state, i, j, rand = Math.random) {
     prefer = []
   }
   fall(s, rand)
-  if (!hasMove(s.board)) s.board = begin(s.stage, rand).board
+  if (!hasMove(s.board)) s.board = deal(s.board.map((t) => (isFixed(t) ? t : null)), rand)
   s.done = won(s) ? 'win' : s.moves <= 0 ? 'lose' : null
   if (s.done === 'win') {
     // 남은 이동마다 로켓 한 발씩 보너스
     s.stars = s.moves >= STAGES[s.stage].moves * 0.3 ? 3 : s.moves >= STAGES[s.stage].moves * 0.1 ? 2 : 1
-    for (let m = 0; m < s.moves; m++) { const x = Math.floor(rand() * N * N); s.board[x] = { ...s.board[x], sp: m % 2 ? 'row' : 'col' }; clearCells(s, [x], events); fall(s, rand) }
+    for (let m = 0; m < s.moves; m++) { const x = Math.floor(rand() * N * N); if (isFixed(s.board[x])) continue; s.board[x] = { ...s.board[x], sp: m % 2 ? 'row' : 'col' }; clearCells(s, [x], events); fall(s, rand) }
     events.push({ type: 'bonus', n: s.moves })
   }
   return { state: s, events }
 }
 
+// 아이템: 망치(한 칸 깨기, 이동 안 씀), 섞기
+export function smash(state, i, rand = Math.random) {
+  if (state.done || state.board[i]?.fix === 'hole') return null
+  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
+  const events = [{ type: 'smash', i }]
+  clearCells(s, [i], events)
+  return settle(s, events, [], rand)
+}
+export function shuffle(state, rand = Math.random) {
+  if (state.done) return null
+  return { ...state, board: deal(state.board.map((t) => (isFixed(t) || t.sp ? t : null)), rand) }
+}
+
 export function goals(s) {
   const st = STAGES[s.stage]; const out = []
+  if (st.boxes) out.push({ kind: 'box', left: s.board.filter((t) => t?.fix === 'box').length })
   if (st.dust) out.push({ kind: 'dust', left: s.dust.reduce((n, d) => n + d, 0) })
   for (const [k, n] of st.collect || []) out.push({ kind: k, left: Math.max(0, n - s.collected[k]) })
   return out
