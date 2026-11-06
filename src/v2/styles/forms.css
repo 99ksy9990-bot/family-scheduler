@@ -64,3 +64,9 @@
 .task-form-group [aria-label='담당 가족'] .choice-chip span.face-chip { flex-direction: column; gap: 2px; padding: 6px 2px; border-radius: 14px; min-height: 0; }
 .face-chip small { font-size: 11px; font-weight: 600; }
 .choice-chip input:checked + .face-chip { background: color-mix(in srgb, var(--tint) 18%, transparent); color: var(--tint); box-shadow: inset 0 0 0 2px var(--tint); }
+/* 일정 추가의 펼침(반복·알림·분류) 선택지: 할 일과 같은 둥근 칩 */
+.form-disclosure .ui-segments { background: none; padding: 0; gap: 8px; margin: 4px 0 12px; }
+.form-disclosure .ui-segments button { min-height: 36px; padding: 7px 14px; border-radius: 999px; background: var(--fill); font-size: 15px; font-weight: 600; color: var(--label); }
+.form-disclosure .ui-segments button[aria-pressed='true'] { background: var(--tint); color: #fff; }
+.form-disclosure .ui-segments button:disabled { opacity: .4; }
+.form-disclosure .ui-segments button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
