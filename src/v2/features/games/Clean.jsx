@@ -21,6 +21,15 @@ const PERKS = [
   { text: '시작할 때 로켓 1개 더', start: ['col'] }, { text: '망치 +1', hammer: 1 }, { text: '섞기 +1', shuffle: 1 }, { text: '시작할 때 프로펠러 1개 더', start: ['prop'] }, { text: '이동 +3', moves: 3 },
   { text: '시작할 때 무지개 1개', start: ['rainbow'] },
 ]
+// 받은 효과를 종류별로 합쳐서 한 줄로
+const START_NAME = { row: '로켓', col: '로켓', bomb: '폭탄', prop: '프로펠러', rainbow: '무지개' }
+function perkSummary(perks) {
+  const sum = (k) => perks.reduce((a, p) => a + (p[k] || 0), 0)
+  const starts = {}
+  for (const sp of perks.flatMap((p) => p.start || [])) starts[START_NAME[sp]] = (starts[START_NAME[sp]] || 0) + 1
+  return [sum('moves') && `이동 +${sum('moves')}`, sum('hammer') && `망치 +${sum('hammer')}`, sum('shuffle') && `섞기 +${sum('shuffle')}`,
+    Object.keys(starts).length && `시작 아이템 ${Object.entries(starts).map(([n, c]) => `${n} ${c}`).join(' · ')}`].filter(Boolean).join(' / ')
+}
 function addStarts(board, sps) {
   for (const sp of sps) { const free = board.map((t, x) => (!isFixed(t) && !t.sp ? x : -1)).filter((x) => x >= 0); const x = free[Math.floor(Math.random() * free.length)]; board[x] = { ...board[x], sp } }
 }
@@ -171,7 +180,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       </section>
       <div className="clean-talk"><Face player={player} mood={cheer ? 'done' : 'basic'} /><p>{roomIndex < 0 ? '우리집이 다 깨끗해졌어! 단계를 더 깨서 별을 모아 봐.' : cheer || room.say}</p></div>
       <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
-      {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perks.map((p) => p.text).join(', ')}</p>}
+      {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
       {unlocked < STAGES.length && <button className="primary-button clean-play" onClick={() => startStage(unlocked)}>{unlocked + 1}단계 도전하고 별 받기</button>}
       <details className="clean-all"><summary>지난 단계 다시 하기</summary>
