@@ -90,7 +90,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     const t = setTimeout(() => setHint(findMove(s.board)), 5000)
     return () => clearTimeout(t)
   }, [s])
-  const earned = Object.values(stars).reduce((a, b) => a + b, 0)
+  const CLEAR_BONUS = 2 // 깰 때마다 받은 별 + 2개 더
+  const earned = Object.values(stars).reduce((a, b) => a + b + CLEAR_BONUS, 0)
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
   const wallet = earned - spent - bought
   const save = (next) => { onProgress?.({ unlocked, stars, done, bought, ...next }) }
@@ -214,6 +215,6 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <li><b>4개</b> 로켓 · <b>네모</b> 프로펠러</li>
       <li><b>ㄱ·T</b> 폭탄 · <b>5개</b> 무지개</li>
     </ul></details>
-    {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)}` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>{s.done === 'win' ? '별 쓰러 집으로' : '집으로'}</button></div>}
+    {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)} + 보너스 ★2` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>{s.done === 'win' ? '별 쓰러 집으로' : '집으로'}</button></div>}
   </div>
 }
