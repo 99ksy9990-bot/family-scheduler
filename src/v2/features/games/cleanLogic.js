@@ -44,7 +44,11 @@ const SHAPES = [[], [0, 6, 42, 48], [24], [14, 21, 28, 20, 27, 34], [0, 1, 5, 6]
 const SHAPES2 = [[0, 1, 7, 5, 6, 13, 35, 42, 43, 41, 47, 48], [16, 18, 30, 32], [3, 45], [21, 22, 26, 27], [0, 6, 24, 42, 48], [3, 10, 38, 45], [0, 1, 2, 4, 5, 6], [7, 14, 13, 20, 28, 35, 34, 41]]
 // 151단계부터 판 모양 8개 더
 const SHAPES3 = [[3, 21, 27, 45], [0, 6, 8, 12, 36, 40, 42, 48], [10, 24, 38], [0, 1, 2, 46, 47, 48], [14, 20, 28, 34, 15, 19], [17, 23, 25, 31], [0, 7, 14, 6, 13, 20], [21, 27, 10, 38]]
-const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 ? 2 : 1 } : null)
+// 201단계부터 판 모양 12개 더 (십자·기둥·대각선·계단·화살표 등), 앞 모양과 섞어서 돌림
+const SHAPES4 = [[17, 23, 24, 25, 31], [8, 15, 22, 12, 19, 26], [0, 1, 2, 4, 5, 6, 43, 44, 45], [8, 10, 12, 36, 38, 40], [16, 17, 18, 23, 25, 30, 31, 32], [0, 8, 16, 32, 40, 48], [6, 12, 18, 30, 36, 42], [35, 41, 42, 43, 47, 48], [21, 23, 25, 27], [0, 3, 6, 7, 13], [0, 7, 8, 14, 15, 16], [3, 9, 11, 15, 19]]
+const MIX = [...SHAPES4, ...SHAPES2, ...SHAPES3, ...SHAPES4.slice(0, 6)]
+const shapeFor = (i) => (i >= 200 ? MIX[(i * 7) % MIX.length] : i >= 150 ? SHAPES3[i % SHAPES3.length] : i >= 100 ? SHAPES2[i % SHAPES2.length] : SHAPES[i % SHAPES.length])
+const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 && i < 200 ? 2 : 1 } : null)
 // 오리 구출: 오리(k=-2)를 맨 아래 줄까지 내리면 모임
 const dropsFor = (i) => (i >= 3 && i % 4 === 3 ? (i >= 24 ? 3 : 2) : 0)
 // 49~60단계: 후반 12단계를 한 번 더, 먼지 2겹 + 모을 개수 +3
@@ -54,16 +58,21 @@ const LATE = [...HARD, ...HARD.slice(0, 16)].map((st) => ({ ...st, moves: st.mov
 // 101~200단계: 더 어렵게 — 먼지 2겹, 모을 개수 +10, 이동 -3
 const ULTRA = [...HARD, ...HARD, ...HARD, ...HARD, ...HARD.slice(0, 4)].map((st) => ({ ...st, moves: st.moves - 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 10]) }) }))
 // 얼음(그 칸에서 맞추면 깨짐, 깨지기 전엔 못 움직임)·거품(안 닦으면 옆으로 번짐)
-const iceFor = (i) => (i >= 20 && i % 5 === 1 ? [29, 30, 31, 32, 33] : [])
-const foamFor = (i) => (i >= 40 && i % 7 === 5 ? [0, 6, 42, 48, 3, 45] : [])
+// 얼음·거품: 200단계 뒤엔 더 자주, 놓이는 줄도 바꿈
+const iceFor = (i) => (i >= 20 && (i % 5 === 1 || (i >= 200 && i % 5 === 3)) ? (i % 2 ? [29, 30, 31, 32, 33] : [36, 37, 38, 39, 40]) : [])
+const foamFor = (i) => (i >= 40 && (i % 7 === 5 || (i >= 200 && i % 7 === 2)) ? (i % 2 ? [0, 6, 42, 48, 3, 45] : [21, 27, 24, 3]) : [])
 export const isHard = (i) => i % 10 === 9 // 10단계마다 '어려움': 별 2배
-const RAW = [...BASE, ...HARD, ...EXTRA, ...LATE, ...ULTRA]
+// 201~300단계: 101~200과 비슷한 수준 (아이들도 할 수 있게 이동 +3)
+const MEGA = [...HARD, ...HARD, ...HARD, ...HARD, ...HARD.slice(0, 4)].map((st, k) => ({ ...st, moves: st.moves - 3 + 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([kd, n]) => [(kd + k) % 6, n + 10]) }) }))
+const RAW = [...BASE, ...HARD, ...EXTRA, ...LATE, ...ULTRA, ...MEGA]
 export const STAGES = RAW.map((st, i) => {
-  const holes = i >= 150 ? SHAPES3[i % SHAPES3.length] : i >= 100 ? SHAPES2[i % SHAPES2.length] : SHAPES[i % SHAPES.length]
+  const holes = shapeFor(i)
   const free = (x) => !holes.includes(x) && !boxesFor(i)?.cells.includes(x)
   const ice = iceFor(i).filter(free); let foam = foamFor(i).filter(free).slice(0, 2)
   if (foamFor(i).length && !foam.length) foam = [24]
-  return { ...st, ice, foam, hard: isHard(i), extraMoves: (ice.length ? 4 : 0) + (foam.length ? 5 : 0) - (isHard(i) ? 2 : 0), holes }
+  // 201단계부터: 목표 종류가 4개 이상이면 이동 +10 (너무 빡빡하지 않게)
+  const kinds = [st.dust, st.collect, boxesFor(i), dropsFor(i), ice.length, foam.length].filter(Boolean).length
+  return { ...st, ice, foam, hard: isHard(i), extraMoves: (ice.length ? 4 : 0) + (foam.length ? 5 : 0) - (isHard(i) ? 2 : 0) + (i >= 200 && kinds >= 4 ? 10 : 0), holes }
 }).map((st, i) => ({ ...st, boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0) + (i >= 150 ? 4 : 0) + st.extraMoves, ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]

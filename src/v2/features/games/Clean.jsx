@@ -9,8 +9,7 @@ const ITEMS = { hammer: 3, shuffle: 1 } // 단계마다 새로 받는 아이템 
 // 별: 단계마다 받은 별(1~3, 어려운 단계는 2배) + 10단계마다 선물 상자 + 주간 이벤트 보상
 const GIFT_EVERY = 10, GIFT = 5
 const WEEK_GOAL = 100, WEEK_REWARD = 10 // 이번 주 먼지 100개 닦으면 별 10개
-const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 게임 중 / 아래는 시작 전에 고르는 아이템
-const PRE = [['row', '로켓', 1], ['bomb', '폭탄', 2], ['rainbow', '무지개', 3]]
+const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 게임 중에 별로 사는 아이템
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const COMP = 50 // 별 계산 바꾼 보상
 const COST_SCALE = 0.36 // 방 꾸미기 비용 (별 버는 양에 맞춤)
@@ -30,6 +29,9 @@ const PERKS = [
   { text: '이동 +2', moves: 2 }, { text: '섞기 +1', shuffle: 1 }, { text: '망치 +1', hammer: 1 }, { text: '시작할 때 폭탄 1개 더', start: ['bomb'] }, { text: '이동 +3', moves: 3 },
   { text: '시작할 때 로켓 1개 더', start: ['col'] }, { text: '망치 +1', hammer: 1 }, { text: '섞기 +1', shuffle: 1 }, { text: '시작할 때 프로펠러 1개 더', start: ['prop'] }, { text: '이동 +3', moves: 3 },
   { text: '시작할 때 무지개 1개', start: ['rainbow'] },
+  // 30~39: 새 방 10개 (우리집보다 앞에 있지만 번호는 뒤)
+  { text: '이동 +2', moves: 2 }, { text: '망치 +1', hammer: 1 }, { text: '섞기 +1', shuffle: 1 }, { text: '시작할 때 로켓 1개 더', start: ['row'] }, { text: '이동 +3', moves: 3 },
+  { text: '망치 +1', hammer: 1 }, { text: '시작할 때 폭탄 1개 더', start: ['bomb'] }, { text: '이동 +2', moves: 2 }, { text: '시작할 때 프로펠러 1개 더', start: ['prop'] }, { text: '이동 +3', moves: 3 },
 ]
 // 받은 효과를 종류별로 합쳐서 한 줄로
 const START_NAME = { row: '로켓', col: '로켓', bomb: '폭탄', prop: '프로펠러', rainbow: '무지개' }
@@ -73,8 +75,18 @@ const ROOMS = [
   { name: '수족관', bg: 'aqua', say: '물고기 친구들을 만나러 가자!', tasks: [['tank', '어항', 19, [26, 64, 30]], ['coral', '산호', 20, [62, 80, 20]], ['treasure', '보물상자', 20, [86, 82, 16]]] },
   { name: '성', bg: 'castle', say: '오늘은 우리가 왕과 공주! 성을 꾸미자.', tasks: [['throne', '왕좌', 20, [50, 62, 26]], ['crown', '왕관 받침', 20, [20, 74, 14]], ['armor', '기사 갑옷', 21, [82, 64, 16]]] },
   { name: '놀이공원', bg: 'park', say: '마지막 나들이! 놀이공원을 완성하자.', tasks: [['carousel', '회전목마', 21, [34, 62, 40]], ['cotton', '솜사탕 수레', 21, [76, 72, 22]], ['balloons', '풍선', 22, [82, 28, 16]]] },
-  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 22, [50, 18, 40]], ['bear', '곰인형 앉히기', 22, [24, 72, 22]], ['cake', '집들이 하기', 23, [72, 72, 24]]] },
-].map((room, r) => ({ ...room, perk: PERKS[r], tasks: room.tasks.map(([img, name, cost, at], t) => ({ id: `${r}-${t}`, img: `/game/room/${img}.png`, name, cost: Math.max(1, Math.round(cost * COST_SCALE)), at })) }))
+  { key: 30, name: '동물원', bg: 'zoo', say: '동물 친구들이 사는 동물원을 꾸미자!', tasks: [['giraffe', '기린', 22, [22, 62, 22]], ['elephant', '코끼리', 23, [56, 74, 26]], ['penguin', '펭귄', 23, [84, 80, 16]]] },
+  { key: 31, name: '농장', bg: 'farm', say: '넓은 농장에서 일해 볼까?', tasks: [['barn', '헛간', 23, [24, 58, 30]], ['tractor', '트랙터', 23, [62, 76, 28]], ['sheep', '양', 24, [86, 82, 16]]] },
+  { key: 32, name: '기차역', bg: 'station', say: '칙칙폭폭! 기차역을 정리하자.', tasks: [['train', '기차', 23, [30, 76, 34]], ['bench', '벤치', 24, [70, 76, 26]], ['stationclock', '역 시계', 24, [86, 46, 16]]] },
+  { key: 33, name: '과학실', bg: 'lab', say: '신기한 실험을 해 볼 과학실이야.', tasks: [['microscope', '현미경', 24, [22, 72, 20]], ['flask', '실험 도구', 24, [52, 76, 22]], ['robot', '로봇', 25, [82, 74, 20]]] },
+  { key: 34, name: '사탕 가게', bg: 'candy', say: '달콤한 사탕 가게를 열자!', tasks: [['candyjar', '사탕 병', 24, [20, 74, 18]], ['lollipop', '막대사탕', 25, [50, 66, 18]], ['icecream', '아이스크림 카트', 25, [80, 72, 28]]] },
+  { key: 35, name: '정글', bg: 'jungle', say: '정글 탐험을 떠나자!', tasks: [['palm', '야자수', 25, [20, 60, 26]], ['monkey', '원숭이', 25, [56, 76, 20]], ['parrot', '앵무새', 26, [80, 40, 14]]] },
+  { key: 36, name: '공룡 박물관', bg: 'dino', say: '공룡 박물관에 화석을 전시하자!', tasks: [['fossil', '공룡 화석', 25, [40, 60, 40]], ['dinoegg', '공룡 알', 26, [80, 80, 14]], ['dino', '아기 공룡', 26, [16, 78, 18]]] },
+  { key: 37, name: '해적선', bg: 'pirate', say: '해적선을 타고 모험을 떠나자!', tasks: [['helm', '조타 키', 26, [50, 62, 24]], ['anchor', '닻', 26, [16, 74, 16]], ['barrel', '나무통', 26, [84, 78, 16]]] },
+  { key: 38, name: '운동장', bg: 'field', say: '가족 운동회를 열자!', tasks: [['goal', '축구 골대', 26, [30, 66, 36]], ['hoop', '농구대', 26, [78, 58, 22]], ['trophy', '트로피', 27, [56, 82, 12]]] },
+  { key: 39, name: '무대', bg: 'stage', say: '우리 가족 공연 무대야! 다 같이 노래하자.', tasks: [['mic', '마이크', 26, [50, 72, 12]], ['spotlight', '조명', 27, [18, 40, 18]], ['speaker', '스피커', 27, [84, 72, 18]]] },
+  { key: 29, name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 28, [50, 18, 40]], ['bear', '곰인형 앉히기', 28, [24, 72, 22]], ['cake', '집들이 하기', 29, [72, 72, 24]]] },
+].map((room, r) => ({ ...room, perk: PERKS[room.key ?? r], tasks: room.tasks.map(([img, name, cost, at], t) => ({ id: `${room.key ?? r}-${t}`, img: `/game/room/${img}.png`, name, cost: Math.max(1, Math.round(cost * COST_SCALE)), at })) }))
 const starKey = (player) => `family-scheduler-clean-stars-${player}`
 const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }
 const progressKey = (player) => `family-scheduler-clean-progress-${player}`
@@ -137,8 +149,6 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [comp] = useState(() => progress?.comp || ((progress?.unlocked || 0) > 0 ? COMP : 0))
   const compNew = !progress?.comp && comp > 0
   useEffect(() => { if (compNew) { onProgress?.({ ...progress, comp }) } }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const [pre, setPre] = useState(null) // 시작 전 아이템 고르는 단계
-  const [picks, setPicks] = useState([])
   const dustNow = useRef(0)
   const [bought, setBought] = useState(() => (progress?.econ === 2 ? progress.bought || 0 : 0)) // 아이템 사는 데 쓴 별
   const [s, setS] = useState(null)
@@ -170,14 +180,12 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const wallet = Math.max(0, earned - spent - bought) // 예전 계산으로 쓴 별이 많아도 0 아래로는 안 감
   const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, week, ...next }) }
   const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk)
-  const startStage = (i, chosen = []) => {
+  const startStage = (i) => {
     const st = begin(i)
     st.moves += perks.reduce((a, p) => a + (p.moves || 0), 0)
     // 시작 특수 블록: 방 효과 + 연승 보너스 + 별로 산 것, 일반 칸 중 아무 데나
-    const cost = chosen.reduce((a, k) => a + PRE.find((x) => x[0] === k)[2], 0)
-    if (cost) { const next = bought + cost; setBought(next); save({ bought: next }) }
-    addStarts(st.board, [...perks.flatMap((p) => p.start || []), ...STREAK.slice(0, Math.min(streak, 3)), ...chosen])
-    dustNow.current = 0; setPre(null); setPicks([]); setTip(FIRST[i] && !seen.includes(i) ? FIRST[i] : null)
+    addStarts(st.board, [...perks.flatMap((p) => p.start || []), ...STREAK.slice(0, Math.min(streak, 3))])
+    dustNow.current = 0; setTip(FIRST[i] && !seen.includes(i) ? FIRST[i] : null)
     setS(st); setItems({ hammer: ITEMS.hammer + perks.reduce((a, p) => a + (p.hammer || 0), 0), shuffle: ITEMS.shuffle + perks.reduce((a, p) => a + (p.shuffle || 0), 0) }); setHammer(false); setBroom(false); setEraser(false); setCheer('')
   }
 
@@ -205,16 +213,10 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
-      <div className="clean-week"><span>이번 주 이벤트: 먼지 {WEEK_GOAL}개 닦기 <b>{Math.min(week.dust, WEEK_GOAL)}/{WEEK_GOAL}</b></span>{week.claimed ? <em>받았어요</em> : <button disabled={week.dust < WEEK_GOAL} onClick={() => { const w = { ...week, claimed: true }; const b = bonus + WEEK_REWARD; setWeek(w); setBonus(b); save({ week: w, bonus: b }); setCheer(`이벤트 선물 별 ${WEEK_REWARD}개!`) }}>★{WEEK_REWARD} 받기</button>}</div>
-      {pre != null ? <div className="clean-pre" role="group" aria-label="시작 아이템 고르기">
-        <p><b>{pre + 1}단계</b>{STAGES[pre].hard && <span className="clean-hard">어려움 · 별 2배</span>}{streak > 0 && <span className="clean-streak">{streak}연승! 시작 아이템 {Math.min(streak, 3)}개</span>}</p>
-        <div className="clean-pre-items">{PRE.map(([k, name, cost]) => { const on = picks.includes(k); const total = picks.reduce((a, x) => a + PRE.find((y) => y[0] === x)[2], 0); return <button key={k} aria-pressed={on} disabled={!on && wallet < total + cost} onClick={() => setPicks((p) => (on ? p.filter((x) => x !== k) : [...p, k]))}><i className="clean-sp-icon" data-sp={k} /><span>{name}</span><small>★{cost}</small></button> })}</div>
-        <button className="primary-button clean-play" autoFocus onClick={() => startStage(pre, picks)}>시작{picks.length ? ` (★${picks.reduce((a, x) => a + PRE.find((y) => y[0] === x)[2], 0)})` : ''}</button>
-        <button className="clean-pre-back" onClick={() => { setPre(null); setPicks([]) }}>취소</button>
-      </div>
-        : unlocked < STAGES.length && <button className={`primary-button clean-play${STAGES[unlocked].hard ? ' hard' : ''}`} onClick={() => setPre(unlocked)}>{unlocked + 1}단계 도전{STAGES[unlocked].hard ? ' · 어려움 별 2배' : ''}{(unlocked + 1) % GIFT_EVERY === 0 ? ' · 선물 상자' : ''}</button>}
+      <div className="clean-week"><span><small>이번 주 이벤트</small><span>먼지 {WEEK_GOAL}개 닦기 <b>{Math.min(week.dust, WEEK_GOAL)}/{WEEK_GOAL}</b></span></span>{week.claimed ? <em>받았어요</em> : <button disabled={week.dust < WEEK_GOAL} onClick={() => { const w = { ...week, claimed: true }; const b = bonus + WEEK_REWARD; setWeek(w); setBonus(b); save({ week: w, bonus: b }); setCheer(`이벤트 선물 별 ${WEEK_REWARD}개!`) }}>★{WEEK_REWARD} 받기</button>}</div>
+      {unlocked < STAGES.length && <button className={`primary-button clean-play${STAGES[unlocked].hard ? ' hard' : ''}`} onClick={() => startStage(unlocked)}>{unlocked + 1}단계 도전{STAGES[unlocked].hard ? ' · 어려움 별 2배' : ''}{(unlocked + 1) % GIFT_EVERY === 0 ? ' · 선물 상자' : ''}{streak ? ` · ${streak}연승 보너스` : ''}</button>}
       <details className="clean-all"><summary>지난 단계 다시 하기</summary>
-        <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => setPre(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
+        <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
       </details>
     </div>
   }
@@ -324,7 +326,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   return <div className="clean">
     <div className="clean-hud">
       <div className="clean-panel"><small>목표</small><span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-label="먼지" /> : g.kind === 'box' ? <i className="box-icon" aria-label="상자" /> : g.kind === 'drop' ? <img src="/game/room/duck.png" alt="오리" /> : g.kind === 'ice' ? <i className="ice-icon" aria-label="얼음" /> : g.kind === 'foam' ? <i className="foam-icon" aria-label="거품" /> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span></div>
-      <div className="clean-hero"><Face player={player} mood={mood} size={64} /><small>{s.stage + 1}단계{STAGES[s.stage].hard ? ' 어려움' : ''}</small></div>
+      <div className="clean-hero"><Face player={player} mood={mood} size={64} /><b className={`clean-stage-no${STAGES[s.stage].hard ? ' hard' : ''}`}>{s.stage + 1}단계</b>{STAGES[s.stage].hard && <small className="clean-hard-tag">어려움</small>}</div>
       <div className="clean-panel"><small>이동 횟수</small><b className="clean-moves">{s.moves}</b></div>
     </div>
     <div className={`clean-board fx-host${hammer || broom || eraser ? ' aiming' : ''}`} ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>

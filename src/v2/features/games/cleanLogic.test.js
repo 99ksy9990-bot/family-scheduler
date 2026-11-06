@@ -69,8 +69,8 @@ test('승리하면 별과 남은 이동 보너스', () => {
   assert.ok(r.events.some((e) => e.type === 'bonus' && e.n === STAGES[0].moves - 1))
 })
 
-test('200단계·먼지 최대 2겹', () => {
-  assert.equal(STAGES.length, 200)
+test('300단계·먼지 최대 2겹', () => {
+  assert.equal(STAGES.length, 300)
   assert.ok(STAGES.every((st) => !st.dust || st.dust.hp <= 2))
   assert.ok(begin(99).moves > 0)
 })
@@ -135,7 +135,7 @@ test('얼음: 못 움직이고 맞추면 깨짐 / 거품: 못 닦으면 번짐 /
   const r = sweep(s, x, seeded(102))
   assert.ok(r.events.some((e) => e.type === 'ice') && r.state.board[x].k >= 0)
   const f = STAGES.findIndex((st) => st.foam.length)
-  const t = { ...begin(f, seeded(103)), board: fill() }
+  const t = { ...begin(f, seeded(103)), board: fill(), foam: Array.from({ length: N * N }, (_, k) => (k === 0 ? 1 : 0)) }
   const before = t.foam.filter(Boolean).length
   t.board[3 * N] = T(0); t.board[3 * N + 1] = T(0); t.board[4 * N + 2] = T(0); t.board[3 * N + 2] = T(3)
   const m = play(t, 3 * N + 2, 4 * N + 2, seeded(104))
