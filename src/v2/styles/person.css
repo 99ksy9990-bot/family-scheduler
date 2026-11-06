@@ -140,3 +140,10 @@
 .settings-content .event-form > .error { padding: 8px 0; }
 .settings-content .event-form fieldset .check-label { padding: 7px 0; width: 38px; justify-content: center; margin-right: 4px; } .settings-content .event-form input::placeholder { color: var(--label-3); }
 .house-tile .house-badge:not(.upcoming) { color: #fff; } /* 사용자 요청: 학교·학원도 '근무 중'처럼 흰 글자 */
+/* 근무표·연차 달력: 전체 정사각형 */
+.shift-grid { aspect-ratio: 1; grid-template-rows: auto; grid-auto-rows: minmax(0, 1fr); }
+.shift-cell { min-height: 0; align-content: center; }
+.shift-cell[data-leave='am'] b, .shift-cell[data-leave='pm'] b { font-size: 11px; line-height: 1.15; word-break: keep-all; }
+.shift-cell[data-leave='full'] { background: #dff3e4; }
+.shift-cell[data-leave='am'] { background: #fff4d6; }
+.shift-cell[data-leave='pm'] { background: #dfe0ff; }

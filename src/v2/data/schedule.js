@@ -6,7 +6,7 @@ import { holidaysForYear } from '../../lib/holidays'
 
 // 고정 근무(예: 평일 08:00–17:00, 공휴일 쉼). 프로필에 regularWork가 있을 때만. 옛 앱은 이 필드를 모르고 그대로 보존함.
 // 연차·반차: regularWork.leaves[날짜] = 'full'|'am'|'pm'. 반차 시간은 고정(오전 08–12, 오후 12:45–17)
-export const LEAVES = { full: { label: '연차', code: '연차', full: true }, am: { label: '오전 반차', code: '오전', start: '12:45', end: '17:00' }, pm: { label: '오후 반차', code: '오후', start: '08:00', end: '12:00' } }
+export const LEAVES = { full: { label: '연차', code: '연차', full: true, off: '하루 종일' }, am: { label: '오전 반차', code: '오전 반차', off: '08:00–12:00', start: '12:45', end: '17:00' }, pm: { label: '오후 반차', code: '오후 반차', off: '12:45–17:00', start: '08:00', end: '12:00' } }
 
 export function regularWorkRows(state, date, taken) {
   const key = iso(date)
