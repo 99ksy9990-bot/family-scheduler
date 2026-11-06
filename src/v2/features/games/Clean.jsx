@@ -3,7 +3,7 @@ import { N, STAGES, begin, findMove, goals, play } from './cleanLogic'
 import { burst, buzz, confetti, pop, shake } from './fx'
 import './games.css'
 
-const IMG = ['roof', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/decor/${n}.png`) // 새로 그린 그림을 블록으로
+const IMG = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
 // 별을 모으면 집 꾸밈이 하나씩 열림 (최대 48단계 × 별 3개 = 144)
 const DECOR = [
