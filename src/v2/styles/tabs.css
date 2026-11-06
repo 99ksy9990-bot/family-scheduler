@@ -131,3 +131,4 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .shift-label[data-shift='leave-am'] { background: #fff1c2; color: #8a5a00; }
 .shift-label[data-shift='leave-pm'] { background: #dfe0ff; color: #3634a3; }
 .shift-label[data-shift^='leave-am'], .shift-label[data-shift^='leave-pm'] { font-size: 10px; letter-spacing: -.4px; }
+.shift-label[data-shift='blank'] { visibility: hidden; min-height: 16px; }

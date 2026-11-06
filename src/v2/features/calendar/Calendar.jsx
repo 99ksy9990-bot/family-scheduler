@@ -34,6 +34,13 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
       if (profile.active === false || !LEAVES[kind]) continue
       map.set(date, [...(map.get(date) || []), { member: profile.id, id: `leave-${kind}`, text: LEAVES[kind].label }])
     }
+    // 교대 근무 이름표가 위, 상주 근무자(연차·반차)가 아래
+    // 교대 근무자가 있으면 그 줄을 비워 두어 상주 근무자 이름표는 늘 아래 줄에
+    const hasShiftWorkers = ws.enabled && workers.size > 0
+    for (const [date, labels] of map) {
+      const sorted = labels.toSorted((a, b) => a.id.startsWith('leave-') - b.id.startsWith('leave-'))
+      map.set(date, hasShiftWorkers && !sorted.some((l) => !l.id.startsWith('leave-')) ? [{ member: '_blank', id: 'blank', text: '' }, ...sorted] : sorted)
+    }
     return map
   }, [state.shifts, state.workSettings, state.profiles])
   const endSwipe = (event) => {
