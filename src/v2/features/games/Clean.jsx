@@ -6,6 +6,7 @@ import './games.css'
 const IMG = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
 const ITEMS = { hammer: 3, shuffle: 1 } // 단계마다 새로 받는 아이템 수
+const MOVES_PER_STAR = 4 // 깼을 때 남은 이동 4번마다 별 1개 더
 const PRICE = { hammer: 2, shuffle: 1 } // 다 쓰면 별로 사기
 // 이야기: 방마다 할 일 3개, 단계에서 얻은 별을 써서 하나씩 고침
 // 방을 다 꾸미면 모든 단계에서 계속 받는 효과
@@ -79,6 +80,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [unlocked, setUnlocked] = useState(() => Math.max(progress?.unlocked || 0, readProgress(player)))
   const [stars, setStars] = useState(() => ({ ...readStars(player), ...progress?.stars }))
   const [done, setDone] = useState(() => progress?.done || [])
+  const [extra, setExtra] = useState(() => progress?.extra || {}) // 단계별 남은 이동 보너스 별(최고 기록)
   const [bought, setBought] = useState(() => progress?.bought || 0) // 아이템 사는 데 쓴 별
   const [s, setS] = useState(null)
   const [sel, setSel] = useState(null)
@@ -100,10 +102,10 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     return () => clearTimeout(t)
   }, [s])
   const CLEAR_BONUS = 2 // 깰 때마다 받은 별 + 2개 더
-  const earned = Object.values(stars).reduce((a, b) => a + b + CLEAR_BONUS, 0)
+  const earned = Object.values(stars).reduce((a, b) => a + b + CLEAR_BONUS, 0) + Object.values(extra).reduce((a, b) => a + b, 0)
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
   const wallet = earned - spent - bought
-  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, ...next }) }
+  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, extra, ...next }) }
   const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk)
   const startStage = (i) => {
     const st = begin(i)
@@ -165,7 +167,10 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     if (r.state.done === 'win') {
       const next = Math.max(unlocked, s.stage + 1)
       const nextStars = { ...stars, [s.stage]: Math.max(stars[s.stage] || 0, r.state.stars || 1) }
-      setUnlocked(next); setStars(nextStars); save({ unlocked: next, stars: nextStars }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
+      const left = r.events.find((e) => e.type === 'bonus')?.n || 0
+      const nextExtra = { ...extra, [s.stage]: Math.max(extra[s.stage] || 0, Math.floor(left / MOVES_PER_STAR)) }
+      setExtra(nextExtra); r.state.extra = Math.floor(left / MOVES_PER_STAR)
+      setUnlocked(next); setStars(nextStars); save({ unlocked: next, stars: nextStars, extra: nextExtra }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
       const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
       if (el) confetti(el)
       onFinish?.({ level: 'normal', score: s.stage + 1, tried: s.stage + 1, win: true })
@@ -239,6 +244,6 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <li><b>4개</b> 로켓 · <b>네모</b> 프로펠러</li>
       <li><b>ㄱ·T</b> 폭탄 · <b>5개</b> 무지개</li>
     </ul></details>
-    {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)} + 보너스 ★2` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>{s.done === 'win' ? '별 쓰러 집으로' : '집으로'}</button></div>}
+    {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)} + 보너스 ★2${s.extra ? ` + 남은 이동 ★${s.extra}` : ''}` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>{s.done === 'win' ? '별 쓰러 집으로' : '집으로'}</button></div>}
   </div>
 }
