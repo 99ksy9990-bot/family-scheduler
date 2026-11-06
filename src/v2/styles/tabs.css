@@ -127,3 +127,7 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 /* 달력: 월 이름 가운데, 양옆 화살표 같은 간격 */
 .heading-line.month-center { justify-content: center; gap: 8px; margin-right: -52px; }
 .month-arrow { width: 36px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--tint-label); display: grid; place-items: center; }
+.shift-label[data-shift='leave-full'] { background: #d8f2e0; color: #1f7a45; }
+.shift-label[data-shift='leave-am'] { background: #fff1c2; color: #8a5a00; }
+.shift-label[data-shift='leave-pm'] { background: #dfe0ff; color: #3634a3; }
+.shift-label[data-shift^='leave-am'], .shift-label[data-shift^='leave-pm'] { font-size: 10px; letter-spacing: -.4px; }

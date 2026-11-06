@@ -20,6 +20,15 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   const [undo, setUndo] = useState(false)
   const child = profile.type === 'child'
   const works = state.workSettings.workerIds?.includes(profile.id)
+  const mode = profile.regularWork ? 'regular' : works ? 'shift' : null
+  // 상주 ↔ 교대 바꾸기. 교대 기록(shifts)은 지우지 않고 근무자 목록만 바꿈
+  const setMode = (next) => {
+    if (next === mode) return
+    const workerIds = (state.workSettings.workerIds || []).filter((id) => id !== profile.id)
+    updateState((current) => ({ ...current,
+      profiles: current.profiles.map((p) => p.id === profile.id ? { ...p, regularWork: next === 'regular' ? { weekdays: [1, 2, 3, 4, 5], start: '08:00', end: '17:00', skipHolidays: true } : undefined } : p),
+      workSettings: { ...current.workSettings, enabled: next === 'shift' ? true : current.workSettings.enabled, workerIds: next === 'shift' ? [...workerIds, profile.id] : workerIds } }))
+  }
   const mine = (row) => row.member === profile.id || row.members?.includes(profile.id)
   const lessons = state.childSchedules.filter(mine).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
   const school = state.childProfiles.find((row) => row.member === profile.id)
@@ -51,12 +60,17 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
       <p>{[child ? '아이' : '어른', school && [school.school, school.grade && `${school.grade}학년`].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}</p>
     </header>
 
-    {!child && <section><h3 className="house-section-title">근무</h3><GroupedList label="근무">
-      {row('regular', icon(Briefcase, 'work'), '고정 근무', profile.regularWork ? `${profile.regularWork.weekdays.map((d) => DAYS[d]).join('·')} ${profile.regularWork.start}–${profile.regularWork.end}${profile.regularWork.skipHolidays !== false ? ' · 공휴일 쉼' : ''}` : '매주 같은 시간에 일해요 (예: 평일 08:00–17:00)', () => open('regular', '고정 근무'))}
-      {profile.regularWork && row('leave', icon(CalendarDays, 'green'), '연차·반차', (() => { const n = Object.keys(profile.regularWork.leaves || {}).length; return n ? `${n}일 입력` : '쉬는 날을 달력에서 골라요' })(), () => open('leave', '연차·반차'))}
-      {row('month', icon(CalendarDays, 'orange'), '교대 근무표', works && shifts.length ? `${shifts.length}일 입력 · 최근 ${md(shifts[0].date)}` : '날마다 근무가 바뀌어요 (D·E·N)', () => { if (!canEdit) return; if (!works) updateState((current) => ({ ...current, workSettings: { ...current.workSettings, enabled: true, workerIds: [...new Set([...(current.workSettings.workerIds || []), profile.id])] } })); setEdit({ section: 'month', title: '교대 근무표' }) })}
-      {works && row('types', icon(Briefcase, 'work'), '근무 종류·시간', types.filter((t) => t.id !== 'off').map((t) => `${t.code} ${clock(t.start)}`).join(' · '), () => open('work', '근무 종류·시간'))}
-    </GroupedList></section>}
+    {!child && <section><h3 className="house-section-title">근무</h3>
+      <div className="ui-segments work-mode" role="group" aria-label="근무 방식">{[['regular', '상주 근무'], ['shift', '교대 근무'], [null, '근무 없음']].map(([id, label]) => <button type="button" key={label} aria-pressed={mode === id} disabled={!canEdit} onClick={() => setMode(id)}>{label}</button>)}</div>
+      {mode && <GroupedList label="근무">
+      {mode === 'regular' ? <>
+      {row('regular', icon(Briefcase, 'work'), '상주 근무', profile.regularWork ? `${profile.regularWork.weekdays.map((d) => DAYS[d]).join('·')} ${profile.regularWork.start}–${profile.regularWork.end}${profile.regularWork.skipHolidays !== false ? ' · 공휴일 쉼' : ''}` : '요일과 시간을 정해요', () => open('regular', '상주 근무'))}
+      {row('leave', icon(CalendarDays, 'green'), '연차·반차', (() => { const n = Object.keys(profile.regularWork.leaves || {}).length; return n ? `${n}일 입력` : '쉬는 날을 달력에서 골라요' })(), () => open('leave', '연차·반차'))}
+      </> : <>
+      {row('month', icon(CalendarDays, 'orange'), '교대 근무표', shifts.length ? `${shifts.length}일 입력 · 최근 ${md(shifts[0].date)}` : '날짜를 눌러 D·E·N을 넣어요', () => { if (!canEdit) return; if (!works) updateState((current) => ({ ...current, workSettings: { ...current.workSettings, enabled: true, workerIds: [...new Set([...(current.workSettings.workerIds || []), profile.id])] } })); setEdit({ section: 'month', title: '교대 근무표' }) })}
+      {row('types', icon(Briefcase, 'work'), '근무 종류·시간', types.filter((t) => t.id !== 'off').map((t) => `${t.code} ${clock(t.start)}`).join(' · '), () => open('work', '근무 종류·시간'))}
+      </>}
+    </GroupedList>}</section>}
 
     {child && <><section><h3 className="house-section-title">학교</h3><GroupedList label="학교">
       {row('school', icon(GraduationCap, 'green'), '학교 정보', school ? [school.school, school.grade && `${school.grade}학년 ${school.classNumber || ''}반`].filter(Boolean).join(' ') : '아직 없음', () => open('schools', '학교 정보', school))}

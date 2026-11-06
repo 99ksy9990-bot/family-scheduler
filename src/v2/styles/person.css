@@ -147,3 +147,19 @@
 .shift-cell[data-leave='am'] { background: #fff4d6; }
 .shift-cell[data-leave='pm'] { background: #dfe0ff; }
 .shift-month-head button { width: 32px; display: grid; place-items: center; margin: 0; }
+/* 연차·반차 달력: 메인 달력처럼 칸은 그대로, 이름표만 색 */
+.shift-cell[data-leave] { background: none; }
+.shift-cell[data-leave] b { font-size: 11px; font-weight: 600; line-height: 16px; border-radius: 5px; padding: 0 4px; white-space: nowrap; }
+.shift-cell[data-leave='full'] b { background: #d8f2e0; color: #1f7a45; }
+.shift-cell[data-leave='am'] b { background: #fff1c2; color: #8a5a00; }
+.shift-cell[data-leave='pm'] b { background: #dfe0ff; color: #3634a3; }
+.shift-cell[data-leave='am'] b, .shift-cell[data-leave='pm'] b { font-size: 10px; letter-spacing: -.3px; }
+/* 교대 근무표도 메인 달력처럼 이름표만 색 */
+.shift-cell[data-shift] { background: none; }
+.shift-cell b:not(:empty) { font-size: 11px; font-weight: 600; line-height: 16px; border-radius: 5px; padding: 0 6px; white-space: nowrap; }
+.shift-cell[data-shift='day'] b { background: #fff1c2; color: #8a5a00; }
+.shift-cell[data-shift='evening'] b { background: #ffe0d4; color: #a33a12; }
+.shift-cell[data-shift='night'] b { background: #dfe0ff; color: #3634a3; }
+.shift-cell[data-shift='off']:not([data-leave]) b { background: var(--fill); color: var(--label-2); }
+.work-mode { margin: 0 0 10px; }
+.work-mode button { flex: 1; }

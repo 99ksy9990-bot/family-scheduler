@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { addDays, iso } from '../../../lib/dates'
 import { holidaysForYear } from '../../../lib/holidays'
-import { scheduleForDate } from '../../data/schedule'
+import { LEAVES, scheduleForDate } from '../../data/schedule'
 import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
 import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
@@ -21,17 +21,21 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
   // 교대 근무자(엄마 등)의 근무만 날짜 칸에 이름표로 (사용자 요청 2026-11-06, 달력 A 방식)
   const shiftLabels = useMemo(() => {
     const ws = state.workSettings || {}
-    if (!ws.enabled) return new Map()
     const types = ws.shiftTypes?.length ? ws.shiftTypes : DEFAULT_SHIFT_TYPES
     const workers = new Set(ws.workerIds || [])
     const map = new Map()
-    for (const s of state.shifts) {
+    for (const s of ws.enabled ? state.shifts : []) {
       const t = types.find((x) => x.id === s.shift)
       if (!t || !workers.has(s.member)) continue
-      map.set(s.date, [...(map.get(s.date) || []).filter((x) => x.member !== s.member), { member: s.member, id: t.id, text: t.id === 'off' ? '휴무' : `근무${t.code}` }])
+      map.set(s.date, [...(map.get(s.date) || []).filter((x) => x.member !== s.member), { member: s.member, id: t.id, text: t.id === 'off' ? '휴무' : t.code }])
+    }
+    // 고정 근무자(아빠)의 연차·반차도 같은 이름표로
+    for (const profile of state.profiles) for (const [date, kind] of Object.entries(profile.regularWork?.leaves || {})) {
+      if (profile.active === false || !LEAVES[kind]) continue
+      map.set(date, [...(map.get(date) || []), { member: profile.id, id: `leave-${kind}`, text: LEAVES[kind].label }])
     }
     return map
-  }, [state.shifts, state.workSettings])
+  }, [state.shifts, state.workSettings, state.profiles])
   const endSwipe = (event) => {
     if (!touch.current) return
     const dx = event.changedTouches[0].clientX - touch.current.x
