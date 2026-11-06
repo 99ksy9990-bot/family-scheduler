@@ -69,10 +69,10 @@ test('승리하면 별과 남은 이동 보너스', () => {
   assert.ok(r.events.some((e) => e.type === 'bonus' && e.n === STAGES[0].moves - 1))
 })
 
-test('60단계·먼지 최대 2겹', () => {
-  assert.equal(STAGES.length, 60)
+test('100단계·먼지 최대 2겹', () => {
+  assert.equal(STAGES.length, 100)
   assert.ok(STAGES.every((st) => !st.dust || st.dust.hp <= 2))
-  assert.ok(begin(59).moves > 0)
+  assert.ok(begin(99).moves > 0)
 })
 
 test('뚫린 칸·상자: 안 움직임, 옆에서 맞추면 상자 깨짐, 망치·섞기', async () => {

@@ -45,7 +45,9 @@ const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].conca
 const dropsFor = (i) => (i >= 3 && i % 4 === 3 ? (i >= 24 ? 3 : 2) : 0)
 // 49~60단계: 후반 12단계를 한 번 더, 먼지 2겹 + 모을 개수 +3
 const EXTRA = HARD.slice(12).map((st) => ({ ...st, moves: st.moves + 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 3]) }) }))
-export const STAGES = [...BASE, ...HARD, ...EXTRA].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+// 61~100단계: 후반 판을 돌려 쓰며 먼지 2겹 + 모을 개수 +5
+const LATE = [...HARD, ...HARD.slice(0, 16)].map((st) => ({ ...st, moves: st.moves + 4, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 5]) }) }))
+export const STAGES = [...BASE, ...HARD, ...EXTRA, ...LATE].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
