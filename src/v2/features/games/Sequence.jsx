@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { bounce, burst, buzz, center, pop, shake } from './fx'
 import { PADS, SPEED, press, stage, start } from './sequenceLogic'
 import './games.css'
 
@@ -10,6 +11,8 @@ export default function Sequence({ onFinish }) {
   const [lit, setLit] = useState(-1) // 반짝이는 칸
   const [showing, setShowing] = useState(false)
   const [msg, setMsg] = useState('')
+  const host = useRef(null)
+  const grid = useRef(null)
 
   // 새 단계마다 순서 보여주기
   const len = game?.seq.length
@@ -33,13 +36,17 @@ export default function Sequence({ onFinish }) {
     if (showing || game.over) return
     const { state, result } = press(game, i, level)
     setGame(state)
+    const el = grid.current?.children[i]
+    if (result === 'ok' || result === 'round') { bounce(el, 1.08); const p = center(host.current, el); burst(host.current, p.x, p.y, result === 'round' ? 12 : 5) }
+    if (result === 'round') { const p = center(host.current, grid.current); pop(host.current, p.x, p.y, `${stage(state)}단계!`, 'gold'); buzz(25) }
+    if (result === 'retry' || result === 'over') { shake(grid.current); buzz([60, 40, 60]) }
     setMsg(result === 'retry' ? '다시 한 번 볼게요' : result === 'round' ? '맞았어요' : '')
     if (result === 'over') onFinish?.({ level, stage: stage(state) })
   }
 
-  return <div className="seq">
+  return <div className="seq fx-host" ref={host}>
     <div className="game-stats"><span>{stage(game)}단계</span><span>{showing ? '잘 보세요' : game.over ? '' : '따라 누르세요'}</span></div>
-    <div className="seq-grid">
+    <div className="seq-grid" ref={grid}>
       {PADS.map((c, i) => <button key={c} className={`seq-pad glass-icon${lit === i ? ' lit' : ''}`} data-character={c} aria-label={c} disabled={showing || game.over} onClick={() => tap(i)}>
         <img src={`/characters/${c}_${lit === i ? 'done' : 'basic'}.png`} alt="" />
       </button>)}

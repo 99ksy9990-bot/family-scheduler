@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BASKET, RULES, begin, step } from './catchLogic'
+import { burst, buzz, pop, shake } from './fx'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -19,7 +20,15 @@ export default function Catch({ onFinish, player = 'little' }) {
     const loop = (now) => {
       const dt = prev ? Math.min(50, now - prev) : 0
       prev = now
+      const before = cur
       cur = step(cur, dt, xRef.current, level)
+      const el = area.current
+      if (el && cur.score > before.score) {
+        const x = xRef.current * el.clientWidth; const y = BASKET.y * el.clientHeight
+        const gain = cur.score - before.score
+        burst(el, x, y, gain > 1 ? 12 : 6); pop(el, x, y - 10, `+${gain}`, gain > 1 ? 'gold' : 'good'); buzz(15)
+      }
+      if (el && cur.lives < before.lives) { pop(el, xRef.current * el.clientWidth, BASKET.y * el.clientHeight - 10, '앗!', 'bad'); shake(el); buzz([60, 40, 60]) }
       setS(cur)
       if (cur.over) { onFinish?.({ level, score: cur.score }); return }
       if (!document.hidden) raf = requestAnimationFrame(loop)

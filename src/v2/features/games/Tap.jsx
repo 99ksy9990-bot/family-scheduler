@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { DURATION, RULES, empty, hit, spawn } from './tapLogic'
+import { burst, buzz, center, pop, shake } from './fx'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -11,6 +12,8 @@ export default function Tap({ onFinish }) {
   const [score, setScore] = useState(0)
   const [left, setLeft] = useState(DURATION)
   const startRef = useRef(0)
+  const host = useRef(null)
+  const grid = useRef(null)
   const scoreRef = useRef(0)
   const running = level && left > 0
 
@@ -36,13 +39,17 @@ export default function Tap({ onFinish }) {
     if (!running) return
     const r = hit(holes, i, level)
     setHoles(r.holes)
+    const el = grid.current?.children[i]; const p = el && center(host.current, el)
+    if (r.delta > 0) { burst(host.current, p.x, p.y, 8); pop(host.current, p.x, p.y - 20, '+1'); buzz(15) }
+    if (r.delta < 0) { pop(host.current, p.x, p.y - 20, `${r.delta}`, 'bad'); shake(grid.current); buzz([50, 30, 50]) }
+    if (holes[i].kind === 'cloud' && r.delta === 0) shake(el)
     scoreRef.current = Math.max(0, scoreRef.current + r.delta)
     setScore(scoreRef.current)
   }
 
-  return <div className="tap">
+  return <div className="tap fx-host" ref={host}>
     <div className="game-stats"><span>{score}점</span><span>{Math.ceil(left / 1000)}초</span></div>
-    <div className="tap-grid">
+    <div className="tap-grid" ref={grid}>
       {holes.map((h, i) => <button key={i} className={`tap-hole${h.kind ? ' up' : ''}`} aria-label={h.kind || '빈 구멍'} onPointerDown={() => tapHole(i)}>
         <img className="tap-bg" src="/game/hole.png" alt="" />
         {h.kind && <img className="tap-face" src={h.kind === 'cloud' ? '/game/cloud.png' : `/characters/${h.kind}_basic.png`} alt="" />}
