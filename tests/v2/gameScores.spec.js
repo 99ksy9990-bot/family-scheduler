@@ -36,3 +36,10 @@ test('5등까지 날짜와 함께 보관, 가족 순위로 합침', async () => 
   expect(r.map((t) => [t.member, t.value])).toEqual([['b', 10], ['a', 9], ['a', 8], ['a', 7], ['a', 5]])
   expect(r[0].at).toBe(new Date(2026, 10, 6, 11).toISOString())
 })
+
+test('예전 최고 기록(top 없음)도 새 판과 함께 남음', async () => {
+  const { recordGameScore, rankGameScores } = await import('../../src/v2/data/gameScores.js')
+  const old = { stack: { a: { best: 12, playedAt: '2026-11-01T01:00:00.000Z' } } }
+  const s = recordGameScore(old, 'stack', 'a', { score: 4 }, new Date(2026, 10, 6))
+  expect(rankGameScores(s, 'stack').map((t) => t.value)).toEqual([12, 4])
+})

@@ -11,7 +11,7 @@ export function recordGameScore(scores = {}, gameId, memberId, result, now) {
   const better = !Number.isFinite(previous?.best) || (gameId === 'pairs' ? metric < previous.best || (metric === previous.best && result.moves < previous.moves) : metric > previous.best)
   // 5등까지 언제 세웠는지 보관 (구성원별 top, 가족 순위는 rankGameScores에서 합침)
   const lower = gameId === 'pairs'
-  const top = [...(previous?.top || []), { value: metric, level: result.level, at: now.toISOString() }].sort((a, b) => lower ? a.value - b.value : b.value - a.value).slice(0, 5)
+  const top = [...(previous?.top || (Number.isFinite(previous?.best) ? [{ value: previous.best, level: previous.level, at: previous.playedAt }] : [])), { value: metric, level: result.level, at: now.toISOString() }].sort((a, b) => lower ? a.value - b.value : b.value - a.value).slice(0, 5)
   const record = { ...previous, top, ...(better ? { best: metric, level: result.level, ...(gameId === 'pairs' ? { moves: result.moves } : {}) } : {}),
     playedAt: now.toISOString(), playsToday: (previous && iso(new Date(previous.playedAt)) === iso(now) ? previous.playsToday || 1 : 0) + 1 }
   return { ...scores, [gameId]: { ...scores?.[gameId], [memberId]: record } }
