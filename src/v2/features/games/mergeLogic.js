@@ -1,10 +1,10 @@
 // 우리집 합치기: 같은 단계 둘이 닿으면 다음 단계 하나로. 좌표는 가로 1 기준, 세로 h, y는 아래로.
 export const STAGES = [
-  { img: '/game/tiles/star.png', r: 0.05, color: '#ffe08a' },
-  { img: '/game/tiles/heart.png', r: 0.065, color: '#ffc2cf' },
-  { img: '/game/tiles/ribbon.png', r: 0.082, color: '#d9c8ff' },
-  { img: '/game/tiles/sun.png', r: 0.1, color: '#ffd59e' },
-  { img: '/game/tiles/house.png', r: 0.12, color: '#bfe0ff' },
+  { img: '/game/tiles/seed.png', r: 0.05, color: '#ffdcb0', name: '씨앗' },
+  { img: '/game/tiles/sprout.png', r: 0.065, color: '#d4f5c4', name: '새싹' },
+  { img: '/game/tiles/flower.png', r: 0.082, color: '#ffd0da', name: '꽃' },
+  { img: '/game/tiles/tree.png', r: 0.1, color: '#cfe6ff', name: '나무' },
+  { img: '/game/tiles/house.png', r: 0.12, color: '#bfe0ff', name: '집' },
   { img: '/characters/little_done.png', r: 0.14, color: '#c8f0d8', name: '연두' },
   { img: '/characters/big_done.png', r: 0.162, color: '#e6d4ff', name: '초롱' },
   { img: '/characters/mom_done.png', r: 0.188, color: '#ffd6cc', name: '엄마' },
