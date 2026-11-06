@@ -163,3 +163,5 @@
 .shift-cell[data-shift='off']:not([data-leave]) b { background: var(--fill); color: var(--label-2); }
 .work-mode { margin: 0 0 10px; }
 .work-mode button { flex: 1; }
+.work-type .house-section-title { padding-left: 4px; }
+.plain-input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 17px; text-align: right; color: var(--label-2); padding: 8px 0; }

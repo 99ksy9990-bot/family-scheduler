@@ -3,7 +3,7 @@
 @font-face { font-family: SUITE; src: url('/fonts/SUITE-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
 body { font-size: 17px; font-variant-numeric: tabular-nums; }
 button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--color-rule); border-radius: var(--radius-input); background: var(--color-card); color: var(--color-ink); cursor: pointer; }
-button:hover { background: var(--color-paper-2); }
+@media (hover: hover) { button:hover { background: var(--color-paper-2); } }
 button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 button[aria-pressed='true'], .primary-button, .add-button { background: var(--color-accent); border-color: var(--color-accent-deep); color: var(--color-accent-ink); }
 button:disabled { opacity: 1; cursor: default; color: var(--label-2); background: var(--fill); }
@@ -81,3 +81,4 @@ main { padding-top: 18px; }
 .undo-toast { position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: max(var(--space-md), calc((100vw - 480px) / 2 + var(--space-md))); right: max(var(--space-md), calc((100vw - 480px) / 2 + var(--space-md))); z-index: var(--z-toast); background: var(--color-card); border: 1px solid var(--color-rule); border-radius: var(--radius-stock); box-shadow: var(--shadow-card); padding: var(--space-sm); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
 
 .task-check { width: 44px; min-height: 44px; display: grid; place-items: center; flex-shrink: 0; }
+button, a, label { -webkit-tap-highlight-color: transparent; }

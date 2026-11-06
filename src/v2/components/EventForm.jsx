@@ -6,9 +6,15 @@ import { assignedMemberIds } from '../../lib/legacyState'
 import { clock } from '../data/schedule'
 import { addDays, iso } from '../../lib/dates'
 
-export function NativeChip({ type, value, onChange, label, name }) {
+export function NativeChip({ type, value, onChange, label, name, required = true }) {
   const text = type === 'date' && value ? new Date(`${value}T00:00:00`).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : value
-  return <label className="input-chip native-chip"><span aria-hidden="true">{text || '선택'}</span><input name={name} aria-label={label} type={type} value={value} onChange={(event) => onChange(event.target.value)} required /></label>
+  return <label className="input-chip native-chip"><span aria-hidden="true">{text || '선택'}</span><input name={name} aria-label={label} type={type} value={value} onChange={(event) => onChange(event.target.value)} required={required} /></label>
+}
+
+// 폼 안에서 값만 넘기는 칩(시간은 24시간, 날짜는 '11월 6일 (금)')
+export function FieldChip({ defaultValue = '', ...props }) {
+  const [value, setValue] = useState(defaultValue)
+  return <NativeChip {...props} value={value} onChange={setValue} />
 }
 
 const frequencies = [['none', '안 함'], ['daily', '매일'], ['weekly', '매주'], ['monthly', '매월'], ['yearly', '매년']]

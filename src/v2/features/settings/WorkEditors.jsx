@@ -1,3 +1,4 @@
+import { NativeChip } from '../../components/EventForm'
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { addDays, iso } from '../../../lib/dates'
@@ -15,8 +16,8 @@ export function RegularWorkEditor({ profile, canEdit, onSave, onCancel }) {
   return <div className="work-editor">
     <ul className="grouped-list">
       <li className="grouped-row"><span className="grouped-body"><strong>요일</strong></span><span className="day-pick" role="group" aria-label="근무 요일">{DAYS.map((n, d) => <button type="button" key={d} aria-pressed={w.weekdays.includes(d)} onClick={() => toggle(d)}>{n}</button>)}</span></li>
-      <li className="grouped-row"><span className="grouped-body"><strong>시작</strong></span><input className="time-pill" type="time" aria-label="시작" value={w.start} onChange={(e) => setW({ ...w, start: e.target.value })} /></li>
-      <li className="grouped-row"><span className="grouped-body"><strong>끝</strong></span><input className="time-pill" type="time" aria-label="끝" value={w.end} onChange={(e) => setW({ ...w, end: e.target.value })} /></li>
+      <li className="grouped-row"><span className="grouped-body"><strong>시작</strong></span><NativeChip label="시작" type="time" value={w.start} onChange={(v) => setW({ ...w, start: v })} /></li>
+      <li className="grouped-row"><span className="grouped-body"><strong>끝</strong></span><NativeChip label="끝" type="time" value={w.end} onChange={(v) => setW({ ...w, end: v })} /></li>
       <li className="grouped-row"><label className="grouped-body switch-row"><strong>공휴일은 쉬어요</strong><input type="checkbox" role="switch" className="ios-switch" checked={w.skipHolidays !== false} onChange={(e) => setW({ ...w, skipHolidays: e.target.checked })} /></label></li>
     </ul>
     <div className="work-actions">

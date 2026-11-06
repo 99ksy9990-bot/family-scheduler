@@ -2,7 +2,7 @@
 .house-section-title { font-size: 20px; line-height: 24px; font-weight: 700; padding: 18px 4px 8px; }
 .house-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .house-tile { height: 140px; padding: 14px; border-radius: 22px; display: flex; flex-direction: column; align-items: flex-start; position: relative; text-align: left; color: var(--label); }
-.house-tile:hover { background: var(--card); }
+@media (hover: hover) { .house-tile:hover { background: var(--card); } }
 .house-tile strong { font-size: 17px; line-height: 20px; font-weight: 700; margin-top: auto; }
 .house-tile small { font-size: 13px; line-height: 16px; color: var(--label-2); margin-top: 2px; white-space: nowrap; }
 .house-badge { position: absolute; top: 16px; right: 16px; max-width: calc(100% - 96px); padding: 3px 8px; border-radius: 999px; background: var(--control); color: var(--on-control); font-size: 12px; line-height: 15px; font-weight: 600; }
@@ -56,7 +56,7 @@
 .task-row { background: none; border: 0; border-radius: 0; position: relative; padding: 11px 16px; }
 .settings-content[aria-label='설정 목록'] { gap: 0; border-radius: 14px; overflow: hidden; }
 .settings-entry { position: relative; border: 0; background: none; border-radius: 0; }
-.settings-entry:hover { background: var(--fill); }
+@media (hover: hover) { .settings-entry:hover { background: var(--fill); } }
 .settings-card { border: 0; background: var(--card); border-radius: 14px; }
 .connection-state { color: var(--label-2); font-size: 15px; }
 .event-sheet .sheet-heading .icon-button { background: var(--fill); color: var(--label-2); }
