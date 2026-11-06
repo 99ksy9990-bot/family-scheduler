@@ -98,3 +98,20 @@ test('특수 블록이 생긴 칸의 먼지도 같이 닦임', () => {
     }
   }
 })
+
+test('오리 구출: 맨 아래 줄에 닿으면 모임, 오리는 안 깨짐', () => {
+  const s = begin(3, seeded(83)) // 4단계: 오리 2마리
+  assert.equal(s.board.filter((t) => t.drop).length, 2)
+  assert.equal(goals(s).find((g) => g.kind === 'drop').left, 2)
+  const t = { ...s, board: [...s.board] }
+  const duck = t.board.findIndex((x) => x.drop)
+  const c = duck % N
+  // 오리를 맨 아래 바로 위로 옮기고 그 아래 칸을 망치로 깨면 내려와서 구출
+  t.board[(N - 2) * N + c] = t.board[duck]; t.board[duck] = { k: 0, sp: null }
+  return import('./cleanLogic.js').then(({ smash }) => {
+    const r = smash(t, (N - 1) * N + c, seeded(89))
+    assert.ok(r.events.some((e) => e.type === 'drop'))
+    assert.ok(goals(r.state).find((g) => g.kind === 'drop').left < 2)
+    assert.equal(smash(t, (N - 2) * N + c, seeded(97)).state.board.filter((x) => x.drop).length, 2)
+  })
+})

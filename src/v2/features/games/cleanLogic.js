@@ -41,7 +41,9 @@ const HARD = BASE.map((st) => ({
 // 판 모양(뚫린 칸)과 상자 줄: 단계 번호로 돌아가며
 const SHAPES = [[], [0, 6, 42, 48], [24], [14, 21, 28, 20, 27, 34], [0, 1, 5, 6], [21, 27]]
 const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 ? 2 : 1 } : null)
-export const STAGES = [...BASE, ...HARD].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+// 오리 구출: 오리(k=-2)를 맨 아래 줄까지 내리면 모임
+const dropsFor = (i) => (i >= 3 && i % 4 === 3 ? (i >= 24 ? 3 : 2) : 0)
+export const STAGES = [...BASE, ...HARD].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
@@ -52,7 +54,10 @@ export function begin(stageIndex, rand = Math.random) {
   const fixed = Array.from({ length: N * N }, (_, i) => (st.holes?.includes(i) ? { k: -1, fix: 'hole' } : st.boxes?.cells.includes(i) ? { k: -1, fix: 'box', hp: st.boxes.hp } : null))
   const board = deal(fixed, rand)
   const dust = Array.from({ length: N * N }, (_, i) => (!fixed[i] && st.dust && rc(i)[0] >= st.dust.rows[0] && rc(i)[0] <= st.dust.rows[1] ? st.dust.hp : 0))
-  return { stage: stageIndex, board, dust, moves: st.moves, collected: Array(KINDS).fill(0), score: 0, done: null }
+  // 오리는 위쪽 줄 서로 다른 칸에
+  const tops = board.map((t, x) => (!isFixed(t) && rc(x)[0] <= 1 ? x : -1)).filter((x) => x >= 0)
+  for (let n = 0; n < (st.drops || 0) && tops.length; n++) { const x = tops.splice(Math.floor(rand() * tops.length), 1)[0]; board[x] = { k: -2, drop: true, sp: null } }
+  return { stage: stageIndex, dropped: 0, board, dust, moves: st.moves, collected: Array(KINDS).fill(0), score: 0, done: null }
 }
 
 // 고정 칸은 두고 나머지를 줄 없이 새로 채움 (움직일 수 있을 때까지)
@@ -119,6 +124,16 @@ export function findMove(b) {
   return null
 }
 export const hasMove = (b) => !!findMove(b)
+// 맨 아래(뚫린 칸 제외)에 닿은 오리를 꺼냄
+function rescue(s, events) {
+  let got = false
+  for (let c = 0; c < N; c++) {
+    let r = N - 1; while (r >= 0 && s.board[r * N + c]?.fix === 'hole') r--
+    const i = r * N + c
+    if (r >= 0 && s.board[i]?.drop) { s.board[i] = null; s.dropped = (s.dropped || 0) + 1; events.push({ type: 'drop', i }); got = true }
+  }
+  return got
+}
 
 // 특수 블록 터짐 범위
 const square = (r, c, size) => { const o = []; for (let y = r - size; y <= r + size; y++) for (let x = c - size; x <= c + size; x++) if (y >= 0 && x >= 0 && y < N && x < N) o.push(y * N + x); return o }
@@ -146,6 +161,7 @@ function clearCells(s, cells, events) {
   while (queue.length) {
     const i = queue.pop(); if (gone.has(i) || !s.board[i]) continue
     if (isFixed(s.board[i])) { if (s.board[i].fix === 'box') hitBox.add(i); continue }
+    if (s.board[i].drop) continue // 오리는 안 깨짐
     gone.add(i)
     if (s.board[i].sp) { const hit = blast(s.board, i, null, s); events.push({ type: s.board[i].sp, i, cells: hit }); for (const x of hit) if (!gone.has(x)) queue.push(x) }
   }
@@ -228,12 +244,13 @@ function settle(s, events, prefer, rand) {
     prefer = []
   }
   fall(s, rand)
-  if (!hasMove(s.board)) s.board = deal(s.board.map((t) => (isFixed(t) ? t : null)), rand)
+  for (let k = 0; k < 10 && rescue(s, events); k++) { fall(s, rand); for (let chain = 0; chain < 30; chain++) { const gs = groups(s.board); if (!gs.length) break; for (const g of gs) clearCells(s, g.cells, events); fall(s, rand) } }
+  if (!hasMove(s.board)) s.board = deal(s.board.map((t) => (isFixed(t) || t?.drop ? t : null)), rand)
   s.done = won(s) ? 'win' : s.moves <= 0 ? 'lose' : null
   if (s.done === 'win') {
     // 남은 이동마다 로켓 한 발씩 보너스
     s.stars = s.moves >= STAGES[s.stage].moves * 0.3 ? 3 : s.moves >= STAGES[s.stage].moves * 0.1 ? 2 : 1
-    for (let m = 0; m < s.moves; m++) { const x = Math.floor(rand() * N * N); if (isFixed(s.board[x])) continue; s.board[x] = { ...s.board[x], sp: m % 2 ? 'row' : 'col' }; clearCells(s, [x], events); fall(s, rand) }
+    for (let m = 0; m < s.moves; m++) { const x = Math.floor(rand() * N * N); if (isFixed(s.board[x]) || s.board[x]?.drop) continue; s.board[x] = { ...s.board[x], sp: m % 2 ? 'row' : 'col' }; clearCells(s, [x], events); fall(s, rand) }
     events.push({ type: 'bonus', n: s.moves })
   }
   return { state: s, events }
@@ -249,11 +266,12 @@ export function smash(state, i, rand = Math.random) {
 }
 export function shuffle(state, rand = Math.random) {
   if (state.done) return null
-  return { ...state, board: deal(state.board.map((t) => (isFixed(t) || t.sp ? t : null)), rand) }
+  return { ...state, board: deal(state.board.map((t) => (isFixed(t) || t.sp || t.drop ? t : null)), rand) }
 }
 
 export function goals(s) {
   const st = STAGES[s.stage]; const out = []
+  if (st.drops) out.push({ kind: 'drop', left: Math.max(0, st.drops - (s.dropped || 0)) })
   if (st.boxes) out.push({ kind: 'box', left: s.board.filter((t) => t?.fix === 'box').length })
   if (st.dust) out.push({ kind: 'dust', left: s.dust.reduce((n, d) => n + d, 0) })
   for (const [k, n] of st.collect || []) out.push({ kind: k, left: Math.max(0, n - s.collected[k]) })

@@ -189,3 +189,11 @@
 .clean-tools button.buy { background: #fff4d6; } .clean-tools button.buy small { color: #b7791f; }
 .clean-tools button.buy img { opacity: .55; }
 .clean-purse { margin: 8px 0 0; font-size: 13px; color: var(--label-2); }
+.clean-perk { margin: 0 0 8px; font-size: 14px; color: var(--label-2); word-break: keep-all; } .clean-perk b { color: var(--tint); }
+.clean-perk-new { margin: 4px 0 0; padding: 12px; border-radius: 16px; background: #fff4d6; color: #7a5200; text-align: center; font-size: 16px; } .clean-perk-new b { font-size: 20px; }
+.clean-room-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px 10px; padding: 0 16px 2px; scrollbar-width: none; }
+.clean-room-tabs button { flex: none; padding: 7px 14px; border: 0; border-radius: 999px; background: var(--fill); color: var(--label); font-weight: 600; font-size: 14px; }
+.clean-room-tabs button[aria-selected='true'] { background: var(--tint); color: var(--on-tint); }
+.clean-room-tabs button:disabled { opacity: .4; }
+.clean-room-tabs button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+.clean-duck { filter: drop-shadow(0 2px 3px rgb(0 0 0 / .25)); }
