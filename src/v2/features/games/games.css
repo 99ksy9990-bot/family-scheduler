@@ -169,6 +169,7 @@
 .clean-tasks button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
 .clean-tasks em { font-style: normal; font-size: 14px; color: var(--label-2); }
 .clean-play { width: 100%; margin-top: 14px; }
+.clean-talk + .clean-play { margin-top: 4px; }
 .clean-all { margin-top: 14px; } .clean-all summary { padding: 8px 0; color: var(--tint); font-weight: 600; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .clean-room-thing { transition: none; } }
 
@@ -208,20 +209,6 @@
 /* 어려운 단계·연승·시작 아이템·주간 이벤트 */
 .clean-stage.hard:not(:disabled) { background: #ffe1e1; color: #c0262d; }
 .clean-play.hard { background: #d93a40; }
-.clean-hard, .clean-streak { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; }
-.clean-hard { background: #ffe1e1; color: #c0262d; } .clean-streak { background: #fff4d6; color: #9a6400; }
-.clean-pre { margin-top: 8px; padding: 14px; border-radius: 20px; background: var(--card); }
-.clean-pre > p { margin: 0 0 10px; font-size: 16px; }
-.clean-pre-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 4px; }
-.clean-pre-items button { display: grid; justify-items: center; gap: 4px; padding: 10px 4px; border: 0; border-radius: 16px; background: var(--fill); color: var(--label); font-weight: 600; }
-.clean-pre-items button[aria-pressed='true'] { background: var(--tint); color: var(--on-tint); }
-.clean-pre-items button:disabled { opacity: .4; }
-.clean-pre-items button:focus-visible, .clean-pre-back:focus-visible, .clean-week button:focus-visible { outline: 3px solid var(--tint); }
-.clean-sp-icon { position: relative; display: block; width: 36px; height: 36px; border-radius: 10px; background: #fff; }
-.clean-sp-icon[data-sp='row'] { background: linear-gradient(90deg, #fff, #ffcc00, #fff); }
-.clean-sp-icon[data-sp='bomb'] { background: radial-gradient(circle, #ff7a59 0 45%, #fff 46%); }
-.clean-sp-icon[data-sp='rainbow'] { background: conic-gradient(#ff5e7e, #ffcc00, #30d158, #0a84ff, #bf5af2, #ff5e7e); }
-.clean-pre-back { display: block; margin: 6px auto 0; padding: 8px 16px; border: 0; background: none; color: var(--label-2); font-size: 15px; }
 .clean-week { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; background: #eef6ff; font-size: 14px; color: var(--label); word-break: keep-all; }
 .clean-week button { flex: none; padding: 6px 12px; border: 0; border-radius: 999px; background: var(--tint); color: var(--on-tint); font-weight: 700; }
 .clean-week button:disabled { background: var(--fill); color: var(--label-3); }
@@ -231,3 +218,4 @@
 .clean-week > span { display: grid; gap: 2px; min-width: 0; } .clean-week small { font-size: 12px; color: var(--label-2); }
 .clean-stage-no { padding: 3px 12px; border-radius: 999px; background: var(--tint); color: var(--on-tint); font-size: 17px; font-weight: 800; white-space: nowrap; }
 .clean-stage-no.hard { background: #d93a40; } .clean-hard-tag { color: #c0262d !important; font-weight: 700; }
+.clean-week button:focus-visible { outline: 3px solid var(--tint); }

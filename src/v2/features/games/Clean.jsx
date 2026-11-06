@@ -76,13 +76,13 @@ const ROOMS = [
   { name: '성', bg: 'castle', say: '오늘은 우리가 왕과 공주! 성을 꾸미자.', tasks: [['throne', '왕좌', 20, [50, 62, 26]], ['crown', '왕관 받침', 20, [20, 74, 14]], ['armor', '기사 갑옷', 21, [82, 64, 16]]] },
   { name: '놀이공원', bg: 'park', say: '마지막 나들이! 놀이공원을 완성하자.', tasks: [['carousel', '회전목마', 21, [34, 62, 40]], ['cotton', '솜사탕 수레', 21, [76, 72, 22]], ['balloons', '풍선', 22, [82, 28, 16]]] },
   { key: 30, name: '동물원', bg: 'zoo', say: '동물 친구들이 사는 동물원을 꾸미자!', tasks: [['giraffe', '기린', 22, [22, 62, 22]], ['elephant', '코끼리', 23, [56, 74, 26]], ['penguin', '펭귄', 23, [84, 80, 16]]] },
-  { key: 31, name: '농장', bg: 'farm', say: '넓은 농장에서 일해 볼까?', tasks: [['barn', '헛간', 23, [24, 58, 30]], ['tractor', '트랙터', 23, [62, 76, 28]], ['sheep', '양', 24, [86, 82, 16]]] },
-  { key: 32, name: '기차역', bg: 'station', say: '칙칙폭폭! 기차역을 정리하자.', tasks: [['train', '기차', 23, [30, 76, 34]], ['bench', '벤치', 24, [70, 76, 26]], ['stationclock', '역 시계', 24, [86, 46, 16]]] },
+  { key: 31, name: '농장', bg: 'farm', say: '넓은 농장에서 일해 볼까?', tasks: [['barn', '헛간', 23, [22, 62, 26]], ['tractor', '트랙터', 23, [62, 76, 28]], ['sheep', '양', 24, [84, 80, 18]]] },
+  { key: 32, name: '기차역', bg: 'station', say: '칙칙폭폭! 기차역을 정리하자.', tasks: [['train', '기차', 23, [30, 76, 34]], ['bench', '벤치', 24, [70, 76, 26]], ['stationclock', '역 시계', 24, [86, 44, 14]]] },
   { key: 33, name: '과학실', bg: 'lab', say: '신기한 실험을 해 볼 과학실이야.', tasks: [['microscope', '현미경', 24, [22, 72, 20]], ['flask', '실험 도구', 24, [52, 76, 22]], ['robot', '로봇', 25, [82, 74, 20]]] },
   { key: 34, name: '사탕 가게', bg: 'candy', say: '달콤한 사탕 가게를 열자!', tasks: [['candyjar', '사탕 병', 24, [20, 74, 18]], ['lollipop', '막대사탕', 25, [50, 66, 18]], ['icecream', '아이스크림 카트', 25, [80, 72, 28]]] },
-  { key: 35, name: '정글', bg: 'jungle', say: '정글 탐험을 떠나자!', tasks: [['palm', '야자수', 25, [20, 60, 26]], ['monkey', '원숭이', 25, [56, 76, 20]], ['parrot', '앵무새', 26, [80, 40, 14]]] },
+  { key: 35, name: '정글', bg: 'jungle', say: '정글 탐험을 떠나자!', tasks: [['palm', '야자수', 25, [20, 66, 28]], ['monkey', '원숭이', 25, [56, 76, 20]], ['parrot', '앵무새', 26, [80, 40, 14]]] },
   { key: 36, name: '공룡 박물관', bg: 'dino', say: '공룡 박물관에 화석을 전시하자!', tasks: [['fossil', '공룡 화석', 25, [40, 60, 40]], ['dinoegg', '공룡 알', 26, [80, 80, 14]], ['dino', '아기 공룡', 26, [16, 78, 18]]] },
-  { key: 37, name: '해적선', bg: 'pirate', say: '해적선을 타고 모험을 떠나자!', tasks: [['helm', '조타 키', 26, [50, 62, 24]], ['anchor', '닻', 26, [16, 74, 16]], ['barrel', '나무통', 26, [84, 78, 16]]] },
+  { key: 37, name: '해적선', bg: 'pirate', say: '해적선을 타고 모험을 떠나자!', tasks: [['helm', '조타 키', 26, [50, 72, 24]], ['anchor', '닻', 26, [16, 78, 16]], ['barrel', '나무통', 26, [84, 78, 16]]] },
   { key: 38, name: '운동장', bg: 'field', say: '가족 운동회를 열자!', tasks: [['goal', '축구 골대', 26, [30, 66, 36]], ['hoop', '농구대', 26, [78, 58, 22]], ['trophy', '트로피', 27, [56, 82, 12]]] },
   { key: 39, name: '무대', bg: 'stage', say: '우리 가족 공연 무대야! 다 같이 노래하자.', tasks: [['mic', '마이크', 26, [50, 72, 12]], ['spotlight', '조명', 27, [18, 40, 18]], ['speaker', '스피커', 27, [84, 72, 18]]] },
   { key: 29, name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 28, [50, 18, 40]], ['bear', '곰인형 앉히기', 28, [24, 72, 22]], ['cake', '집들이 하기', 29, [72, 72, 24]]] },
@@ -210,14 +210,14 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
         {room.tasks.map((t) => <img key={t.id} className={`clean-room-thing${done.includes(t.id) ? ' on' : ''}`} src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}
       </section>
       <div className="clean-talk"><Face player={player} mood={cheer ? 'done' : 'basic'} /><p>{roomIndex < 0 ? '우리집이 다 깨끗해졌어! 단계를 더 깨서 별을 모아 봐.' : cheer || room.say}</p></div>
-      <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
-      {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
-      <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
-      <div className="clean-week"><span><small>이번 주 이벤트</small><span>먼지 {WEEK_GOAL}개 닦기 <b>{Math.min(week.dust, WEEK_GOAL)}/{WEEK_GOAL}</b></span></span>{week.claimed ? <em>받았어요</em> : <button disabled={week.dust < WEEK_GOAL} onClick={() => { const w = { ...week, claimed: true }; const b = bonus + WEEK_REWARD; setWeek(w); setBonus(b); save({ week: w, bonus: b }); setCheer(`이벤트 선물 별 ${WEEK_REWARD}개!`) }}>★{WEEK_REWARD} 받기</button>}</div>
       {unlocked < STAGES.length && <button className={`primary-button clean-play${STAGES[unlocked].hard ? ' hard' : ''}`} onClick={() => startStage(unlocked)}>{unlocked + 1}단계 도전{STAGES[unlocked].hard ? ' · 어려움 별 2배' : ''}{(unlocked + 1) % GIFT_EVERY === 0 ? ' · 선물 상자' : ''}{streak ? ` · ${streak}연승 보너스` : ''}</button>}
       <details className="clean-all"><summary>지난 단계 다시 하기</summary>
         <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
       </details>
+      <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
+      {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
+      <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
+      <div className="clean-week"><span><small>이번 주 이벤트</small><span>먼지 {WEEK_GOAL}개 닦기 <b>{Math.min(week.dust, WEEK_GOAL)}/{WEEK_GOAL}</b></span></span>{week.claimed ? <em>받았어요</em> : <button disabled={week.dust < WEEK_GOAL} onClick={() => { const w = { ...week, claimed: true }; const b = bonus + WEEK_REWARD; setWeek(w); setBonus(b); save({ week: w, bonus: b }); setCheer(`이벤트 선물 별 ${WEEK_REWARD}개!`) }}>★{WEEK_REWARD} 받기</button>}</div>
     </div>
   }
 

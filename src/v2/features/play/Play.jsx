@@ -20,7 +20,7 @@ export default function Play({ state, updateState }) {
   const finish = (res) => {
     const now = new Date()
     const saved = updateState((current) => ({ ...current, gameScores: recordGameScore(current.gameScores, selected, player, res, now) }))
-    setMessage(saved ? '기록을 남겼어요.' : '기록을 저장할 권한이 없어요. 가족 연결을 확인해 주세요.')
+    setMessage(saved ? '' : '기록을 저장할 권한이 없어요. 가족 연결을 확인해 주세요.')
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setResult({ at: now.toISOString(), res }), 1400) // 끝나는 장면을 잠깐 보여 준 뒤
   }

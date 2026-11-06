@@ -18,7 +18,6 @@ const finishPairs = async (page, dialog) => {
     for (const index of indexes) await dialog.locator('.pairs-card').nth(index).click()
   }
   await expect(dialog.getByText('다 찾았어요', { exact: true })).toBeVisible()
-  await expect(dialog.getByRole('status')).toHaveText('기록을 남겼어요.')
 }
 
 test('가족 선택·게임 완료·gameScores 기록·판수·재불러오기 보존', async ({ page }) => {
