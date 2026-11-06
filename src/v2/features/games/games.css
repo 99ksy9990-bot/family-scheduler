@@ -132,7 +132,7 @@
 
 /* 대청소: 위 판(목표 · 캐릭터 · 이동) */
 .clean-hud { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: stretch; margin-bottom: 10px; }
-.clean-panel { display: grid; align-content: center; justify-items: center; gap: 4px; padding: 6px 8px 8px; border-radius: 16px; background: var(--fill); }
+.clean-panel { display: grid; grid-template-rows: auto 1fr; align-items: center; justify-items: center; gap: 4px; padding: 6px 8px 8px; border-radius: 16px; background: var(--fill); }
 .clean-panel > small, .clean-hero small { font-size: 12px; color: var(--label-2); }
 .clean-moves { font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--label); }
 .clean-hero { display: grid; justify-items: center; align-content: center; gap: 2px; }
