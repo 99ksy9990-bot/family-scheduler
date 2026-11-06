@@ -17,6 +17,8 @@ const PERKS = [
   { text: '시작할 때 프로펠러 1개', start: ['prop'] }, { text: '이동 +3', moves: 3 }, { text: '섞기 +1', shuffle: 1 }, { text: '시작할 때 로켓 1개 더', start: ['col'] },
   { text: '이동 +2', moves: 2 }, { text: '망치 +1', hammer: 1 }, { text: '시작할 때 폭탄 1개 더', start: ['bomb'] }, { text: '섞기 +1', shuffle: 1 },
   { text: '이동 +3', moves: 3 }, { text: '시작할 때 프로펠러 1개 더', start: ['prop'] }, { text: '망치 +1', hammer: 1 }, { text: '시작할 때 로켓 1개 더', start: ['row'] },
+  { text: '이동 +2', moves: 2 }, { text: '섞기 +1', shuffle: 1 }, { text: '망치 +1', hammer: 1 }, { text: '시작할 때 폭탄 1개 더', start: ['bomb'] }, { text: '이동 +3', moves: 3 },
+  { text: '시작할 때 로켓 1개 더', start: ['col'] }, { text: '망치 +1', hammer: 1 }, { text: '섞기 +1', shuffle: 1 }, { text: '시작할 때 프로펠러 1개 더', start: ['prop'] }, { text: '이동 +3', moves: 3 },
   { text: '시작할 때 무지개 1개', start: ['rainbow'] },
 ]
 function addStarts(board, sps) {
@@ -42,7 +44,17 @@ const ROOMS = [
   { name: '온실', bg: 'green', say: '꽃과 채소를 키우는 따뜻한 온실이야.', tasks: [['shelf', '화분 선반', 14, [24, 62, 32]], ['can', '물뿌리개', 14, [56, 82, 14]], ['sunflower', '해바라기 화분', 15, [80, 66, 20]]] },
   { name: '캠핑장', bg: 'camp', say: '오늘 밤은 가족 캠핑! 텐트를 치자.', tasks: [['tent', '텐트 치기', 15, [30, 66, 40]], ['fire', '모닥불 피우기', 15, [64, 80, 18]], ['chair', '캠핑 의자', 16, [86, 78, 18]]] },
   { name: '바닷가', bg: 'beach', say: '바닷가 별장에 놀러 왔어! 쉴 곳을 만들자.', tasks: [['beachchair', '비치 의자', 15, [30, 76, 30]], ['surf', '서핑보드', 16, [70, 62, 14]], ['sandcastle', '모래성 쌓기', 16, [52, 84, 18]]] },
-  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 17, [50, 18, 40]], ['bear', '곰인형 앉히기', 17, [24, 72, 22]], ['cake', '집들이 하기', 18, [72, 72, 24]]] },
+  { name: '수영장', bg: 'pool', say: '더운 날엔 수영이 최고! 수영장을 꾸미자.', tasks: [['tube', '수영 튜브', 16, [24, 80, 22]], ['slide', '미끄럼틀', 16, [72, 62, 30]], ['ball', '비치볼', 17, [48, 82, 14]]] },
+  { name: '빵집', bg: 'bakery', say: '고소한 빵 냄새! 우리 가족 빵집을 열자.', tasks: [['oven', '오븐 놓기', 16, [22, 64, 30]], ['bread', '빵 진열대', 17, [62, 66, 36]], ['cakestand', '케이크 스탠드', 17, [88, 76, 14]]] },
+  { name: '미술실', bg: 'art', say: '가족 그림 대회를 하자! 미술실을 준비해.', tasks: [['easel', '이젤 세우기', 17, [28, 62, 26]], ['palette', '물감 팔레트', 17, [58, 82, 16]], ['statue', '조각상', 18, [82, 66, 18]]] },
+  { name: '우주 방', bg: 'space', say: '별나라 여행을 떠나자! 우주 방을 꾸며 볼까?', tasks: [['telescope', '망원경', 17, [24, 66, 24]], ['rocket', '로켓 모형', 18, [64, 64, 20]], ['planets', '행성 모빌', 18, [50, 20, 40]]] },
+  { name: '눈 마당', bg: 'snow', say: '펑펑 눈이 왔어! 겨울 놀이를 하자.', tasks: [['snowman', '눈사람', 18, [26, 68, 24]], ['sled', '썰매', 18, [56, 84, 24]], ['tree', '크리스마스 트리', 19, [80, 60, 24]]] },
+  { name: '꽃집', bg: 'flower', say: '꽃을 팔아 볼까? 예쁜 꽃집을 꾸미자.', tasks: [['bucket', '꽃 양동이', 18, [20, 78, 18]], ['bouquet', '꽃다발', 19, [50, 74, 16]], ['cart', '꽃 수레', 19, [76, 66, 32]]] },
+  { name: '영화관', bg: 'cinema', say: '온 가족 영화의 밤! 영화관을 만들자.', tasks: [['popcorn', '팝콘 기계', 19, [20, 66, 20]], ['seats', '영화관 의자', 19, [54, 78, 40]], ['projector', '영사기', 20, [84, 70, 16]]] },
+  { name: '수족관', bg: 'aqua', say: '물고기 친구들을 만나러 가자!', tasks: [['tank', '어항', 19, [26, 64, 30]], ['coral', '산호', 20, [62, 80, 20]], ['treasure', '보물상자', 20, [86, 82, 16]]] },
+  { name: '성', bg: 'castle', say: '오늘은 우리가 왕과 공주! 성을 꾸미자.', tasks: [['throne', '왕좌', 20, [50, 62, 26]], ['crown', '왕관 받침', 20, [20, 74, 14]], ['armor', '기사 갑옷', 21, [82, 64, 16]]] },
+  { name: '놀이공원', bg: 'park', say: '마지막 나들이! 놀이공원을 완성하자.', tasks: [['carousel', '회전목마', 21, [34, 62, 40]], ['cotton', '솜사탕 수레', 21, [76, 72, 22]], ['balloons', '풍선', 22, [82, 28, 16]]] },
+  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 22, [50, 18, 40]], ['bear', '곰인형 앉히기', 22, [24, 72, 22]], ['cake', '집들이 하기', 23, [72, 72, 24]]] },
 ].map((room, r) => ({ ...room, perk: PERKS[r], tasks: room.tasks.map(([img, name, cost, at], t) => ({ id: `${r}-${t}`, img: `/game/room/${img}.png`, name, cost, at })) }))
 const starKey = (player) => `family-scheduler-clean-stars-${player}`
 const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }
