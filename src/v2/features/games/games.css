@@ -86,3 +86,10 @@
 .merge-ladder li { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
 .merge-ladder img { width: 76%; height: 76%; object-fit: contain; border-radius: 50%; }
 @media (prefers-reduced-motion: reduce) { .merge-ball { transition: none; } }
+.game-result .game-ranks { margin-top: 8px; }
+.game-ranks .is-new { background: color-mix(in srgb, var(--tint) 10%, transparent); }
+.rank-new { font-style: normal; font-size: 12px; font-weight: 700; color: #fff; background: var(--tint); border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
+.game-result-actions { display: flex; gap: 10px; margin-top: 20px; }
+.game-result-actions button { flex: 1; min-height: 50px; border-radius: 14px; font-size: 17px; font-weight: 600; border: 0; background: var(--fill); color: var(--label); }
+.game-result-actions .primary-button { background: var(--tint); color: #fff; }
+.game-score-now { font-size: 17px; color: var(--label-2); margin: 4px 0 12px; } .game-score-now b { font-size: 28px; color: var(--label); margin-left: 6px; }
