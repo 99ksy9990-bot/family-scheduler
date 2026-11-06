@@ -12,7 +12,9 @@ const PRICE = { hammer: 2, shuffle: 1 } // 다 쓰면 별로 사기
 // 방을 다 꾸미면 모든 단계에서 계속 받는 효과
 const PERKS = [
   { text: '망치 +1', hammer: 1 }, { text: '이동 +2', moves: 2 }, { text: '섞기 +1', shuffle: 1 }, { text: '이동 +3', moves: 3 },
-  { text: '시작할 때 로켓 1개', start: ['row'] }, { text: '시작할 때 폭탄 1개', start: ['bomb'] }, { text: '망치 +1', hammer: 1 }, { text: '시작할 때 무지개 1개', start: ['rainbow'] },
+  { text: '시작할 때 로켓 1개', start: ['row'] }, { text: '시작할 때 폭탄 1개', start: ['bomb'] }, { text: '망치 +1', hammer: 1 },
+  { text: '시작할 때 프로펠러 1개', start: ['prop'] }, { text: '이동 +3', moves: 3 }, { text: '섞기 +1', shuffle: 1 }, { text: '시작할 때 로켓 1개 더', start: ['col'] },
+  { text: '시작할 때 무지개 1개', start: ['rainbow'] },
 ]
 function addStarts(board, sps) {
   for (const sp of sps) { const free = board.map((t, x) => (!isFixed(t) && !t.sp ? x : -1)).filter((x) => x >= 0); const x = free[Math.floor(Math.random() * free.length)]; board[x] = { ...board[x], sp } }
@@ -25,7 +27,11 @@ const ROOMS = [
   { name: '욕실', bg: 'bath', say: '욕실이 미끌미끌해. 깨끗하게 씻을 수 있게 해 줘!', tasks: [['tub', '욕조 놓기', 5, [56, 72, 44]], ['towel', '수건 걸기', 6, [18, 40, 22]], ['duck', '고무 오리', 6, [70, 58, 12]]] },
   { name: '침실', bg: 'bed', say: '오늘 밤엔 푹 자고 싶어. 침실을 포근하게 꾸며 줘.', tasks: [['bedframe', '침대 놓기', 6, [40, 70, 42]], ['closet', '옷장 넣기', 6, [82, 60, 22]], ['starlamp', '별 무드등', 7, [76, 82, 12]]] },
   { name: '마당', bg: 'yard', say: '밖에서도 놀 수 있게 마당을 만들자!', tasks: [['flowers', '꽃밭 가꾸기', 7, [24, 84, 30]], ['swing', '그네 달기', 7, [66, 66, 30]], ['doghouse', '강아지집', 8, [88, 82, 18]]] },
-  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 8, [50, 18, 40]], ['bear', '곰인형 앉히기', 8, [24, 72, 22]], ['cake', '집들이 하기', 9, [72, 72, 24]]] },
+  { name: '놀이방', bg: 'play', say: '장난감이 다 흩어졌어! 신나게 놀 수 있게 정리하자.', tasks: [['blocks', '블록 탑 쌓기', 8, [22, 70, 20]], ['horse', '흔들 목마', 8, [56, 70, 30]], ['toybox', '장난감 상자', 9, [84, 76, 20]]] },
+  { name: '세탁실', bg: 'laundry', say: '빨래가 산더미야. 뽀송뽀송하게 만들어 줘!', tasks: [['washer', '세탁기 놓기', 8, [24, 66, 30]], ['basket', '빨래 바구니', 9, [56, 80, 18]], ['dryrack', '건조대 펴기', 9, [80, 66, 26]]] },
+  { name: '베란다', bg: 'veranda', say: '햇살 좋은 베란다에서 쉬고 싶어.', tasks: [['shelf', '화분 선반', 9, [20, 66, 26]], ['rocking', '흔들의자', 10, [56, 72, 30]], ['birdcage', '새장 걸기', 10, [84, 36, 16]]] },
+  { name: '다락방', bg: 'attic', say: '다락방에 비밀 공간을 만들자! 별도 보일 거야.', tasks: [['starwin', '별 창문', 10, [50, 32, 28]], ['scope', '망원경', 10, [24, 70, 22]], ['chest', '보물 상자', 11, [76, 78, 24]]] },
+  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 11, [50, 18, 40]], ['bear', '곰인형 앉히기', 12, [24, 72, 22]], ['cake', '집들이 하기', 12, [72, 72, 24]]] },
 ].map((room, r) => ({ ...room, perk: PERKS[r], tasks: room.tasks.map(([img, name, cost, at], t) => ({ id: `${r}-${t}`, img: `/game/room/${img}.png`, name, cost, at })) }))
 const starKey = (player) => `family-scheduler-clean-stars-${player}`
 const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }
