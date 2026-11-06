@@ -102,9 +102,8 @@
 .shift-brush button b { font-size: 17px; }
 .shift-brush button small { font-size: 12px; color: var(--label-2); }
 .shift-brush button[aria-pressed='true'] { box-shadow: inset 0 0 0 2.5px var(--tint); }
-.shift-month-head { display: flex; align-items: center; gap: 8px; }
+.shift-month-head { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 0 auto; }
 .shift-month-head b { font-size: 17px; }
-.shift-month-head small { color: var(--label-2); margin-right: auto; }
 .shift-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; background: var(--card); border-radius: 16px; padding: 8px; }
 .shift-wd { text-align: center; font-size: 12px; color: var(--label-2); padding: 2px 0; }
 .shift-cell { border: 0; border-radius: 10px; background: none; min-height: 48px; padding: 4px 0; display: grid; justify-items: center; gap: 2px; font-variant-numeric: tabular-nums; }

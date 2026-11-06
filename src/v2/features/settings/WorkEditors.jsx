@@ -44,11 +44,10 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
     updateState((current) => ({ ...current, shifts: [...current.shifts.filter((s) => !(s.member === profile.id && s.date === key)), ...(next ? [{ id: crypto.randomUUID(), member: profile.id, date: key, shift: next }] : [])] }))
   }
   const code = (id) => types.find((t) => t.id === id)?.code || ''
-  const count = cells.filter((d) => d.getMonth() === month.getMonth() && mine.get(iso(d))).length
   return <div className="work-editor">
     <div className="shift-brush" role="group" aria-label="근무 종류">{types.map((t) => <button type="button" key={t.id} data-shift={t.id} aria-pressed={brush === t.id} onClick={() => setBrush(t.id)}><b>{t.code}</b><small>{t.id === 'off' ? '휴무' : t.start}</small></button>)}</div>
     <p className="quiet">근무 종류를 고르고 날짜를 누르세요. 같은 날을 다시 누르면 지워져요.</p>
-    <div className="shift-month-head"><button className="icon-button" aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={20} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><small>{count}일 입력</small><button className="icon-button" aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={20} /></button></div>
+    <div className="shift-month-head month-arrows"><button aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={18} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><button aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={18} /></button></div>
     <div className="shift-grid">
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
       {cells.map((d) => { const key = iso(d); const s = mine.get(key); return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={s || ''} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${s ? code(s) : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{s ? code(s) : ''}</b></button> })}
@@ -72,11 +71,10 @@ export function LeaveMonthEditor({ profile, canEdit, onSave }) {
     if (next[key] === brush) delete next[key]; else next[key] = brush
     onSave({ ...profile.regularWork, leaves: next })
   }
-  const count = cells.filter((d) => d.getMonth() === month.getMonth() && leaves[iso(d)]).length
   return <div className="work-editor">
     <div className="shift-brush" role="group" aria-label="휴가 종류">{Object.entries(LEAVES).map(([id, t]) => <button type="button" key={id} data-shift="off" aria-pressed={brush === id} onClick={() => setBrush(id)}><b>{t.code}</b><small>{t.off}</small></button>)}</div>
     <p className="quiet">종류를 고르고 날짜를 누르세요. 같은 날을 다시 누르면 지워져요.</p>
-    <div className="shift-month-head"><button className="icon-button" aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={20} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><small>{count}일</small><button className="icon-button" aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={20} /></button></div>
+    <div className="shift-month-head month-arrows"><button aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={18} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><button aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={18} /></button></div>
     <div className="shift-grid">
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
       {cells.map((d) => { const key = iso(d); const l = LEAVES[leaves[key]]; return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={l ? 'off' : ''} data-leave={leaves[key] || undefined} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${l ? l.label : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{l ? l.code : ''}</b></button> })}
