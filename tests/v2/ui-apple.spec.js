@@ -18,7 +18,7 @@ test('우리집 이름·불투명 타일·유리 아이콘·떠 있는 알약', 
     const selected = nav.locator('[aria-current="page"]')
     await expect.poll(() => selected.evaluate((element) => getComputedStyle(element).color)).toBe('rgb(10, 132, 255)')
     expect(await selected.locator('svg').evaluate((element) => getComputedStyle(element).stroke)).toBe('rgb(10, 132, 255)')
-    expect(await selected.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(120, 120, 128, 0.14)')
+    expect(await selected.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(scheme === 'light' ? 'rgba(120, 120, 128, 0.14)' : 'rgba(255, 255, 255, 0.12)')
   }
   await page.emulateMedia({ colorScheme: 'light' })
   expect(await tile.locator('.glass-icon').evaluate((element) => element.getBoundingClientRect().width)).toBe(66)
