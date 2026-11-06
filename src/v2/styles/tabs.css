@@ -85,3 +85,15 @@ main { padding-top: 12px; }
 .header-add svg { width: 28px; height: 28px; stroke-width: 2.4; }
 .header-add:active { opacity: .5; }
 .header-add:focus-visible { outline: 3px solid var(--tint, #0a84ff); outline-offset: 2px; }
+/* 달력 칸 근무 이름표 */
+.calendar-day { align-content: start; }
+.shift-label { display: block; font-size: 11px; font-weight: 600; line-height: 16px; border-radius: 5px; margin: 1px 2px 0; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.shift-label[data-shift='day'] { background: #fff1c2; color: #8a5a00; }
+.shift-label[data-shift='evening'] { background: #ffe0d4; color: #a33a12; }
+.shift-label[data-shift='night'] { background: #dfe0ff; color: #3634a3; }
+.shift-label[data-shift='off'] { background: var(--fill); color: var(--label-2); }
+.month-grid .calendar-day { height: 58px; min-height: 58px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; padding-top: 2px; }
+.month-grid .calendar-day .day-number { width: 30px; height: 30px; font-size: 16px; align-self: center; display: grid; place-items: center; border-radius: 50%; }
+/* 정사각형 칸 (사용자 2026-11-06) */
+.month-grid .calendar-day { height: auto; min-height: 0; aspect-ratio: 1; }
+#selected-heading { scroll-margin-top: 12px; }

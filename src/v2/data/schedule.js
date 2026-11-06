@@ -2,6 +2,19 @@ import { addDays, iso } from '../../lib/dates'
 import { eventsForDate } from '../../lib/schedule'
 import { assignedMemberIds, DEFAULT_SHIFT_TYPES } from '../../lib/legacyState'
 import { hasRecurrence, isRecurrenceStart } from '../../lib/recurrence'
+import { holidaysForYear } from '../../lib/holidays'
+
+// 고정 근무(예: 평일 08:00–17:00, 공휴일 쉼). 프로필에 regularWork가 있을 때만. 옛 앱은 이 필드를 모르고 그대로 보존함.
+export function regularWorkRows(state, date, taken) {
+  const key = iso(date)
+  const holiday = holidaysForYear(date.getFullYear()).has(key)
+  return (state.profiles || []).flatMap((profile) => {
+    const work = profile.regularWork
+    if (!work?.start || !work?.end || profile.active === false || taken.has(profile.id)) return []
+    if (!(work.weekdays || [1, 2, 3, 4, 5]).includes(date.getDay()) || (work.skipHolidays !== false && holiday)) return []
+    return [{ id: `work-${profile.id}-${key}`, date: key, title: '근무', member: profile.id, members: [profile.id], time: work.start, end: work.end, type: 'shift', regular: true }]
+  })
+}
 
 export function clock(value) {
   if (!value || value === '종일') return ''
@@ -31,7 +44,8 @@ export function scheduleForDate(state, date) {
         crossesMidnight: !index && overnight, carryover: Boolean(index) }]
     })
   }) : []
-  return [...events, ...shifts].map((event) => ({ ...event, displayStart: clock(event.time), displayEnd: clock(event.end) }))
+  const regular = regularWorkRows(state, date, new Set(shifts.filter((row) => !row.carryover).map((row) => row.member)))
+  return [...events, ...shifts, ...regular].map((event) => ({ ...event, displayStart: clock(event.time), displayEnd: clock(event.end) }))
     .sort((a, b) => (a.displayStart || '').localeCompare(b.displayStart || '') || a.title.localeCompare(b.title, 'ko'))
 }
 

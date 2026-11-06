@@ -1,0 +1,56 @@
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { addDays, iso } from '../../../lib/dates'
+import { holidaysForYear } from '../../../lib/holidays'
+import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
+
+const DAYS = ['일', '월', '화', '수', '목', '금', '토']
+
+// 고정 근무: 요일·시간·공휴일 쉼. 프로필 regularWork 필드(추가 필드)에 저장.
+export function RegularWorkEditor({ profile, canEdit, onSave, onCancel }) {
+  const init = profile.regularWork || { weekdays: [1, 2, 3, 4, 5], start: '08:00', end: '17:00', skipHolidays: true }
+  const [w, setW] = useState(init)
+  const toggle = (d) => setW((v) => ({ ...v, weekdays: v.weekdays.includes(d) ? v.weekdays.filter((x) => x !== d) : [...v.weekdays, d].sort() }))
+  return <div className="work-editor">
+    <ul className="grouped-list">
+      <li className="grouped-row"><span className="grouped-body"><strong>요일</strong></span><span className="day-pick" role="group" aria-label="근무 요일">{DAYS.map((n, d) => <button type="button" key={d} aria-pressed={w.weekdays.includes(d)} onClick={() => toggle(d)}>{n}</button>)}</span></li>
+      <li className="grouped-row"><span className="grouped-body"><strong>시작</strong></span><input className="time-pill" type="time" aria-label="시작" value={w.start} onChange={(e) => setW({ ...w, start: e.target.value })} /></li>
+      <li className="grouped-row"><span className="grouped-body"><strong>끝</strong></span><input className="time-pill" type="time" aria-label="끝" value={w.end} onChange={(e) => setW({ ...w, end: e.target.value })} /></li>
+      <li className="grouped-row"><label className="grouped-body switch-row"><strong>공휴일은 쉬어요</strong><input type="checkbox" role="switch" className="ios-switch" checked={w.skipHolidays !== false} onChange={(e) => setW({ ...w, skipHolidays: e.target.checked })} /></label></li>
+    </ul>
+    <div className="work-actions">
+      <button className="primary-button" disabled={!canEdit || !w.weekdays.length || !w.start || !w.end} onClick={() => onSave(w)}>저장</button>
+      {profile.regularWork && <button className="danger-button" disabled={!canEdit} onClick={() => onSave(null)}>고정 근무 끄기</button>}
+      <button onClick={onCancel}>취소</button>
+    </div>
+  </div>
+}
+
+// 교대 근무표: 근무 종류를 고르고 날짜를 톡톡 눌러 칠하기. shifts 컬렉션(옛 앱과 같은 형식)에 바로 저장.
+export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
+  const types = state.workSettings.shiftTypes?.length ? state.workSettings.shiftTypes : DEFAULT_SHIFT_TYPES
+  const [brush, setBrush] = useState(types[0]?.id)
+  const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
+  const mine = new Map(state.shifts.filter((s) => s.member === profile.id).map((s) => [s.date, s.shift]))
+  const start = addDays(month, -month.getDay())
+  const weeks = Math.ceil((month.getDay() + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7)
+  const cells = Array.from({ length: weeks * 7 }, (_, i) => addDays(start, i))
+  const holidays = holidaysForYear(month.getFullYear())
+  const paint = (date) => {
+    if (!canEdit) return
+    const key = iso(date)
+    const next = mine.get(key) === brush ? null : brush // 같은 걸 다시 누르면 지움
+    updateState((current) => ({ ...current, shifts: [...current.shifts.filter((s) => !(s.member === profile.id && s.date === key)), ...(next ? [{ id: crypto.randomUUID(), member: profile.id, date: key, shift: next }] : [])] }))
+  }
+  const code = (id) => types.find((t) => t.id === id)?.code || ''
+  const count = cells.filter((d) => d.getMonth() === month.getMonth() && mine.get(iso(d))).length
+  return <div className="work-editor">
+    <div className="shift-brush" role="group" aria-label="근무 종류">{types.map((t) => <button type="button" key={t.id} data-shift={t.id} aria-pressed={brush === t.id} onClick={() => setBrush(t.id)}><b>{t.code}</b><small>{t.id === 'off' ? '휴무' : t.start}</small></button>)}</div>
+    <p className="quiet">근무 종류를 고르고 날짜를 누르세요. 같은 날을 다시 누르면 지워져요.</p>
+    <div className="shift-month-head"><button className="icon-button" aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={20} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><small>{count}일 입력</small><button className="icon-button" aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={20} /></button></div>
+    <div className="shift-grid">
+      {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
+      {cells.map((d) => { const key = iso(d); const s = mine.get(key); return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={s || ''} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${s ? code(s) : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{s ? code(s) : ''}</b></button> })}
+    </div>
+  </div>
+}

@@ -83,3 +83,39 @@
 .kind-chip.academy { background: #ff9f0a; }
 .danger-button { color: var(--red, #ff3b30); }
 .member-add-form .ui-segments button { flex: 1; font-size: 15px; }
+
+/* 근무 입력 */
+.work-editor { display: grid; gap: 12px; }
+.work-actions { display: grid; gap: 8px; }
+.day-pick { display: flex; gap: 4px; }
+.day-pick button { width: 34px; height: 34px; min-height: 34px; padding: 0; border: 0; border-radius: 50%; background: var(--fill); font-size: 14px; }
+.day-pick button[aria-pressed='true'] { background: var(--tint); color: #fff; font-weight: 700; }
+.time-pill { font: inherit; font-size: 17px; border: 0; border-radius: 8px; padding: 6px 10px; background: var(--fill); color: var(--label); font-variant-numeric: tabular-nums; }
+.switch-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.ios-switch { appearance: none; width: 51px; height: 31px; border-radius: 16px; background: var(--fill); position: relative; cursor: pointer; flex: none; }
+.ios-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform .2s; }
+.ios-switch:checked { background: #34c759; }
+.ios-switch:checked::after { transform: translateX(20px); }
+.ios-switch:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+.shift-brush { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
+.shift-brush button { border: 0; border-radius: 12px; padding: 8px 4px; background: var(--card); display: grid; gap: 2px; min-height: 52px; }
+.shift-brush button b { font-size: 17px; }
+.shift-brush button small { font-size: 12px; color: var(--label-2); }
+.shift-brush button[aria-pressed='true'] { box-shadow: inset 0 0 0 2.5px var(--tint); }
+.shift-month-head { display: flex; align-items: center; gap: 8px; }
+.shift-month-head b { font-size: 17px; }
+.shift-month-head small { color: var(--label-2); margin-right: auto; }
+.shift-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; background: var(--card); border-radius: 16px; padding: 8px; }
+.shift-wd { text-align: center; font-size: 12px; color: var(--label-2); padding: 2px 0; }
+.shift-cell { border: 0; border-radius: 10px; background: none; min-height: 48px; padding: 4px 0; display: grid; justify-items: center; gap: 2px; font-variant-numeric: tabular-nums; }
+.shift-cell span { font-size: 15px; }
+.shift-cell b { font-size: 13px; min-height: 16px; }
+.shift-cell.other { opacity: .35; }
+.shift-cell.sun span { color: #ff3b30; }
+.shift-cell[data-shift='day'] { background: #fff4d6; }
+.shift-cell[data-shift='evening'] { background: #ffe1d6; }
+.shift-cell[data-shift='night'] { background: #dfe0ff; }
+.shift-cell[data-shift='off'] { background: var(--fill); }
+.shift-cell:focus-visible, .shift-brush button:focus-visible, .day-pick button:focus-visible { outline: 3px solid var(--tint); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .ios-switch::after { transition: none; } }
+.shift-brush button, .shift-brush button[aria-pressed='true'] { background: var(--card); color: var(--label); border-color: transparent; }

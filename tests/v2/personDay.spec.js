@@ -19,6 +19,8 @@ test('한 사람의 오늘·내일: 근무 이월·공통 일정·시간표·반
   const state = createDemo(today)
   state.events = [{ id: 'event', member: 'family', date: iso(today), time: '14:00', title: '공통 일정' }]
   state.shifts = [{ member: 'demo-dad', date: iso(addDays(today, -1)), shift: 'night' }]
+  state.workSettings = { ...state.workSettings, workerIds: ['demo-dad'] }
+  state.profiles = state.profiles.map(({ regularWork, ...profile }) => profile) // eslint-disable-line no-unused-vars
   state.tasks = [
     { id: 'task', title: '오늘 할 일', dueDate: iso(today), time: '16:00', assignee: 'demo-dad' },
     { id: 'other', title: '다른 가족', dueDate: iso(today), assignee: 'demo-mom' },

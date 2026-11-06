@@ -5,7 +5,7 @@ import { DEFAULT_SHIFT_TYPES } from '../../lib/legacyState'
 export function createDemo(today) {
   const date = iso(today)
   const profiles = [['dad', '아빠', 'adult'], ['mom', '엄마', 'adult'], ['big', '초롱', 'child'], ['little', '연두', 'child']]
-    .map(([id, name, type]) => ({ id: `demo-${id}`, name, type, characterId: id, active: true }))
+    .map(([id, name, type]) => ({ id: `demo-${id}`, name, type, characterId: id, active: true, ...(id === 'dad' ? { regularWork: { weekdays: [1, 2, 3, 4, 5], start: '08:00', end: '17:00', skipHolidays: true } } : {}) }))
   const events = [
     ['아침 산책', '07:30', '08:00', 'dad'], ['그림 그리기', '10:00', '11:00', 'little'],
     ['함께 점심', '12:00', '13:00', 'family'], ['도서관 나들이', '15:00', '16:00', 'big'],
@@ -14,7 +14,8 @@ export function createDemo(today) {
   const tasks = [['우유 사기', '장보기', 'mom', date], ['가방 챙기기', '긴급', 'little', date], ['화분 물 주기', '집안일', 'dad', ''], ['책장 정리', '집안일', 'big', ''], ['식탁 닦기', '집안일', 'family', date]]
     .map(([title, category, member, dueDate], index) => ({ id: `demo-task-${index}`, title, category, assignee: member === 'family' ? 'family' : `demo-${member}`, dueDate, done: index === 4 }))
   return { profiles, events, tasks, taskCategories: ['긴급', '장보기', '집안일'],
-    shifts: [-1, 0, 1].map((offset) => ({ id: `demo-shift-${offset}`, member: 'demo-dad', date: iso(addDays(today, offset)), shift: offset === 0 ? 'day' : 'off' })),
-    workSettings: { enabled: true, workerIds: ['demo-dad'], shiftTypes: structuredClone(DEFAULT_SHIFT_TYPES) },
+    // 엄마: 교대(D·D·E·E·N·N·휴·휴 반복), 아빠: 평일 고정 근무(아래 profiles 수정)
+    shifts: Array.from({ length: 42 }, (_, i) => i - 14).map((offset) => ({ id: `demo-shift-${offset}`, member: 'demo-mom', date: iso(addDays(today, offset)), shift: ['day', 'day', 'evening', 'evening', 'night', 'night', 'off', 'off'][((offset % 8) + 8) % 8] })),
+    workSettings: { enabled: true, workerIds: ['demo-mom'], shiftTypes: structuredClone(DEFAULT_SHIFT_TYPES) },
     childSchedules: [], childProfiles: [], schedulePeriods: [], anniversaries: [], scheduleExceptions: [], profileLinks: {}, gameScores: {} }
 }

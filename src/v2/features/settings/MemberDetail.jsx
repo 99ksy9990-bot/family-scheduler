@@ -6,6 +6,7 @@ import CharacterAvatar from '../../components/CharacterAvatar'
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import { clock } from '../../data/schedule'
 import Family from './Family'
+import { RegularWorkEditor, ShiftMonthEditor } from './WorkEditors'
 
 const CHARACTERS = ['dad', 'mom', 'big', 'little']
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -33,7 +34,9 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   if (edit) return <div className="member-page">
     <nav className="member-nav"><button className="text-button" onClick={() => setEdit(null)}><ChevronLeft size={20} />{profile.name}</button></nav>
     <h2 className="member-edit-title">{edit.title}</h2>
-    <Family state={state} updateState={updateState} canEdit={canEdit} editorOnly initialSection={edit.section} initialRecord={edit.record} onSaved={() => setEdit(null)} onCancel={() => setEdit(null)} />
+    {edit.section === 'regular' ? <RegularWorkEditor profile={profile} canEdit={canEdit} onCancel={() => setEdit(null)} onSave={(regularWork) => { set({ regularWork }); setEdit(null) }} />
+      : edit.section === 'month' ? <ShiftMonthEditor profile={profile} state={state} updateState={updateState} canEdit={canEdit} />
+        : <Family state={state} updateState={updateState} canEdit={canEdit} editorOnly initialSection={edit.section} initialRecord={edit.record} onSaved={() => setEdit(null)} onCancel={() => setEdit(null)} />}
   </div>
 
   const row = (key, ic, title, subtitle, onClick) => <GroupedRow key={key} icon={ic} title={title} subtitle={subtitle} value={<ChevronRight size={18} />} onClick={onClick} />
@@ -48,10 +51,9 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
     </header>
 
     {!child && <section><h3 className="house-section-title">근무</h3><GroupedList label="근무">
-      {works ? <>
-        {row('types', icon(Briefcase, 'work'), '근무 유형', types.filter((t) => t.id !== 'off').map((t) => `${t.code} ${clock(t.start)}`).join(' · '), () => open('work', '근무 유형'))}
-        {row('shifts', icon(CalendarDays, 'orange'), '근무표', shifts[0] ? `${shifts.length}일 입력 · 최근 ${md(shifts[0].date)}` : '아직 없음', () => open('shifts', '근무 추가'))}
-      </> : addRow('work-on', '근무표 쓰기', () => canEdit && updateState((current) => ({ ...current, workSettings: { ...current.workSettings, enabled: true, workerIds: [...new Set([...(current.workSettings.workerIds || []), profile.id])] } })))}
+      {row('regular', icon(Briefcase, 'work'), '고정 근무', profile.regularWork ? `${profile.regularWork.weekdays.map((d) => DAYS[d]).join('·')} ${profile.regularWork.start}–${profile.regularWork.end}${profile.regularWork.skipHolidays !== false ? ' · 공휴일 쉼' : ''}` : '매주 같은 시간에 일해요 (예: 평일 08:00–17:00)', () => open('regular', '고정 근무'))}
+      {row('month', icon(CalendarDays, 'orange'), '교대 근무표', works && shifts.length ? `${shifts.length}일 입력 · 최근 ${md(shifts[0].date)}` : '날마다 근무가 바뀌어요 (D·E·N)', () => { if (!canEdit) return; if (!works) updateState((current) => ({ ...current, workSettings: { ...current.workSettings, enabled: true, workerIds: [...new Set([...(current.workSettings.workerIds || []), profile.id])] } })); setEdit({ section: 'month', title: '교대 근무표' }) })}
+      {works && row('types', icon(Briefcase, 'work'), '근무 종류·시간', types.filter((t) => t.id !== 'off').map((t) => `${t.code} ${clock(t.start)}`).join(' · '), () => open('work', '근무 종류·시간'))}
     </GroupedList></section>}
 
     {child && <><section><h3 className="house-section-title">학교</h3><GroupedList label="학교">
@@ -65,7 +67,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
     </GroupedList></section></>}
 
     {works && shifts.length > 0 && <section><h3 className="house-section-title">최근 근무</h3><GroupedList label="최근 근무">
-      {shifts.slice(0, 5).map((s) => { const t = types.find((x) => x.id === s.shift); return row(s.date, icon(Briefcase, 'work'), md(s.date), t ? `${t.code} ${t.id === 'off' ? '' : `${clock(t.start)}–${clock(t.end)}`}` : s.shift, () => open('shifts', '근무 바꾸기', s)) })}
+      {shifts.slice(0, 5).map((s) => { const t = types.find((x) => x.id === s.shift); return row(s.date, icon(Briefcase, 'work'), md(s.date), t ? `${t.code} ${t.id === 'off' ? '' : `${clock(t.start)}–${clock(t.end)}`}` : s.shift, () => canEdit && setEdit({ section: 'month', title: '교대 근무표' })) })}
     </GroupedList></section>}
 
     <section><h3 className="house-section-title">모습</h3><GroupedList label="모습">
