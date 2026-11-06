@@ -24,6 +24,7 @@ test('가족 선택·게임 완료·gameScores 기록·판수·재불러오기 �
   const dialog = await openPairs(page, '가족')
   await finishPairs(page, dialog)
   await page.clock.runFor(500)
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-v2-metadata') || '{}').gameScores?.pairs?.p?.best)).toBe(6)
   const scores = await page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-v2-metadata')).gameScores)
   expect(scores.pairs.p).toMatchObject({ best: 6, level: 'easy', moves: 6, playsToday: 1 })
   await page.keyboard.press('Escape')
