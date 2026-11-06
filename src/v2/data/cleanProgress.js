@@ -18,6 +18,8 @@ export function mergeProgress(a, b) {
     // 연승은 더 최근에 저장한 쪽, 이벤트 보상은 큰 쪽, 주간 이벤트는 최근 주
     ...((b.streakAt || 0) >= (a.streakAt || 0) ? { streak: b.streak || 0, streakAt: b.streakAt } : { streak: a.streak || 0, streakAt: a.streakAt }),
     bonus: Math.max(a.bonus || 0, b.bonus || 0),
+    comp: Math.max(a.comp || 0, b.comp || 0),
+    seen: [...new Set([...(a.seen || []), ...(b.seen || [])])],
     week: mergeWeek(a.week, b.week),
   }
 }
