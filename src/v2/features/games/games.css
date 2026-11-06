@@ -64,3 +64,11 @@
 .stack-roof { position: absolute; left: 10%; right: 10%; height: 60px; background: #ff7a59; clip-path: polygon(50% 0, 100% 100%, 0 100%); animation: roof-in .5s cubic-bezier(.2,1.4,.4,1); }
 @keyframes roof-in { from { transform: translateY(-120px); opacity: 0 } to { transform: none; opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { .stack-roof { animation: none } }
+/* 게임은 아이폰 화면 전체로 */
+.sheet.game-sheet { max-width: none; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; padding-top: calc(env(safe-area-inset-top) + 12px); }
+.game-ranks { margin-top: 24px; }
+.game-ranks h3 { margin: 0 0 8px; }
+.game-ranks .grouped-row { gap: 10px; }
+.rank-no { width: 20px; text-align: center; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.rank-value { margin-left: auto; font-variant-numeric: tabular-nums; }
+.game-sheet .stack-area, .game-sheet .catch-area { height: calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }

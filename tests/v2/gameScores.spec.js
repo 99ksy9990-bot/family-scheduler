@@ -25,3 +25,14 @@ test('게임별 최고 기록·짝맞추기 동률 횟수·하루 판수·다음
   expect(scores.tap.mom).toMatchObject({ best: 30, playsToday: 1 })
   expect(recordGameScore(scores, 'tap', 'mom', { score: NaN }, now)).toBe(scores)
 })
+
+test('5등까지 날짜와 함께 보관, 가족 순위로 합침', async () => {
+  const { recordGameScore, rankGameScores } = await import('../../src/v2/data/gameScores.js')
+  let s = {}
+  for (const [i, v] of [3, 9, 1, 7, 5, 8].entries()) s = recordGameScore(s, 'stack', 'a', { score: v }, new Date(2026, 10, 6, 10, i))
+  s = recordGameScore(s, 'stack', 'b', { score: 10 }, new Date(2026, 10, 6, 11))
+  expect(s.stack.a.top.map((t) => t.value)).toEqual([9, 8, 7, 5, 3])
+  const r = rankGameScores(s, 'stack')
+  expect(r.map((t) => [t.member, t.value])).toEqual([['b', 10], ['a', 9], ['a', 8], ['a', 7], ['a', 5]])
+  expect(r[0].at).toBe(new Date(2026, 10, 6, 11).toISOString())
+})
