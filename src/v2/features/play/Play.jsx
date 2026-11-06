@@ -2,6 +2,7 @@ import { Suspense, useRef, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import { GAMES } from '../games'
+import { mergeProgress } from '../../data/cleanProgress'
 import { bestGameLabel, recordGameScore, rankGameScores, unitOf } from '../../data/gameScores'
 
 export default function Play({ state, updateState }) {
@@ -27,7 +28,7 @@ export default function Play({ state, updateState }) {
     {game && <Sheet title={game.name} onClose={() => { stop(); setSelected(null) }} className="game-sheet">
       {!Game ? <div className="empty-state"><h3>준비 중</h3><p>가족과 함께할 놀이를 준비하고 있어요.</p></div> : !player ? <><h3>누가 해요?</h3><div className="player-options">{profiles.map((profile) => <button key={profile.id} onClick={() => setPlayer(profile.id)}><CharacterAvatar profile={profile} size={56} /><span>{profile.name}</span></button>)}</div>{!profiles.length && <p>가족 탭에서 구성원을 먼저 등록해 주세요.</p>}<GameRanks scores={state.gameScores} gameId={selected} profiles={state.profiles} /></>
         : <><p className="game-player">{profiles.find((profile) => profile.id === player)?.name}의 놀이</p>{result ? <div className="game-result">{selected === 'clean' && result.res.tried ? <p className="game-score-now">{result.res.tried}단계 <b>{result.res.win ? '성공!' : '실패'}</b>{!result.res.win && <small> 깬 단계 {result.res.score}단계로 기록</small>}</p> : <p className="game-score-now">이번 기록 <b>{(selected === 'pairs' ? result.res.seconds : selected === 'sequence' ? result.res.stage : result.res.score)?.toLocaleString('ko-KR')}{unitOf(selected)}</b></p>}<p role="status" className="quiet">{message}</p><GameRanks scores={state.gameScores} gameId={selected} profiles={state.profiles} highlight={result.at} /><div className="game-result-actions"><button className="primary-button" onClick={() => { setResult(null); setRound((n) => n + 1) }}>다시 하기</button><button onClick={() => { setResult(null); setPlayer(null) }}>다른 사람</button></div></div>
-          : <Suspense fallback={<p role="status">게임을 불러오고 있어요…</p>}><Game key={round} player={profiles.find((profile) => profile.id === player)?.characterId || 'dad'} onFinish={finish} progress={state.cleanProgress?.[player]} onProgress={(value) => updateState((current) => ({ ...current, cleanProgress: { ...current.cleanProgress, [player]: value } }))} /></Suspense>}{!result && message && <p role="status">{message}</p>}</>}
+          : <Suspense fallback={<p role="status">게임을 불러오고 있어요…</p>}><Game key={round} player={profiles.find((profile) => profile.id === player)?.characterId || 'dad'} onFinish={finish} progress={state.cleanProgress?.[player]} onProgress={(value) => updateState((current) => ({ ...current, cleanProgress: { ...current.cleanProgress, [player]: mergeProgress(current.cleanProgress?.[player], value) } }))} /></Suspense>}{!result && message && <p role="status">{message}</p>}</>}
     </Sheet>}
   </section>
 }

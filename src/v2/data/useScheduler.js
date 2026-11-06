@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useFamilySync } from '../../hooks/useFamilySync'
 import { decodeConnect } from './connectLink'
+import { mergeAllProgress } from './cleanProgress'
 import { upgradeSharedState } from '../../lib/legacyState'
 import { readLegacyStorage, fromLegacy, toLegacy } from './migrate'
 
@@ -24,7 +25,12 @@ export function useScheduler() {
   const [loaded, setLoaded] = useState(load)
   const [saveError, setSaveError] = useState('')
   const onRemoteState = useCallback((incoming) => {
-    setLoaded((current) => ({ state: fromLegacy({ ...current.state, ...upgradeSharedState(incoming) }), error: '' }))
+    setLoaded((current) => {
+      const next = { ...current.state, ...upgradeSharedState(incoming) }
+      // 대청소 진행도는 뒤로 가지 않게 합침 (다른 폰의 오래된 값이 덮어쓰지 않도록)
+      if (current.state?.cleanProgress || next.cleanProgress) next.cleanProgress = mergeAllProgress(current.state?.cleanProgress, next.cleanProgress)
+      return { state: fromLegacy(next), error: '' }
+    })
   }, [])
   const sync = useFamilySync({ localState: loaded.state, onRemoteState })
   // 연결 링크로 열면 바로 로그인하고 주소에서 로그인 정보를 지움
