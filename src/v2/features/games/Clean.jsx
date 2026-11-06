@@ -84,7 +84,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   return <div className="clean">
     <div className="clean-hud">
       <span className="clean-moves"><b>{s.moves}</b><small>남은 이동</small></span>
-      <span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-hidden="true" /> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span>
+      <span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <><i className="dust-icon" aria-hidden="true" /><small className="dust-goal">먼지</small></> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span>
       <span className="clean-stage-no">{s.stage + 1}단계</span>
     </div>
     <div className="clean-board fx-host" ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>
@@ -92,7 +92,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
         <img src={IMG[t.k]} alt="" draggable="false" />
       </button>)}
     </div>
-    <p className="quiet clean-help">4개 → 로켓 · 네모 → 프로펠러 · ㄱ·T → 폭탄 · 5개 → 무지개. 특수끼리 바꾸면 합체!</p>
+    <p className="quiet clean-help">줄무늬 먼지 칸 위에서 맞추면 닦여요. 4개 → 로켓 · 네모 → 프로펠러 · ㄱ·T → 폭탄 · 5개 → 무지개. 특수끼리 바꾸면 합체!</p>
     {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)}` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>단계 고르기</button></div>}
   </div>
 }
