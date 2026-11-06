@@ -1,3 +1,5 @@
+import { iso } from '../../../lib/dates'
+import { seasonOf } from '../../../lib/schedule'
 import { useState } from 'react'
 import { Briefcase, CalendarDays, ChevronLeft, ChevronRight, GraduationCap, Plus } from 'lucide-react'
 import { MEMBER_COLORS } from '../../../lib/colors'
@@ -32,7 +34,8 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   const mine = (row) => row.member === profile.id || row.members?.includes(profile.id)
   const lessons = state.childSchedules.filter(mine).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
   const school = state.childProfiles.find((row) => row.member === profile.id)
-  const periods = state.schedulePeriods.filter((row) => row.member === profile.id || row.member === 'all')
+  const periods = state.schedulePeriods.filter((row) => row.member === profile.id || row.member === 'all').toSorted((a, b) => (a.start || '').localeCompare(b.start || ''))
+  const todayKey = iso(new Date())
   const shifts = state.shifts.filter((row) => row.member === profile.id).sort((a, b) => b.date.localeCompare(a.date))
   const types = state.workSettings.shiftTypes?.length ? state.workSettings.shiftTypes : DEFAULT_SHIFT_TYPES
   const set = (patch) => updateState((current) => ({ ...current, profiles: current.profiles.map((item) => item.id === profile.id ? { ...item, ...patch } : item) }))
@@ -74,13 +77,13 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
 
     {child && <><section><h3 className="house-section-title">학교</h3><GroupedList label="학교">
       {row('school', icon(GraduationCap, 'green'), '학교 정보', school ? [school.school, school.grade && `${school.grade}학년 ${school.classNumber || ''}반`].filter(Boolean).join(' ') : '아직 없음', () => open('schools', '학교 정보', school))}
-      {periods.map((p) => row(p.id, icon(CalendarDays, 'orange'), p.season === 'vacation' ? '방학' : '학기', `${p.start} – ${p.end}`, () => open('periods', '학기·방학', p)))}
+      {periods.map((p) => row(p.id, icon(CalendarDays, seasonOf(p.season) === '방학' ? 'blue' : 'orange'), `${seasonOf(p.season)}${p.start <= todayKey && todayKey <= p.end ? ' · 지금' : ''}`, `${p.start.replaceAll('-', '.')} – ${p.end.replaceAll('-', '.')}`, () => open('periods', '학기·방학', p)))}
       {addRow('period-add', '학기·방학 추가', () => open('periods', '학기·방학 추가', { member: profile.id }))}
     </GroupedList></section>
-    <section><h3 className="house-section-title">시간표</h3><GroupedList label="시간표">
-      {lessons.map((l) => row(l.id, <span className={`kind-chip${l.kind === '학원' ? ' academy' : ''}`}>{l.kind || '학원'}</span>, l.title, `${days(l)} ${clock(l.time)}${l.end ? `–${clock(l.end)}` : ''}${l.season === 'vacation' ? ' · 방학' : ''}`, () => open('schedules', l.title, l)))}
-      {addRow('lesson-add', '수업·학원 추가', () => open('schedules', '수업·학원 추가'))}
-    </GroupedList></section></>}
+    {['학기', '방학'].map((season) => <section key={season}><h3 className="house-section-title">{season} 시간표</h3><GroupedList label={`${season} 시간표`}>
+      {lessons.filter((l) => (seasonOf(l.season) || '학기') === season).map((l) => row(l.id, <span className={`kind-chip${l.kind === '학원' ? ' academy' : ''}`}>{l.kind || '학원'}</span>, l.title, `${days(l)} ${clock(l.time)}${l.end ? `–${clock(l.end)}` : ''}`, () => open('schedules', l.title, l)))}
+      {addRow(`lesson-add-${season}`, `${season} 수업·학원 추가`, () => open('schedules', `${season} 수업·학원 추가`, { season }))}
+    </GroupedList></section>)}</>}
 
     {works && shifts.length > 0 && <section><h3 className="house-section-title">최근 근무</h3><GroupedList label="최근 근무">
       {shifts.slice(0, 5).map((s) => { const t = types.find((x) => x.id === s.shift); return row(s.date, icon(Briefcase, 'work'), md(s.date), t ? `${t.code} ${t.id === 'off' ? '' : `${clock(t.start)}–${clock(t.end)}`}` : s.shift, () => canEdit && setEdit({ section: 'month', title: '교대 근무표' })) })}

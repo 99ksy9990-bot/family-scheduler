@@ -183,7 +183,7 @@ test('자녀 시간표·학기와 기념일 편집 저장', async ({ page }) => 
   await page.getByLabel('시작일', { exact: true }).fill('2026-01-01')
   await page.getByLabel('종료일', { exact: true }).fill('2026-12-31')
   await page.getByRole('button', { name: '저장', exact: true }).click()
-  await page.getByRole('button', { name: /수업·학원 추가/ }).click()
+  await page.getByRole('button', { name: /학기 수업·학원 추가/ }).click()
   await page.getByLabel('수업 이름').fill('목요일 수업')
   await page.getByLabel('시작 시간', { exact: true }).fill('15:00')
   await page.getByLabel('종료 시간', { exact: true }).fill('16:00')

@@ -78,11 +78,14 @@ export const scheduleWeekdays = (schedule) => {
   return [...new Set(values.map(Number).filter((day) => day >= 0 && day <= 6))].sort((a, b) => a - b)
 }
 
+// 기간 구분: 옛 앱은 '학기'/'방학', 새 앱 초기 버전은 'term'/'vacation'으로 저장 → 같은 것으로 비교
+export const seasonOf = (value) => value === 'term' ? '학기' : value === 'vacation' ? '방학' : value
+
 export const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
   const dateValue = iso(date)
   if (holidaysForYear(date.getFullYear()).has(dateValue)) return []
   return childSchedules
-    .filter((schedule) => schedule.season === activeSeasonForDate(date, schedulePeriods, schedule.member) && scheduleWeekdays(schedule).includes(date.getDay()))
+    .filter((schedule) => seasonOf(schedule.season) === seasonOf(activeSeasonForDate(date, schedulePeriods, schedule.member)) && scheduleWeekdays(schedule).includes(date.getDay()))
     .filter((schedule) => !scheduleExceptions.some((exception) => exception.scheduleId === schedule.id && exception.date === dateValue && exception.type === 'skip'))
     .map((schedule) => ({
       ...schedule,

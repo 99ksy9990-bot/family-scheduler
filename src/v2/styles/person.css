@@ -166,3 +166,4 @@
 .work-type .house-section-title { padding-left: 4px; }
 .plain-input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 17px; text-align: right; color: var(--label-2); padding: 8px 0; }
 .shift-cell[data-leave] b { background: var(--fill) !important; color: var(--label-2) !important; }
+.settings-color-icon[data-tone='blue'] { background: #0a84ff; }

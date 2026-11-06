@@ -17,7 +17,7 @@ export default function Family({ state, updateState, canEdit, initialProfile, in
   const memberField = { key: 'member', label: '담당 가족', options: members, defaultValue: members[0]?.[0] }
   const childMember = { ...memberField, options: profiles.filter((profile) => profile.type === 'child').map((profile) => [profile.id, profile.name]), defaultValue: profiles.find((profile) => profile.type === 'child')?.id, required: true }
   const periodMember = { ...childMember, options: [['all', '모든 자녀'], ...childMember.options], defaultValue: 'all' }
-  const season = { key: 'season', label: '기간 구분', options: [['term', '학기'], ['vacation', '방학']], defaultValue: 'term' }
+  const season = { key: 'season', label: '기간 구분', options: [['학기', '학기'], ['방학', '방학']], defaultValue: '학기' }
   const collections = {
     schedules: ['자녀 시간표', 'childSchedules', [{ key: 'title', label: '수업 이름', required: true }, childMember, season, { key: 'kind', label: '종류', options: [['학교', '학교'], ['학원', '학원']], defaultValue: '학원' }, { key: 'time', label: '시작 시간', type: 'time', required: true }, { key: 'end', label: '종료 시간', type: 'time', required: true }, { key: 'weekdays', label: '요일', type: 'weekdays' }]],
     periods: ['학기·방학 기간', 'schedulePeriods', [periodMember, season, { key: 'start', label: '시작일', type: 'date', required: true }, { key: 'end', label: '종료일', type: 'date', required: true }]],
