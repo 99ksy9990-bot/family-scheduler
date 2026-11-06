@@ -17,11 +17,13 @@ export function recordGameScore(scores = {}, gameId, memberId, result, now) {
   return { ...scores, [gameId]: { ...scores?.[gameId], [memberId]: record } }
 }
 
-export function bestGameLabel(scores, gameId) {
-  const values = Object.values(scores?.[gameId] || {}).map((record) => record?.best).filter(Number.isFinite)
-  if (!values.length) return '기록 없음'
-  const best = gameId === 'pairs' ? Math.min(...values) : Math.max(...values)
-  return `최고 ${best.toLocaleString('ko-KR')}${unitOf(gameId)}`
+// profiles를 주면 '1등 아빠 34초'처럼 누가 1등인지도 보여 줌
+export function bestGameLabel(scores, gameId, profiles) {
+  const rows = Object.entries(scores?.[gameId] || {}).filter(([, record]) => Number.isFinite(record?.best))
+  if (!rows.length) return '기록 없음'
+  const [member, { best }] = rows.reduce((a, b) => ((gameId === 'pairs' ? b[1].best < a[1].best : b[1].best > a[1].best) ? b : a))
+  const name = profiles?.find((p) => p.id === member)?.name
+  return `${name ? `1등 ${name}` : '최고'} ${best.toLocaleString('ko-KR')}${unitOf(gameId)}`
 }
 
 export const unitOf = (gameId) => gameId === 'pairs' ? '초' : ['sequence', 'clean'].includes(gameId) ? '단계' : gameId === 'stack' ? '층' : '점'

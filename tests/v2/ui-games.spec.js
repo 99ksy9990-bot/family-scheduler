@@ -29,10 +29,10 @@ test('가족 선택·게임 완료·gameScores 기록·판수·재불러오기 �
   expect(scores.pairs.p).toMatchObject({ best: 6, level: 'easy', moves: 6, playsToday: 1 })
   await page.keyboard.press('Escape')
   await expect(page.locator('.app-date')).toHaveText('오늘 1판')
-  await expect(page.locator('.game-tile').first()).toContainText('최고 6초')
+  await expect(page.locator('.game-tile').first()).toContainText('1등 가족 6초')
   await page.reload()
   await page.getByRole('navigation').getByRole('button', { name: '놀이', exact: true }).click()
-  await expect(page.locator('.game-tile').first()).toContainText('최고 6초')
+  await expect(page.locator('.game-tile').first()).toContainText('1등 가족 6초')
 })
 
 test('연속 두 판·최고 기록과 무관한 증가·날짜 변경 후 초기화', async ({ page }) => {
@@ -48,7 +48,7 @@ test('연속 두 판·최고 기록과 무관한 증가·날짜 변경 후 초�
   await page.clock.setFixedTime(new Date('2026-11-06T10:00:00+09:00'))
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(page.locator('.app-date')).toHaveText('오늘 0판')
-  await expect(page.locator('.game-tile').first()).toContainText('최고 6초')
+  await expect(page.locator('.game-tile').first()).toContainText('1등 가족 6초')
 })
 
 test.describe('예시 게임', () => {
