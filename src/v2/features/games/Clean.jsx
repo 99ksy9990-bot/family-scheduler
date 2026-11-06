@@ -11,13 +11,15 @@ const GIFT_EVERY = 10, GIFT = 5
 // 오늘의 이벤트: 날마다 다른 미션 + 출석 별 (요일·날짜로 돌아감)
 const MISSIONS = [
   { type: 'win', goal: 3, reward: 5, text: '단계 3번 깨기' }, { type: 'dust', goal: 40, reward: 4, text: '먼지 40개 닦기' },
-  { type: 'make', goal: 10, reward: 4, text: '특수 블록 10개 만들기' }, { type: 'box', goal: 10, reward: 4, text: '상자 10번 치기' },
+  { type: 'make', goal: 10, reward: 4, text: '특수 블록 10개 만들기' }, { type: 'box', goal: 10, reward: 4, text: '상자 10번 치기', need: 'boxes' },
   { type: 'star3', goal: 2, reward: 5, text: '별 3개로 2번 깨기' }, { type: 'combo', goal: 3, reward: 5, text: '특수 블록 3번 합치기' },
-  { type: 'drop', goal: 3, reward: 4, text: '오리 3마리 구출' }, { type: 'ice', goal: 10, reward: 4, text: '얼음 10개 깨기' },
+  { type: 'drop', goal: 3, reward: 4, text: '오리 3마리 구출', need: 'drops' }, { type: 'ice', goal: 10, reward: 4, text: '얼음 10개 깨기', need: 'ice' },
 ]
 const CHECKIN = 2, WEEK_BONUS = 10 // 출석 별, 7일 연속이면 별 10개 더
 const dayId = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-const missionOf = (d = new Date()) => MISSIONS[Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5) % MISSIONS.length]
+// 그 사람이 지금 할 수 있는 단계(지금 단계까지)에 나오는 방해물 미션만 고름
+const firstOf = (need) => STAGES.findIndex((st) => (Array.isArray(st[need]) ? st[need].length : st[need]))
+const missionOf = (unlocked, d = new Date()) => { const ok = MISSIONS.filter((m) => !m.need || firstOf(m.need) <= unlocked); return ok[Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5) % ok.length] }
 const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 게임 중에 별로 사는 아이템
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const COMP = 50 // 별 계산 바꾼 보상
@@ -150,8 +152,9 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const [done, setDone] = useState(() => progress?.done || [])
   const [streak, setStreak] = useState(() => progress?.streak || 0) // 연승
   const [bonus, setBonus] = useState(() => progress?.bonus || 0) // 이벤트로 받은 별
-  const [day, setDay] = useState(() => (progress?.day?.id === dayId() ? progress.day : { id: dayId(), n: 0, claimed: false, checkin: false }))
-  const mission = missionOf()
+  const [day, setDay] = useState(() => (progress?.day?.id === dayId() ? progress.day : { id: dayId(), n: 0, claimed: false, checkin: false, type: missionOf(Math.max(progress?.unlocked || 0, readProgress(player))).type }))
+  // 오늘 미션은 정해지면 그날 안 바뀜 (새 단계가 열려도)
+  const mission = MISSIONS.find((m) => m.type === day.type) || missionOf(unlocked)
   const [attend, setAttend] = useState(() => progress?.attend || { last: '', run: 0 }) // 연속 출석
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return dayId(d) })()
   const runNow = attend.last === dayId() || attend.last === yesterday ? attend.run : 0
