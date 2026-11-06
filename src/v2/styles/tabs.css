@@ -100,3 +100,10 @@ main { padding-top: 12px; }
 /* 아이폰 상단 흐림 영역(상태바 아래 가장자리 효과로 추정) 밖으로 머리 내리기 */
 .app-heading, .demo-banner + .app-heading { padding-top: max(16px, calc(env(safe-area-inset-top) + 28px)); }
 .header-add { top: calc(max(16px, calc(env(safe-area-inset-top) + 28px)) - 6px); }
+/* 달력 전체를 정사각형으로 (사용자 2026-11-06: 칸이 아니라 달력 자체 가로=세로) */
+.month-card { aspect-ratio: 1; display: flex; flex-direction: column; }
+.month-card .month-grid { flex: 1; min-height: 0; grid-template-rows: auto; grid-auto-rows: minmax(0, 1fr); }
+.month-grid .calendar-day { aspect-ratio: auto; height: auto; min-height: 0; overflow: hidden; }
+/* viewport-fit=cover 제거(2026-11-06): 상태바 아래부터 화면 시작 → 위쪽 반투명 덮임과 큰 여백 없앰 */
+.app-heading, .demo-banner + .app-heading { padding-top: 12px; }
+.header-add { top: 6px; }

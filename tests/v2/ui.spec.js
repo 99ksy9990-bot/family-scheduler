@@ -60,9 +60,11 @@ test('일정 추가·날짜 한 칸·자동 종료 시간·저장 및 새로고�
   await expect(page.getByRole('heading', { name: '새 가족 일정', exact: true })).toBeVisible()
 })
 
-test('달력은 정사각형 칸·숫자(+교대 근무 이름표)·균일 굵기·공휴일 빨간 숫자', async ({ page }) => {
+test('달력 전체가 정사각형·숫자(+교대 근무 이름표)·균일 굵기·공휴일 빨간 숫자', async ({ page }) => {
   await page.getByRole('navigation').getByRole('button', { name: '달력', exact: true }).click()
-  expect(await page.locator('.calendar-day').evaluateAll((cells) => cells.every((cell) => /^\d+/.test(cell.textContent) && Math.abs(cell.getBoundingClientRect().height - cell.getBoundingClientRect().width) <= 1 && cell.getBoundingClientRect().width >= 44))).toBe(true)
+  expect(await page.locator('.calendar-day').evaluateAll((cells) => cells.every((cell) => /^\d+/.test(cell.textContent) && cell.getBoundingClientRect().width >= 44 && cell.getBoundingClientRect().height >= 44))).toBe(true)
+  const card = await page.locator('.month-card').boundingBox()
+  expect(Math.abs(card.width - card.height)).toBeLessThanOrEqual(1)
   expect(await page.locator('.day-number').evaluateAll((numbers) => numbers.every((number) => ['400', '700'].includes(getComputedStyle(number).fontWeight)))).toBe(true)
   await page.getByRole('button', { name: '이전 달' }).click()
   const holiday = page.locator('.holiday-day .day-number').first()
