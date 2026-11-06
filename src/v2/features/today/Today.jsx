@@ -12,7 +12,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="house-section-title">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
-        const status = houseStatus(profile, rows, state.tasks, today, now)
+        const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
         return <button className="house-tile" data-character={profile.characterId || 'unknown'} key={profile.id} onClick={() => onPerson(profile.id)} aria-label={`${profile.name}의 오늘 일정, ${status.label}`}>
           {status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={status.expression} size={66} glass /><strong>{profile.name}</strong><small>{status.detail}</small>
         </button>

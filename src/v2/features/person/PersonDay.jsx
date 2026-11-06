@@ -18,7 +18,7 @@ export default function PersonDay({ memberId, state, today, now, updateState, ca
   const profile = state.profiles.find((item) => item.id === memberId)
   if (!profile) return null
   if (editing) return <DayRowEditor row={editing} state={state} today={today} updateState={updateState} canEdit={canEdit} onClose={() => setEditing(null)} />
-  const status = houseStatus(profile, scheduleForDate(state, today), state.tasks, today, now)
+  const status = houseStatus(profile, scheduleForDate(state, today), state.tasks, today, now, state.shifts)
   const renderRow = (row, label, date, grouped = false) => {
     const Icon = row.type === 'shift' ? BriefcaseBusiness : row.recurrenceType === 'child' ? GraduationCap : CalendarDays
     return <div className={`person-row${row.carryover ? ' is-carryover' : ''}${grouped ? ' is-grouped' : ''}`} key={row.id}>
