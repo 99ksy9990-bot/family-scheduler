@@ -120,3 +120,15 @@ test('연속 N 한 칸 두 행·마침 흐리게·두 줄 시간 칸·상단 불
   await page.emulateMedia({ colorScheme: 'dark' })
   await expect.poll(() => date.evaluate((element) => getComputedStyle(element).color)).toBe('rgb(152, 152, 157)')
 })
+
+test('반복 시간표 이 날만 빼기·되돌리기 (scheduleExceptions 형식)', async ({ page }) => {
+  await seed(page)
+  await page.locator('.house-tile').filter({ hasText: '아이' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: '아이 시간표 이 날만 빼기' }).first().click()
+  await page.clock.runFor(500)
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-schedule-exceptions-v1') || '[]'))).toEqual([expect.objectContaining({ scheduleId: 'school', date: '2026-11-05', type: 'skip' })])
+  await expect(dialog.getByRole('list', { name: '오늘의 일정과 할 일', exact: true })).not.toContainText('아이 시간표')
+  await dialog.getByRole('button', { name: '되돌리기' }).click()
+  await expect(dialog.getByRole('list', { name: '오늘의 일정과 할 일', exact: true })).toContainText('아이 시간표')
+})
