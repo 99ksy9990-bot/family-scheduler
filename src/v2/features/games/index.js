@@ -8,4 +8,5 @@ export const GAMES = [
   { id: 'stack', name: '우리집 쌓기', image: 'tiles/house', component: lazy(() => import('./Stack.jsx')) },
   { id: 'merge', name: '우리집 합치기', image: 'tiles/sprout', component: lazy(() => import('./Merge.jsx')) },
   { id: 'match', name: '같은 그림 셋 맞추기', image: 'tiles/ribbon', component: lazy(() => import('./Match.jsx')) },
+  { id: 'clean', name: '우리집 대청소', image: 'sparkle', component: lazy(() => import('./Clean.jsx')) },
 ]

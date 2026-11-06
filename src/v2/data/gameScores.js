@@ -24,7 +24,7 @@ export function bestGameLabel(scores, gameId) {
   return `최고 ${best.toLocaleString('ko-KR')}${unitOf(gameId)}`
 }
 
-export const unitOf = (gameId) => gameId === 'pairs' ? '초' : gameId === 'sequence' ? '단계' : gameId === 'stack' ? '층' : '점'
+export const unitOf = (gameId) => gameId === 'pairs' ? '초' : ['sequence', 'clean'].includes(gameId) ? '단계' : gameId === 'stack' ? '층' : '점'
 
 export function rankGameScores(scores, gameId) {
   const lower = gameId === 'pairs'

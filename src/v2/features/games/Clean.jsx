@@ -1,0 +1,88 @@
+import { useRef, useState } from 'react'
+import { N, STAGES, begin, goals, play } from './cleanLogic'
+import { burst, buzz, confetti, pop, shake } from './fx'
+import './games.css'
+
+const IMG = ['star', 'heart', 'sun', 'ribbon', 'pencil', 'house'].map((n) => `/game/tiles/${n}.png`)
+const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
+const starKey = (player) => `family-scheduler-clean-stars-${player}`
+const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }
+const progressKey = (player) => `family-scheduler-clean-progress-${player}`
+const readProgress = (player) => { try { return Number(localStorage.getItem(progressKey(player))) || 0 } catch { return 0 } }
+
+export default function Clean({ player, onFinish }) {
+  const [unlocked, setUnlocked] = useState(() => readProgress(player))
+  const [stars, setStars] = useState(() => readStars(player))
+  const [s, setS] = useState(null)
+  const [sel, setSel] = useState(null)
+  const [flash, setFlash] = useState(() => new Set())
+  const area = useRef(null)
+  const start = useRef(null)
+
+  if (!s) return <div className="clean-map">
+    <p className="quiet">먼지를 닦고 물건을 모아 집을 깨끗하게! 단계를 깨면 다음 단계가 열려요.</p>
+    <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className="clean-stage" disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => setS(begin(i))}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
+  </div>
+
+  const doSwap = (i, j) => {
+    const r = play(s, i, j)
+    setSel(null)
+    const el = area.current
+    if (!r) { shake(el?.querySelector(`[data-i="${i}"]`)); buzz(20); return }
+    setS(r.state)
+    setFlash(new Set(r.events.filter((e) => e.i != null).map((e) => e.i)))
+    const cell = el?.clientWidth / N
+    for (const e of r.events) {
+      if (e.i == null || !el) continue
+      const x = (e.i % N + 0.5) * cell; const y = (Math.floor(e.i / N) + 0.5) * cell
+      if (e.type === 'make') pop(el, x, y, SP_LABEL[e.sp], 'gold')
+      else if (e.type === 'combo') { burst(el, x, y, 24); pop(el, x, y, '합체!', 'gold') }
+      else if (['row', 'col', 'bomb', 'rainbow', 'prop'].includes(e.type)) burst(el, x, y, 14)
+    }
+    const chain = r.events.filter((e) => e.type === 'chain').at(-1)
+    if (chain && el) pop(el, el.clientWidth / 2, el.clientWidth / 2, `연쇄 ×${chain.n}`, 'gold')
+    buzz(r.events.length > 6 ? [20, 30, 20] : 12)
+    if (r.state.done === 'win') {
+      const next = Math.max(unlocked, s.stage + 1)
+      const nextStars = { ...stars, [s.stage]: Math.max(stars[s.stage] || 0, r.state.stars || 1) }
+      setUnlocked(next); setStars(nextStars); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
+      const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
+      if (el) confetti(el)
+      onFinish?.({ level: 'normal', score: s.stage + 1 })
+    } else if (r.state.done === 'lose') onFinish?.({ level: 'normal', score: s.stage })
+  }
+
+  const tap = (i) => {
+    if (s.done) return
+    if (sel == null) return setSel(i)
+    if (sel === i) return setSel(null)
+    const near = Math.abs(sel - i) === N || (Math.abs(sel - i) === 1 && Math.floor(sel / N) === Math.floor(i / N))
+    near ? doSwap(sel, i) : setSel(i)
+  }
+  // 밀어서 바꾸기
+  const down = (e, i) => { start.current = { x: e.clientX, y: e.clientY, i } }
+  const up = (e) => {
+    const st = start.current; start.current = null; if (!st) return
+    const dx = e.clientX - st.x; const dy = e.clientY - st.y
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return tap(st.i)
+    const [r, c] = [Math.floor(st.i / N), st.i % N]
+    const j = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? (c < N - 1 ? st.i + 1 : -1) : (c > 0 ? st.i - 1 : -1)) : (dy > 0 ? (r < N - 1 ? st.i + N : -1) : (r > 0 ? st.i - N : -1))
+    if (j >= 0 && !s.done) doSwap(st.i, j)
+  }
+
+  const gs = goals(s)
+  return <div className="clean">
+    <div className="clean-hud">
+      <span className="clean-moves"><b>{s.moves}</b><small>남은 이동</small></span>
+      <span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-hidden="true" /> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span>
+      <span className="clean-stage-no">{s.stage + 1}단계</span>
+    </div>
+    <div className="clean-board fx-host" ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>
+      {s.board.map((t, i) => <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ' 먼지' : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
+        <img src={IMG[t.k]} alt="" draggable="false" />
+      </button>)}
+    </div>
+    <p className="quiet clean-help">4개 → 로켓 · 네모 → 프로펠러 · ㄱ·T → 폭탄 · 5개 → 무지개. 특수끼리 바꾸면 합체!</p>
+    {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)}` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>단계 고르기</button></div>}
+  </div>
+}

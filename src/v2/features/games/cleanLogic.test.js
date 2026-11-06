@@ -1,0 +1,70 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { N, begin, play, goals, hasMove, STAGES } from './cleanLogic.js'
+
+// 결정적 난수
+const seeded = (seed) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
+const T = (k, sp = null) => ({ k, sp })
+const fill = () => Array.from({ length: N * N }, (_, i) => T((i + Math.floor(i / N) * 2) % 6)) // 줄 없는 판
+
+test('시작 판: 줄 없음, 움직일 수 있음, 먼지 배치', () => {
+  const s = begin(1, seeded(3))
+  assert.ok(hasMove(s.board))
+  assert.equal(s.dust.filter(Boolean).length, 16)
+  assert.equal(s.moves, STAGES[1].moves)
+})
+
+test('3개 맞추기: 지워지고 이동 1 줄고 모으기 증가, 무효 바꾸기는 null', () => {
+  const s = begin(0, seeded(5)); s.board = fill()
+  s.board[0] = T(0); s.board[1] = T(0); s.board[N + 2] = T(0); s.board[2] = T(3)
+  const r = play(s, 2, N + 2, seeded(9))
+  assert.ok(r); assert.equal(r.state.moves, s.moves - 1)
+  assert.ok(r.state.collected[0] >= 3)
+  assert.equal(play(r.state, 3 * N + 3, 3 * N + 5), null)
+})
+
+test('4개 → 로켓, 로켓끼리 바꾸면 줄 두 개 지움', () => {
+  const s = begin(0, seeded(7)); s.board = fill()
+  for (const c of [0, 1, 3]) s.board[c] = T(0); s.board[N + 2] = T(0); s.board[2] = T(4)
+  const r = play(s, 2, N + 2, seeded(11))
+  assert.ok(r.events.some((e) => e.type === 'make' && (e.sp === 'col' || e.sp === 'row')))
+})
+
+test('무지개 + 아무거나: 그 종류 전부 지움, 먼지 닦임', () => {
+  const s = begin(1, seeded(13)); s.board = fill()
+  s.board[7 * N] = T(2, 'rainbow')
+  const k = s.board[7 * N + 1].k
+  const before = s.board.filter((t) => t.k === k).length
+  const r = play(s, 7 * N, 7 * N + 1, seeded(17))
+  assert.ok(r.state.collected[k] >= before)
+  assert.ok(goals(r.state)[0].left < goals(s)[0].left)
+})
+
+test('목표를 다 채우면 승리, 이동이 0이면 실패', () => {
+  const s = begin(0, seeded(19)); s.board = fill()
+  s.collected[0] = 11; s.board[0] = T(0); s.board[1] = T(0); s.board[N + 2] = T(0); s.board[2] = T(3)
+  assert.equal(play(s, 2, N + 2, seeded(23)).state.done, 'win')
+  const t = { ...begin(0, seeded(29)), moves: 1 }; t.board = fill(); t.board[0] = T(5); t.board[1] = T(5); t.board[N + 2] = T(5); t.board[2] = T(3)
+  assert.equal(play(t, 2, N + 2, seeded(31)).state.done, 'lose')
+})
+
+test('2×2 네모 → 프로펠러, 특수는 옆과 바꾸기만 해도 터짐, 합치기', () => {
+  const s = begin(0, seeded(37)); s.board = fill()
+  s.board[0] = T(1); s.board[1] = T(1); s.board[N] = T(1); s.board[N + 2] = T(1); s.board[N + 1] = T(5)
+  const r = play(s, N + 1, N + 2, seeded(41))
+  assert.ok(r.events.some((e) => e.type === 'make' && e.sp === 'prop'))
+  const t = begin(0, seeded(43)); t.board = fill(); t.board[3 * N + 3] = T(0, 'row')
+  const r2 = play(t, 3 * N + 3, 3 * N + 4, seeded(47))
+  assert.ok(r2 && r2.events.some((e) => e.type === 'row'))
+  const u = begin(0, seeded(53)); u.board = fill(); u.board[3 * N + 3] = T(0, 'bomb'); u.board[3 * N + 4] = T(1, 'bomb')
+  const r3 = play(u, 3 * N + 3, 3 * N + 4, seeded(59))
+  assert.ok(r3.events.some((e) => e.type === 'combo' && e.kinds === 'bomb+bomb'))
+})
+
+test('승리하면 별과 남은 이동 보너스', () => {
+  const s = begin(0, seeded(61)); s.board = fill(); s.collected[0] = 11
+  s.board[0] = T(0); s.board[1] = T(0); s.board[N + 2] = T(0); s.board[2] = T(3)
+  const r = play(s, 2, N + 2, seeded(67))
+  assert.equal(r.state.done, 'win'); assert.equal(r.state.stars, 3)
+  assert.ok(r.events.some((e) => e.type === 'bonus' && e.n === STAGES[0].moves - 1))
+})

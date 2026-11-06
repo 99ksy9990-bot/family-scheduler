@@ -14,7 +14,7 @@ test.describe('공개 예시', () => {
     await expect(page.locator('.app-heading h1')).toHaveText('11월')
     await expect(page.locator('.month-card')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
     await page.getByRole('navigation').getByRole('button', { name: '놀이', exact: true }).click()
-    await expect(page.locator('.game-tile')).toHaveCount(7)
+    await expect(page.locator('.game-tile')).toHaveCount(8)
     await expect(page.locator('.header-add')).toHaveCount(0)
     await expect.poll(() => page.locator('.game-tile img').evaluateAll((images) => images.every((img) => img.complete && img.naturalWidth > 0))).toBe(true)
     const pending = GAMES.findIndex((game) => !game.component)
