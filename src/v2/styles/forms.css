@@ -70,3 +70,4 @@
 .form-disclosure .ui-segments button[aria-pressed='true'] { background: var(--tint); color: #fff; }
 .form-disclosure .ui-segments button:disabled { opacity: .4; }
 .form-disclosure .ui-segments button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+.task-form-group .owners-row { width: 100%; border-bottom: 0; }

@@ -139,8 +139,8 @@ test('할 일 추가·완료·캐릭터 반응·삭제 되돌리기·개수 일�
   await page.getByRole('button', { name: '할 일', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('할 일', { exact: true }).fill('방 정리')
-  await dialog.locator('input[name="assignees"][value="family"]').uncheck({ force: true })
-  await dialog.locator('input[name="assignees"]:not([value="family"])').first().check({ force: true })
+  const faces = dialog.locator('.schedule-owners button')
+  for (let i = 1; i < await faces.count(); i++) await faces.nth(i).click() // 첫 사람만 남기기
   await dialog.getByRole('button', { name: '추가', exact: true }).click()
   await expect(page.getByTestId('task-count')).toHaveText('1개 남음')
   await page.locator('.task-group').filter({ has: page.locator('summary', { hasText: '언젠가' }) }).locator('summary').click()

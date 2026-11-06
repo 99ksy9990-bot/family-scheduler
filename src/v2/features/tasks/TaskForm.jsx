@@ -1,5 +1,4 @@
 import CharacterAvatar from '../../components/CharacterAvatar'
-import MemberAvatars from '../../components/MemberAvatars'
 import { useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { iso } from '../../../lib/dates'
@@ -9,6 +8,11 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
   const [frequency, setFrequency] = useState(task?.recurrence?.frequency || 'none')
   const categories = state.taskCategories.length ? state.taskCategories : ['집안일']
   const [error, setError] = useState('')
+  const active = state.profiles.filter((profile) => profile.active !== false)
+  const initial = task?.assignees || [task?.assignee || 'family']
+  // 일정 추가의 '누구'와 같은 방식. 모두 고르거나 아무도 안 고르면 '가족'으로 저장
+  const [members, setMembers] = useState(initial.includes('family') ? active.map((profile) => profile.id) : initial)
+  const toggleMember = (id) => setMembers((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
   const submit = (event) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -17,7 +21,7 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
     if (values.startDate && values.dueDate && values.dueDate < values.startDate) { setError('마감일은 시작일보다 빠를 수 없어요.'); return }
     if (frequency !== 'none' && !values.dueDate) { setError('반복할 첫 날짜를 선택해 주세요.'); return }
     if (values.until && values.until < values.dueDate) { setError('반복 종료일을 확인해 주세요.'); return }
-    const assignees = form.getAll('assignees')
+    const assignees = !members.length || active.every((profile) => members.includes(profile.id)) ? [] : members
     const reminders = form.getAll('reminders')
     const item = { ...task, id: task?.id || crypto.randomUUID(), title: values.title.trim(), category: values.category,
       assignee: assignees[0] || 'family', assignees: assignees.length ? assignees : ['family'],
@@ -32,7 +36,7 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
       <li className="grouped-row task-row-stack"><span className="task-row-label">분류</span><span className="chip-choices" role="radiogroup" aria-label="분류">{[...new Set([...categories, ...(task?.category ? [task.category] : [])])].map((category) => <label className="choice-chip" key={category}><input type="radio" name="category" value={category} defaultChecked={(task?.category || categories[0]) === category} /><span>{category}</span></label>)}</span></li>
     </ul>
     <ul className="grouped-list task-form-group">
-      <li className="grouped-row task-row-stack"><span className="task-row-label">누가</span><span className="chip-choices" role="group" aria-label="담당 가족">{[{ id: 'family', name: '가족' }, ...state.profiles.filter((profile) => profile.active !== false)].map((profile) => <label className="choice-chip" key={profile.id}><input type="checkbox" name="assignees" value={profile.id} defaultChecked={(task?.assignees || [task?.assignee || 'family']).includes(profile.id)} /><span className="face-chip">{profile.id === 'family' ? <MemberAvatars item={{ member: 'family', members: ['family'] }} profiles={state.profiles.filter((p) => p.active !== false)} /> : <CharacterAvatar profile={profile} size={32} />}<small>{profile.name}</small></span></label>)}</span></li>
+      <li className="grouped-row"><div className="schedule-field owners-row"><span id="task-owners">누가</span><div className="schedule-owners" role="group" aria-labelledby="task-owners">{active.map((profile) => <button type="button" key={profile.id} aria-label={profile.name} aria-pressed={members.includes(profile.id)} onClick={() => toggleMember(profile.id)}><CharacterAvatar profile={profile} size={40} /></button>)}</div></div></li>
     </ul>
     <ul className="grouped-list task-form-group">
       <li className="grouped-row"><label className="task-line">시작일<input className="input-chip" type="date" name="startDate" defaultValue={task?.startDate || (task ? '' : iso(today))} /></label></li>

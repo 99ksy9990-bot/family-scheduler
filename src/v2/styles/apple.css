@@ -96,3 +96,14 @@
   .bottom-nav button[aria-current='page'] { background: rgba(255,255,255,.12); box-shadow: none; }
 }
 @media (prefers-reduced-transparency: reduce) { .bottom-nav { background: var(--solid-card); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+/* 유리 강화: 더 투명하게, 위쪽 반사광·가장자리 굴절 느낌 */
+.bottom-nav { background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.22)); -webkit-backdrop-filter: blur(14px) saturate(2) contrast(1.05); backdrop-filter: blur(14px) saturate(2) contrast(1.05); border: 1px solid rgba(255,255,255,.55); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 1px 0 0 rgba(255,255,255,.4), inset -1px 0 0 rgba(255,255,255,.4), 0 10px 30px rgba(0,0,0,.14), 0 1px 2px rgba(0,0,0,.08); }
+.bottom-nav::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(120% 70% at 50% -20%, rgba(255,255,255,.55), transparent 60%); }
+.bottom-nav button { position: relative; z-index: 1; }
+.bottom-nav button[aria-current='page'] { background: rgba(255,255,255,.5); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 4px rgba(0,0,0,.08); }
+@media (prefers-color-scheme: dark) {
+  .bottom-nav { background: linear-gradient(180deg, rgba(60,60,66,.5), rgba(30,30,34,.4)); border-color: rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 30px rgba(0,0,0,.45); }
+  .bottom-nav::before { background: radial-gradient(120% 70% at 50% -20%, rgba(255,255,255,.12), transparent 60%); }
+  .bottom-nav button[aria-current='page'] { background: rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.15); }
+}
+@media (prefers-reduced-transparency: reduce) { .bottom-nav { background: var(--solid-card); -webkit-backdrop-filter: none; backdrop-filter: none; } .bottom-nav::before { display: none; } }
