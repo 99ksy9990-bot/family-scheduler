@@ -11,7 +11,7 @@ function NativeChip({ type, value, onChange, label, name }) {
 const frequencies = [['none', '안 함'], ['daily', '매일'], ['weekly', '매주'], ['monthly', '매월'], ['yearly', '매년']]
 const remindersList = [['10-minutes', '10분 전'], ['30-minutes', '30분 전'], ['same-day', '당일']]
 
-export default function EventForm({ date, profiles, onSave, onClose }) {
+export default function EventForm({ date, profiles, onSave, onClose, onModeChange }) {
   const active = profiles.filter((profile) => profile.active !== false)
   const [allDay, setAllDay] = useState(false)
   const [multipleDays, setMultipleDays] = useState(false)
@@ -55,25 +55,25 @@ export default function EventForm({ date, profiles, onSave, onClose }) {
     if (saved) onClose()
     else setError('일정을 저장할 권한이 없어요. 가족 설정을 확인해 주세요.')
   }
-  return <Sheet title="일정 추가" onClose={onClose} className="event-sheet" handle>
-    <form className="schedule-form" onSubmit={submit}>
+  return <Sheet title="새 일정" onClose={onClose} className="event-sheet" submitForm="new-event-form">
+    <div className="add-mode"><button type="button" aria-pressed="true">일정</button><button type="button" onClick={() => onModeChange?.('task')}>할 일</button></div>
+    <form id="new-event-form" className="schedule-form" onSubmit={submit}>
       <div className="schedule-fields">
-        <input className="schedule-title" name="title" aria-label="무슨 일정인가요?" placeholder="무슨 일정인가요?" required maxLength={200} data-autofocus />
-        <div className="schedule-field"><span>날짜</span><NativeChip name="date" label="날짜" type="date" value={eventDate} onChange={updateDate} /></div>
-        {!allDay && <div className="schedule-field"><span>시간</span><NativeChip name="time" label="시작 시간" type="time" value={time} onChange={updateTime} /><span className="time-between">~</span><NativeChip name="end" label="종료 시간" type="time" value={end} onChange={setEnd} /></div>}
-        <div className="schedule-field"><span>하루 종일</span><button type="button" className="switch-control" role="switch" aria-label="하루 종일" aria-checked={allDay} onClick={() => setAllDay(!allDay)}><span aria-hidden="true" /></button></div>
-        <div className="schedule-field"><span>여러 날</span><button type="button" className="switch-control" role="switch" aria-label="여러 날" aria-checked={multipleDays} onClick={() => { setMultipleDays(!multipleDays); setEndDate(eventDate) }}><span aria-hidden="true" /></button></div>
-        {multipleDays && <div className="schedule-field"><span>종료일</span><NativeChip name="endDate" label="종료일" type="date" value={endDate} onChange={setEndDate} /></div>}
-        <p className="schedule-label" id="schedule-owners">누구 일정인가요?</p><div className="schedule-owners" role="group" aria-labelledby="schedule-owners">{(active.length ? active : [{ id: 'family', name: '가족 모두' }]).map((profile) => <button type="button" key={profile.id} aria-label={profile.name} aria-pressed={members.includes(profile.id)} onClick={() => toggleMember(profile.id)}><CharacterAvatar profile={profile} size={48} /><span>{profile.name}</span></button>)}</div>
-        <label className="schedule-field"><span>장소</span><input name="location" aria-label="장소" placeholder="선택 사항" /></label>
-        <div className="schedule-field"><span>반복</span><div className="ui-segments" role="group" aria-label="반복">{frequencies.map(([value, label]) => <button type="button" key={value} aria-pressed={frequency === value} onClick={() => setFrequency(value)}>{label}</button>)}</div></div>
-        {frequency !== 'none' && <div className="schedule-repeat"><label>반복 간격<input className="input-chip" name="interval" type="number" min={1} max={365} defaultValue={1} /></label><label>반복 종료일<input className="input-chip" name="until" type="date" /></label></div>}
-        <div className="schedule-field"><span>알림</span><div className="ui-segments" role="group" aria-label="알림"><button type="button" aria-pressed={!reminders.length} onClick={() => setReminders([])}>없음</button>{remindersList.map(([value, label]) => <button type="button" key={value} aria-pressed={reminders.includes(value)} onClick={() => setReminders((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}>{label}</button>)}</div></div>
-        <div className="schedule-field"><span>분류</span><div className="ui-segments" role="group" aria-label="일정 분류"><button type="button" aria-pressed={scope === 'family'} onClick={() => setScope('family')}>가족</button><button type="button" aria-pressed={scope === 'children'} disabled={!active.some((profile) => profile.type === 'child')} onClick={() => setScope('children')}>자녀</button></div></div>
-        {scope === 'children' && <div className="schedule-field"><span>종류</span><div className="ui-segments" role="group" aria-label="자녀 일정 종류">{['학교', '학원'].map((value) => <button type="button" key={value} aria-pressed={kind === value} onClick={() => setKind(value)}>{value}</button>)}</div></div>}
+        <div className="form-group"><input className="schedule-title" name="title" aria-label="무슨 일정인가요?" placeholder="제목" required maxLength={200} data-autofocus /><label className="schedule-field"><input name="location" aria-label="장소" placeholder="장소" /></label></div>
+        <div className="form-group">
+          <div className="schedule-field"><span>하루 종일</span><button type="button" className="switch-control" role="switch" aria-label="하루 종일" aria-checked={allDay} onClick={() => setAllDay(!allDay)}><span aria-hidden="true" /></button></div>
+          <div className="schedule-field"><span>시작</span><NativeChip name="date" label="날짜" type="date" value={eventDate} onChange={updateDate} />{!allDay && <NativeChip name="time" label="시작 시간" type="time" value={time} onChange={updateTime} />}</div>
+          <div className="schedule-field"><span>종료</span>{multipleDays && <NativeChip name="endDate" label="종료일" type="date" value={endDate} onChange={setEndDate} />}{!allDay ? <NativeChip name="end" label="종료 시간" type="time" value={end} onChange={setEnd} /> : <span className="quiet">{multipleDays ? '' : '같은 날'}</span>}</div>
+          <div className="schedule-field"><span>여러 날</span><button type="button" className="switch-control" role="switch" aria-label="여러 날" aria-checked={multipleDays} onClick={() => { setMultipleDays(!multipleDays); setEndDate(eventDate) }}><span aria-hidden="true" /></button></div>
+        </div>
+        <div className="form-group">
+          <div className="schedule-field owners-row"><span id="schedule-owners">누구</span><div className="schedule-owners" role="group" aria-labelledby="schedule-owners">{(active.length ? active : [{ id: 'family', name: '가족 모두' }]).map((profile) => <button type="button" key={profile.id} aria-label={profile.name} aria-pressed={members.includes(profile.id)} onClick={() => toggleMember(profile.id)}><CharacterAvatar profile={profile} size={40} /></button>)}</div></div>
+          <details className="form-disclosure"><summary>반복<span>{frequencies.find(([value]) => value === frequency)[1]} ›</span></summary><div className="ui-segments" role="group" aria-label="반복">{frequencies.map(([value, label]) => <button type="button" key={value} aria-pressed={frequency === value} onClick={() => setFrequency(value)}>{label}</button>)}</div>{frequency !== 'none' && <div className="schedule-repeat"><label>반복 간격<input name="interval" type="number" min={1} max={365} defaultValue={1} /></label><label>반복 종료일<input name="until" type="date" /></label></div>}</details>
+          <details className="form-disclosure"><summary>알림<span>{reminders.length ? reminders.map((value) => remindersList.find(([id]) => id === value)[1]).join(' · ') : '없음'} ›</span></summary><div className="ui-segments" role="group" aria-label="알림"><button type="button" aria-pressed={!reminders.length} onClick={() => setReminders([])}>없음</button>{remindersList.map(([value, label]) => <button type="button" key={value} aria-pressed={reminders.includes(value)} onClick={() => setReminders((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}>{label}</button>)}</div></details>
+        </div>
+        <div className="form-group"><details className="form-disclosure"><summary>일정 분류<span>{scope === 'family' ? '가족' : `자녀 · ${kind}`} ›</span></summary><div className="ui-segments" role="group" aria-label="일정 분류"><button type="button" aria-pressed={scope === 'family'} onClick={() => setScope('family')}>가족</button><button type="button" aria-pressed={scope === 'children'} disabled={!active.some((profile) => profile.type === 'child')} onClick={() => setScope('children')}>자녀</button></div>{scope === 'children' && <div className="ui-segments" role="group" aria-label="자녀 일정 종류">{['학교', '학원'].map((value) => <button type="button" key={value} aria-pressed={kind === value} onClick={() => setKind(value)}>{value}</button>)}</div>}</details></div>
         {error && <p className="error" role="alert">{error}</p>}
       </div>
-      <footer className="schedule-save"><button type="submit" className="primary-button">저장</button></footer>
     </form>
   </Sheet>
 }

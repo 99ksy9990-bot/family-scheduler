@@ -1,0 +1,83 @@
+/* 네 탭의 공통 머리·묶음 목록·타일 */
+.app-heading { padding-right: 56px; }
+.heading-line { display: flex; align-items: center; gap: 12px; }
+.header-add { position: absolute; right: 0; bottom: 0; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: var(--control); color: var(--on-control); }
+main { padding-top: 12px; }
+[data-view='today'] main { padding-top: 0; }
+.demo-banner { display: block; width: calc(100% + 32px); margin: 0 -16px; min-height: 30px; padding: 6px 10px; font-size: 12px; line-height: 18px; border: 0; border-radius: 0; background: var(--card); color: var(--tint-label); text-align: center; }
+.demo-banner + .app-heading { padding-top: max(12px, calc(env(safe-area-inset-top) - 31px)); }
+.empty-state,.data-message { display: block; background: var(--card); border-radius: 14px; padding: 16px; }
+.empty-state h3 { font-size: 17px; }
+.empty-state p { margin-top: 4px; font-size: 13px; color: var(--label-2); }
+.grouped-list { list-style: none; padding: 0; margin: 0; border-radius: 14px; overflow: hidden; background: var(--card); }
+.grouped-row { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 11px 16px; }
+.grouped-row + .grouped-row::before,.todo-row + .todo-row::before { content: ''; position: absolute; top: 0; left: 60px; right: 0; height: .5px; background: var(--sep); }
+.grouped-row:has(> .grouped-action) { padding: 0; }
+.grouped-action { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; border: 0; border-radius: 0; padding: 11px 16px; text-align: left; background: none; color: var(--label); }
+.grouped-icon { width: 32px; height: 32px; display: grid; place-items: center; flex-shrink: 0; }
+.grouped-body { flex: 1; min-width: 0; }
+.grouped-body strong,.grouped-body h3 { display: block; font-size: 17px; font-weight: 600; line-height: 21px; }
+.grouped-body small { display: block; color: var(--label-2); font-size: 13px; line-height: 17px; margin-top: 2px; }
+.grouped-value { color: var(--label-2); font-size: 17px; white-space: nowrap; }
+.house-section-title { padding-left: 4px; padding-right: 4px; }
+.month-arrows { display: flex; margin-right: auto; }
+.month-arrows button { padding: 0; width: 32px; min-height: 44px; border: 0; background: none; color: var(--tint-label); }
+.month-card { background: var(--card); border-radius: 22px; padding: 12px 8px 8px; touch-action: pan-y; }
+.month-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); text-align: center; }
+.month-grid .weekday { padding: 4px 0; }
+.month-grid .calendar-day { border: 0; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; background: none; border-radius: 0; }
+.month-grid .day-number { width: 36px; height: 36px; font-size: 17px; color: var(--label); }
+.month-grid .outside .day-number { color: var(--label-3); }
+.month-grid :is(.sunday,.holiday-day) .day-number { color: var(--error); }
+.month-grid [aria-pressed='true'] .day-number { background: rgba(10,132,255,.14); color: var(--tint-label); font-weight: 700; }
+.month-grid [data-today='true'] .day-number { background: var(--control); color: var(--on-control); font-weight: 700; }
+.selected-schedule { margin-top: 0; }
+.task-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-section-heading small { font-size: 13px; font-weight: 400; color: var(--label-2); margin-left: 6px; }
+.text-button { border: 0; padding: 0 4px; font-size: 13px; background: none; color: var(--tint-label); }
+.task-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.task-chips button { border: 0; border-radius: 999px; background: var(--card); font-size: 15px; font-weight: 600; padding: 8px 14px; min-height: 40px; white-space: nowrap; }
+.task-chips button[aria-pressed='true'] { background: var(--control); color: var(--on-control); }
+.task-hint { font-size: 12px; margin: 6px 4px; }
+.task-group { margin-top: 8px; }
+.task-group summary { list-style: none; font-size: 17px; font-weight: 600; padding: 12px 16px; min-height: 48px; background: var(--card); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.task-group summary::-webkit-details-marker { display: none; }
+.task-group summary span { color: var(--label-2); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.task-group[open] summary { border-radius: 14px 14px 0 0; }
+.task-group[open] summary svg { transform: rotate(90deg); }
+.task-group[open] .grouped-list,.task-group[open] .empty-state { border-radius: 0 0 14px 14px; }
+.todo-row { display: flex; align-items: center; position: relative; gap: 12px; padding: 8px 16px; }
+.round-check { display: grid; place-items: center; width: 32px; height: 44px; position: relative; flex-shrink: 0; }
+.round-check input { position: absolute; opacity: 0; width: 32px; height: 44px; cursor: pointer; }
+.round-check > span { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--label-3); display: grid; place-items: center; pointer-events: none; }
+.round-check input:checked + span { background: var(--control); border-color: var(--control); color: var(--on-control); }
+.round-check input:focus-visible + span { outline: 2px solid var(--tint); outline-offset: 3px; }
+.todo-body { flex: 1; min-width: 0; padding: 4px 0; text-align: left; border: 0; background: none; border-radius: 0; }
+.todo-body strong { display: block; font-size: 17px; font-weight: 600; line-height: 21px; }
+.todo-body small { display: block; font-size: 13px; color: var(--label-2); line-height: 17px; margin-top: 2px; }
+.todo-members { display: flex; flex-wrap: wrap; max-width: 76px; gap: 2px; }
+.task-celebration { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 8px; }
+.family-page .settings-entry { display: flex; border: 0; padding: 0; border-radius: 0; background: none; }
+.family-page .settings-entry::before { left: 60px; }
+.family-page .grouped-icon { flex: 0 0 32px; }
+.settings-color-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #007aff; color: #fff; }
+.settings-color-icon[data-icon='family'] { background: #5856d6; }
+.settings-color-icon[data-icon='notifications'] { background: #df3a32; }
+.settings-color-icon[data-icon='backup'] { background: #24834c; }
+.settings-color-icon[data-icon='about'] { background: #747480; }
+.game-orb { width: 66px; height: 66px; flex-shrink: 0; background-color: rgba(10,132,255,.16); }
+.game-orb img { width: 56px; height: 56px; object-fit: contain; }
+.game-orb::after { opacity: .35; inset: 2px 18% 72%; }
+.game-tile strong { font-size: 17px; line-height: 20px; }
+.add-choices { background: var(--card); border-radius: 14px; overflow: hidden; }
+.add-choices button { display: flex; gap: 12px; align-items: center; width: 100%; border: 0; border-radius: 0; background: none; font-size: 17px; }
+.add-choices button + button { border-top: .5px solid var(--sep); }
+[data-view='play'] main,[data-view='family'] main { padding-top: 0; }
+.family-section-heading { display: flex; justify-content: space-between; align-items: center; }
+.settings-color-icon[data-icon='connection'] { background: #34c759; }
+.settings-color-icon[data-icon='notifications'] { background: #ff3b30; }
+.settings-color-icon[data-icon='backup'] { background: #0a84ff; }
+.game-orb img { width: 44px; height: 44px; }
+.player-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 12px; }
+.player-options button { display: grid; justify-items: center; gap: 4px; border: 0; background: var(--card); border-radius: 22px; padding: 16px; }
+.game-player { font-size: 13px; color: var(--label-2); margin-bottom: 8px; }

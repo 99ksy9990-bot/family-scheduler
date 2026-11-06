@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import CharacterAvatar from '../../components/CharacterAvatar'
-import Timeline, { DataState } from '../../components/Timeline'
+import { DataState } from '../../components/DataState'
+import ScheduleList from '../../components/ScheduleList'
 import Sheet from '../../components/Sheet'
 import { houseStatus, remainingSchedule, rowsForMember } from '../../data/house'
 import { assignedMemberIds } from '../../../lib/legacyState'
@@ -26,6 +27,6 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
         return <li key={row.id} className={`house-row${row.id === nextTimed?.id ? ' next' : ''}`}><CharacterAvatar profile={profile} size={32} /><div><h3>{row.title}</h3><small>{members.map((member) => member.name).join(' · ') || profile.name}</small></div><time>{row.displayStart || '종일'}</time></li>
       })}</ol> : <div className="empty-state"><h3>오늘 남은 일정이 없어요</h3><p>가족 타일을 누르면 지난 일정도 볼 수 있어요.</p></div>}</DataState>
     </section>
-    {selected && <Sheet title={`${selected.name}의 오늘 일정`} onClose={() => setSelected(null)}><Timeline rows={rowsForMember(rows, selected.id)} profiles={state.profiles} date={today} now={now} /></Sheet>}
+    {selected && <Sheet title={`${selected.name}의 오늘 일정`} onClose={() => setSelected(null)}><ScheduleList rows={rowsForMember(rows, selected.id)} profiles={state.profiles} /></Sheet>}
   </div>
 }

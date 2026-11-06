@@ -6,9 +6,9 @@ import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
 
 const characters = [['dad', '아빠'], ['mom', '엄마'], ['big', '큰딸'], ['little', '작은딸']]
 
-export default function Family({ state, updateState, canEdit }) {
+export default function Family({ state, updateState, canEdit, initialProfile }) {
   const [section, setSection] = useState('profiles')
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing] = useState(() => state.profiles.find((profile) => profile.id === initialProfile) || null)
   const [message, setMessage] = useState('')
   const profiles = state.profiles
   const members = [['family', '가족 모두'], ...profiles.map((profile) => [profile.id, profile.name])]

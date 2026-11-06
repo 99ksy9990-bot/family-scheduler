@@ -24,7 +24,7 @@ test('우리집 이름·불투명 타일·유리 아이콘·떠 있는 알약', 
   expect(await tile.locator('.glass-icon').evaluate((element) => element.getBoundingClientRect().width)).toBe(66)
   expect(await tile.locator('.glass-icon').evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient')
   await expect(page.locator('.glass-background')).toHaveCount(0)
-  await page.getByRole('navigation').getByRole('button', { name: '설정', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.getByRole('button', { name: '일정 추가', exact: true })).toHaveCount(0)
 })
 

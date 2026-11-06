@@ -1,44 +1,44 @@
-.event-sheet.sheet { height: calc(100dvh - 110px); max-height: calc(100dvh - 110px); display: flex; flex-direction: column; padding: 8px 18px 0; overflow: hidden; border-radius: 28px 28px 0 0; background: var(--solid-card); }
-.sheet-grab { width: 40px; height: 5px; min-height: 5px; border-radius: 3px; background: var(--sep); margin: 0 auto 10px; }
-.event-sheet .sheet-heading { margin: 0 0 12px; flex-shrink: 0; }
-.event-sheet .sheet-heading h2 { font-size: 19px; font-weight: 700; }
-.event-sheet .sheet-heading .icon-button { border: 0; border-radius: 50%; background: var(--bg); color: var(--label-2); }
+.event-sheet.sheet { height: calc(100dvh - max(54px, env(safe-area-inset-top))); max-height: calc(100dvh - max(54px, env(safe-area-inset-top))); display: flex; flex-direction: column; padding: 0 16px max(12px, env(safe-area-inset-bottom)); overflow: hidden; border-radius: 14px 14px 0 0; background: var(--bg); }
+.event-sheet .sheet-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; padding: 6px 0; flex-shrink: 0; }
+.event-sheet .sheet-toolbar h2 { font-size: 17px; font-weight: 700; text-align: center; }
+.sheet-toolbar button { min-width: 44px; min-height: 44px; padding: 4px 0; border: 0; background: none; color: var(--tint-label); font-size: 17px; }
+.sheet-toolbar button:last-child { font-weight: 700; }
+.add-mode { display: flex; justify-content: center; gap: 8px; padding: 0 0 12px; flex-shrink: 0; }
+.add-mode button { border: 0; border-radius: 999px; padding: 7px 14px; background: var(--card); font-size: 15px; font-weight: 600; min-height: 36px; }
+.add-mode button[aria-pressed='true'] { background: var(--control); color: var(--on-control); }
 .schedule-form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
-.schedule-fields { overflow-y: auto; min-height: 0; flex: 1; padding-bottom: 8px; }
-.schedule-title { width: 100%; font-size: 20px; font-weight: 700; border: 0; border-bottom: 2px solid var(--control); background: none; padding: 8px 2px; margin-bottom: 6px; border-radius: 0; color: var(--label); }
-.schedule-field { display: flex; align-items: center; gap: 8px; min-height: 48px; border-bottom: 1px solid var(--sep); }
-.schedule-field > span:first-child { flex: 1; font-size: 15px; font-weight: 600; white-space: nowrap; }
-.schedule-field .input-chip { width: auto; min-width: 0; max-width: 160px; border: 0; font-size: 15px; font-weight: 700; background: var(--bg); border-radius: 10px; padding: 7px 8px; min-height: 40px; color: var(--label); }
-.schedule-field input[type='time'] { width: 100px; }
-.schedule-field input[name='location'] { width: 70%; min-width: 0; font-size: 15px; border: 0; background: none; text-align: right; padding: 8px 0; color: var(--label); }
-.time-between { color: var(--label-2); }
-.switch-control { width: 46px; min-width: 46px; height: 44px; min-height: 44px; border: 0; padding: 0; background: none; position: relative; }
+.schedule-fields { overflow-y: auto; min-height: 0; flex: 1; padding-bottom: 8px; display: flex; flex-direction: column; gap: 16px; scrollbar-width: none; }
+.schedule-fields::-webkit-scrollbar { display: none; }
+.form-group { background: var(--card); border-radius: 14px; padding: 0 16px; flex-shrink: 0; }
+.schedule-title { width: 100%; font-size: 17px; font-weight: 400; border: 0; border-bottom: .5px solid var(--sep); background: none; padding: 14px 0; border-radius: 0; color: var(--label); }
+.schedule-field { display: flex; align-items: center; gap: 8px; min-height: 50px; border-bottom: .5px solid var(--sep); }
+.schedule-field:last-child { border-bottom: 0; }
+.schedule-field > span:first-child { flex: 1; font-size: 17px; font-weight: 400; white-space: nowrap; }
+.schedule-field input[name='location'] { width: 100%; min-width: 0; min-height: 48px; font-size: 17px; border: 0; background: none; text-align: left; padding: 8px 0; color: var(--label); }
+.schedule-field .input-chip { width: auto; min-width: 0; max-width: 160px; border: 0; font-size: 17px; background: var(--fill); border-radius: 8px; padding: 4px 8px; min-height: 36px; color: var(--label); }
+.schedule-field .native-chip { display: block; position: relative; line-height: 26px; white-space: nowrap; }
+.native-chip input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.native-chip:focus-within { outline: 2px solid var(--tint); outline-offset: 2px; }
+.switch-control { width: 51px; min-width: 51px; height: 44px; min-height: 44px; border: 0; padding: 0; background: none; position: relative; }
 .switch-control:hover { background: none; }
-.switch-control > span { position: absolute; inset: 8px 0; border-radius: 14px; background: var(--sep); }
-.switch-control > span::after { content: ''; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--solid-card); transition: transform var(--dur-micro); }
+.switch-control > span { position: absolute; top: 6px; left: 0; width: 51px; height: 31px; border-radius: 16px; background: var(--sep); }
+.switch-control > span::after { content: ''; position: absolute; left: 2px; top: 2px; width: 27px; height: 27px; border-radius: 50%; background: var(--switch-thumb); box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform var(--dur-micro); }
 .switch-control[aria-checked='true'] > span { background: var(--control); }
-.switch-control[aria-checked='true'] > span::after { transform: translateX(18px); }
-.schedule-label { font-size: 15px; font-weight: 600; margin: 14px 0 8px; }
-.schedule-owners { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-bottom: 6px; }
-.schedule-owners button { padding: 6px 0; border: 0; border-radius: 14px; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 13px; font-weight: 600; color: var(--label-2); }
-.schedule-owners button[aria-pressed='true'] { background: var(--control); color: var(--label); }
+.switch-control[aria-checked='true'] > span::after { transform: translateX(20px); }
+.schedule-owners { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; margin: 0; padding: 4px 0; }
+.schedule-owners button { width: 40px; min-height: 44px; padding: 0; border: 0; background: none; border-radius: 50%; }
+.schedule-owners button[aria-pressed='true'] { background: none; }
 .schedule-owners button:not([aria-pressed='true']) img { filter: grayscale(.9); opacity: .6; }
-.character-size-48 { width: 48px; height: 48px; border: 0; margin: 0; }
-.character-size-48 img, .character-size-48 .character-initial { width: 48px; height: 48px; border-radius: 50%; }
-.ui-segments { display: flex; background: var(--bg); border-radius: 10px; padding: 2px; }
+.form-disclosure { padding: 0; }
+.form-disclosure + .form-disclosure { border-top: .5px solid var(--sep); }
+.form-disclosure summary { min-height: 50px; list-style: none; display: flex; align-items: center; justify-content: space-between; font-size: 17px; cursor: pointer; }
+.form-disclosure summary::-webkit-details-marker { display: none; }
+.form-disclosure summary span { font-size: 15px; color: var(--label-2); text-align: right; }
+.ui-segments { display: flex; background: var(--fill); border-radius: 10px; padding: 2px; flex-wrap: wrap; margin-bottom: 8px; }
 .ui-segments button { min-height: 44px; min-width: 40px; font-size: 13px; font-weight: 400; padding: 6px 7px; border: 0; border-radius: 8px; background: none; color: var(--label); white-space: nowrap; }
-.ui-segments button[aria-pressed='true'] { background: var(--solid-card); box-shadow: var(--shadow-card); font-weight: 700; }
+.ui-segments button[aria-pressed='true'] { background: var(--solid-card); font-weight: 700; }
 .schedule-repeat { display: flex; gap: 8px; padding: 8px 0; }
 .schedule-repeat label { flex: 1; min-width: 0; display: grid; font-size: 13px; gap: 4px; }
-.schedule-repeat input { width: 100%; min-width: 0; min-height: 40px; background: var(--bg); border: 1px solid var(--sep); border-radius: 10px; }
-.schedule-save { flex-shrink: 0; padding: 8px 0 max(12px, env(safe-area-inset-bottom)); background: var(--solid-card); }
-.schedule-save button { width: 100%; height: 54px; border-radius: 16px; border: 0; border: 0; background: var(--control); font-size: 17px; font-weight: 700; color: var(--label); }
-
-.schedule-field .native-chip { display: block; position: relative; padding: 7px 12px; line-height: 26px; min-height: 40px; white-space: nowrap; }
-.native-chip input { position: absolute; inset: 0; width: 100% !important; height: 100%; opacity: 0; cursor: pointer; }
-.native-chip:focus-within { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-
-
-.schedule-save button { color: var(--on-control); }
-.switch-control > span::after { background: var(--switch-thumb); }
-.schedule-owners button[aria-pressed='true'] { color: var(--on-control); }
+.schedule-repeat input { width: 100%; min-width: 0; border: 0; padding: 8px; background: var(--bg); border-radius: 8px; }
+.task-add-form { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 12px; gap: 16px; }
+.task-add-form > label,.task-add-form > fieldset,.task-add-form > .form-pair { background: var(--card); border: 0; border-radius: 14px; padding: 12px 16px; margin: 0; }

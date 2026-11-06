@@ -28,7 +28,7 @@ export function useScheduler() {
   const sync = useFamilySync({ localState: loaded.state, onRemoteState })
   const canEdit = !sync.family || Boolean(sync.family.membership?.can_edit)
   useEffect(() => {
-    if (!loaded.state) return
+    if (!loaded.state || !sync.session) return
     const timer = window.setTimeout(() => {
       try {
         const state = toLegacy(loaded.state)
@@ -38,7 +38,7 @@ export function useScheduler() {
       } catch { setSaveError('기기에 저장하지 못했어요. 저장 공간을 확인해 주세요.') }
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [loaded.state])
+  }, [loaded.state, sync.session])
   const updateState = (update) => {
     if (!canEdit || !loaded.state) return false
     setLoaded((current) => ({ ...current, state: typeof update === 'function' ? update(current.state) : update }))
