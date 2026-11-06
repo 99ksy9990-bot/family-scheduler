@@ -60,7 +60,7 @@ main { padding-top: 12px; }
 .family-page .settings-entry { display: flex; border: 0; padding: 0; border-radius: 0; background: none; }
 .family-page .settings-entry::before { left: 60px; }
 .family-page .grouped-icon { flex: 0 0 32px; }
-.settings-color-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #007aff; color: #fff; }
+.settings-color-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #007aff; color: var(--on-tint); }
 .settings-color-icon[data-icon='family'] { background: #5856d6; }
 .settings-color-icon[data-icon='notifications'] { background: #df3a32; }
 .settings-color-icon[data-icon='backup'] { background: #24834c; }
@@ -75,22 +75,22 @@ main { padding-top: 12px; }
 [data-view='play'] main,[data-view='family'] main { padding-top: 0; }
 .family-section-heading { display: flex; justify-content: space-between; align-items: center; }
 .settings-color-icon[data-icon='connection'] { background: #34c759; }
-.settings-color-icon[data-icon='notifications'] { background: #ff3b30; }
-.settings-color-icon[data-icon='backup'] { background: #0a84ff; }
+.settings-color-icon[data-icon='notifications'] { background: var(--red); }
+.settings-color-icon[data-icon='backup'] { background: var(--tint); }
 .game-orb img { width: 44px; height: 44px; }
 .player-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 12px; }
 .player-options button { display: grid; justify-items: center; gap: 4px; border: 0; background: var(--card); border-radius: 22px; padding: 16px; }
 .game-player { font-size: 13px; color: var(--label-2); margin-bottom: 8px; }
-.header-add { top: -6px; bottom: auto; background: none; color: var(--tint, #0a84ff); box-shadow: none; border-radius: 10px; }
+.header-add { top: -6px; bottom: auto; background: none; color: var(--tint); box-shadow: none; border-radius: 10px; }
 .header-add svg { width: 28px; height: 28px; stroke-width: 2.4; }
 .header-add:active { opacity: .5; }
-.header-add:focus-visible { outline: 3px solid var(--tint, #0a84ff); outline-offset: 2px; }
+.header-add:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
 /* 달력 칸 근무 이름표 */
 .calendar-day { align-content: start; }
 .shift-label { display: block; font-size: 11px; font-weight: 600; line-height: 16px; border-radius: 5px; margin: 1px 2px 0; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: clip; }
-.shift-label[data-shift='day'] { background: #fff1c2; color: #8a5a00; }
-.shift-label[data-shift='evening'] { background: #ffe0d4; color: #a33a12; }
-.shift-label[data-shift='night'] { background: #dfe0ff; color: #3634a3; }
+.shift-label[data-shift='day'] { background: var(--shift-d-bg); color: var(--shift-d-ink); }
+.shift-label[data-shift='evening'] { background: var(--shift-e-bg); color: var(--shift-e-ink); }
+.shift-label[data-shift='night'] { background: var(--shift-n-bg); color: var(--shift-n-ink); }
 .shift-label[data-shift='off'] { background: var(--fill); color: var(--label-2); }
 .month-grid .calendar-day { height: 58px; min-height: 58px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; padding-top: 2px; }
 .month-grid .calendar-day .day-number { width: 30px; height: 30px; font-size: 16px; align-self: center; display: grid; place-items: center; border-radius: 50%; }
@@ -128,8 +128,8 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .heading-line.month-center { justify-content: center; gap: 8px; margin-right: -52px; }
 .month-arrow { width: 36px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--tint-label); display: grid; place-items: center; }
 .shift-label[data-shift='leave-full'] { background: #d8f2e0; color: #1f7a45; }
-.shift-label[data-shift='leave-am'] { background: #fff1c2; color: #8a5a00; }
-.shift-label[data-shift='leave-pm'] { background: #dfe0ff; color: #3634a3; }
+.shift-label[data-shift='leave-am'] { background: var(--shift-d-bg); color: var(--shift-d-ink); }
+.shift-label[data-shift='leave-pm'] { background: var(--shift-n-bg); color: var(--shift-n-ink); }
 .shift-label[data-shift^='leave-am'], .shift-label[data-shift^='leave-pm'] { font-size: 10px; letter-spacing: -.4px; }
 .shift-label[data-shift='blank'] { visibility: hidden; min-height: 16px; }
 /* 상주 근무자 연차·반차는 쉬는 날이라 휴무와 같은 회색 */

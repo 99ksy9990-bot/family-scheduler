@@ -84,7 +84,7 @@ test('야간 이월 근무 원본과 시간표 편집, 중복 근무를 만들�
   await page.keyboard.press('Escape')
   await page.getByRole('navigation').getByRole('button', { name: '가족', exact: true }).click()
   await page.getByRole('list', { name: '구성원', exact: true }).getByRole('button', { name: /^아이/ }).click()
-  await page.getByRole('list', { name: '학기 시간표', exact: true }).getByRole('button').first().click()
+  await page.getByRole('list', { name: /학기/ }).last().getByRole('button').first().click()
   await page.getByLabel('수업 이름', { exact: true }).fill('바꾼 시간표')
   await page.getByRole('button', { name: '저장', exact: true }).click()
   await expect(page.locator('.member-hero h2')).toHaveText('아이')

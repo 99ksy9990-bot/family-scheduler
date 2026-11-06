@@ -21,7 +21,13 @@ export default function Records({ title, collection, fields, state, updateState,
     if (values.start && values.end && collection === 'schedulePeriods' && values.end < values.start) { setError('종료일을 확인해 주세요.'); return }
     if (values.calendarType !== 'lunar' && values.month && values.day > new Date(2000, values.month, 0).getDate()) { setError('존재하는 날짜를 선택해 주세요.'); return }
     if (values.calendarType === 'lunar' && values.day > 30) { setError('음력 날짜는 30일까지 선택해 주세요.'); return }
+    // 학년·구분을 고르면 옛 앱이 읽는 season(학기/방학)도 맞춰 저장
+    if (values.term) values.season = values.term.endsWith('방학') ? '방학' : '학기'
+    // 특정 기간을 고르면 구분(학기/방학)도 그 기간에 맞춤 → 옛 앱에서도 같은 구분으로 보임
+    if (values.periodId) { const period = state.schedulePeriods.find((p) => p.id === values.periodId); if (period) values.season = period.season }
+    if ('periodId' in values && !values.periodId) delete values.periodId
     const record = { ...editing, ...values }
+    if (!values.periodId && 'periodId' in editing && fields.some((f) => f.key === 'periodId')) delete record.periodId
     if (identity === 'id') record.id ||= crypto.randomUUID()
     const previousId = keyOf(editing)
     const saved = updateState((current) => ({ ...current, [collection]: previousId

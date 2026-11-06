@@ -81,11 +81,14 @@ export const scheduleWeekdays = (schedule) => {
 // 기간 구분: 옛 앱은 '학기'/'방학', 새 앱 초기 버전은 'term'/'vacation'으로 저장 → 같은 것으로 비교
 export const seasonOf = (value) => value === 'term' ? '학기' : value === 'vacation' ? '방학' : value
 
+// periodId가 있으면 그 기간에만, 없으면 같은 구분(학기/방학)의 모든 기간에
+export const scheduleInPeriod = (schedule, period) => Boolean(period) && (schedule.periodId ? schedule.periodId === period.id : seasonOf(schedule.season) === seasonOf(period.season))
+
 export const childEventsForDate = (date, childSchedules, schedulePeriods, scheduleExceptions = []) => {
   const dateValue = iso(date)
   if (holidaysForYear(date.getFullYear()).has(dateValue)) return []
   return childSchedules
-    .filter((schedule) => seasonOf(schedule.season) === seasonOf(activeSeasonForDate(date, schedulePeriods, schedule.member)) && scheduleWeekdays(schedule).includes(date.getDay()))
+    .filter((schedule) => scheduleInPeriod(schedule, activePeriodForDate(date, schedulePeriods, schedule.member)) && scheduleWeekdays(schedule).includes(date.getDay()))
     .filter((schedule) => !scheduleExceptions.some((exception) => exception.scheduleId === schedule.id && exception.date === dateValue && exception.type === 'skip'))
     .map((schedule) => ({
       ...schedule,

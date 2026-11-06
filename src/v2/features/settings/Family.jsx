@@ -1,3 +1,4 @@
+import { periodName } from '../../data/periods'
 import { clock } from '../../data/schedule'
 import { NativeChip } from '../../components/EventForm'
 import { useState } from 'react'
@@ -18,9 +19,11 @@ export default function Family({ state, updateState, canEdit, initialProfile, in
   const childMember = { ...memberField, options: profiles.filter((profile) => profile.type === 'child').map((profile) => [profile.id, profile.name]), defaultValue: profiles.find((profile) => profile.type === 'child')?.id, required: true }
   const periodMember = { ...childMember, options: [['all', '모든 자녀'], ...childMember.options], defaultValue: 'all' }
   const season = { key: 'season', label: '기간 구분', options: [['학기', '학기'], ['방학', '방학']], defaultValue: '학기' }
+  const dot = (d) => (d || '').slice(2).replaceAll('-', '.')
+  const periodField = { key: 'periodId', label: '기간', options: [['', '구분 전체'], ...state.schedulePeriods.toSorted((a, b) => (a.start || '').localeCompare(b.start || '')).map((p) => [p.id, `${periodName(p, state.childProfiles.find((c) => c.member === p.member))} (${dot(p.start)}–${dot(p.end)})`])], defaultValue: '' }
   const collections = {
-    schedules: ['자녀 시간표', 'childSchedules', [{ key: 'title', label: '수업 이름', required: true }, childMember, season, { key: 'kind', label: '종류', options: [['학교', '학교'], ['학원', '학원']], defaultValue: '학원' }, { key: 'time', label: '시작 시간', type: 'time', required: true }, { key: 'end', label: '종료 시간', type: 'time', required: true }, { key: 'weekdays', label: '요일', type: 'weekdays' }]],
-    periods: ['학기·방학 기간', 'schedulePeriods', [periodMember, season, { key: 'start', label: '시작일', type: 'date', required: true }, { key: 'end', label: '종료일', type: 'date', required: true }]],
+    schedules: ['자녀 시간표', 'childSchedules', [{ key: 'title', label: '수업 이름', required: true }, childMember, season, periodField, { key: 'kind', label: '종류', options: [['학교', '학교'], ['학원', '학원']], defaultValue: '학원' }, { key: 'time', label: '시작 시간', type: 'time', required: true }, { key: 'end', label: '종료 시간', type: 'time', required: true }, { key: 'weekdays', label: '요일', type: 'weekdays' }]],
+    periods: ['학기·방학 기간', 'schedulePeriods', [periodMember, { key: 'grade', label: '학년', options: [1, 2, 3, 4, 5, 6].map((g) => [String(g), `${g}학년`]), defaultValue: String(state.childProfiles[0]?.grade || 1) }, { key: 'term', label: '구분', options: ['1학기', '2학기', '여름방학', '겨울방학'].map((t) => [t, t]), defaultValue: '1학기' }, { key: 'start', label: '시작일', type: 'date', required: true }, { key: 'end', label: '종료일', type: 'date', required: true }]],
     schools: ['자녀 학교 정보', 'childProfiles', [childMember, ...[['school', '학교'], ['grade', '학년'], ['classNumber', '반'], ['studentNumber', '번호'], ['teacherName', '담임 선생님'], ['teacherPhone', '연락처']].map(([key, label]) => ({ key, label }))]],
     anniversaries: ['기념일', 'anniversaries', [{ key: 'name', label: '이름', required: true }, { key: 'kind', label: '종류', options: [['생일', '생일'], ['기념일', '기념일']], defaultValue: '생일' }, { key: 'calendarType', label: '달력', options: [['solar', '양력'], ['lunar', '음력']], defaultValue: 'solar' }, { key: 'month', label: '월', type: 'number', min: 1, max: 12, required: true }, { key: 'day', label: '일', type: 'number', min: 1, max: 31, required: true }, { key: 'baseYear', label: '기준 연도', type: 'number', min: 1900, max: 2100 }, { key: 'leapMonth', label: '윤달', type: 'checkbox' }]],
     shifts: ['날짜별 근무', 'shifts', [memberField, { key: 'date', label: '날짜', type: 'date', required: true }, { key: 'shift', label: '근무 유형', options: (state.workSettings.shiftTypes?.length ? state.workSettings.shiftTypes : DEFAULT_SHIFT_TYPES).map((item) => [item.id, item.label]), defaultValue: 'day' }]],

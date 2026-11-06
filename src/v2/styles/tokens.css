@@ -8,6 +8,8 @@
   --bar: rgba(249,249,249,.86); --fill: rgba(120,120,128,.12); --error: #ad1534;
   --dad: #5e5ce6; --mom: #ff7a59; --big: #bf5af2; --little: #30b07a;
   --icon-selected: #0064ce; --icon-line: rgba(255,255,255,.9); --badge-light: #fff; --badge-dark: #101014; --switch-thumb: #fff;
+  --on-tint: #fff; --red: #ff3b30; --orange: #ff9f0a;
+  --shift-d-bg: #fff1c2; --shift-d-ink: #8a5a00; --shift-e-bg: #ffe0d4; --shift-e-ink: #a33a12; --shift-n-bg: #dfe0ff; --shift-n-ink: #3634a3;
   --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-3xl: 96px;
   --text-xs: .75rem; --text-sm: .875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem;
   --font-body: var(--font); --font-display: var(--font); --num: tabular-nums;

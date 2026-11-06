@@ -82,3 +82,7 @@ main { padding-top: 18px; }
 
 .task-check { width: 44px; min-height: 44px; display: grid; place-items: center; flex-shrink: 0; }
 button, a, label { -webkit-tap-highlight-color: transparent; }
+/* 누를 수 없는 버튼: 흐림 + 커서 + 회색 바탕 (흐림만으로 구분하지 않기) */
+button:disabled, .member-color:disabled { cursor: not-allowed; }
+.form-disclosure .ui-segments button:disabled { background: var(--fill); color: var(--label-3); cursor: not-allowed; }
+::selection { background: color-mix(in srgb, var(--tint) 25%, transparent); color: var(--label); }
