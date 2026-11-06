@@ -121,7 +121,7 @@
 .skip-day { flex: none; border: 0; background: var(--fill); color: var(--tint); font-size: 12px; font-weight: 600; border-radius: 999px; padding: 6px 10px; min-height: 32px; margin-right: 6px; } .skip-day:focus-visible { outline: 3px solid var(--tint); }
 .member-hide-group { margin-top: 28px; }
 /* 기록 편집(시간표·학기·기념일·근무·학교): 아이폰 묶음 목록 모양. 네모 입력칸 대신 행 + 오른쪽 칩 */
-.settings-content .event-form.settings-card { background: var(--card); border: 0; border-radius: 14px; padding: 0 16px; gap: 0; box-shadow: none; }
+.settings-content .event-form.settings-card { background: var(--card); border: 0; border-radius: 14px; padding: 0 16px 16px; gap: 0; box-shadow: none; }
 .settings-content .event-form > label, .settings-content .event-form > fieldset { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 6px 0; border: 0; border-bottom: .5px solid var(--sep); border-radius: 0; margin: 0; font-size: 17px; color: var(--label); }
 .settings-content .event-form > fieldset { flex-wrap: wrap; padding: 10px 0; }
 .settings-content .event-form > fieldset legend { float: left; font-size: 17px; padding: 0; margin-bottom: 8px; width: 100%; }
@@ -133,7 +133,7 @@
 .settings-content .event-form fieldset .check-label:has(input:checked) { background: var(--tint); color: var(--on-tint); }
 .settings-content .event-form > label.check-label { justify-content: space-between; width: 100%; }
 .settings-content .event-form > label.check-label input { position: static; opacity: 1; width: 22px; height: 22px; accent-color: var(--tint); }
-.settings-content .event-form > .primary-button, .settings-content .event-form > button { margin: 10px 0; min-height: 48px; border-radius: 12px; border: 0; width: 100%; font-size: 17px; }
+.settings-content .event-form > .primary-button, .settings-content .event-form > button { margin: 16px 0 0; min-height: 48px; border-radius: 12px; border: 0; width: 100%; font-size: 17px; }
 .settings-content .event-form > button:not(.primary-button):not(.danger-button) { background: var(--fill); color: var(--label); }
 .settings-content .event-form > .danger-button { background: none; color: var(--red); }
 .settings-content .event-form > .error { padding: 8px 0; }
