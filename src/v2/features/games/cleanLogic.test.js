@@ -69,8 +69,8 @@ test('승리하면 별과 남은 이동 보너스', () => {
   assert.ok(r.events.some((e) => e.type === 'bonus' && e.n === STAGES[0].moves - 1))
 })
 
-test('100단계·먼지 최대 2겹', () => {
-  assert.equal(STAGES.length, 100)
+test('200단계·먼지 최대 2겹', () => {
+  assert.equal(STAGES.length, 200)
   assert.ok(STAGES.every((st) => !st.dust || st.dust.hp <= 2))
   assert.ok(begin(99).moves > 0)
 })
@@ -114,4 +114,14 @@ test('오리 구출: 맨 아래 줄에 닿으면 모임, 오리는 안 깨짐', 
     assert.ok(goals(r.state).find((g) => g.kind === 'drop').left < 2)
     assert.equal(smash(t, (N - 2) * N + c, seeded(97)).state.board.filter((x) => x.drop).length, 2)
   })
+})
+
+test('빗자루는 한 줄을, 지우개는 한 종류를 치움', async () => {
+  const { sweep, erase } = await import('./cleanLogic.js')
+  const s = { ...begin(0, seeded(3)), board: fill() }
+  const r = sweep(s, N * 3, seeded(4))
+  assert.ok(r)
+  const k = s.board[0].k, e = erase(s, k, seeded(5))
+  assert.ok(e)
+  assert.equal(e.state.collected[k] >= s.board.filter((t) => t.k === k).length, true)
 })

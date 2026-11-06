@@ -40,6 +40,10 @@ const HARD = BASE.map((st) => ({
 // 쉽게 조정: 이동 1.5배, 모을 개수 0.7배
 // 판 모양(뚫린 칸)과 상자 줄: 단계 번호로 돌아가며
 const SHAPES = [[], [0, 6, 42, 48], [24], [14, 21, 28, 20, 27, 34], [0, 1, 5, 6], [21, 27]]
+// 101단계부터 더 다양한 판 모양
+const SHAPES2 = [[0, 1, 7, 5, 6, 13, 35, 42, 43, 41, 47, 48], [16, 18, 30, 32], [3, 45], [21, 22, 26, 27], [0, 6, 24, 42, 48], [3, 10, 38, 45], [0, 1, 2, 4, 5, 6], [7, 14, 13, 20, 28, 35, 34, 41]]
+// 151단계부터 판 모양 8개 더
+const SHAPES3 = [[3, 21, 27, 45], [0, 6, 8, 12, 36, 40, 42, 48], [10, 24, 38], [0, 1, 2, 46, 47, 48], [7, 8, 12, 13, 35, 36, 40, 41], [17, 23, 25, 31], [0, 7, 14, 6, 13, 20], [1, 5, 43, 47, 24]]
 const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 ? 2 : 1 } : null)
 // 오리 구출: 오리(k=-2)를 맨 아래 줄까지 내리면 모임
 const dropsFor = (i) => (i >= 3 && i % 4 === 3 ? (i >= 24 ? 3 : 2) : 0)
@@ -47,7 +51,9 @@ const dropsFor = (i) => (i >= 3 && i % 4 === 3 ? (i >= 24 ? 3 : 2) : 0)
 const EXTRA = HARD.slice(12).map((st) => ({ ...st, moves: st.moves + 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 3]) }) }))
 // 61~100단계: 후반 판을 돌려 쓰며 먼지 2겹 + 모을 개수 +5
 const LATE = [...HARD, ...HARD.slice(0, 16)].map((st) => ({ ...st, moves: st.moves + 4, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 5]) }) }))
-export const STAGES = [...BASE, ...HARD, ...EXTRA, ...LATE].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+// 101~200단계: 더 어렵게 — 먼지 2겹, 모을 개수 +10, 이동 -3
+const ULTRA = [...HARD, ...HARD, ...HARD, ...HARD, ...HARD.slice(0, 4)].map((st) => ({ ...st, moves: st.moves - 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 10]) }) }))
+export const STAGES = [...BASE, ...HARD, ...EXTRA, ...LATE, ...ULTRA].map((st, i) => ({ ...st, holes: i >= 150 ? SHAPES3[i % SHAPES3.length] : i >= 100 ? SHAPES2[i % SHAPES2.length] : SHAPES[i % SHAPES.length], boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
@@ -266,6 +272,25 @@ export function smash(state, i, rand = Math.random) {
   const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
   const events = [{ type: 'smash', i }]
   clearCells(s, [i], events)
+  return settle(s, events, [], rand)
+}
+// 빗자루(별로만 삼): 누른 칸의 가로 한 줄을 통째로 치움
+export function sweep(state, i, rand = Math.random) {
+  if (state.done || i < 0 || i >= N * N) return null
+  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
+  const r = Math.floor(i / N), cells = Array.from({ length: N }, (_, c) => r * N + c).filter((x) => s.board[x]?.fix !== 'hole')
+  const events = [{ type: 'smash', i }]
+  clearCells(s, cells, events)
+  return settle(s, events, [], rand)
+}
+// 지우개(별로만 삼): 판에서 한 종류를 모두 지움
+export function erase(state, k, rand = Math.random) {
+  if (state.done || k < 0) return null
+  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
+  const cells = s.board.map((t, x) => (t && t.k === k ? x : -1)).filter((x) => x >= 0)
+  if (!cells.length) return null
+  const events = [{ type: 'smash', i: cells[0] }]
+  clearCells(s, cells, events)
   return settle(s, events, [], rand)
 }
 export function shuffle(state, rand = Math.random) {

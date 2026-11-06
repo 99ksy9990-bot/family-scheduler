@@ -145,7 +145,7 @@
 .clean-board.aiming .clean-cell { cursor: crosshair; }
 .clean-board.aiming { box-shadow: 0 0 0 3px var(--orange); }
 /* 아이템 */
-.clean-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.clean-tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
 .clean-tools button { position: relative; display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border: 0; border-radius: 16px; background: var(--fill); color: var(--label); }
 .clean-tools img { width: 44px; height: 44px; } .clean-tools button small { font-size: 13px; font-weight: 600; color: var(--label); }
 .clean-badge { position: absolute; top: 4px; right: calc(50% - 34px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; line-height: 20px; font-variant-numeric: tabular-nums; }
