@@ -171,3 +171,18 @@
 .clean-play { width: 100%; margin-top: 14px; }
 .clean-all { margin-top: 14px; } .clean-all summary { padding: 8px 0; color: var(--tint); font-weight: 600; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .clean-room-thing { transition: none; } }
+
+/* 특수 블록 효과 */
+.fx-cell { position: absolute; z-index: 20; border-radius: 10px; pointer-events: none; mix-blend-mode: screen; box-shadow: 0 0 12px currentColor; }
+.fx-beam { position: absolute; z-index: 22; pointer-events: none; border-radius: 999px; background: linear-gradient(90deg, #fff7, #fff 30%, #ffd84d 50%, #fff 70%, #fff7); box-shadow: 0 0 16px 6px #ffcc00; }
+.fx-beam.row { height: 18px; } .fx-beam.col { width: 18px; background: linear-gradient(180deg, #fff7, #fff 30%, #ffd84d 50%, #fff 70%, #fff7); }
+.fx-blast { position: absolute; z-index: 22; pointer-events: none; border-radius: 16px; background: radial-gradient(circle, #fff 0 15%, var(--c) 45%, transparent 75%); box-shadow: 0 0 0 4px var(--c); }
+.fx-ray { position: absolute; z-index: 22; height: 5px; margin-top: -2.5px; border-radius: 999px; transform-origin: 0 50%; pointer-events: none; box-shadow: 0 0 8px #fff; }
+.fx-prop { position: absolute; z-index: 26; width: 40px; height: 40px; pointer-events: none; filter: drop-shadow(0 2px 4px rgb(0 0 0 / .3)); }
+/* 판 위 특수 블록 표시 */
+.clean-cell[data-sp='row']::before, .clean-cell[data-sp='col']::before { content: '↔'; position: absolute; right: 2px; bottom: 0; z-index: 2; font-size: 14px; font-weight: 900; color: #ff9500; -webkit-text-stroke: 3px #fff; paint-order: stroke fill; }
+.clean-cell[data-sp='col']::before { content: '↕'; }
+.clean-party { display: grid; gap: 4px; padding-top: 4px; }
+.clean-party h3 { margin: 14px 0 0; font-size: 28px; text-align: center; animation: done-pop .5s ease-out; }
+@media (prefers-reduced-motion: reduce) { .clean-party h3 { animation: none; } }
+.dust-badge { position: absolute; left: 2px; top: 2px; z-index: 3; min-width: 18px; height: 18px; border-radius: 999px; background: #7d6644; color: #fff; font-size: 12px; font-style: normal; font-weight: 800; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #fff; }

@@ -88,3 +88,13 @@ test('뚫린 칸·상자: 안 움직임, 옆에서 맞추면 상자 깨짐, 망�
   assert.ok(hasMove(t.board) && t.board[24].fix === 'hole' && t.board.filter((x) => x.fix === 'box').length === 4)
   for (let i = 0; i < 20; i++) { const m = (() => { for (let a = 0; a < N * N; a++) for (const b of [a + 1, a + N]) { const x = play(t, a, b, seeded(i + 1)); if (x) return x } })(); if (m) assert.ok(m.state.board.every(Boolean)) }
 })
+
+test('특수 블록이 생긴 칸의 먼지도 같이 닦임', () => {
+  for (let t = 0; t < 200; t++) {
+    const s = begin(4)
+    for (let a = 0; a < N * N; a++) for (const b of [a + 1, a + N]) {
+      const r = play(s, a, b); if (!r) continue
+      for (const e of r.events.filter((x) => x.type === 'make' && s.dust[x.i])) assert.ok(r.state.dust[e.i] < s.dust[e.i] || r.events.filter((x) => x.type === 'dust' && x.i === e.i).length)
+    }
+  }
+})

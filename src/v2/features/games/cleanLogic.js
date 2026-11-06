@@ -147,7 +147,7 @@ function clearCells(s, cells, events) {
     const i = queue.pop(); if (gone.has(i) || !s.board[i]) continue
     if (isFixed(s.board[i])) { if (s.board[i].fix === 'box') hitBox.add(i); continue }
     gone.add(i)
-    if (s.board[i].sp) { events.push({ type: s.board[i].sp, i }); for (const x of blast(s.board, i, null, s)) if (!gone.has(x)) queue.push(x) }
+    if (s.board[i].sp) { const hit = blast(s.board, i, null, s); events.push({ type: s.board[i].sp, i, cells: hit }); for (const x of hit) if (!gone.has(x)) queue.push(x) }
   }
   // 지운 칸 옆 상자도 한 번씩 맞음
   for (const i of gone) { const [r, c] = rc(i); for (const [y, x] of [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]) if (y >= 0 && x >= 0 && y < N && x < N && s.board[y * N + x]?.fix === 'box') hitBox.add(y * N + x) }
@@ -178,20 +178,20 @@ function combo(s, i, j, events) {
   else if (kinds === 'bomb+col' || kinds === 'bomb+row') cells = [-1, 0, 1].flatMap((d) => line(Math.min(N - 1, Math.max(0, r + d)), Math.min(N - 1, Math.max(0, c + d))))
   else if (kinds === 'bomb+bomb') cells = square(r, c, 2)
   else { const other = A === 'prop' ? B : A; const t = propTarget(s, j); const tmp = [...s.board]; tmp[t] = { ...tmp[t], sp: other === 'prop' ? 'bomb' : other }; cells = [i, j, ...blast(tmp, t, null, s)] }
-  events.push({ type: 'combo', i: j, kinds })
+  events.push({ type: 'combo', i: j, kinds, cells })
   s.board[i] = { ...s.board[i], sp: null }; s.board[j] = { ...s.board[j], sp: null }
   return [...new Set(cells)]
 }
 
 // 바꾸기 한 번. 무효면 null. → 새 상태 + events(효과용)
 export function play(state, i, j, rand = Math.random) {
-  if (state.done || !adjacent(i, j) || isFixed(state.board[i]) || isFixed(state.board[j])) return null
+  if (state.done || !adjacent(i, j) || !state.board[i] || !state.board[j] || isFixed(state.board[i]) || isFixed(state.board[j])) return null
   const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
   const events = []
   const a = s.board[i]; const bb = s.board[j]
   if (a.sp === 'rainbow' || bb.sp === 'rainbow') {
     const [rain, other] = a.sp === 'rainbow' ? [i, bb] : [j, a]
-    events.push({ type: 'rainbow', i: rain })
+    events.push({ type: 'rainbow', i: rain, cells: a.sp === 'rainbow' && bb.sp === 'rainbow' ? s.board.map((_, x) => x) : s.board.map((t, x) => (t && t.k === other.k ? x : -1)).filter((x) => x >= 0) })
     if (a.sp === 'rainbow' && bb.sp === 'rainbow') { s.board[rain] = { ...s.board[rain], sp: null }; clearCells(s, s.board.map((_, x) => x), events) }
     else if (other.sp) {
       // 무지개 + 특수: 같은 종류가 모두 그 특수 블록이 되어 한꺼번에 터짐
@@ -222,7 +222,7 @@ function settle(s, events, prefer, rand) {
       const keep = g.sp ? g.at : -1
       const made = keep >= 0 ? { k: g.k, sp: g.sp } : null
       clearCells(s, g.cells.filter((c) => c !== keep), events)
-      if (made) { s.board[keep] = made; events.push({ type: 'make', i: keep, sp: g.sp }); s.collected[g.k]++ }
+      if (made) { s.board[keep] = made; events.push({ type: 'make', i: keep, sp: g.sp }); s.collected[g.k]++; if (s.dust[keep]) { s.dust[keep]--; events.push({ type: 'dust', i: keep }) } } // 특수 블록이 생긴 칸의 먼지도 닦임
     }
     if (chain) events.push({ type: 'chain', n: chain + 1 })
     prefer = []
