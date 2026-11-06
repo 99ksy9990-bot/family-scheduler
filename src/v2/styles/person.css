@@ -51,3 +51,35 @@
 .house-tile[data-character='big'] { --badge-color: var(--big); }
 .house-tile[data-character='little'] { --badge-color: var(--little); }
 .house-tile .house-badge.upcoming { background: color-mix(in srgb,var(--badge-color, var(--tint)) 10%,var(--card)); border: 1px solid var(--badge-color, var(--tint)); color: var(--label-2); box-shadow: none; }
+
+/* 가족 탭: 구성원 화면 */
+.member-page { padding-bottom: 120px; }
+.member-nav { padding: 4px 0 0; }
+.member-nav .text-button { display: inline-flex; align-items: center; gap: 2px; font-size: 17px; }
+.member-hero { text-align: center; padding: 4px 0 8px; display: grid; justify-items: center; gap: 4px; }
+.member-hero h2 { font-size: 28px; font-weight: 700; margin-top: 6px; }
+.member-hero p { color: var(--label-2); font-size: 15px; }
+.member-edit-title { font-size: 28px; font-weight: 700; margin: 6px 0 12px; }
+.member-pick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.member-pick.big { justify-content: space-between; margin-bottom: 8px; }
+.member-pick button { border: 0; background: none; padding: 2px; border-radius: 50%; cursor: pointer; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.member-pick button[aria-pressed='false'] img { filter: grayscale(1); opacity: .45; }
+.member-pick button[aria-pressed='true'] { box-shadow: 0 0 0 3px var(--tint); }
+.member-pick button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+.member-color { width: 30px; min-width: 30px !important; height: 30px; min-height: 30px !important; background: var(--swatch) !important; }
+.member-color:disabled { opacity: .25; }
+.member-name { font: inherit; font-size: 17px; border: 0; background: none; text-align: right; color: var(--label); width: 9em; }
+.member-name.wide { width: 100%; text-align: left; padding: 12px 0; }
+.member-name:focus-visible { outline: 2px solid var(--tint); border-radius: 6px; }
+.member-hide { color: var(--red, #ff3b30); justify-content: center; font-size: 17px; width: 100%; }
+.member-add-form { display: grid; gap: 12px; }
+.member-add .grouped-body strong { color: var(--tint); font-weight: 400; }
+.settings-color-icon[data-tone='work'] { background: #5e5ce6; }
+.settings-color-icon[data-tone='orange'] { background: #ff9f0a; }
+.settings-color-icon[data-tone='green'] { background: #30b07a; }
+.settings-color-icon[data-tone='pink'] { background: #ff2d55; }
+.settings-color-icon[data-tone='add'] { background: var(--fill); color: var(--tint); }
+.kind-chip { font-size: 12px; font-weight: 700; padding: 3px 7px; border-radius: 999px; background: #30b07a; color: #fff; white-space: nowrap; }
+.kind-chip.academy { background: #ff9f0a; }
+.danger-button { color: var(--red, #ff3b30); }
+.member-add-form .ui-segments button { flex: 1; font-size: 15px; }
