@@ -124,3 +124,6 @@ button:focus:not(:focus-visible), [role='switch']:focus:not(:focus-visible) { ou
 .sheet { overflow-x: clip; }
 input, select, textarea { min-width: 0; max-width: 100%; box-sizing: border-box; }
 input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: none; }
+/* 달력: 월 이름 가운데, 양옆 화살표 같은 간격 */
+.heading-line.month-center { justify-content: center; gap: 8px; margin-right: -52px; }
+.month-arrow { width: 36px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--tint-label); display: grid; place-items: center; }
