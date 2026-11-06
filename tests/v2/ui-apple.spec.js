@@ -9,7 +9,7 @@ test('우리집 이름·불투명 타일·유리 아이콘·떠 있는 알약', 
   const nav = page.getByRole('navigation')
   expect((await nav.boundingBox()).height).toBe(66)
   expect(page.viewportSize().height - (await nav.boundingBox()).y - 66).toBe(8)
-  expect(await nav.evaluate((element) => getComputedStyle(element).backdropFilter)).toContain('blur(24px)')
+  expect(await nav.evaluate((element) => getComputedStyle(element).backdropFilter)).toContain('blur(20px)')
   expect(await tile.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgb(255, 255, 255)')
   await expect(nav.locator('.glass-icon')).toHaveCount(0)
   expect(await nav.locator('svg').first().evaluate((element) => element.getBoundingClientRect().width)).toBe(26)
@@ -18,7 +18,7 @@ test('우리집 이름·불투명 타일·유리 아이콘·떠 있는 알약', 
     const selected = nav.locator('[aria-current="page"]')
     await expect.poll(() => selected.evaluate((element) => getComputedStyle(element).color)).toBe('rgb(10, 132, 255)')
     expect(await selected.locator('svg').evaluate((element) => getComputedStyle(element).stroke)).toBe('rgb(10, 132, 255)')
-    expect(await selected.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
+    expect(await selected.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(120, 120, 128, 0.14)')
   }
   await page.emulateMedia({ colorScheme: 'light' })
   expect(await tile.locator('.glass-icon').evaluate((element) => element.getBoundingClientRect().width)).toBe(66)
