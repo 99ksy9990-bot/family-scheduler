@@ -6,6 +6,7 @@ import './games.css'
 const IMG = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
 const ITEMS = { hammer: 3, shuffle: 1 } // 단계마다 새로 받는 아이템 수
+const PRICE = { hammer: 2, shuffle: 1 } // 다 쓰면 별로 사기
 // 이야기: 방마다 할 일 3개, 단계에서 얻은 별을 써서 하나씩 고침
 const ROOMS = [
   { name: '현관', bg: 'entry', say: '집에 오자마자 현관이 엉망이네! 같이 치워 볼까?', tasks: [['door', '현관문 꾸미기', 1, [50, 54, 30]], ['plant', '화분 놓기', 2, [16, 74, 20]], ['clock', '시계 걸기', 2, [82, 34, 16]]] },
@@ -70,6 +71,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [unlocked, setUnlocked] = useState(() => Math.max(progress?.unlocked || 0, readProgress(player)))
   const [stars, setStars] = useState(() => ({ ...readStars(player), ...progress?.stars }))
   const [done, setDone] = useState(() => progress?.done || [])
+  const [bought, setBought] = useState(() => progress?.bought || 0) // 아이템 사는 데 쓴 별
   const [s, setS] = useState(null)
   const [sel, setSel] = useState(null)
   const [flash, setFlash] = useState(() => new Set())
@@ -90,8 +92,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   }, [s])
   const earned = Object.values(stars).reduce((a, b) => a + b, 0)
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
-  const wallet = earned - spent
-  const save = (next) => { onProgress?.({ unlocked, stars, done, ...next }) }
+  const wallet = earned - spent - bought
+  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, ...next }) }
   const startStage = (i) => { setS(begin(i)); setItems(ITEMS); setHammer(false); setCheer('') }
 
   if (!s) {
@@ -156,6 +158,12 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     if (!r) return
     setItems((it) => ({ ...it, hammer: it.hammer - 1 })); show(r)
   }
+  const buy = (kind) => {
+    if (wallet < PRICE[kind]) return
+    const next = bought + PRICE[kind]; setBought(next); save({ bought: next })
+    setItems((it) => ({ ...it, [kind]: it[kind] + 1 }))
+    pop(area.current, area.current?.clientWidth / 2, area.current?.clientWidth / 2, `${kind === 'hammer' ? '망치' : '섞기'} +1`, 'gold')
+  }
   const reshuffle = () => { const r = shuffle(s); if (!r) return; setItems((it) => ({ ...it, shuffle: it.shuffle - 1 })); setS(r); setHint(null); setSel(null) }
 
   const tap = (i) => {
@@ -192,10 +200,13 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       </button>)}
     </div>
     <div className="clean-tools">
-      <button aria-pressed={hammer} disabled={!!s.done || !items.hammer} onClick={() => setHammer((h) => !h)} aria-label={`망치: 한 칸 깨기, ${items.hammer}개 남음`}><img src="/game/room/hammer.png" alt="" /><span className="clean-badge">{items.hammer}</span><small>망치</small></button>
-      <button disabled={!!s.done || !items.shuffle} onClick={reshuffle} aria-label={`섞기, ${items.shuffle}개 남음`}><img src="/game/room/shuffle.png" alt="" /><span className="clean-badge">{items.shuffle}</span><small>섞기</small></button>
+      {items.hammer ? <button aria-pressed={hammer} disabled={!!s.done} onClick={() => setHammer((h) => !h)} aria-label={`망치: 한 칸 깨기, ${items.hammer}개 남음`}><img src="/game/room/hammer.png" alt="" /><span className="clean-badge">{items.hammer}</span><small>망치</small></button>
+        : <button className="buy" disabled={!!s.done || wallet < PRICE.hammer} onClick={() => buy('hammer')} aria-label={`망치 별 ${PRICE.hammer}개로 사기`}><img src="/game/room/hammer.png" alt="" /><small>★ {PRICE.hammer} 사기</small></button>}
+      {items.shuffle ? <button disabled={!!s.done} onClick={reshuffle} aria-label={`섞기, ${items.shuffle}개 남음`}><img src="/game/room/shuffle.png" alt="" /><span className="clean-badge">{items.shuffle}</span><small>섞기</small></button>
+        : <button className="buy" disabled={!!s.done || wallet < PRICE.shuffle} onClick={() => buy('shuffle')} aria-label={`섞기 별 ${PRICE.shuffle}개로 사기`}><img src="/game/room/shuffle.png" alt="" /><small>★ {PRICE.shuffle} 사기</small></button>}
       <button disabled={!!s.done} onClick={() => setHint(findMove(s.board))} aria-label="힌트: 바꿀 곳 보기"><img src="/game/room/hint.png" alt="" /><small>힌트</small></button>
     </div>
+    <p className="clean-purse">가진 별 ★ {wallet} · 아이템을 다 쓰면 별로 살 수 있어요</p>
     {hammer && <p className="clean-aim" role="status">깰 칸을 눌러 주세요 (이동은 줄지 않아요)</p>}
     <details key="help" className="clean-all"><summary>블록 설명 보기</summary><ul className="clean-help">
       <li><b>먼지</b> 그 칸에서 맞추기 (숫자 2는 두 번)</li>

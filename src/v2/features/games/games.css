@@ -186,3 +186,6 @@
 .clean-party h3 { margin: 14px 0 0; font-size: 28px; text-align: center; animation: done-pop .5s ease-out; }
 @media (prefers-reduced-motion: reduce) { .clean-party h3 { animation: none; } }
 .dust-badge { position: absolute; left: 2px; top: 2px; z-index: 3; min-width: 18px; height: 18px; border-radius: 999px; background: #7d6644; color: #fff; font-size: 12px; font-style: normal; font-weight: 800; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #fff; }
+.clean-tools button.buy { background: #fff4d6; } .clean-tools button.buy small { color: #b7791f; }
+.clean-tools button.buy img { opacity: .55; }
+.clean-purse { margin: 8px 0 0; font-size: 13px; color: var(--label-2); }
