@@ -119,14 +119,14 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     const open = (r, k) => k < ROOMS.length - 1 || ROOMS.slice(0, -1).every(finished) // 마지막 '우리집'은 다른 방을 다 꾸미면 열림
     const room = ROOMS[view ?? (roomIndex < 0 ? ROOMS.length - 1 : roomIndex)]
     const fix = (t) => { if (wallet < t.cost) return; const next = [...done, t.id]; setDone(next); save({ done: next }); setCheer(`${t.name} 끝! 고마워!`); if (room.tasks.every((x) => next.includes(x.id))) setParty({ room, last: ROOMS.every((r) => r.tasks.every((x) => next.includes(x.id))) }) }
-    if (party) return <div className="clean-party fx-host" ref={partyRef} role="dialog" aria-label="축하">
+    if (party) return <div key="party" className="clean-party fx-host" ref={partyRef} role="dialog" aria-label="축하">
       <div className="clean-room on" style={{ backgroundImage: `url(/game/room/${party.room.bg}.jpg)` }}>{party.room.tasks.map((t) => <img key={t.id} className="clean-room-thing on" src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}</div>
       <h3>{party.last ? '우리집 완성!' : `${party.room.name} 완성!`}</h3>
       <p className="clean-perk-new">새 효과: <b>{party.room.perk.text}</b><br />이제 모든 단계에서 받아요</p>
       <div className="clean-talk"><Face player={player} mood="done" /><p>{party.last ? '모든 방이 반짝반짝해! 정말 고마워. 우리 가족 최고!' : `${party.room.name}이(가) 정말 예뻐졌어! 다음 방도 같이 고치자.`}</p></div>
       <button className="primary-button clean-play" onClick={() => { setParty(null); setCheer(''); setView(null) }}>{party.last ? '우리집 보기' : '다음 방으로'}</button>
     </div>
-    return <div className="clean-map">
+    return <div key="map" className="clean-map">
       <div className="clean-room-tabs" role="tablist" aria-label="방 고르기">{ROOMS.map((r, k) => <button key={r.name} role="tab" aria-selected={r === room} disabled={!open(r, k)} onClick={() => { setView(k); setCheer('') }}>{r.name}{finished(r) ? ' ✓' : ''}</button>)}</div>
       <section className="clean-room" style={{ backgroundImage: `url(/game/room/${room.bg}.jpg)` }} aria-label={`${room.name} 꾸미기`}>
         <span className="clean-room-name">{room.name}</span>
