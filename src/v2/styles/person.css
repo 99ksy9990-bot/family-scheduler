@@ -146,3 +146,4 @@
 .shift-cell[data-leave='full'] { background: #dff3e4; }
 .shift-cell[data-leave='am'] { background: #fff4d6; }
 .shift-cell[data-leave='pm'] { background: #dfe0ff; }
+.shift-month-head button { width: 32px; display: grid; place-items: center; margin: 0; }
