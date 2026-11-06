@@ -107,3 +107,8 @@ main { padding-top: 12px; }
 /* viewport-fit=cover 제거(2026-11-06): 상태바 아래부터 화면 시작 → 위쪽 반투명 덮임과 큰 여백 없앰 */
 .app-heading, .demo-banner + .app-heading { padding-top: 12px; }
 .header-add { top: 6px; }
+/* iOS 26 홈 화면 앱의 상단 흐림 효과 막기: 맨 위에 고정된 불투명 전체 폭 띠 (개발자 보고 기반 우회, 애플 공식 아님) */
+.ios-edge-guard { position: fixed; top: 0; left: 0; right: 0; height: calc(env(safe-area-inset-top) + 12px); background: var(--bg); z-index: 50; pointer-events: none; }
+.app-heading, .demo-banner + .app-heading { padding-top: 20px; }
+.demo-banner { margin-top: 12px; }
+.header-add { top: 14px; }

@@ -52,6 +52,7 @@ function Workspace({ scheduler }) {
   const subtitle = tab === 'today' ? formatLongDate(today) : tab === 'calendar' ? `${cursor.getFullYear()}년` : tab === 'play' ? `오늘 ${todayPlays(state?.gameScores, today)}판` : `${profiles.filter((profile) => profile.active !== false).length}명`
   const props = { today, now, state, loading: !isDemo && sync.syncStatus === 'connecting', error: isDemo ? '' : scheduler.error, onRetry: scheduler.retry }
   return <div className="v2-app" data-view={tab}>
+    <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
     <header className="app-heading"><a href="#main" className="skip-link">본문으로 이동</a><p className="app-date">{subtitle}</p><div className="heading-line"><h1>{title}</h1>{tab === 'calendar' && <div className="month-arrows"><button aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={18} /></button><button aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={18} /></button></div>}</div>
       {canEdit && ['today', 'calendar'].includes(tab) && <button className="header-add" onClick={() => { setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} aria-label={tab === 'today' ? '추가' : '일정 추가'}><Plus size={26} /></button>}
