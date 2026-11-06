@@ -1,9 +1,15 @@
+import CharacterAvatar from '../../components/CharacterAvatar'
 import { useState } from 'react'
 
 const statusLabels = { local: '아직 가족방에 연결되지 않았어요. 로그인하면 가족 일정을 불러올 수 있어요.', connecting: '가족 연결 중', saving: '저장 중', synced: '가족과 동기화됨', readonly: '보기 전용', offline: '오프라인', conflict: '변경 충돌', error: '연결 확인 필요' }
 
+// 우리 가족 네 명 중에서 고르기 (가족 탭에 등록한 구성원, 없으면 기본 네 명)
+const FAMILY = [['아빠', 'dad', 'adult'], ['엄마', 'mom', 'adult'], ['초롱', 'big', 'child'], ['연두', 'little', 'child']].map(([name, characterId, type]) => ({ id: characterId, name, characterId, type }))
+
 export default function Connection({ sync, state, updateState, canEdit }) {
-  const [mode, setMode] = useState('signin')
+  const listed = state.profiles.filter((p) => p.active !== false)
+  const whoList = listed.length ? listed : FAMILY
+  const [mode, setMode] = useState('code')
   const [familyMode, setFamilyMode] = useState('join')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -24,6 +30,7 @@ export default function Connection({ sync, state, updateState, canEdit }) {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     keepCode(data.get('inviteCode') || '')
+    if (mode === 'code') { const who = whoList.find((p) => p.name === data.get('who')); run(() => sync.joinWithCode({ inviteCode: String(data.get('inviteCode')).trim().toUpperCase(), displayName: who.name, memberRole: who.type === 'child' ? 'child' : 'parent' })); return }
     run(() => mode === 'signin' ? sync.signIn(data.get('email').trim(), data.get('password')) : sync.signUp(data.get('email').trim(), data.get('password')))
   }
   const connect = (event) => {
@@ -34,10 +41,10 @@ export default function Connection({ sync, state, updateState, canEdit }) {
   const owner = sync.session?.user.id === sync.family?.household.owner_id
   return <div className="settings-content">
     <p className="connection-state" role="status">{statusLabels[sync.syncStatus] || '연결 상태 확인 중'}{sync.family ? ` · ${sync.family.household.name}` : ''}</p>
-    <p>같은 가족 계정으로 로그인하면 저장된 가족 일정을 불러와요. 처음 참여하는 가족은 회원가입 후 받은 8자리 초대 코드로 들어와요. 새로 참여하면 기본적으로 보기 전용이에요.</p>
+    <p>같은 가족 계정으로 로그인하면 저장된 가족 일정을 불러와요. 가족은 8자리 초대 코드를 넣고 자기가 누구인지 고르면 바로 들어와요. 처음에는 보기만 할 수 있고, 관리자가 편집을 허용할 수 있어요.</p>
     {sync.error && <p className="error" role="alert">{sync.error}</p>}
-    {!sync.session ? <><div className="segmented"><button aria-pressed={mode === 'signin'} onClick={() => setMode('signin')}>로그인</button><button aria-pressed={mode === 'signup'} onClick={() => setMode('signup')}>회원가입</button></div>
-      <form className="event-form" onSubmit={authenticate}><label>이메일<input name="email" type="email" autoComplete="email" required /></label><label>비밀번호<input name="password" type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} /></label><label>초대 코드<input name="inviteCode" defaultValue={pendingCode} placeholder="있으면 입력 (8자리)" maxLength={8} autoCapitalize="characters" /></label><button className="primary-button" disabled={busy}>{busy ? '처리 중…' : mode === 'signin' ? '로그인' : '회원가입'}</button></form></>
+    {!sync.session ? <><div className="segmented"><button aria-pressed={mode === 'code'} onClick={() => setMode('code')}>초대 코드</button><button aria-pressed={mode === 'signin'} onClick={() => setMode('signin')}>로그인</button><button aria-pressed={mode === 'signup'} onClick={() => setMode('signup')}>회원가입</button></div>
+      <form className="event-form" onSubmit={authenticate}>{mode === 'code' ? <><label>초대 코드<input name="inviteCode" defaultValue={pendingCode} required minLength={8} maxLength={8} autoCapitalize="characters" placeholder="8자리" /></label><fieldset className="who-pick"><legend>나는 누구예요?</legend>{whoList.map((p) => <label key={p.name} className="who-option"><input type="radio" name="who" value={p.name} required /><CharacterAvatar profile={p} size={52} /><span>{p.name}</span></label>)}</fieldset><button className="primary-button" disabled={busy}>{busy ? '들어가는 중…' : '가족방 들어가기'}</button><p className="quiet">이 기기에서만 로그인돼요. 앱을 지우거나 다른 폰에서는 코드를 다시 넣으면 돼요.</p></> : <><label>이메일<input name="email" type="email" autoComplete="email" required /></label><label>비밀번호<input name="password" type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} /></label><label>초대 코드<input name="inviteCode" defaultValue={pendingCode} placeholder="있으면 입력 (8자리)" maxLength={8} autoCapitalize="characters" /></label><button className="primary-button" disabled={busy}>{busy ? '처리 중…' : mode === 'signin' ? '로그인' : '회원가입'}</button></>}</form></>
       : !sync.family ? <><p>로그인됨: {sync.session.user.email}</p><div className="segmented"><button aria-pressed={familyMode === 'join'} onClick={() => setFamilyMode('join')}>초대 코드로 참여</button><button aria-pressed={familyMode === 'create'} onClick={() => setFamilyMode('create')}>가족 만들기</button></div>
         <form className="event-form" onSubmit={connect}>{familyMode === 'create' ? <label>가족방 이름<input name="householdName" defaultValue="우리 가족" required /></label> : <label>초대 코드<input name="inviteCode" defaultValue={pendingCode} required minLength={8} maxLength={8} autoCapitalize="characters" /></label>}<label>내 이름<input name="displayName" required /></label><label>역할<select name="memberRole"><option value="parent">부모</option><option value="child">자녀</option></select></label><button disabled={busy} className="primary-button">연결하기</button></form></>
         : <><div className="data-message"><p>초대 코드 <strong>{sync.family.household.invite_code}</strong></p><button disabled={busy} onClick={() => run(async () => { await navigator.clipboard.writeText(sync.family.household.invite_code); return '초대 코드를 복사했어요.' })}>코드 복사</button></div>

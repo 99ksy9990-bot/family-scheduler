@@ -439,6 +439,15 @@ export function useFamilySync({ localState, onRemoteState }) {
     if (rpcError) throw rpcError
     return loadFamilyContext(session.user.id, householdId)
   }
+  // 초대 코드만으로 참여: 이 기기에 손님 계정을 만들고 바로 가족방에 들어감 (Supabase '익명 로그인'이 켜져 있어야 함)
+  const joinWithCode = async ({ inviteCode, displayName, memberRole }) => {
+    setError('')
+    const { data, error: authError } = await supabase.auth.signInAnonymously()
+    if (authError) throw new Error(/anonymous/i.test(authError.message) ? '초대 코드 바로 참여가 아직 꺼져 있어요. 관리자에게 Supabase 설정을 켜 달라고 해 주세요.' : authError.message)
+    const { data: householdId, error: rpcError } = await supabase.rpc('join_household', { household_code: inviteCode, display_name: displayName, member_role: memberRole })
+    if (rpcError) { await supabase.auth.signOut(); throw rpcError }
+    return loadFamilyContext(data.user.id, householdId)
+  }
   const updatePermission = async (userId, canEdit) => {
     const { error: rpcError } = await supabase.rpc('set_household_member_permission', { target_household_id: family.household.id, target_user_id: userId, allow_edit: canEdit })
     if (rpcError) throw rpcError
@@ -452,7 +461,7 @@ export function useFamilySync({ localState, onRemoteState }) {
 
   return {
     enabled: supabaseEnabled, session, family, syncStatus, error, isOnline, lastSyncedAt, remoteChange, conflict,
-    signIn, signUp, signOut, createFamily, joinFamily, updatePermission, restoreVersion, acceptRemote, keepLocal,
+    signIn, signUp, signOut, createFamily, joinFamily, joinWithCode, updatePermission, restoreVersion, acceptRemote, keepLocal,
     dismissRemoteChange: () => setRemoteChange(null),
     refresh: () => session?.user ? loadFamilyContext(session.user.id, family?.household?.id) : null,
   }
