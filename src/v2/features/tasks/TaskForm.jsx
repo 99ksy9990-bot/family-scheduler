@@ -1,3 +1,5 @@
+import CharacterAvatar from '../../components/CharacterAvatar'
+import MemberAvatars from '../../components/MemberAvatars'
 import { useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { iso } from '../../../lib/dates'
@@ -30,7 +32,7 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
       <li className="grouped-row task-row-stack"><span className="task-row-label">분류</span><span className="chip-choices" role="radiogroup" aria-label="분류">{[...new Set([...categories, ...(task?.category ? [task.category] : [])])].map((category) => <label className="choice-chip" key={category}><input type="radio" name="category" value={category} defaultChecked={(task?.category || categories[0]) === category} /><span>{category}</span></label>)}</span></li>
     </ul>
     <ul className="grouped-list task-form-group">
-      <li className="grouped-row task-row-stack"><span className="task-row-label">누가</span><span className="chip-choices" role="group" aria-label="담당 가족">{[{ id: 'family', name: '가족' }, ...state.profiles.filter((profile) => profile.active !== false)].map((profile) => <label className="choice-chip" key={profile.id}><input type="checkbox" name="assignees" value={profile.id} defaultChecked={(task?.assignees || [task?.assignee || 'family']).includes(profile.id)} /><span>{profile.name}</span></label>)}</span></li>
+      <li className="grouped-row task-row-stack"><span className="task-row-label">누가</span><span className="chip-choices" role="group" aria-label="담당 가족">{[{ id: 'family', name: '가족' }, ...state.profiles.filter((profile) => profile.active !== false)].map((profile) => <label className="choice-chip" key={profile.id}><input type="checkbox" name="assignees" value={profile.id} defaultChecked={(task?.assignees || [task?.assignee || 'family']).includes(profile.id)} /><span className="face-chip">{profile.id === 'family' ? <MemberAvatars item={{ member: 'family', members: ['family'] }} profiles={state.profiles.filter((p) => p.active !== false)} /> : <CharacterAvatar profile={profile} size={32} />}<small>{profile.name}</small></span></label>)}</span></li>
     </ul>
     <ul className="grouped-list task-form-group">
       <li className="grouped-row"><label className="task-line">시작일<input className="input-chip" type="date" name="startDate" defaultValue={task?.startDate || (task ? '' : iso(today))} /></label></li>

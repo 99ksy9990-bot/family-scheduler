@@ -5,6 +5,9 @@ import { hasRecurrence, isRecurrenceStart } from '../../lib/recurrence'
 import { holidaysForYear } from '../../lib/holidays'
 
 // 고정 근무(예: 평일 08:00–17:00, 공휴일 쉼). 프로필에 regularWork가 있을 때만. 옛 앱은 이 필드를 모르고 그대로 보존함.
+// 연차·반차: regularWork.leaves[날짜] = 'full'|'am'|'pm'. 반차 시간은 고정(오전 08–12, 오후 12:45–17)
+export const LEAVES = { full: { label: '연차', code: '연차', full: true }, am: { label: '오전 반차', code: '오전', start: '12:45', end: '17:00' }, pm: { label: '오후 반차', code: '오후', start: '08:00', end: '12:00' } }
+
 export function regularWorkRows(state, date, taken) {
   const key = iso(date)
   const holiday = holidaysForYear(date.getFullYear()).has(key)
@@ -12,7 +15,10 @@ export function regularWorkRows(state, date, taken) {
     const work = profile.regularWork
     if (!work?.start || !work?.end || profile.active === false || taken.has(profile.id)) return []
     if (!(work.weekdays || [1, 2, 3, 4, 5]).includes(date.getDay()) || (work.skipHolidays !== false && holiday)) return []
-    return [{ id: `work-${profile.id}-${key}`, date: key, title: '근무', member: profile.id, members: [profile.id], time: work.start, end: work.end, type: 'shift', regular: true }]
+    const base = { id: `work-${profile.id}-${key}`, date: key, member: profile.id, members: [profile.id], type: 'shift', regular: true }
+    const leave = LEAVES[work.leaves?.[key]]
+    if (leave?.full) return [{ ...base, title: '연차', time: '종일', type: 'leave' }]
+    return [{ ...base, title: leave ? `근무 · ${leave.label}` : '근무', time: leave?.start || work.start, end: leave?.end || work.end }]
   })
 }
 
