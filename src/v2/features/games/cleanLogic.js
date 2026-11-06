@@ -96,13 +96,14 @@ function groups(b, prefer = []) {
 export const adjacent = (i, j) => (Math.abs(i - j) === 1 && Math.floor(i / N) === Math.floor(j / N)) || Math.abs(i - j) === N
 const swapped = (b, i, j) => { const n = [...b]; [n[i], n[j]] = [n[j], n[i]]; return n }
 
-export function hasMove(b) {
+// 바꿀 수 있는 두 칸 [i, j] (힌트용), 없으면 null
+export function findMove(b) {
   for (let i = 0; i < N * N; i++) {
-    if (b[i]?.sp) return true
-    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && runs(swapped(b, i, j)).length) return true
+    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && (b[i]?.sp || b[j]?.sp || runs(swapped(b, i, j)).length)) return [i, j]
   }
-  return false
+  return null
 }
+export const hasMove = (b) => !!findMove(b)
 
 // 특수 블록 터짐 범위
 const square = (r, c, size) => { const o = []; for (let y = r - size; y <= r + size; y++) for (let x = c - size; x <= c + size; x++) if (y >= 0 && x >= 0 && y < N && x < N) o.push(y * N + x); return o }

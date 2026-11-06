@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { N, STAGES, begin, goals, play } from './cleanLogic'
+import { useEffect, useRef, useState } from 'react'
+import { N, STAGES, begin, findMove, goals, play } from './cleanLogic'
 import { burst, buzz, confetti, pop, shake } from './fx'
 import './games.css'
 
@@ -25,6 +25,14 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [flash, setFlash] = useState(() => new Set())
   const area = useRef(null)
   const start = useRef(null)
+  const [hint, setHint] = useState(null)
+  // 5초 동안 안 움직이면 바꿀 수 있는 두 칸을 깜빡여 알려 줌
+  useEffect(() => {
+    setHint(null)
+    if (!s || s.done) return
+    const t = setTimeout(() => setHint(findMove(s.board)), 5000)
+    return () => clearTimeout(t)
+  }, [s])
   const totalStars = Object.values(stars).reduce((a, b) => a + b, 0)
 
   if (!s) return <div className="clean-map">
@@ -88,10 +96,11 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <span className="clean-stage-no">{s.stage + 1}단계</span>
     </div>
     <div className="clean-board fx-host" ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>
-      {s.board.map((t, i) => <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ' 먼지' : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
+      {s.board.map((t, i) => <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}${hint?.includes(i) ? ' hint' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ' 먼지' : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
         <img src={IMG[t.k]} alt="" draggable="false" />
       </button>)}
     </div>
+    <button className="clean-hint-button" disabled={!!s.done} onClick={() => setHint(findMove(s.board))}>힌트</button>
     <p className="quiet clean-help">줄무늬 먼지 칸 위에서 맞추면 닦여요. 4개 → 로켓 · 네모 → 프로펠러 · ㄱ·T → 폭탄 · 5개 → 무지개. 특수끼리 바꾸면 합체!</p>
     {s.done && <div className="game-done"><b>{s.done === 'win' ? `${s.stage + 1}단계 깨끗해졌어요! ${'★'.repeat(s.stars || 1)}` : '이동을 다 썼어요'}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>단계 고르기</button></div>}
   </div>
