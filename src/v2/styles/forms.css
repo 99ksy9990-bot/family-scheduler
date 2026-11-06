@@ -71,3 +71,5 @@
 .form-disclosure .ui-segments button:disabled { opacity: .4; }
 .form-disclosure .ui-segments button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
 .task-form-group .owners-row { width: 100%; border-bottom: 0; }
+.task-form-group .task-field { width: 100%; border-bottom: 0; flex-wrap: nowrap; }
+.task-form-group .task-field > span:first-child { flex: 1; }

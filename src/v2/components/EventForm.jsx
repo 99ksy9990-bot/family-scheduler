@@ -4,8 +4,9 @@ import CharacterAvatar from './CharacterAvatar'
 import { oneHourLater } from '../data/eventTime'
 import { assignedMemberIds } from '../../lib/legacyState'
 import { clock } from '../data/schedule'
+import { addDays, iso } from '../../lib/dates'
 
-function NativeChip({ type, value, onChange, label, name }) {
+export function NativeChip({ type, value, onChange, label, name }) {
   const text = type === 'date' && value ? new Date(`${value}T00:00:00`).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) : value
   return <label className="input-chip native-chip"><span aria-hidden="true">{text || '선택'}</span><input name={name} aria-label={label} type={type} value={value} onChange={(event) => onChange(event.target.value)} required /></label>
 }
@@ -68,7 +69,7 @@ export default function EventForm({ date, profiles, onSave, onClose, onModeChang
           <div className="schedule-field"><span>하루 종일</span><button type="button" className="switch-control" role="switch" aria-label="하루 종일" aria-checked={allDay} onClick={() => setAllDay(!allDay)}><span aria-hidden="true" /></button></div>
           <div className="schedule-field"><span>시작</span><NativeChip name="date" label="날짜" type="date" value={eventDate} onChange={updateDate} />{!allDay && <NativeChip name="time" label="시작 시간" type="time" value={time} onChange={updateTime} />}</div>
           <div className="schedule-field"><span>종료</span>{multipleDays && <NativeChip name="endDate" label="종료일" type="date" value={endDate} onChange={setEndDate} />}{allDay ? <span className="quiet">{multipleDays ? '' : '같은 날'}</span> : end ? <><NativeChip name="end" label="종료 시간" type="time" value={end} onChange={setEnd} /><button type="button" className="end-clear" aria-label="종료 시각 빼기" onClick={() => setEnd('')}>×</button></> : <button type="button" className="end-add" onClick={() => { const next = oneHourLater(time || '09:00', eventDate); setEnd(next.time); if (next.endDate > eventDate) { setMultipleDays(true); setEndDate(next.endDate) } }}>+ 종료 시각</button>}</div>
-          <div className="schedule-field"><span>여러 날</span><button type="button" className="switch-control" role="switch" aria-label="여러 날" aria-checked={multipleDays} onClick={() => { setMultipleDays(!multipleDays); setEndDate(eventDate) }}><span aria-hidden="true" /></button></div>
+          <div className="schedule-field"><span>여러 날</span><button type="button" className="switch-control" role="switch" aria-label="여러 날" aria-checked={multipleDays} onClick={() => { setMultipleDays(!multipleDays); setEndDate(multipleDays ? eventDate : iso(addDays(new Date(`${eventDate}T00:00:00`), 1))) }}><span aria-hidden="true" /></button></div>
         </div>
         <div className="form-group">
           <div className="schedule-field owners-row"><span id="schedule-owners">누구</span><div className="schedule-owners" role="group" aria-labelledby="schedule-owners">{(active.length ? active : [{ id: 'family', name: '가족' }]).map((profile) => <button type="button" key={profile.id} aria-label={profile.name} aria-pressed={members.includes(profile.id)} onClick={() => toggleMember(profile.id)}><CharacterAvatar profile={profile} size={40} /></button>)}</div></div>
