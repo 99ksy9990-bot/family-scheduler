@@ -219,3 +219,4 @@
 .clean-stage-no { padding: 3px 12px; border-radius: 999px; background: var(--tint); color: var(--on-tint); font-size: 17px; font-weight: 800; white-space: nowrap; }
 .clean-stage-no.hard { background: #d93a40; } .clean-hard-tag { color: #c0262d !important; font-weight: 700; }
 .clean-week button:focus-visible { outline: 3px solid var(--tint); }
+.clean-week + .clean-week { margin-top: 8px; }

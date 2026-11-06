@@ -4,7 +4,7 @@ const weekNo = (w) => (w?.id ? new Date(w.id.replace(/-/g, '/')).getTime() : 0)
 function mergeWeek(a, b) {
   if (!a || !b) return a || b
   if (weekNo(a) !== weekNo(b)) return weekNo(a) > weekNo(b) ? a : b
-  return { id: a.id, dust: Math.max(a.dust || 0, b.dust || 0), claimed: !!(a.claimed || b.claimed) }
+  return { id: a.id, n: Math.max(a.n || 0, b.n || 0), claimed: !!(a.claimed || b.claimed), checkin: !!(a.checkin || b.checkin) }
 }
 export function mergeProgress(a, b) {
   if (!a) return b; if (!b) return a
@@ -20,7 +20,7 @@ export function mergeProgress(a, b) {
     bonus: Math.max(a.bonus || 0, b.bonus || 0),
     comp: Math.max(a.comp || 0, b.comp || 0),
     seen: [...new Set([...(a.seen || []), ...(b.seen || [])])],
-    week: mergeWeek(a.week, b.week),
+    day: mergeWeek(a.day, b.day), // 오늘의 이벤트·출석
   }
 }
 export function mergeAllProgress(a = {}, b = {}) {

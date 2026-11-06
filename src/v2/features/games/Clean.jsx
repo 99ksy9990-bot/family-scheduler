@@ -8,7 +8,16 @@ const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', r
 const ITEMS = { hammer: 3, shuffle: 1 } // 단계마다 새로 받는 아이템 수
 // 별: 단계마다 받은 별(1~3, 어려운 단계는 2배) + 10단계마다 선물 상자 + 주간 이벤트 보상
 const GIFT_EVERY = 10, GIFT = 5
-const WEEK_GOAL = 100, WEEK_REWARD = 10 // 이번 주 먼지 100개 닦으면 별 10개
+// 오늘의 이벤트: 날마다 다른 미션 + 출석 별 (요일·날짜로 돌아감)
+const MISSIONS = [
+  { type: 'win', goal: 3, reward: 5, text: '단계 3번 깨기' }, { type: 'dust', goal: 40, reward: 4, text: '먼지 40개 닦기' },
+  { type: 'make', goal: 10, reward: 4, text: '특수 블록 10개 만들기' }, { type: 'box', goal: 10, reward: 4, text: '상자 10번 치기' },
+  { type: 'star3', goal: 2, reward: 5, text: '별 3개로 2번 깨기' }, { type: 'combo', goal: 3, reward: 5, text: '특수 블록 3번 합치기' },
+  { type: 'drop', goal: 3, reward: 4, text: '오리 3마리 구출' }, { type: 'ice', goal: 10, reward: 4, text: '얼음 10개 깨기' },
+]
+const CHECKIN = 2 // 출석 별
+const dayId = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+const missionOf = (d = new Date()) => MISSIONS[Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5) % MISSIONS.length]
 const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 게임 중에 별로 사는 아이템
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const COMP = 50 // 별 계산 바꾼 보상
@@ -16,7 +25,6 @@ const COST_SCALE = 0.36 // 방 꾸미기 비용 (별 버는 양에 맞춤)
 const now = () => Date.now()
 // 새 방해물이 처음 나오는 단계에서 한 번 설명
 const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'] }
-const weekId = (d = new Date()) => { const m = new Date(d); m.setDate(m.getDate() - ((m.getDay() + 6) % 7)); return `${m.getFullYear()}-${m.getMonth() + 1}-${m.getDate()}` }
 const EXTRA_MOVES = 5 // 다 쓰면 별로 사기
 // 이야기: 방마다 할 일 3개, 단계에서 얻은 별을 써서 하나씩 고침
 // 방을 다 꾸미면 모든 단계에서 계속 받는 효과
@@ -142,7 +150,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [done, setDone] = useState(() => progress?.done || [])
   const [streak, setStreak] = useState(() => progress?.streak || 0) // 연승
   const [bonus, setBonus] = useState(() => progress?.bonus || 0) // 이벤트로 받은 별
-  const [week, setWeek] = useState(() => (progress?.week?.id === weekId() ? progress.week : { id: weekId(), dust: 0, claimed: false }))
+  const [day, setDay] = useState(() => (progress?.day?.id === dayId() ? progress.day : { id: dayId(), n: 0, claimed: false, checkin: false }))
+  const mission = missionOf()
   const [tip, setTip] = useState(null)
   const [seen, setSeen] = useState(() => progress?.seen || []) // 이미 본 설명 (단계 번호)
   // 별 계산을 바꾸면서 줄어든 별을 한 번 보상 (예전부터 하던 사람만)
@@ -178,7 +187,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const earned = Object.entries(stars).reduce((a, [i, n]) => a + n * (STAGES[i]?.hard ? 2 : 1), 0) + GIFT * Math.floor(unlocked / GIFT_EVERY) + bonus + comp
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
   const wallet = Math.max(0, earned - spent - bought) // 예전 계산으로 쓴 별이 많아도 0 아래로는 안 감
-  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, week, ...next }) }
+  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, day, ...next }) }
   const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk)
   const startStage = (i) => {
     const st = begin(i)
@@ -217,7 +226,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
-      <div className="clean-week"><span><small>이번 주 이벤트</small><span>먼지 {WEEK_GOAL}개 닦기 <b>{Math.min(week.dust, WEEK_GOAL)}/{WEEK_GOAL}</b></span></span>{week.claimed ? <em>받았어요</em> : <button disabled={week.dust < WEEK_GOAL} onClick={() => { const w = { ...week, claimed: true }; const b = bonus + WEEK_REWARD; setWeek(w); setBonus(b); save({ week: w, bonus: b }); setCheer(`이벤트 선물 별 ${WEEK_REWARD}개!`) }}>★{WEEK_REWARD} 받기</button>}</div>
+      <div className="clean-week"><span><small>오늘 출석</small><span>매일 들어오면 별 {CHECKIN}개</span></span>{day.checkin ? <em>받았어요</em> : <button onClick={() => { const d = { ...day, checkin: true }; const b = bonus + CHECKIN; setDay(d); setBonus(b); save({ day: d, bonus: b }); setCheer(`출석 고마워! 별 ${CHECKIN}개!`) }}>★{CHECKIN} 받기</button>}</div>
+      <div className="clean-week"><span><small>오늘의 이벤트</small><span>{mission.text} <b>{Math.min(day.n, mission.goal)}/{mission.goal}</b></span></span>{day.claimed ? <em>받았어요</em> : <button disabled={day.n < mission.goal} onClick={() => { const d = { ...day, claimed: true }; const b = bonus + mission.reward; setDay(d); setBonus(b); save({ day: d, bonus: b }); setCheer(`이벤트 선물 별 ${mission.reward}개!`) }}>★{mission.reward} 받기</button>}</div>
     </div>
   }
 
@@ -239,14 +249,15 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     if (chain && el) pop(el, el.clientWidth / 2, el.clientWidth / 2, `연쇄 ×${chain.n}`, 'gold')
     if (chain?.n >= 3) setCheer('우와, 연쇄다!')
     buzz(r.events.length > 6 ? [20, 30, 20] : 12)
-    dustNow.current += r.events.filter((e) => e.type === 'dust').length
+    dustNow.current += r.events.filter((e) => e.type === mission.type).length
     if (r.state.done === 'win') {
       const next = Math.max(unlocked, s.stage + 1)
       const nextStars = { ...stars, [s.stage]: Math.max(stars[s.stage] || 0, r.state.stars || 1) }
-      const w = { ...week, dust: week.dust + dustNow.current }; dustNow.current = 0
+      const won = mission.type === 'win' ? 1 : mission.type === 'star3' && r.state.stars === 3 ? 1 : 0
+      const w = { ...day, n: day.n + dustNow.current + won }; dustNow.current = 0
       r.state.gift = next > unlocked && next % GIFT_EVERY === 0; r.state.streak = streak + 1
-      setWeek(w); setStreak(streak + 1)
-      setUnlocked(next); setStars(nextStars); save({ unlocked: next, stars: nextStars, streak: streak + 1, week: w }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
+      setDay(w); setStreak(streak + 1)
+      setUnlocked(next); setStars(nextStars); save({ unlocked: next, stars: nextStars, streak: streak + 1, day: w }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
       const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
       if (el) confetti(el)
       onFinish?.({ level: 'normal', score: s.stage + 1, tried: s.stage + 1, win: true })
@@ -254,8 +265,8 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   }
   // 이동을 다 써도 바로 끝내지 않고 이어하기를 물어봄
   const giveUp = () => {
-    const w = { ...week, dust: week.dust + dustNow.current }; dustNow.current = 0
-    setWeek(w); setStreak(0); save({ streak: 0, week: w })
+    const w = { ...day, n: day.n + dustNow.current }; dustNow.current = 0
+    setDay(w); setStreak(0); save({ streak: 0, day: w })
     onFinish?.({ level: 'normal', score: s.stage, tried: s.stage + 1, win: false })
     setS(null); setSel(null)
   }

@@ -26,14 +26,14 @@ test('게임별 최고 기록·짝맞추기 동률 횟수·하루 판수·다음
   expect(recordGameScore(scores, 'tap', 'mom', { score: NaN }, now)).toBe(scores)
 })
 
-test('5등까지 날짜와 함께 보관, 가족 순위로 합침', async () => {
+test('5등까지 날짜와 함께 보관, 가족 순위는 사람마다 최고 기록 하나', async () => {
   const { recordGameScore, rankGameScores } = await import('../../src/v2/data/gameScores.js')
   let s = {}
   for (const [i, v] of [3, 9, 1, 7, 5, 8].entries()) s = recordGameScore(s, 'stack', 'a', { score: v }, new Date(2026, 10, 6, 10, i))
   s = recordGameScore(s, 'stack', 'b', { score: 10 }, new Date(2026, 10, 6, 11))
   expect(s.stack.a.top.map((t) => t.value)).toEqual([9, 8, 7, 5, 3])
   const r = rankGameScores(s, 'stack')
-  expect(r.map((t) => [t.member, t.value])).toEqual([['b', 10], ['a', 9], ['a', 8], ['a', 7], ['a', 5]])
+  expect(r.map((t) => [t.member, t.value])).toEqual([['b', 10], ['a', 9]])
   expect(r[0].at).toBe(new Date(2026, 10, 6, 11).toISOString())
 })
 
@@ -41,5 +41,5 @@ test('예전 최고 기록(top 없음)도 새 판과 함께 남음', async () =>
   const { recordGameScore, rankGameScores } = await import('../../src/v2/data/gameScores.js')
   const old = { stack: { a: { best: 12, playedAt: '2026-11-01T01:00:00.000Z' } } }
   const s = recordGameScore(old, 'stack', 'a', { score: 4 }, new Date(2026, 10, 6))
-  expect(rankGameScores(s, 'stack').map((t) => t.value)).toEqual([12, 4])
+  expect(rankGameScores(s, 'stack').map((t) => t.value)).toEqual([12])
 })

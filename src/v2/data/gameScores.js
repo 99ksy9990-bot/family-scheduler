@@ -30,6 +30,7 @@ export const unitOf = (gameId) => gameId === 'pairs' ? '초' : ['sequence', 'cle
 
 export function rankGameScores(scores, gameId) {
   const lower = gameId === 'pairs'
-  return Object.entries(scores?.[gameId] || {}).flatMap(([member, record]) => (record?.top || (Number.isFinite(record?.best) ? [{ value: record.best, level: record.level, at: record.playedAt }] : [])).map((item) => ({ ...item, member })))
-    .sort((a, b) => lower ? a.value - b.value : b.value - a.value).slice(0, 5)
+  // 가족 순위: 사람마다 최고 기록 하나씩
+  return Object.entries(scores?.[gameId] || {}).map(([member, record]) => ({ ...((record?.top || [])[0] || { value: record?.best, level: record?.level, at: record?.playedAt }), member }))
+    .filter((item) => Number.isFinite(item.value)).sort((a, b) => lower ? a.value - b.value : b.value - a.value)
 }
