@@ -27,7 +27,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     for (const s of ws.enabled ? state.shifts : []) {
       const t = types.find((x) => x.id === s.shift)
       if (!t || !workers.has(s.member)) continue
-      map.set(s.date, [...(map.get(s.date) || []).filter((x) => x.member !== s.member), { member: s.member, id: t.id, text: t.id === 'off' ? '휴무' : t.code }])
+      map.set(s.date, [...(map.get(s.date) || []).filter((x) => x.member !== s.member), { member: s.member, id: t.id, text: t.id === 'off' ? 'OFF' : t.code }])
     }
     // 고정 근무자(아빠)의 연차·반차도 같은 이름표로
     for (const profile of state.profiles) for (const [date, kind] of Object.entries(profile.regularWork?.leaves || {})) {

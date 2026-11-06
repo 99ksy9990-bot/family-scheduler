@@ -44,9 +44,9 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
     const next = mine.get(key) === brush ? null : brush // 같은 걸 다시 누르면 지움
     updateState((current) => ({ ...current, shifts: [...current.shifts.filter((s) => !(s.member === profile.id && s.date === key)), ...(next ? [{ id: crypto.randomUUID(), member: profile.id, date: key, shift: next }] : [])] }))
   }
-  const code = (id) => id === 'off' ? '휴무' : types.find((t) => t.id === id)?.code || ''
+  const code = (id) => id === 'off' ? 'OFF' : types.find((t) => t.id === id)?.code || ''
   return <div className="work-editor">
-    <div className="shift-brush" role="group" aria-label="근무 종류">{types.map((t) => <button type="button" key={t.id} data-shift={t.id} aria-pressed={brush === t.id} onClick={() => setBrush(t.id)}><b>{t.id === 'off' ? '휴무' : t.code}</b><small>{t.id === 'off' ? '쉬는 날' : t.start}</small></button>)}</div>
+    <div className="shift-brush" role="group" aria-label="근무 종류">{types.map((t) => <button type="button" key={t.id} data-shift={t.id} aria-pressed={brush === t.id} onClick={() => setBrush(t.id)}><b>{t.id === 'off' ? 'OFF' : t.code}</b><small>{t.id === 'off' ? '휴무' : t.start}</small></button>)}</div>
     <p className="quiet">근무 종류를 고르고 날짜를 누르세요. 같은 날을 다시 누르면 지워져요.</p>
     <div className="shift-month-head month-arrows"><button aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={18} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><button aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={18} /></button></div>
     <div className="shift-grid">
