@@ -139,3 +139,4 @@
 .settings-content .event-form > .danger-button { background: none; color: #ff3b30; }
 .settings-content .event-form > .error { padding: 8px 0; }
 .settings-content .event-form fieldset .check-label { padding: 7px 0; width: 38px; justify-content: center; margin-right: 4px; } .settings-content .event-form input::placeholder { color: var(--label-3); }
+.house-tile .house-badge:not(.upcoming) { color: #fff; } /* 사용자 요청: 학교·학원도 '근무 중'처럼 흰 글자 */

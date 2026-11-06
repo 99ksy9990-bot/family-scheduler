@@ -53,9 +53,9 @@ test('연속 두 판·최고 기록과 무관한 증가·날짜 변경 후 초�
 
 test.describe('예시 게임', () => {
   test.use({ connected: false })
-  test('다섯 게임 모두 선택·시작·하늘 선물의 선택 캐릭터 전달', async ({ page }) => {
+  test('여섯 게임 모두 선택·시작·하늘 선물의 선택 캐릭터 전달', async ({ page }) => {
     await page.getByRole('navigation').getByRole('button', { name: '놀이', exact: true }).click()
-    for (const [index, selector] of ['.pairs-grid', '.catch-area', '.tap-grid', '.seq-grid', '.match-grid'].entries()) {
+    for (const [index, selector] of ['.pairs-grid', '.catch-area', '.tap-grid', '.seq-grid', '.stack-area', '.match-grid'].entries()) {
       await page.locator('.game-tile').nth(index).click()
       const dialog = page.getByRole('dialog')
       await dialog.getByRole('button', { name: '연두', exact: true }).click()

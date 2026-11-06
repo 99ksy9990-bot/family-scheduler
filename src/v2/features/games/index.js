@@ -5,5 +5,6 @@ export const GAMES = [
   { id: 'catch', name: '하늘 선물 받기', image: 'star', component: lazy(() => import('./Catch.jsx')) },
   { id: 'tap', name: '가족 얼굴 톡톡', image: 'hole', component: lazy(() => import('./Tap.jsx')) },
   { id: 'sequence', name: '순서 기억하기', image: 'sun', component: lazy(() => import('./Sequence.jsx')) },
+  { id: 'stack', name: '우리집 쌓기', image: 'tiles/house', component: lazy(() => import('./Stack.jsx')) },
   { id: 'match', name: '같은 그림 셋 맞추기', image: 'tiles/ribbon', component: lazy(() => import('./Match.jsx')) },
 ]

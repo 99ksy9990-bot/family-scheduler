@@ -18,5 +18,5 @@ export function bestGameLabel(scores, gameId) {
   const values = Object.values(scores?.[gameId] || {}).map((record) => record?.best).filter(Number.isFinite)
   if (!values.length) return '기록 없음'
   const best = gameId === 'pairs' ? Math.min(...values) : Math.max(...values)
-  return `최고 ${best.toLocaleString('ko-KR')}${gameId === 'pairs' ? '초' : gameId === 'sequence' ? '단계' : '점'}`
+  return `최고 ${best.toLocaleString('ko-KR')}${gameId === 'pairs' ? '초' : gameId === 'sequence' ? '단계' : gameId === 'stack' ? '층' : '점'}`
 }

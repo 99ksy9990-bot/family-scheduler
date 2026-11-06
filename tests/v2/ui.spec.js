@@ -16,7 +16,7 @@ test('첫 화면 일정·캐릭터·24시간 표기·4개 탭·가로 넘침 없
   expect(Math.abs(frame.x - (page.viewportSize().width - frame.width) / 2)).toBeLessThan(1)
   expect(await page.locator('.bottom-nav').evaluate((nav) => nav.getBoundingClientRect().width)).toBeLessThanOrEqual(480)
   await page.getByRole('navigation').getByRole('button', { name: '놀이', exact: true }).click()
-  await expect(page.locator('.game-tile')).toHaveCount(5)
+  await expect(page.locator('.game-tile')).toHaveCount(6)
   await page.getByRole('navigation').getByRole('button', { name: '가족', exact: true }).click()
   await expect(page.getByRole('region', { name: '가족 목록' })).toBeVisible()
 
