@@ -11,7 +11,11 @@ const ROOMS = [
   { name: '현관', bg: 'entry', say: '집에 오자마자 현관이 엉망이네! 같이 치워 볼까?', tasks: [['door', '현관문 꾸미기', 1, [50, 54, 30]], ['plant', '화분 놓기', 2, [16, 74, 20]], ['clock', '시계 걸기', 2, [82, 34, 16]]] },
   { name: '거실', bg: 'living', say: '거실에 먼지가 가득해. 가족이 다 같이 쉴 곳을 만들자!', tasks: [['rug', '러그 깔기', 3, [50, 86, 44]], ['lamp', '조명 켜기', 3, [14, 60, 18]], ['frame', '가족 액자 걸기', 4, [54, 34, 26]]] },
   { name: '공부방', bg: 'study', say: '초롱이랑 연두가 공부할 방이야. 깔끔하게 정리해 주자.', tasks: [['window', '창문 달기', 4, [50, 38, 34]], ['pencil', '연필꽂이 정리', 5, [82, 74, 16]], ['heart', '쿠션 놓기', 5, [20, 78, 20]]] },
-  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 6, [50, 18, 40]], ['bear', '곰인형 앉히기', 7, [24, 72, 22]], ['cake', '집들이 하기', 8, [72, 72, 24]]] },
+  { name: '부엌', bg: 'kitchen', say: '배고프다! 부엌을 고쳐서 맛있는 밥을 해 먹자.', tasks: [['stove', '가스레인지 놓기', 5, [22, 70, 26]], ['table', '식탁 차리기', 5, [64, 72, 34]], ['fruit', '과일 바구니', 6, [64, 50, 18]]] },
+  { name: '욕실', bg: 'bath', say: '욕실이 미끌미끌해. 깨끗하게 씻을 수 있게 해 줘!', tasks: [['tub', '욕조 놓기', 5, [56, 72, 44]], ['towel', '수건 걸기', 6, [18, 40, 22]], ['duck', '고무 오리', 6, [70, 58, 12]]] },
+  { name: '침실', bg: 'bed', say: '오늘 밤엔 푹 자고 싶어. 침실을 포근하게 꾸며 줘.', tasks: [['bedframe', '침대 놓기', 6, [40, 70, 42]], ['closet', '옷장 넣기', 6, [82, 60, 22]], ['starlamp', '별 무드등', 7, [76, 82, 12]]] },
+  { name: '마당', bg: 'yard', say: '밖에서도 놀 수 있게 마당을 만들자!', tasks: [['flowers', '꽃밭 가꾸기', 7, [24, 84, 30]], ['swing', '그네 달기', 7, [66, 66, 30]], ['doghouse', '강아지집', 8, [88, 82, 18]]] },
+  { name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 8, [50, 18, 40]], ['bear', '곰인형 앉히기', 8, [24, 72, 22]], ['cake', '집들이 하기', 9, [72, 72, 24]]] },
 ].map((room, r) => ({ ...room, tasks: room.tasks.map(([img, name, cost, at], t) => ({ id: `${r}-${t}`, img: `/game/room/${img}.png`, name, cost, at })) }))
 const starKey = (player) => `family-scheduler-clean-stars-${player}`
 const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }

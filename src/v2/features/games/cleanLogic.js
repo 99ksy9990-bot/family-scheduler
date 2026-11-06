@@ -41,7 +41,7 @@ const HARD = BASE.map((st) => ({
 // 판 모양(뚫린 칸)과 상자 줄: 단계 번호로 돌아가며
 const SHAPES = [[], [0, 6, 42, 48], [24], [14, 21, 28, 20, 27, 34], [0, 1, 5, 6], [21, 27]]
 const boxesFor = (i) => (i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 ? 2 : 1 } : null)
-export const STAGES = [...BASE, ...HARD].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+export const STAGES = [...BASE, ...HARD].map((st, i) => ({ ...st, holes: SHAPES[i % SHAPES.length], boxes: boxesFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
