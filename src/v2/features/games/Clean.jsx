@@ -14,6 +14,8 @@ const PRE = [['row', '로켓', 1], ['bomb', '폭탄', 2], ['rainbow', '무지개
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const COST_SCALE = 0.36 // 방 꾸미기 비용 (별 버는 양에 맞춤)
 const now = () => Date.now()
+// 새 방해물이 처음 나오는 단계에서 한 번 설명
+const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'] }
 const weekId = (d = new Date()) => { const m = new Date(d); m.setDate(m.getDate() - ((m.getDay() + 6) % 7)); return `${m.getFullYear()}-${m.getMonth() + 1}-${m.getDate()}` }
 const EXTRA_MOVES = 5 // 다 쓰면 별로 사기
 // 이야기: 방마다 할 일 3개, 단계에서 얻은 별을 써서 하나씩 고침
@@ -128,6 +130,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const [streak, setStreak] = useState(() => progress?.streak || 0) // 연승
   const [bonus, setBonus] = useState(() => progress?.bonus || 0) // 이벤트로 받은 별
   const [week, setWeek] = useState(() => (progress?.week?.id === weekId() ? progress.week : { id: weekId(), dust: 0, claimed: false }))
+  const [tip, setTip] = useState(null)
   const [pre, setPre] = useState(null) // 시작 전 아이템 고르는 단계
   const [picks, setPicks] = useState([])
   const dustNow = useRef(0)
@@ -168,7 +171,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
     const cost = chosen.reduce((a, k) => a + PRE.find((x) => x[0] === k)[2], 0)
     if (cost) { const next = bought + cost; setBought(next); save({ bought: next }) }
     addStarts(st.board, [...perks.flatMap((p) => p.start || []), ...STREAK.slice(0, Math.min(streak, 3)), ...chosen])
-    dustNow.current = 0; setPre(null); setPicks([])
+    dustNow.current = 0; setPre(null); setPicks([]); setTip(FIRST[i] || null)
     setS(st); setItems({ hammer: ITEMS.hammer + perks.reduce((a, p) => a + (p.hammer || 0), 0), shuffle: ITEMS.shuffle + perks.reduce((a, p) => a + (p.shuffle || 0), 0) }); setHammer(false); setBroom(false); setEraser(false); setCheer('')
   }
 
@@ -346,6 +349,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <li><b>4개</b> 로켓 · <b>네모</b> 프로펠러</li>
       <li><b>ㄱ·T</b> 폭탄 · <b>5개</b> 무지개</li>
     </ul></details>
+    {tip && !s.done && <div className="game-done clean-tip" role="dialog" aria-label={tip[1]}><i className={tip[0]} /><b>{tip[1]}</b><p>{tip[2]}</p><button className="primary-button clean-play" autoFocus onClick={() => setTip(null)}>알겠어요</button></div>}
     {s.done === 'win' && <div className="game-done"><b>{s.stage + 1}단계 깨끗해졌어요! {'★'.repeat((s.stars || 1) * (STAGES[s.stage].hard ? 2 : 1))}{s.gift ? ` · 선물 상자 ★${GIFT}` : ''}{s.streak > 1 ? ` · ${s.streak}연승` : ''}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>별 쓰러 집으로</button></div>}
     {s.done === 'lose' && <div className="game-done"><b>이동을 다 썼어요{streak ? ` (지면 ${streak}연승이 끊겨요)` : ''}</b><button className="game-level" disabled={wallet < PRICE.moves} onClick={keepGoing}>이동 +{EXTRA_MOVES} 이어하기 ★{PRICE.moves}</button><button className="game-level" onClick={giveUp}>그만하기</button></div>}
   </div>

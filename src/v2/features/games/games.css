@@ -227,3 +227,4 @@
 .clean-week button:disabled { background: var(--fill); color: var(--label-3); }
 .clean-week em { flex: none; font-style: normal; color: var(--label-2); }
 .game-done button + button { margin-left: 8px; }
+.clean-tip { position: fixed; z-index: 50; left: 50%; top: 40%; transform: translate(-50%, -50%); width: min(320px, calc(100vw - 32px)); justify-items: center; padding: 22px 18px; border-radius: 24px; background: var(--card, #fff); box-shadow: 0 12px 40px rgba(0,0,0,.25); } .clean-tip p { margin: 0; max-width: 260px; word-break: keep-all; } .clean-tip .ice-icon, .clean-tip .foam-icon { width: 56px; height: 56px; }
