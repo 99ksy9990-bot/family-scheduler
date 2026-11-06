@@ -132,3 +132,5 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .shift-label[data-shift='leave-pm'] { background: #dfe0ff; color: #3634a3; }
 .shift-label[data-shift^='leave-am'], .shift-label[data-shift^='leave-pm'] { font-size: 10px; letter-spacing: -.4px; }
 .shift-label[data-shift='blank'] { visibility: hidden; min-height: 16px; }
+/* 상주 근무자 연차·반차는 쉬는 날이라 휴무와 같은 회색 */
+.shift-label[data-shift^='leave-'] { background: var(--fill); color: var(--label-2); }
