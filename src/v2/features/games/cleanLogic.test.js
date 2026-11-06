@@ -10,7 +10,7 @@ const fill = () => Array.from({ length: N * N }, (_, i) => T((i + Math.floor(i /
 test('시작 판: 줄 없음, 움직일 수 있음, 먼지 배치', () => {
   const s = begin(1, seeded(3))
   assert.ok(hasMove(s.board))
-  assert.equal(s.dust.filter(Boolean).length, 16)
+  assert.equal(s.dust.filter(Boolean).length, 2 * N)
   assert.equal(s.moves, STAGES[1].moves)
 })
 
@@ -32,10 +32,10 @@ test('4개 → 로켓, 로켓끼리 바꾸면 줄 두 개 지움', () => {
 
 test('무지개 + 아무거나: 그 종류 전부 지움, 먼지 닦임', () => {
   const s = begin(1, seeded(13)); s.board = fill()
-  s.board[7 * N] = T(2, 'rainbow')
-  const k = s.board[7 * N + 1].k
+  s.board[(N - 1) * N] = T(2, 'rainbow')
+  const k = s.board[(N - 1) * N + 1].k
   const before = s.board.filter((t) => t.k === k).length
-  const r = play(s, 7 * N, 7 * N + 1, seeded(17))
+  const r = play(s, (N - 1) * N, (N - 1) * N + 1, seeded(17))
   assert.ok(r.state.collected[k] >= before)
   assert.ok(goals(r.state)[0].left < goals(s)[0].left)
 })
@@ -50,7 +50,7 @@ test('목표를 다 채우면 승리, 이동이 0이면 실패', () => {
 
 test('2×2 네모 → 프로펠러, 특수는 옆과 바꾸기만 해도 터짐, 합치기', () => {
   const s = begin(0, seeded(37)); s.board = fill()
-  s.board[0] = T(1); s.board[1] = T(1); s.board[N] = T(1); s.board[N + 2] = T(1); s.board[N + 1] = T(5)
+  s.board[0] = T(1); s.board[1] = T(1); s.board[N] = T(1); s.board[N + 2] = T(1); s.board[N + 1] = T(5); s.board[2 * N + 1] = T(4)
   const r = play(s, N + 1, N + 2, seeded(41))
   assert.ok(r.events.some((e) => e.type === 'make' && e.sp === 'prop'))
   const t = begin(0, seeded(43)); t.board = fill(); t.board[3 * N + 3] = T(0, 'row')

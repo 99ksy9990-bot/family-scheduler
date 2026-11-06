@@ -1,6 +1,6 @@
 // 우리집 대청소: 단계별 목표(먼지 닦기·물건 모으기)를 정해진 이동 안에 끝내는 셋 맞추기.
 // 판: N×N, 칸 = { k: 0~5 종류, sp: null|'row'|'col'|'bomb'|'rainbow' }, dust[i] = 먼지 남은 횟수(0~2)
-export const N = 8
+export const N = 7
 export const KINDS = 6
 
 // 단계: moves 이동 수, dust 먼지 배치(행 범위·두께), collect 모을 종류와 개수
@@ -37,7 +37,7 @@ const HARD = BASE.map((st) => ({
   ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 3]) }),
 }))
 // 쉽게 조정: 이동 1.5배, 모을 개수 0.7배
-export const STAGES = [...BASE, ...HARD].map((st) => ({ ...st, moves: Math.round(st.moves * 1.5), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+export const STAGES = [...BASE, ...HARD].map((st) => ({ ...st, ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)

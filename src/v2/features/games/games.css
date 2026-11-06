@@ -114,7 +114,7 @@
 .clean-goals .done { opacity: .45; }
 .dust-icon { display: inline-block; border-radius: 8px; background: repeating-linear-gradient(45deg, #c4ae8a 0 4px, #e0d2b8 4px 8px); }
 .clean-stage-no { font-weight: 700; color: var(--label-2); }
-.clean-board { position: relative; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 2px; padding: 4px; border-radius: 18px; background: #e8f0fb; touch-action: none; user-select: none; -webkit-user-select: none; }
+.clean-board { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; padding: 4px; border-radius: 18px; background: #e8f0fb; touch-action: none; user-select: none; -webkit-user-select: none; }
 .clean-cell { position: relative; aspect-ratio: 1; padding: 6%; border: 0; border-radius: 10px; background: rgba(255,255,255,.75); display: grid; place-items: center; }
 .clean-cell img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .clean-cell[data-dust] { background: repeating-linear-gradient(45deg, #c4ae8a 0 5px, #e0d2b8 5px 10px); }
