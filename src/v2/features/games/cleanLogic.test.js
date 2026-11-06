@@ -68,3 +68,9 @@ test('승리하면 별과 남은 이동 보너스', () => {
   assert.equal(r.state.done, 'win'); assert.equal(r.state.stars, 3)
   assert.ok(r.events.some((e) => e.type === 'bonus' && e.n === STAGES[0].moves - 1))
 })
+
+test('48단계·뒤 24단계는 먼지 최대 3겹', () => {
+  assert.equal(STAGES.length, 48)
+  assert.ok(STAGES.every((st) => !st.dust || st.dust.hp <= 3))
+  assert.ok(begin(47).moves > 0)
+})

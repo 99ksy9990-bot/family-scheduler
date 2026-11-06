@@ -4,7 +4,7 @@ export const N = 8
 export const KINDS = 6
 
 // 단계: moves 이동 수, dust 먼지 배치(행 범위·두께), collect 모을 종류와 개수
-export const STAGES = [
+const BASE = [
   { moves: 20, collect: [[0, 12]] },
   { moves: 20, dust: { rows: [6, 7], hp: 1 } },
   { moves: 22, collect: [[1, 15], [2, 15]] },
@@ -17,7 +17,25 @@ export const STAGES = [
   { moves: 28, dust: { rows: [4, 7], hp: 2 } },
   { moves: 26, collect: [[0, 25], [2, 25], [3, 25]] },
   { moves: 30, dust: { rows: [0, 7], hp: 1 } },
+  { moves: 24, dust: { rows: [5, 7], hp: 2 }, collect: [[2, 18]] },
+  { moves: 24, collect: [[1, 22], [4, 22]] },
+  { moves: 28, dust: { rows: [3, 7], hp: 2 } },
+  { moves: 26, dust: { rows: [2, 7], hp: 1 }, collect: [[0, 18], [5, 18]] },
+  { moves: 25, collect: [[2, 28], [3, 28]] },
+  { moves: 30, dust: { rows: [1, 7], hp: 2 } },
+  { moves: 28, dust: { rows: [4, 7], hp: 2 }, collect: [[1, 20], [3, 20]] },
+  { moves: 27, collect: [[0, 30], [1, 30], [5, 30]] },
+  { moves: 32, dust: { rows: [0, 7], hp: 2 } },
+  { moves: 30, dust: { rows: [2, 7], hp: 2 }, collect: [[4, 25]] },
+  { moves: 30, dust: { rows: [0, 7], hp: 1 }, collect: [[2, 25], [3, 25]] },
+  { moves: 34, dust: { rows: [0, 7], hp: 2 }, collect: [[0, 20], [5, 20]] },
 ]
+// 25~48단계: 앞 24단계를 더 두껍고 많게 (먼지 hp+1 최대 3, 모을 개수 +5, 이동 +2)
+export const STAGES = [...BASE, ...BASE.map((st) => ({
+  moves: st.moves + 2,
+  ...(st.dust && { dust: { rows: st.dust.rows, hp: Math.min(3, st.dust.hp + 1) } }),
+  ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 5]) }),
+}))]
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)

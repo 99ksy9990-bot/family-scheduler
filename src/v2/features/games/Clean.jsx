@@ -5,19 +5,21 @@ import './games.css'
 
 const IMG = ['star', 'heart', 'sun', 'ribbon', 'pencil', 'house'].map((n) => `/game/tiles/${n}.png`)
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
-// 별을 모으면 집 꾸밈이 하나씩 열림 (k = IMG 번호)
+// 별을 모으면 집 꾸밈이 하나씩 열림 (최대 48단계 × 별 3개 = 144)
 const DECOR = [
-  { name: '현관 리본', k: 3, need: 3 }, { name: '거실 햇살', k: 2, need: 7 }, { name: '방 하트 쿠션', k: 1, need: 12 },
-  { name: '공부방 연필꽂이', k: 4, need: 18 }, { name: '지붕 별 장식', k: 0, need: 26 }, { name: '반짝 우리집', k: 5, need: 36 },
-]
+  ['ribbon', '현관 리본', 5], ['sun', '창가 햇살', 12], ['heart', '하트 쿠션', 20], ['pencil', '연필꽂이', 30],
+  ['roof', '지붕 별 장식', 42], ['plant', '화분', 55], ['clock', '벽시계', 68], ['rug', '거실 러그', 82],
+  ['lamp', '스탠드 조명', 96], ['frame', '가족 액자', 110], ['bear', '곰인형', 126], ['home', '반짝 우리집', 144],
+].map(([img, name, need]) => ({ img: `/game/decor/${img}.png`, name, need }))
 const starKey = (player) => `family-scheduler-clean-stars-${player}`
 const readStars = (player) => { try { return JSON.parse(localStorage.getItem(starKey(player))) || {} } catch { return {} } }
 const progressKey = (player) => `family-scheduler-clean-progress-${player}`
 const readProgress = (player) => { try { return Number(localStorage.getItem(progressKey(player))) || 0 } catch { return 0 } }
 
-export default function Clean({ player, onFinish }) {
-  const [unlocked, setUnlocked] = useState(() => readProgress(player))
-  const [stars, setStars] = useState(() => readStars(player))
+export default function Clean({ player, onFinish, progress, onProgress }) {
+  // 가족 데이터에 저장(폰이 바뀌어도 유지), 예전 폰 저장값은 처음 한 번 가져옴
+  const [unlocked, setUnlocked] = useState(() => Math.max(progress?.unlocked || 0, readProgress(player)))
+  const [stars, setStars] = useState(() => ({ ...readStars(player), ...progress?.stars }))
   const [s, setS] = useState(null)
   const [sel, setSel] = useState(null)
   const [flash, setFlash] = useState(() => new Set())
@@ -29,7 +31,7 @@ export default function Clean({ player, onFinish }) {
     <p className="quiet">먼지를 닦고 물건을 모아 집을 깨끗하게! 단계를 깨면 다음 단계가 열려요.</p>
     <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className="clean-stage" disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => setS(begin(i))}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
     <h3 className="clean-decor-title">우리집 꾸미기 <small>모은 별 ★{totalStars}</small></h3>
-    <div className="clean-decor">{DECOR.map((d) => { const open = totalStars >= d.need; return <div key={d.name} className={`clean-decor-item${open ? ' open' : ''}`} aria-label={`${d.name} ${open ? '꾸밈 완료' : `별 ${d.need}개 필요`}`}><img src={IMG[d.k]} alt="" /><b>{d.name}</b><small>{open ? '완료' : `★${d.need}`}</small></div> })}</div>
+    <div className="clean-decor">{DECOR.map((d) => { const open = totalStars >= d.need; return <div key={d.name} className={`clean-decor-item${open ? ' open' : ''}`} aria-label={`${d.name} ${open ? '꾸밈 완료' : `별 ${d.need}개 필요`}`}><img src={d.img} alt="" /><b>{d.name}</b><small>{open ? '완료' : `★${d.need}`}</small></div> })}</div>
   </div>
 
   const doSwap = (i, j) => {
@@ -53,7 +55,7 @@ export default function Clean({ player, onFinish }) {
     if (r.state.done === 'win') {
       const next = Math.max(unlocked, s.stage + 1)
       const nextStars = { ...stars, [s.stage]: Math.max(stars[s.stage] || 0, r.state.stars || 1) }
-      setUnlocked(next); setStars(nextStars); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
+      setUnlocked(next); setStars(nextStars); onProgress?.({ unlocked: next, stars: nextStars }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
       const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
       if (el) confetti(el)
       onFinish?.({ level: 'normal', score: s.stage + 1 })
