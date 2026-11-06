@@ -125,6 +125,9 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
   const partyRef = useRef(null)
   useEffect(() => { if (party && partyRef.current) confetti(partyRef.current) }, [party])
   const area = useRef(null)
+  const tabs = useRef(null)
+  // 고른 방 탭이 화면 밖이면 가운데로 끌어옴 (방이 30개라 옆으로 김)
+  useEffect(() => { tabs.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }) }, [view, done, s, party])
   const start = useRef(null)
   // 5초 동안 안 움직이면 바꿀 수 있는 두 칸을 깜빡여 알려 줌
   useEffect(() => {
@@ -160,7 +163,7 @@ export default function Clean({ player, onFinish, progress, onProgress }) {
       <button className="primary-button clean-play" onClick={() => { setParty(null); setCheer(''); setView(null) }}>{party.last ? '우리집 보기' : '다음 방으로'}</button>
     </div>
     return <div key="map" className="clean-map">
-      <div className="clean-room-tabs" role="tablist" aria-label="방 고르기">{ROOMS.map((r, k) => <button key={r.name} role="tab" aria-selected={r === room} disabled={!open(r, k)} onClick={() => { setView(k); setCheer('') }}>{r.name}{finished(r) ? ' ✓' : ''}</button>)}</div>
+      <div className="clean-room-tabs" ref={tabs} role="tablist" aria-label="방 고르기">{ROOMS.map((r, k) => <button key={r.name} role="tab" aria-selected={r === room} disabled={!open(r, k)} onClick={() => { setView(k); setCheer('') }}>{r.name}{finished(r) ? ' ✓' : ''}</button>)}</div>
       <section className="clean-room" style={{ backgroundImage: `url(/game/room/${room.bg}.jpg)` }} aria-label={`${room.name} 꾸미기`}>
         <span className="clean-room-name">{room.name}</span>
         <span className="clean-wallet">★ {wallet}</span>
