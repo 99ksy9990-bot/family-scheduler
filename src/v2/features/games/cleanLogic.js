@@ -53,7 +53,18 @@ const EXTRA = HARD.slice(12).map((st) => ({ ...st, moves: st.moves + 3, ...(st.d
 const LATE = [...HARD, ...HARD.slice(0, 16)].map((st) => ({ ...st, moves: st.moves + 4, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 5]) }) }))
 // 101~200단계: 더 어렵게 — 먼지 2겹, 모을 개수 +10, 이동 -3
 const ULTRA = [...HARD, ...HARD, ...HARD, ...HARD, ...HARD.slice(0, 4)].map((st) => ({ ...st, moves: st.moves - 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 10]) }) }))
-export const STAGES = [...BASE, ...HARD, ...EXTRA, ...LATE, ...ULTRA].map((st, i) => ({ ...st, holes: i >= 150 ? SHAPES3[i % SHAPES3.length] : i >= 100 ? SHAPES2[i % SHAPES2.length] : SHAPES[i % SHAPES.length], boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0) + (i >= 150 ? 4 : 0), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
+// 얼음(그 칸에서 맞추면 깨짐, 깨지기 전엔 못 움직임)·거품(안 닦으면 옆으로 번짐)
+const iceFor = (i) => (i >= 20 && i % 5 === 1 ? [29, 30, 31, 32, 33] : [])
+const foamFor = (i) => (i >= 40 && i % 7 === 5 ? [0, 6, 42, 48, 3, 45] : [])
+export const isHard = (i) => i % 10 === 9 // 10단계마다 '어려움': 별 2배
+const RAW = [...BASE, ...HARD, ...EXTRA, ...LATE, ...ULTRA]
+export const STAGES = RAW.map((st, i) => {
+  const holes = i >= 150 ? SHAPES3[i % SHAPES3.length] : i >= 100 ? SHAPES2[i % SHAPES2.length] : SHAPES[i % SHAPES.length]
+  const free = (x) => !holes.includes(x) && !boxesFor(i)?.cells.includes(x)
+  const ice = iceFor(i).filter(free); let foam = foamFor(i).filter(free).slice(0, 2)
+  if (foamFor(i).length && !foam.length) foam = [24]
+  return { ...st, ice, foam, hard: isHard(i), extraMoves: (ice.length ? 4 : 0) + (foam.length ? 5 : 0) - (isHard(i) ? 2 : 0), holes }
+}).map((st, i) => ({ ...st, boxes: boxesFor(i), drops: dropsFor(i), ...(st.dust && { dust: { ...st.dust, rows: [Math.max(0, st.dust.rows[0] - 1), N - 1] } }), moves: Math.round(st.moves * 1.5 * (st.dust ? (st.dust.hp > 1 ? 1.5 : 1.3) : 1) * (i < 12 ? 1.1 : 1)) + (dropsFor(i) ? 5 : 0) + (i >= 150 ? 4 : 0) + st.extraMoves, ...(st.collect && { collect: st.collect.map(([k, n]) => [k, Math.round(n * 0.7)]) }) }))
 
 const rc = (i) => [Math.floor(i / N), i % N]
 const kindAt = (b, r, c) => (r < 0 || c < 0 || r >= N || c >= N || !b[r * N + c] ? -1 : b[r * N + c].k)
@@ -67,7 +78,10 @@ export function begin(stageIndex, rand = Math.random) {
   // 오리는 위쪽 줄 서로 다른 칸에
   const tops = board.map((t, x) => (!isFixed(t) && rc(x)[0] <= 1 ? x : -1)).filter((x) => x >= 0)
   for (let n = 0; n < (st.drops || 0) && tops.length; n++) { const x = tops.splice(Math.floor(rand() * tops.length), 1)[0]; board[x] = { k: -2, drop: true, sp: null } }
-  return { stage: stageIndex, dropped: 0, board, dust, moves: st.moves, collected: Array(KINDS).fill(0), score: 0, done: null }
+  for (const x of st.ice) board[x] = { ...board[x], ice: 1 }
+  if (st.ice.length && !hasMove(board)) return begin(stageIndex, rand)
+  const foam = Array.from({ length: N * N }, (_, i) => (st.foam.includes(i) ? 1 : 0))
+  return { stage: stageIndex, dropped: 0, board, dust, foam, moves: st.moves, collected: Array(KINDS).fill(0), score: 0, done: null }
 }
 
 // 고정 칸은 두고 나머지를 줄 없이 새로 채움 (움직일 수 있을 때까지)
@@ -86,6 +100,7 @@ function deal(fixed, rand) {
   return board
 }
 export const isFixed = (t) => !!t?.fix
+export const isLocked = (t) => !!t?.fix || !!t?.ice // 얼음 칸도 못 움직임
 
 // 가로·세로 3개 이상 줄 찾기 → [{ cells, dir }]
 function runs(b) {
@@ -129,7 +144,7 @@ const swapped = (b, i, j) => { const n = [...b]; [n[i], n[j]] = [n[j], n[i]]; re
 // 바꿀 수 있는 두 칸 [i, j] (힌트용), 없으면 null
 export function findMove(b) {
   for (let i = 0; i < N * N; i++) {
-    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && !isFixed(b[i]) && !isFixed(b[j]) && (b[i]?.sp || b[j]?.sp || runs(swapped(b, i, j)).length)) return [i, j]
+    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && !isLocked(b[i]) && !isLocked(b[j]) && (b[i]?.sp || b[j]?.sp || runs(swapped(b, i, j)).length)) return [i, j]
   }
   return null
 }
@@ -167,11 +182,13 @@ function blast(b, i, target = null, s = null) {
 
 // 칸들을 지우면서 그 안의 특수 블록도 연쇄로 터뜨림
 function clearCells(s, cells, events) {
-  const queue = [...cells]; const gone = new Set(); const hitBox = new Set()
+  const queue = [...cells]; const gone = new Set(); const hitBox = new Set(); const thawed = new Set()
   while (queue.length) {
     const i = queue.pop(); if (gone.has(i) || !s.board[i]) continue
     if (isFixed(s.board[i])) { if (s.board[i].fix === 'box') hitBox.add(i); continue }
     if (s.board[i].drop) continue // 오리는 안 깨짐
+    if (thawed.has(i)) continue
+    if (s.board[i].ice) { s.board[i] = { ...s.board[i], ice: 0 }; thawed.add(i); events.push({ type: 'ice', i }); continue } // 얼음만 깨지고 물건은 남음
     gone.add(i)
     if (s.board[i].sp) { const hit = blast(s.board, i, null, s); events.push({ type: s.board[i].sp, i, cells: hit }); for (const x of hit) if (!gone.has(x)) queue.push(x) }
   }
@@ -181,6 +198,7 @@ function clearCells(s, cells, events) {
   for (const i of gone) {
     s.collected[s.board[i].k]++
     if (s.dust[i]) { s.dust[i]--; events.push({ type: 'dust', i }) }
+    if (s.foam?.[i]) { s.foam[i] = 0; s.foamHit = true; events.push({ type: 'foam', i }) }
     s.board[i] = null
   }
   s.score += gone.size * 10
@@ -190,8 +208,8 @@ function clearCells(s, cells, events) {
 function fall(s, rand) {
   for (let c = 0; c < N; c++) {
     // 고정 칸(뚫린 칸·상자)은 그 자리에 두고, 블록은 그 사이로 떨어짐
-    const col = []; for (let r = N - 1; r >= 0; r--) { const t = s.board[r * N + c]; if (t && !isFixed(t)) col.push(t) }
-    for (let r = N - 1, x = 0; r >= 0; r--) if (!isFixed(s.board[r * N + c])) s.board[r * N + c] = col[x++] || { k: pick(rand), sp: null }
+    const col = []; for (let r = N - 1; r >= 0; r--) { const t = s.board[r * N + c]; if (t && !isLocked(t)) col.push(t) }
+    for (let r = N - 1, x = 0; r >= 0; r--) if (!isLocked(s.board[r * N + c])) s.board[r * N + c] = col[x++] || { k: pick(rand), sp: null }
   }
 }
 
@@ -211,8 +229,8 @@ function combo(s, i, j, events) {
 
 // 바꾸기 한 번. 무효면 null. → 새 상태 + events(효과용)
 export function play(state, i, j, rand = Math.random) {
-  if (state.done || !adjacent(i, j) || !state.board[i] || !state.board[j] || isFixed(state.board[i]) || isFixed(state.board[j])) return null
-  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
+  if (state.done || !adjacent(i, j) || !state.board[i] || !state.board[j] || isLocked(state.board[i]) || isLocked(state.board[j])) return null
+  const s = copy(state)
   const events = []
   const a = s.board[i]; const bb = s.board[j]
   if (a.sp === 'rainbow' || bb.sp === 'rainbow') {
@@ -236,7 +254,18 @@ export function play(state, i, j, rand = Math.random) {
     if (!groups(s.board).length) return null
   }
   s.moves--
-  return settle(s, events, [i, j], rand)
+  const r = settle(s, events, [i, j], rand)
+  spread(r.state, r.events, rand)
+  return r
+}
+const copy = (state) => ({ ...state, board: [...state.board], dust: [...state.dust], foam: [...(state.foam || [])], collected: [...state.collected], foamHit: false })
+// 이번 이동에 거품을 하나도 못 닦으면 거품 하나가 옆 칸으로 번짐
+function spread(s, events, rand) {
+  if (s.done || s.foamHit || !s.foam?.some(Boolean)) return
+  const to = []
+  s.foam.forEach((f, i) => { if (!f) return; const [r, c] = rc(i); for (const [y, x] of [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]) { const k = y * N + x; if (y >= 0 && x >= 0 && y < N && x < N && !s.foam[k] && !isFixed(s.board[k])) to.push(k) } })
+  if (!to.length) return
+  const k = to[Math.floor(rand() * to.length)]; s.foam[k] = 1; events.push({ type: 'grow', i: k })
 }
 
 // 터진 뒤 떨어지고 연쇄, 끝났는지 판정
@@ -255,12 +284,12 @@ function settle(s, events, prefer, rand) {
   }
   fall(s, rand)
   for (let k = 0; k < 10 && rescue(s, events); k++) { fall(s, rand); for (let chain = 0; chain < 30; chain++) { const gs = groups(s.board); if (!gs.length) break; for (const g of gs) clearCells(s, g.cells, events); fall(s, rand) } }
-  if (!hasMove(s.board)) s.board = deal(s.board.map((t) => (isFixed(t) || t?.drop ? t : null)), rand)
+  if (!hasMove(s.board)) s.board = deal(s.board.map((t) => (isLocked(t) || t?.drop ? t : null)), rand)
   s.done = won(s) ? 'win' : s.moves <= 0 ? 'lose' : null
   if (s.done === 'win') {
     // 남은 이동마다 로켓 한 발씩 보너스
     s.stars = s.moves >= STAGES[s.stage].moves * 0.3 ? 3 : s.moves >= STAGES[s.stage].moves * 0.1 ? 2 : 1
-    for (let m = 0; m < s.moves; m++) { const x = Math.floor(rand() * N * N); if (isFixed(s.board[x]) || s.board[x]?.drop) continue; s.board[x] = { ...s.board[x], sp: m % 2 ? 'row' : 'col' }; clearCells(s, [x], events); fall(s, rand) }
+    for (let m = 0; m < s.moves; m++) { const x = Math.floor(rand() * N * N); if (isLocked(s.board[x]) || s.board[x]?.drop) continue; s.board[x] = { ...s.board[x], sp: m % 2 ? 'row' : 'col' }; clearCells(s, [x], events); fall(s, rand) }
     events.push({ type: 'bonus', n: s.moves })
   }
   return { state: s, events }
@@ -269,16 +298,16 @@ function settle(s, events, prefer, rand) {
 // 아이템: 망치(한 칸 깨기, 이동 안 씀), 섞기
 export function smash(state, i, rand = Math.random) {
   if (state.done || state.board[i]?.fix === 'hole') return null
-  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
+  const s = copy(state)
   const events = [{ type: 'smash', i }]
   clearCells(s, [i], events)
   return settle(s, events, [], rand)
 }
-// 빗자루(별로만 삼): 누른 칸의 가로 한 줄을 통째로 치움
-export function sweep(state, i, rand = Math.random) {
+// 빗자루(별로만 삼): 누른 칸의 가로 한 줄(col이면 세로 한 줄)을 통째로 치움
+export function sweep(state, i, rand = Math.random, col = false) {
   if (state.done || i < 0 || i >= N * N) return null
-  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
-  const r = Math.floor(i / N), cells = Array.from({ length: N }, (_, c) => r * N + c).filter((x) => s.board[x]?.fix !== 'hole')
+  const s = copy(state)
+  const r = Math.floor(i / N), cells = Array.from({ length: N }, (_, c) => (col ? c * N + (i % N) : r * N + c)).filter((x) => s.board[x]?.fix !== 'hole')
   const events = [{ type: 'smash', i }]
   clearCells(s, cells, events)
   return settle(s, events, [], rand)
@@ -286,7 +315,7 @@ export function sweep(state, i, rand = Math.random) {
 // 지우개(별로만 삼): 판에서 한 종류를 모두 지움
 export function erase(state, k, rand = Math.random) {
   if (state.done || k < 0) return null
-  const s = { ...state, board: [...state.board], dust: [...state.dust], collected: [...state.collected] }
+  const s = copy(state)
   const cells = s.board.map((t, x) => (t && t.k === k ? x : -1)).filter((x) => x >= 0)
   if (!cells.length) return null
   const events = [{ type: 'smash', i: cells[0] }]
@@ -295,13 +324,15 @@ export function erase(state, k, rand = Math.random) {
 }
 export function shuffle(state, rand = Math.random) {
   if (state.done) return null
-  return { ...state, board: deal(state.board.map((t) => (isFixed(t) || t.sp || t.drop ? t : null)), rand) }
+  return { ...state, board: deal(state.board.map((t) => (isLocked(t) || t.sp || t.drop ? t : null)), rand) }
 }
 
 export function goals(s) {
   const st = STAGES[s.stage]; const out = []
   if (st.drops) out.push({ kind: 'drop', left: Math.max(0, st.drops - (s.dropped || 0)) })
   if (st.boxes) out.push({ kind: 'box', left: s.board.filter((t) => t?.fix === 'box').length })
+  if (st.ice.length) out.push({ kind: 'ice', left: s.board.filter((t) => t?.ice).length })
+  if (st.foam.length) out.push({ kind: 'foam', left: (s.foam || []).filter(Boolean).length })
   if (st.dust) out.push({ kind: 'dust', left: s.dust.reduce((n, d) => n + d, 0) })
   for (const [k, n] of st.collect || []) out.push({ kind: k, left: Math.max(0, n - s.collected[k]) })
   return out

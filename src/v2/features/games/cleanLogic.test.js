@@ -125,3 +125,22 @@ test('빗자루는 한 줄을, 지우개는 한 종류를 치움', async () => {
   assert.ok(e)
   assert.equal(e.state.collected[k] >= s.board.filter((t) => t.k === k).length, true)
 })
+
+test('얼음: 못 움직이고 맞추면 깨짐 / 거품: 못 닦으면 번짐 / 세로 빗자루', async () => {
+  const { sweep, isLocked } = await import('./cleanLogic.js')
+  const i = STAGES.findIndex((st) => st.ice.length)
+  const s = begin(i, seeded(101)); const x = STAGES[i].ice[0]
+  assert.ok(isLocked(s.board[x]) && goals(s).find((g) => g.kind === 'ice').left === STAGES[i].ice.length)
+  assert.equal(play(s, x, x + 1), null)
+  const r = sweep(s, x, seeded(102))
+  assert.ok(r.events.some((e) => e.type === 'ice') && r.state.board[x].k >= 0)
+  const f = STAGES.findIndex((st) => st.foam.length)
+  const t = { ...begin(f, seeded(103)), board: fill() }
+  const before = t.foam.filter(Boolean).length
+  t.board[3 * N] = T(0); t.board[3 * N + 1] = T(0); t.board[4 * N + 2] = T(0); t.board[3 * N + 2] = T(3)
+  const m = play(t, 3 * N + 2, 4 * N + 2, seeded(104))
+  assert.ok(m.state.foam.filter(Boolean).length >= before) // 거품 옆이 아니면 번지거나 그대로
+  const c = sweep({ ...begin(0, seeded(105)), board: fill() }, 3, seeded(106), true)
+  assert.ok(c.events.filter((e) => e.type === 'smash').length === 1 && c.state.collected.reduce((a, b) => a + b) >= N)
+  assert.ok(STAGES[9].hard && !STAGES[8].hard)
+})

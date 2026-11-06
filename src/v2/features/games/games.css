@@ -145,7 +145,7 @@
 .clean-board.aiming .clean-cell { cursor: crosshair; }
 .clean-board.aiming { box-shadow: 0 0 0 3px var(--orange); }
 /* 아이템 */
-.clean-tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.clean-tools { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
 .clean-tools button { position: relative; display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border: 0; border-radius: 16px; background: var(--fill); color: var(--label); }
 .clean-tools img { width: 44px; height: 44px; } .clean-tools button small { font-size: 13px; font-weight: 600; color: var(--label); }
 .clean-badge { position: absolute; top: 4px; right: calc(50% - 34px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; line-height: 20px; font-variant-numeric: tabular-nums; }
@@ -197,3 +197,33 @@
 .clean-room-tabs button:disabled { opacity: .4; }
 .clean-room-tabs button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
 .clean-duck { filter: drop-shadow(0 2px 3px rgb(0 0 0 / .25)); }
+/* 얼음·거품 */
+.clean-cell[data-ice]::after { content: ''; position: absolute; inset: 2px; border-radius: 10px; pointer-events: none; z-index: 1; background: linear-gradient(135deg, rgba(220,240,255,.85), rgba(150,200,240,.55) 60%, rgba(255,255,255,.8)); box-shadow: inset 0 0 0 2px #8cc4ef; }
+.clean-cell[data-foam] { background: radial-gradient(circle at 30% 30%, #fff 0 18%, transparent 19%), radial-gradient(circle at 70% 60%, #fff 0 22%, transparent 23%), radial-gradient(circle at 35% 75%, #fff 0 14%, transparent 15%), #f4c6e4; }
+.ice-icon, .foam-icon { display: inline-block; width: 28px; height: 28px; border-radius: 8px; }
+.ice-icon { background: linear-gradient(135deg, #e8f5ff, #8cc4ef); box-shadow: inset 0 0 0 2px #6aaee6; }
+.foam-icon { background: radial-gradient(circle at 35% 35%, #fff 0 22%, transparent 23%), radial-gradient(circle at 68% 65%, #fff 0 20%, transparent 21%), #f4c6e4; }
+.clean-tools img.rot { transform: rotate(90deg); }
+.clean-tools img { width: 38px; height: 38px; } .clean-tools button small { font-size: 12px; white-space: nowrap; }
+/* 어려운 단계·연승·시작 아이템·주간 이벤트 */
+.clean-stage.hard:not(:disabled) { background: #ffe1e1; color: #c0262d; }
+.clean-play.hard { background: #d93a40; }
+.clean-hard, .clean-streak { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.clean-hard { background: #ffe1e1; color: #c0262d; } .clean-streak { background: #fff4d6; color: #9a6400; }
+.clean-pre { margin-top: 8px; padding: 14px; border-radius: 20px; background: var(--card); }
+.clean-pre > p { margin: 0 0 10px; font-size: 16px; }
+.clean-pre-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 4px; }
+.clean-pre-items button { display: grid; justify-items: center; gap: 4px; padding: 10px 4px; border: 0; border-radius: 16px; background: var(--fill); color: var(--label); font-weight: 600; }
+.clean-pre-items button[aria-pressed='true'] { background: var(--tint); color: var(--on-tint); }
+.clean-pre-items button:disabled { opacity: .4; }
+.clean-pre-items button:focus-visible, .clean-pre-back:focus-visible, .clean-week button:focus-visible { outline: 3px solid var(--tint); }
+.clean-sp-icon { position: relative; display: block; width: 36px; height: 36px; border-radius: 10px; background: #fff; }
+.clean-sp-icon[data-sp='row'] { background: linear-gradient(90deg, #fff, #ffcc00, #fff); }
+.clean-sp-icon[data-sp='bomb'] { background: radial-gradient(circle, #ff7a59 0 45%, #fff 46%); }
+.clean-sp-icon[data-sp='rainbow'] { background: conic-gradient(#ff5e7e, #ffcc00, #30d158, #0a84ff, #bf5af2, #ff5e7e); }
+.clean-pre-back { display: block; margin: 6px auto 0; padding: 8px 16px; border: 0; background: none; color: var(--label-2); font-size: 15px; }
+.clean-week { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; padding: 10px 12px; border-radius: 14px; background: #eef6ff; font-size: 14px; color: var(--label); word-break: keep-all; }
+.clean-week button { flex: none; padding: 6px 12px; border: 0; border-radius: 999px; background: var(--tint); color: var(--on-tint); font-weight: 700; }
+.clean-week button:disabled { background: var(--fill); color: var(--label-3); }
+.clean-week em { flex: none; font-style: normal; color: var(--label-2); }
+.game-done button + button { margin-left: 8px; }
