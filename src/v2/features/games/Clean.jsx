@@ -135,6 +135,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   useEffect(() => { playMusic('clean', TRACKS[musicNo % TRACKS.length]) }, [musicNo])
   const area = useRef(null)
   const tabs = useRef(null)
+  const [slide, setSlide] = useState(null)
   const swipe = useRef(null) // 방 그림을 옆으로 밀면 옆 방
   // 고른 방 탭이 화면 밖이면 가운데로 끌어옴 (방이 30개라 옆으로 김)
   useEffect(() => { tabs.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }) }, [view, done, s, party])
@@ -166,6 +167,9 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     const finished = (r) => r.tasks.every((t) => done.includes(t.id))
     const open = (r, k) => k < ROOMS.length - 1 || ROOMS.slice(0, -1).every(finished) // 마지막 '우리집'은 다른 방을 다 꾸미면 열림
     const room = ROOMS[view ?? (roomIndex < 0 ? ROOMS.length - 1 : roomIndex)]
+    const at = ROOMS.indexOf(room)
+    const canGo = (d) => !!ROOMS[at + d] && open(ROOMS[at + d], at + d)
+    const go = (d) => { if (canGo(d)) { setSlide(d > 0 ? 'next' : 'prev'); setView(at + d); setCheer('') } }
     const fix = (t) => { if (wallet < t.cost) return; const next = [...done, t.id]; setDone(next); save({ done: next }); setCheer(`${t.name} 끝! 고마워!`); if (room.tasks.every((x) => next.includes(x.id))) setParty({ room, last: ROOMS.every((r) => r.tasks.every((x) => next.includes(x.id))) }) }
     if (party) return <div key="party" className="clean-party fx-host" ref={partyRef} role="dialog" aria-label="축하">
       <div className="clean-room on" style={{ backgroundImage: `url(/game/room/${party.room.bg}.jpg)` }}>{party.room.tasks.map((t) => <img key={t.id} className="clean-room-thing on" src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}</div>
@@ -176,7 +180,9 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     </div>
     return <div key="map" className="clean-map">
       <div className="clean-room-tabs" ref={tabs} role="tablist" aria-label="방 고르기">{ROOMS.map((r, k) => <button key={r.name} role="tab" aria-selected={r === room} disabled={!open(r, k)} onClick={() => { setView(k); setCheer('') }}>{r.name}{finished(r) ? ' ✓' : ''}</button>)}</div>
-      <section className="clean-room" onTouchStart={(e) => { swipe.current = e.touches[0].clientX }} onTouchEnd={(e) => { const dx = e.changedTouches[0].clientX - (swipe.current ?? e.changedTouches[0].clientX); swipe.current = null; const k = ROOMS.indexOf(room) + (dx < -50 ? 1 : dx > 50 ? -1 : 0); if (k !== ROOMS.indexOf(room) && ROOMS[k] && open(ROOMS[k], k)) { setView(k); setCheer() } }} style={{ backgroundImage: `url(/game/room/${room.bg}.jpg)` }} aria-label={`${room.name} 꾸미기`}>
+      <section key={room.name} className={`clean-room${slide ? ` slide-${slide}` : ''}`} onTouchStart={(e) => { swipe.current = e.touches[0].clientX }} onTouchEnd={(e) => { const dx = e.changedTouches[0].clientX - (swipe.current ?? e.changedTouches[0].clientX); swipe.current = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1) }} style={{ backgroundImage: `url(/game/room/${room.bg}.jpg)` }} aria-label={`${room.name} 꾸미기`}>
+        {canGo(-1) && <button className="clean-room-arrow prev" aria-label="이전 방" onClick={() => go(-1)}>‹</button>}
+        {canGo(1) && <button className="clean-room-arrow next" aria-label="다음 방" onClick={() => go(1)}>›</button>}
         <span className="clean-room-name">{room.name}</span>
         <span className="clean-wallet">★ {wallet}</span>
         {room.tasks.map((t) => <img key={t.id} className={`clean-room-thing${done.includes(t.id) ? ' on' : ''}`} src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}

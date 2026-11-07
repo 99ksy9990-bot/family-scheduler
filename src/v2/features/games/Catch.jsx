@@ -47,15 +47,18 @@ export default function Catch({ onFinish, player = 'little', shop }) {
 
   if (!level) return <div className="game-levels">{Object.keys(RULES).map((lv) => <button key={lv} className="game-level" onClick={() => setLevel(lv)}>{LEVEL_NAMES[lv]}<small>{lv === 'easy' ? '비구름 없음' : lv === 'hard' ? '빨라요' : '비구름 조심'}</small></button>)}</div>
 
+  // 캐릭터 그림 실제 폭의 반만큼 양끝에서 멈춤 (화면 밖으로 안 나가게)
+  const edge = () => { const el = area.current; const b = el?.querySelector('.catch-basket'); return b ? Math.max(BASKET.half, b.getBoundingClientRect().width / 2 / el.clientWidth) : BASKET.half }
+  const clamp = (v) => { const h = Math.min(0.5, edge()); return Math.min(1 - h, Math.max(h, v)) }
   const move = (e) => {
     const r = area.current.getBoundingClientRect()
-    const v = Math.min(1 - BASKET.half, Math.max(BASKET.half, (e.clientX - r.left) / r.width))
+    const v = clamp((e.clientX - r.left) / r.width)
     xRef.current = v; setX(v)
   }
   const keys = (e) => {
     const d = e.key === 'ArrowLeft' ? -0.06 : e.key === 'ArrowRight' ? 0.06 : 0
     if (!d) return
-    const v = Math.min(1 - BASKET.half, Math.max(BASKET.half, xRef.current + d)); xRef.current = v; setX(v)
+    const v = clamp(xRef.current + d); xRef.current = v; setX(v)
   }
 
   return <div className="catch">

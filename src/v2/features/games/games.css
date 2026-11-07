@@ -71,10 +71,10 @@
 .game-ranks .grouped-row { gap: 10px; }
 .rank-no { width: 20px; text-align: center; color: var(--label-2); font-variant-numeric: tabular-nums; }
 .rank-value { margin-left: auto; font-variant-numeric: tabular-nums; }
-.game-sheet .stack-area, .game-sheet .catch-area { height: calc(100dvh - 320px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.game-sheet .stack-area, .game-sheet .catch-area { height: calc(100dvh - 390px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
 /* 우리집 합치기 */
 .merge-area { position: relative; height: min(560px, 62vh); border-radius: 22px; overflow: hidden; background: linear-gradient(#fff6e5, #ffe9cc); touch-action: none; user-select: none; -webkit-user-select: none; }
-.game-sheet .merge-area { height: calc(100dvh - 260px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.game-sheet .merge-area { height: calc(100dvh - 330px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
 .merge-ball { position: absolute; left: 0; top: 0; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 -4px 0 rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.08); will-change: transform; pointer-events: none; }
 .merge-ball img { width: 78%; height: 78%; object-fit: contain; border-radius: 50%; }
 .merge-ball.aiming { opacity: .9; }
@@ -236,3 +236,18 @@
 .game-room-name { margin: 0 0 6px; font-size: 13px; color: var(--secondary-label, #6e6e73); text-align: center; }
 .result-hero { display: grid; place-items: center; height: 150px; margin-bottom: 12px; }
 .result-hero .character img { width: 96px; height: 96px; filter: drop-shadow(0 6px 12px rgb(0 0 0 / .2)); }
+.clean-room-arrow { position: absolute; top: 50%; z-index: 2; width: 40px; height: 40px; margin-top: -20px; border: 0; border-radius: 50%; background: rgb(255 255 255 / .85); color: #1c1c1e; font-size: 28px; line-height: 1; box-shadow: 0 2px 8px rgb(0 0 0 / .15); }
+.clean-room-arrow.prev { left: 8px; } .clean-room-arrow.next { right: 8px; }
+.clean-room-arrow:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+.clean-room.slide-next { animation: room-in-next .3s ease-out; } .clean-room.slide-prev { animation: room-in-prev .3s ease-out; }
+@keyframes room-in-next { from { transform: translateX(12%); opacity: 0; } }
+@keyframes room-in-prev { from { transform: translateX(-12%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .clean-room.slide-next, .clean-room.slide-prev { animation: none; } }
+.clean-room-arrow { position: absolute; top: 50%; z-index: 2; width: 40px; height: 40px; margin-top: -20px; border: 0; border-radius: 50%; background: rgb(255 255 255 / .85); color: #1c1c1e; font-size: 28px; line-height: 1; box-shadow: 0 2px 8px rgb(0 0 0 / .15); }
+.clean-room-arrow.prev { left: 8px; } .clean-room-arrow.next { right: 8px; }
+.clean-room-arrow:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+.clean-room.slide-next { animation: room-in-next .3s ease-out; } .clean-room.slide-prev { animation: room-in-prev .3s ease-out; }
+@keyframes room-in-next { from { transform: translateX(12%); opacity: 0; } }
+@keyframes room-in-prev { from { transform: translateX(-12%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .clean-room.slide-next, .clean-room.slide-prev { animation: none; } }
+.game-sheet { overscroll-behavior: contain; }
