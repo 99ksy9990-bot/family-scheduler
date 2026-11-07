@@ -251,3 +251,5 @@
 @keyframes room-in-prev { from { transform: translateX(-12%); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .clean-room.slide-next, .clean-room.slide-prev { animation: none; } }
 .game-sheet { overscroll-behavior: contain; }
+.sheet.game-sheet { overflow-x: hidden; overscroll-behavior: none; }
+.catch { touch-action: none; user-select: none; -webkit-user-select: none; }
