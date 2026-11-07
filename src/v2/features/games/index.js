@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 // 놀이 탭이 읽는 목록. component 없는 게임은 "준비 중".
 // 별 쓰는 곳 (게임 목록과 따로, 놀이 탭 맨 위)
-export const HOME = { id: 'home', name: '우리집 꾸미기', image: 'icons/clean', component: lazy(() => import('./Home.jsx')) }
+export const HOME = { id: 'home', name: '우리집 꾸미기', image: 'icons/home', component: lazy(() => import('./Home.jsx')) }
 export const GAMES = [
   { id: 'pairs', name: '짝꿍 카드 찾기', image: 'icons/pairs', component: lazy(() => import('./Pairs.jsx')) },
   { id: 'catch', name: '선물 비가 내려요', image: 'icons/catch', component: lazy(() => import('./Catch.jsx')) },

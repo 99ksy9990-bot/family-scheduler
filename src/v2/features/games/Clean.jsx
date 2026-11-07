@@ -6,6 +6,9 @@ import { GAME_NAMES, PERK_TEXT, roomGame } from './theme'
 import { COMP, GIFT, GIFT_EVERY, arcadeOf } from './wallet'
 import './games.css'
 
+const PERK_COMP = 5
+// 방 효과를 담당 게임으로 나누면서 대청소 효과가 빠진 방: 방 하나마다 별 PERK_COMP개 (한 번만)
+const perkCompOf = (p) => (!p || p.perkComp ? 0 : ROOMS.filter((r, k) => roomGame(k) !== 'clean' && r.tasks.every((t) => (p.done || []).includes(t.id))).length * PERK_COMP)
 const TRACKS = ['pairs', 'catch', 'tap', 'sequence', 'stack', 'merge', 'match']
 
 const IMG = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
@@ -96,7 +99,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const [stars, setStars] = useState(() => ({ ...readStars(player), ...progress?.stars }))
   const [done, setDone] = useState(() => progress?.done || [])
   const [streak, setStreak] = useState(() => progress?.streak || 0) // 연승
-  const [bonus, setBonus] = useState(() => progress?.bonus || 0) // 이벤트로 받은 별
+  const [bonus, setBonus] = useState(() => (progress?.bonus || 0) + perkCompOf(progress)) // 이벤트로 받은 별
   const [day, setDay] = useState(() => (progress?.day?.id === dayId() ? progress.day : { id: dayId(), n: 0, claimed: false, checkin: false, type: missionOf(Math.max(progress?.unlocked || 0, readProgress(player))).type }))
   // 오늘 미션은 정해지면 그날 안 바뀜 (새 단계가 열려도)
   const mission = MISSIONS.find((m) => m.type === day.type) || missionOf(unlocked)
@@ -119,7 +122,9 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const [broom, setBroom] = useState(false) // false | 'row' | 'col'
   const [eraser, setEraser] = useState(false)
   const [hint, setHint] = useState(null)
-  const [cheer, setCheer] = useState(() => (compNew ? `그동안 고마워! 보상 별 ${comp}개를 줄게.` : ''))
+  const [perkComp] = useState(() => perkCompOf(progress))
+  useEffect(() => { if (progress && !progress.perkComp) onProgress?.({ ...progress, bonus, perkComp: true }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const [cheer, setCheer] = useState(() => (perkComp ? `방 효과가 바뀌어서 보상 별 ${perkComp}개를 줄게!` : compNew ? `그동안 고마워! 보상 별 ${comp}개를 줄게.` : ''))
   const [view, setView] = useState(null) // 고른 방 (없으면 아직 안 끝난 첫 방)
   const [party, setParty] = useState(null) // 방을 다 고치면 축하 화면
   const partyRef = useRef(null)
@@ -142,7 +147,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const earned = Object.entries(stars).reduce((a, [i, n]) => a + n * (STAGES[i]?.hard ? 2 : 1), 0) + GIFT * Math.floor(unlocked / GIFT_EVERY) + bonus + comp + arcadeOf(progress).earned - arcadeOf(progress).spent // 다른 게임에서 번 별·쓴 별 포함
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
   const wallet = Math.max(0, earned - spent - bought) // 예전 계산으로 쓴 별이 많아도 0 아래로는 안 감
-  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, day, attend, ...next }) }
+  const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, day, attend, perkComp: true, ...next }) }
   const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk).filter(Boolean) // 대청소 담당 방만
   const startStage = (i) => {
     const st = begin(i)

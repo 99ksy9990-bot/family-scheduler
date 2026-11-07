@@ -33,7 +33,7 @@ export default function Pairs({ onFinish, shop }) {
   useEffect(() => { if (done) confetti(host.current) }, [done])
   useEffect(() => { if (done) onFinish?.({ level, seconds: Math.round((Date.now() - game.startedAt) / 1000), moves: game.moves }) }, [done]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const start = (lv) => { const g = freshGame(lv); setLevel(lv); setGame(g); setNow(g.startedAt); const n = perkLevel('pairs'); if (n) { setPeek(true); setTimeout(() => setPeek(false), 2000 * n) } }
+  const start = (lv) => { const g = freshGame(lv); setLevel(lv); setGame(g); setNow(g.startedAt); const n = perkLevel('pairs'); if (n) { setPeek(true); setTimeout(() => setPeek(false), 3000 * n) } }
 
   if (!game) return <div className="game-levels">{Object.keys(LEVELS).map((lv) => <button key={lv} className="game-level" onClick={() => start(lv)}>{LEVEL_NAMES[lv]}<small>{LEVELS[lv].pairs}쌍</small></button>)}</div>
 

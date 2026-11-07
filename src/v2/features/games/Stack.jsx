@@ -33,7 +33,7 @@ export default function Stack({ onFinish, shop }) {
     return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', resume) }
   }, [level])
 
-  if (!level) return <div className="game-levels">{Object.keys(LEVELS).map((lv) => <button key={lv} className="game-level" onClick={() => { const w = Math.min(0.9, 0.6 + 0.1 * perkLevel('stack')); cur.current = { ...begin(), floors: [{ x: (1 - w) / 2, w }], moving: { x: 0, w, dir: 1 } }; setS(cur.current); setLevel(lv) }}>{LEVEL_NAMES[lv]}<small>{lv === 'easy' ? '천천히' : lv === 'hard' ? '빨라요' : ''}</small></button>)}</div>
+  if (!level) return <div className="game-levels">{Object.keys(LEVELS).map((lv) => <button key={lv} className="game-level" onClick={() => { const w = Math.min(0.95, 0.6 + 0.15 * perkLevel('stack')); cur.current = { ...begin(), floors: [{ x: (1 - w) / 2, w }], moving: { x: 0, w, dir: 1 } }; setS(cur.current); setLevel(lv) }}>{LEVEL_NAMES[lv]}<small>{lv === 'easy' ? '천천히' : lv === 'hard' ? '빨라요' : ''}</small></button>)}</div>
 
   const tap = () => {
     if (cur.current.over) return

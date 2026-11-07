@@ -20,7 +20,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
 
   useEffect(() => {
     if (!level) return undefined
-    let raf = 0; let prev = 0; live.current = { ...begin(), bigUntil: 10000 * perkLevel('catch'), mul: room.mine ? 2 : 1 }
+    let raf = 0; let prev = 0; live.current = { ...begin(), bigUntil: 20000 * perkLevel('catch'), mul: room.mine ? 2 : 1 }
     const loop = (now) => {
       let cur = live.current
       const dt = prev ? Math.min(50, now - prev) : 0

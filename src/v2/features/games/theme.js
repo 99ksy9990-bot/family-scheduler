@@ -7,7 +7,7 @@ let homeDone = []
 export const setHome = (done) => { homeDone = done || [] }
 export const finishedRooms = (done = []) => ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id)))
 export const GAME_NAMES = { catch: '선물 비가 내려요', tap: '두더지 가족 톡톡', sequence: '따라쟁이 챌린지', match: '달콤 3매치', pairs: '짝꿍 카드 찾기', stack: '하늘 끝까지 집 쌓기', merge: '쑥쑥 나무 키우기', clean: '우리집 대청소' }
-export const PERK_TEXT = { catch: '처음 10초 큰 바구니', tap: '시간 +3초', sequence: '틀려도 한 번 봐줌', match: '이동 +3 (시간 모드 +5초)', pairs: '시작할 때 2초 카드 보기', stack: '첫 층 넓게', merge: '처음 3번 씨앗' }
+export const PERK_TEXT = { catch: '처음 20초 큰 바구니', tap: '시간 +6초', sequence: '틀려도 한 번 봐줌 (쉬움은 하트 +1)', match: '이동 +5 (시간 모드 +10초)', pairs: '시작할 때 3초 카드 보기', stack: '첫 층 넓게', merge: '처음 5번 씨앗' }
 const gameRooms = (game) => ROOMS.filter((r, k) => roomGame(k) === game)
 // 그 게임을 맡은 방 중 다 꾸민 방 수 (효과가 그만큼 커짐)
 export const perkLevel = (game, done = homeDone) => gameRooms(game).filter((r) => r.tasks.every((t) => done.includes(t.id))).length

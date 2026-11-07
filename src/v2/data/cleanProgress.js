@@ -20,6 +20,7 @@ export function mergeProgress(a, b) {
     ...((b.streakAt || 0) >= (a.streakAt || 0) ? { streak: b.streak || 0, streakAt: b.streakAt } : { streak: a.streak || 0, streakAt: a.streakAt }),
     bonus: Math.max(a.bonus || 0, b.bonus || 0),
     comp: Math.max(a.comp || 0, b.comp || 0),
+    ...((a.perkComp || b.perkComp) && { perkComp: true }), // 방 효과 바꾼 보상 받음
     seen: [...new Set([...(a.seen || []), ...(b.seen || [])])],
     day: mergeWeek(a.day, b.day), // 오늘의 이벤트·출석
     ...((a.arcade || b.arcade) && { arcade: mergeArcade(a.arcade, b.arcade) }),

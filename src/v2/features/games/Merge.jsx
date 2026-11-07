@@ -20,7 +20,7 @@ export default function Merge({ onFinish, shop }) {
 
   useEffect(() => {
     const el = area.current; if (!el) return undefined
-    seeds.current = 3 * perkLevel('merge'); cur.current = begin(el.clientHeight / el.clientWidth); if (seeds.current) cur.current = { ...cur.current, next: 0 }; setS(cur.current); setW(el.clientWidth)
+    seeds.current = 5 * perkLevel('merge'); cur.current = begin(el.clientHeight / el.clientWidth); if (seeds.current) cur.current = { ...cur.current, next: 0 }; setS(cur.current); setW(el.clientWidth)
     let raf = 0; let prev = 0
     const loop = (now) => {
       const dt = prev ? (now - prev) / 1000 : 0; prev = now

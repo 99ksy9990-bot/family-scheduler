@@ -22,7 +22,7 @@ export default function Tap({ onFinish, shop }) {
 
   useEffect(() => {
     if (!level) return undefined
-    startRef.current = clock() + 3000 * perkLevel('tap') // 거실 효과: 시간 더
+    startRef.current = clock() + 6000 * perkLevel('tap') // 거실 효과: 시간 더
     const tick = setInterval(() => {
       const t = clock() - startRef.current
       setLeft(Math.max(0, DURATION - t))

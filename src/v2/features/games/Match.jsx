@@ -32,7 +32,7 @@ export default function Match({ onFinish, shop }) {
 
   useEffect(() => { if (over) onFinish?.({ level, score }) }, [over]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!level) return <div className="game-levels">{Object.keys(MODES).map((lv) => <button key={lv} className="game-level" onClick={() => { setPics(pickObjects(6)); setBoard(fresh()); setScore(0); setMoves(-3 * perkLevel('match')); setLeft(60 + 5 * perkLevel('match')); setLevel(lv) }}>{LEVEL_NAMES[lv]}<small>{HINT[lv]}</small></button>)}</div>
+  if (!level) return <div className="game-levels">{Object.keys(MODES).map((lv) => <button key={lv} className="game-level" onClick={() => { setPics(pickObjects(6)); setBoard(fresh()); setScore(0); setMoves(-5 * perkLevel('match')); setLeft(60 + 10 * perkLevel('match')); setLevel(lv) }}>{LEVEL_NAMES[lv]}<small>{HINT[lv]}</small></button>)}</div>
 
   const tryMove = (i, j) => {
     if (over) return
