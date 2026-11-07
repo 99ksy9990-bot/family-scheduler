@@ -71,6 +71,19 @@ const SOUND_KEY = 'family-scheduler-sound'
 export const isSoundOn = () => { try { return localStorage.getItem(SOUND_KEY) !== 'off' } catch { return true } }
 export const setSound = (on) => { try { localStorage.setItem(SOUND_KEY, on ? 'on' : 'off') } catch { /* 저장 못 해도 이번만 */ } }
 let audio = null
+// 게임마다 다른 효과음 (음색·높이)
+const SFX = {
+  pairs: { type: 'sine', one: [1568], good: [1047, 1319, 1568], bad: [330, 262] },
+  catch: { type: 'square', one: [988], good: [784, 1175], bad: [196, 147] },
+  tap: { type: 'triangle', one: [523, 784], good: [392, 523, 659], bad: [175, 131] },
+  sequence: { type: 'sine', one: [880], good: [659, 880, 1109], bad: [247, 196] },
+  stack: { type: 'triangle', one: [440], good: [523, 659, 784], bad: [220, 147] },
+  merge: { type: 'sine', one: [698], good: [587, 784], bad: [220, 165] },
+  match: { type: 'square', one: [1319], good: [1047, 1397], bad: [262, 196] },
+  clean: { type: 'triangle', one: [880], good: [660, 880], bad: [220, 165] },
+}
+let sfx = SFX.clean
+export const setSfx = (game) => { sfx = SFX[game] || SFX.clean }
 function tone(freqs, dur = 0.09) {
   if (!isSoundOn()) return
   try {
@@ -78,14 +91,14 @@ function tone(freqs, dur = 0.09) {
     let t = audio.currentTime
     for (const f of freqs) {
       const o = audio.createOscillator(); const g = audio.createGain()
-      o.type = 'triangle'; o.frequency.value = f
-      g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur)
+      o.type = sfx.type; o.frequency.value = f
+      g.gain.setValueAtTime(sfx.type === 'square' ? 0.05 : 0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur)
       o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur); t += dur * 0.8
     }
   } catch { /* 소리 지원 안 함 */ }
 }
 // 진동 + 효과음: 배열(실패) = 낮은 소리, 긴 진동(큰 성공) = 두 음, 짧은 진동 = 한 음
-export const buzz = (ms = 30) => { try { navigator.vibrate?.(ms) } catch { /* 지원 안 함 */ } tone(Array.isArray(ms) ? [220, 165] : ms >= 25 ? [660, 880] : [880]) }
+export const buzz = (ms = 30) => { try { navigator.vibrate?.(ms) } catch { /* 지원 안 함 */ } tone(Array.isArray(ms) ? sfx.bad : ms >= 25 ? sfx.good : sfx.one) }
 
 export function confetti(host, count = 40) {
   if (!host || calm()) return
@@ -102,3 +115,16 @@ export function confetti(host, count = 40) {
     a.onfinish = () => n.remove()
   }
 }
+
+// 배경음악: 게임마다 한 곡 반복 (소리 버튼과 따로 켜고 끔)
+const MUSIC_KEY = 'family-scheduler-music'
+export const isMusicOn = () => { try { return localStorage.getItem(MUSIC_KEY) !== 'off' } catch { return true } }
+let bgm = null
+export function playMusic(game) {
+  stopMusic()
+  if (!isMusicOn() || typeof Audio === 'undefined') return
+  bgm = new Audio(`/game/music/${game}.m4a`); bgm.loop = true; bgm.volume = 0.35
+  bgm.play().catch(() => {}) // 자동 재생이 막히면 조용히
+}
+export function stopMusic() { if (bgm) { bgm.pause(); bgm = null } }
+export const setMusic = (on, game) => { try { localStorage.setItem(MUSIC_KEY, on ? 'on' : 'off') } catch { /* 이번만 */ } if (on && game) playMusic(game); else stopMusic() }
