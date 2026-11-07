@@ -8,8 +8,8 @@ export function shuffle(list, rand = Math.random) {
   return a
 }
 
-export function newDeck(level, rand = Math.random) {
-  const faces = shuffle(FACES, rand).slice(0, LEVELS[level].pairs)
+export function newDeck(level, rand = Math.random, list = FACES) {
+  const faces = shuffle(list, rand).slice(0, LEVELS[level].pairs)
   return shuffle([...faces, ...faces], rand).map((face, id) => ({ id, face, matched: false }))
 }
 

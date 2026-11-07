@@ -8,7 +8,7 @@ export const start = (rand = Math.random) => ({ seq: [Math.floor(rand() * 4)], p
 export function press(state, pad, level, rand = Math.random) {
   if (state.over) return { state, result: 'over' }
   if (state.seq[state.pos] !== pad) {
-    if (level === 'easy' && state.lives > 0) return { state: { ...state, pos: 0, lives: state.lives - 1 }, result: 'retry' }
+    if ((level === 'easy' || state.saved) && state.lives > 0) return { state: { ...state, pos: 0, lives: state.lives - 1 }, result: 'retry' }
     return { state: { ...state, over: true }, result: 'over' }
   }
   if (state.pos + 1 < state.seq.length) return { state: { ...state, pos: state.pos + 1 }, result: 'ok' }

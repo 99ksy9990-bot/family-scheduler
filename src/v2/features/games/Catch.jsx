@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { BASKET, RULES, begin, step } from './catchLogic'
+import { BASKET, RULES, begin, halfOf, step } from './catchLogic'
+import ItemBar from './ItemBar'
+import { pickRoom, roomStyle } from './theme'
 import { burst, buzz, pop, shake } from './fx'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
 const WHO = ['dad', 'mom', 'big', 'little']
 
-export default function Catch({ onFinish, player = 'little' }) {
+export default function Catch({ onFinish, player = 'little', shop }) {
+  const [room] = useState(pickRoom) // 이 방 배경에서 그 방 물건이 떨어짐
+  const live = useRef(null) // 지금 판 (아이템이 바꿈)
   const [level, setLevel] = useState(null)
   const [s, setS] = useState(begin)
   const xRef = useRef(0.5)
@@ -16,8 +20,9 @@ export default function Catch({ onFinish, player = 'little' }) {
 
   useEffect(() => {
     if (!level) return undefined
-    let raf = 0; let prev = 0; let cur = begin()
+    let raf = 0; let prev = 0; live.current = begin()
     const loop = (now) => {
+      let cur = live.current
       const dt = prev ? Math.min(50, now - prev) : 0
       prev = now
       const before = cur
@@ -29,12 +34,12 @@ export default function Catch({ onFinish, player = 'little' }) {
         burst(el, x, y, gain > 1 ? 12 : 6); pop(el, x, y - 10, `+${gain}`, gain > 1 ? 'gold' : 'good'); buzz(15)
       }
       if (el && cur.lives < before.lives) { pop(el, xRef.current * el.clientWidth, BASKET.y * el.clientHeight - 10, '앗!', 'bad'); shake(el); buzz([60, 40, 60]) }
-      setS(cur)
+      live.current = cur; setS(cur)
       if (cur.over) { onFinish?.({ level, score: cur.score }); return }
       if (!document.hidden) raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
-    const resume = () => { if (!document.hidden && !cur.over) { prev = 0; raf = requestAnimationFrame(loop) } }
+    const resume = () => { if (!document.hidden && !live.current.over) { prev = 0; raf = requestAnimationFrame(loop) } }
     document.addEventListener('visibilitychange', resume)
     return () => { cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', resume) }
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -53,11 +58,17 @@ export default function Catch({ onFinish, player = 'little' }) {
   }
 
   return <div className="catch">
+    <p className="game-room-name">{room.name}에서 선물 받기 · 맨 오른쪽 물건은 3점</p>
     <div className="game-stats"><span>{s.score}점</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={i} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
-    <div className="catch-area" ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={move} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
-      {s.items.map((it) => <img key={it.id} className="catch-item" src={`/game/${it.kind}.png`} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
-      <img className="catch-basket" src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
+    <div className="catch-area room-bg" style={roomStyle(room)} ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={move} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
+      {s.items.map((it) => <img key={it.id} className="catch-item" src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
+      <img className={`catch-basket${halfOf(s) > BASKET.half ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
     </div>
+    <ItemBar key={level} shop={shop} off={s.over} items={[
+      { id: 'big', name: '큰 바구니', img: 'room/basket', price: 1, use: () => { live.current = { ...live.current, bigUntil: live.current.t + 10000 } } },
+      { id: 'slow', name: '느림 시계', img: 'room/clock', price: 1, use: () => { live.current = { ...live.current, slowUntil: live.current.t + 10000 } } },
+      { id: 'life', name: '하트 하나', img: 'room/heart', price: 2, ok: () => s.lives < 3, use: () => { live.current = { ...live.current, lives: Math.min(3, live.current.lives + 1) } } },
+    ]} />
     {s.over && <div className="game-done"><b>{s.score}점</b><button className="game-level" onClick={() => { setS(begin()); setLevel(null) }}>다시 하기</button></div>}
   </div>
 }

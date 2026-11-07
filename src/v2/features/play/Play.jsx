@@ -3,6 +3,7 @@ import Sheet from '../../components/Sheet'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import { GAMES } from '../games'
 import { mergeProgress } from '../../data/cleanProgress'
+import { earnStar, spendStars, walletOf, DAILY } from '../games/wallet'
 import { gameLeader, bestGameLabel, recordGameScore, rankGameScores, unitOf } from '../../data/gameScores'
 
 export default function Play({ state, updateState }) {
@@ -18,18 +19,27 @@ export default function Play({ state, updateState }) {
   const game = GAMES.find((item) => item.id === selected)
   const Game = game?.component
   const profiles = state.profiles.filter((profile) => profile.active !== false)
+  // 별 지갑: 아이템을 사면 별을 바로 씀
+  const shop = player && { wallet: walletOf(state.cleanProgress?.[player]), buy: (n) => updateState((current) => (walletOf(current.cleanProgress?.[player]) < n ? current : { ...current, cleanProgress: { ...current.cleanProgress, [player]: spendStars(current.cleanProgress?.[player] || {}, n) } })) }
   const finish = (res) => {
     const now = new Date()
-    const saved = updateState((current) => ({ ...current, gameScores: recordGameScore(current.gameScores, selected, player, res, now) }))
-    setMessage(saved ? '' : '기록을 저장할 권한이 없어요. 가족 연결을 확인해 주세요.')
+    let got = false
+    const saved = updateState((current) => {
+      const next = { ...current, gameScores: recordGameScore(current.gameScores, selected, player, res, now) }
+      if (selected === 'clean') return next
+      // 다른 게임도 한 판 끝내면 별 1개 (게임마다 하루 DAILY개까지), 대청소 별과 같은 지갑
+      const r = earnStar(current.cleanProgress?.[player] || {}, selected, now); got = r.got
+      return r.got ? { ...next, cleanProgress: { ...current.cleanProgress, [player]: r.progress } } : next
+    })
+    setMessage(!saved ? '기록을 저장할 권한이 없어요. 가족 연결을 확인해 주세요.' : selected === 'clean' ? '' : got ? '별 1개를 받았어요. 방 꾸미기에 쓸 수 있어요.' : `오늘 이 게임 별은 다 받았어요 (하루 ${DAILY}개)`)
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setResult({ at: now.toISOString(), res }), 1400) // 끝나는 장면을 잠깐 보여 준 뒤
   }
-  return <section className="play-page" aria-label="가족 놀이"><h2 className="house-section-title">게임</h2><div className="house-grid">{GAMES.map(({ id, name, image }) => <button className="house-tile game-tile" key={id} onClick={() => { stop(); setGo(false); setSelected(id); setPlayer(null); setMessage('') }}><span className="glass-icon game-orb"><img src={`/game/${image}.png`} alt="" /></span>{(() => { const top = state.profiles.find((p) => p.id === (id === 'clean' ? cleanRows(state.cleanProgress, state.profiles)[0]?.member : gameLeader(state.gameScores, id))); return top && <span className="game-leader" aria-hidden="true"><CharacterAvatar profile={top} size={56} /></span> })()}<strong>{name}</strong><small>{id === 'clean' ? cleanLeader(state.cleanProgress, state.profiles) : bestGameLabel(state.gameScores, id, state.profiles)}</small></button>)}</div>
+  return <section className="play-page" aria-label="가족 놀이"><h2 className="house-section-title">게임</h2><div className="house-grid">{GAMES.map(({ id, name, image }) => <button className="house-tile game-tile" key={id} onClick={() => { stop(); setGo(false); setSelected(id); setPlayer(null); setMessage('') }}><span className="glass-icon game-orb"><img src={`/game/${image}.png`} alt="" /></span>{(() => { const top = state.profiles.find((p) => p.id === (id === 'clean' ? cleanRows(state.cleanProgress, state.profiles)[0]?.member : gameLeader(state.gameScores, id))); return top && <span className="game-leader" aria-hidden="true"><CharacterAvatar profile={top} size={36} /></span> })()}<strong>{name}</strong><small>{id === 'clean' ? cleanLeader(state.cleanProgress, state.profiles) : bestGameLabel(state.gameScores, id, state.profiles)}</small></button>)}</div>
     {game && <Sheet title={game.name} onClose={() => { stop(); setSelected(null) }} className="game-sheet">
       {!Game ? <div className="empty-state"><h3>준비 중</h3><p>가족과 함께할 놀이를 준비하고 있어요.</p></div> : !player ? <><h3>누가 해요?</h3><div className="player-options">{profiles.map((profile) => <button key={profile.id} onClick={() => { setGo(false); setPlayer(profile.id) }}><CharacterAvatar profile={profile} size={56} /><span>{profile.name}</span></button>)}</div>{!profiles.length && <p>가족 탭에서 구성원을 먼저 등록해 주세요.</p>}<GameRanks scores={state.gameScores} gameId={selected} profiles={state.profiles} /></>
         : <><p className="game-player">{profiles.find((profile) => profile.id === player)?.name}의 놀이</p>{result ? <div className="game-result">{selected === 'clean' && result.res.tried ? <p className="game-score-now">{result.res.tried}단계 <b>{result.res.win ? '성공!' : '실패'}</b>{!result.res.win && <small> 깬 단계 {result.res.score}단계로 기록</small>}</p> : <p className="game-score-now">이번 기록 <b>{(selected === 'pairs' ? result.res.seconds : selected === 'sequence' ? result.res.stage : result.res.score)?.toLocaleString('ko-KR')}{unitOf(selected)}</b></p>}<p role="status" className="quiet">{message}</p>{selected === 'clean' ? <CleanRanks progress={state.cleanProgress} profiles={state.profiles} me={player} /> : <GameRanks scores={state.gameScores} gameId={selected} profiles={state.profiles} highlight={result.at} />}<div className="game-result-actions">{selected === 'clean' ? <><button className="primary-button" onClick={() => { setGo(true); setResult(null); setRound((n) => n + 1) }}>{result.res.win ? `${result.res.tried + 1}단계 도전` : `${result.res.tried}단계 다시 도전`}</button><button onClick={() => { setGo(false); setResult(null); setRound((n) => n + 1) }}>방 꾸미기</button></> : <button className="primary-button" onClick={() => { setResult(null); setRound((n) => n + 1) }}>다시 하기</button>}<button onClick={() => { setGo(false); setResult(null); setPlayer(null) }}>다른 사람</button></div></div>
-          : <Suspense fallback={<p role="status">게임을 불러오고 있어요…</p>}><Game key={round} autoStart={selected === 'clean' && go} player={profiles.find((profile) => profile.id === player)?.characterId || 'dad'} onFinish={finish} progress={state.cleanProgress?.[player]} onProgress={(value) => updateState((current) => ({ ...current, cleanProgress: { ...current.cleanProgress, [player]: mergeProgress(current.cleanProgress?.[player], value) } }))} /></Suspense>}{!result && message && <p role="status">{message}</p>}</>}
+          : <Suspense fallback={<p role="status">게임을 불러오고 있어요…</p>}><Game key={round} autoStart={selected === 'clean' && go} player={profiles.find((profile) => profile.id === player)?.characterId || 'dad'} onFinish={finish} shop={shop} progress={state.cleanProgress?.[player]} onProgress={(value) => updateState((current) => ({ ...current, cleanProgress: { ...current.cleanProgress, [player]: mergeProgress(current.cleanProgress?.[player], value) } }))} /></Suspense>}{!result && message && <p role="status">{message}</p>}</>}
     </Sheet>}
   </section>
 }

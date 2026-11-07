@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { LEVELS, begin, drop, height, move } from './stackLogic'
 import { bounce, burst, buzz, confetti, pop, shake } from './fx'
+import ItemBar from './ItemBar'
+import { pickRoom, roomStyle } from './theme'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -8,7 +10,8 @@ const FACES = ['dad', 'mom', 'big', 'little']
 const COLORS = ['#5e5ce6', '#ff7a59', '#bf5af2', '#30b07a']
 const FLOOR = 34 // 층 높이(px)
 
-export default function Stack({ onFinish }) {
+export default function Stack({ onFinish, shop }) {
+  const [room] = useState(pickRoom) // 판 뒤 배경 그림
   const [level, setLevel] = useState(null)
   const [s, setS] = useState(begin)
   const cur = useRef(s)
@@ -62,11 +65,15 @@ export default function Stack({ onFinish }) {
   const floorStyle = (f, i) => ({ left: `${f.x * 100}%`, width: `${f.w * 100}%`, bottom: `${i * FLOOR - shift}px`, background: COLORS[i % 4] })
   return <div className="stack">
     <div className="game-stats"><span>{height(s)}층</span><span>{s.combo >= 2 ? `딱 ${s.combo}번 연속` : '눌러서 쌓기'}</span></div>
-    <div className="stack-area fx-host" ref={area} role="button" tabIndex={0} aria-label="눌러서 층 쌓기" onPointerDown={tap} onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && (e.preventDefault(), tap())}>
+    <div className="stack-area fx-host room-bg" style={roomStyle(room)} ref={area} role="button" tabIndex={0} aria-label="눌러서 층 쌓기" onPointerDown={tap} onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && (e.preventDefault(), tap())}>
       {s.floors.map((f, i) => <div key={i} className={`stack-floor${i === 0 ? ' base' : ''}`} style={floorStyle(f, i)}>{i > 0 && <img src={`/characters/${FACES[i % 4]}_${s.last?.perfect && i === s.floors.length - 1 ? 'done' : 'basic'}.png`} alt="" />}</div>)}
       {!s.over && <div className="stack-floor moving" style={floorStyle(s.moving, s.floors.length)}><img src={`/characters/${FACES[s.floors.length % 4]}_busy.png`} alt="" /></div>}
       {s.over && <div className="stack-roof" style={{ bottom: `${s.floors.length * FLOOR - shift}px` }} />}
     </div>
+    <ItemBar key={level} shop={shop} off={s.over} items={[
+      { id: 'fit', name: '딱 맞추기', img: 'room/hammer', price: 1, use: () => { const c = cur.current; cur.current = { ...c, moving: { ...c.moving, x: c.floors.at(-1).x } }; tap() } },
+      { id: 'wide', name: '넓히기', img: 'room/rug', price: 2, ok: () => s.floors.at(-1).w < 0.55, use: () => { const c = cur.current; const top = c.floors.at(-1); const x = Math.min(0.4, Math.max(0, top.x - (0.6 - top.w) / 2)); cur.current = { ...c, floors: [...c.floors.slice(0, -1), { x, w: 0.6 }], moving: { ...c.moving, w: 0.6, x: Math.min(c.moving.x, 0.4) } }; setS(cur.current) } },
+    ]} />
     {s.over && <div className="game-done"><b>{height(s)}층 우리집!</b><button className="game-level" onClick={() => setLevel(null)}>다시 하기</button></div>}
   </div>
 }

@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { LINE, STAGES, begin, drop, step } from './mergeLogic'
 import { burst, buzz, confetti, pop, shake } from './fx'
+import ItemBar from './ItemBar'
+import { pickRoom, roomStyle } from './theme'
 import './games.css'
 
-export default function Merge({ onFinish }) {
+export default function Merge({ onFinish, shop }) {
+  const [room] = useState(pickRoom) // 판 뒤 배경 그림
   const area = useRef(null)
   const cur = useRef(null)
   const [s, setS] = useState(null)
@@ -46,13 +49,17 @@ export default function Merge({ onFinish }) {
 
   return <div className="merge">
     <div className="game-stats"><span>{s?.score || 0}점</span><span className="merge-next">다음 {s && <img src={STAGES[s.after].img} alt="" />}</span></div>
-    <div className="merge-area fx-host" ref={area} role="application" aria-label="좌우로 옮기고 떼서 떨어뜨리기"
+    <div className="merge-area fx-host room-bg" style={roomStyle(room)} ref={area} role="application" aria-label="좌우로 옮기고 떼서 떨어뜨리기"
       onPointerDown={(e) => setAim(toX(e))} onPointerMove={(e) => setAim(toX(e))} onPointerUp={release}>
       {s && <div className="merge-line" style={{ top: LINE * s.h * W }} />}
       {s && !s.over && <>{ball(s.next, Math.min(1 - STAGES[s.next].r, Math.max(STAGES[s.next].r, aim)), STAGES[s.next].r + 0.01, 'aim', ' aiming')}<div className="merge-guide" style={{ left: aim * W }} /></>}
       {s?.balls.map((b) => ball(b.stage, b.x, b.y, b.id))}
     </div>
     <ol className="merge-ladder" aria-label="합치는 순서">{STAGES.map((st, i) => <li key={i} style={{ background: st.color }}><img src={st.img} alt={st.name || ''} /></li>)}</ol>
+    <ItemBar key={round} shop={shop} off={!s || s.over} items={[
+      { id: 'seed', name: '씨앗으로', img: 'tiles/seed', price: 1, ok: () => s?.next > 0, use: () => { cur.current = { ...cur.current, next: 0 } } },
+      { id: 'top', name: '맨 위 치우기', img: 'room/broom', price: 2, ok: () => s?.balls.length > 0, use: () => { const b = cur.current.balls; const t = b.reduce((m, x) => (x.y - STAGES[x.stage].r < m.y - STAGES[m.stage].r ? x : m)); cur.current = { ...cur.current, balls: b.filter((x) => x !== t) } } },
+    ]} />
     {s?.over && <div className="game-done"><b>{s.score}점!</b><button className="game-level" onClick={() => setRound((n) => n + 1)}>다시 하기</button></div>}
   </div>
 }

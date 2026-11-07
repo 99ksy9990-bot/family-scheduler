@@ -1,3 +1,4 @@
+import { mergeArcade } from '../features/games/wallet.js'
 // 대청소 진행도 합치기: 기기·서버 어느 쪽이 오래된 값이어도 뒤로 가지 않게 (깬 단계·별·꾸민 것은 큰 쪽/합집합)
 const maxMap = (a = {}, b = {}) => Object.fromEntries([...new Set([...Object.keys(a), ...Object.keys(b)])].map((k) => [k, Math.max(a[k] || 0, b[k] || 0)]))
 const weekNo = (w) => (w?.id ? new Date(w.id.replace(/-/g, '/')).getTime() : 0)
@@ -21,6 +22,7 @@ export function mergeProgress(a, b) {
     comp: Math.max(a.comp || 0, b.comp || 0),
     seen: [...new Set([...(a.seen || []), ...(b.seen || [])])],
     day: mergeWeek(a.day, b.day), // 오늘의 이벤트·출석
+    ...((a.arcade || b.arcade) && { arcade: mergeArcade(a.arcade, b.arcade) }),
     attend: !a.attend || !b.attend ? a.attend || b.attend : weekNo({ id: a.attend.last }) === weekNo({ id: b.attend.last }) ? { last: a.attend.last, run: Math.max(a.attend.run, b.attend.run) } : weekNo({ id: a.attend.last }) > weekNo({ id: b.attend.last }) ? a.attend : b.attend,
   }
 }

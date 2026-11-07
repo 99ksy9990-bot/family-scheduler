@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { bounce, burst, buzz, center, confetti, pop, shake } from './fx'
 import { LEVELS, closeMismatch, flip, isDone, newDeck } from './pairsLogic'
+import ItemBar from './ItemBar'
+import { pickObjects, pickRoom, roomStyle } from './theme'
 import './games.css'
 
-const freshGame = (lv) => ({ deck: newDeck(lv), open: [], moves: 0, startedAt: Date.now() })
+// 카드 그림: 방 물건에서 매판 섞어 뽑음, 뒷면은 방 배경
+const freshGame = (lv) => { const objs = pickObjects(10); return { deck: newDeck(lv, Math.random, objs.map((o) => o.img)), names: Object.fromEntries(objs.map((o) => [o.img, o.name])), room: pickRoom(), open: [], moves: 0, startedAt: Date.now() } }
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
 
-export default function Pairs({ onFinish }) {
+export default function Pairs({ onFinish, shop }) {
   const [level, setLevel] = useState(null)
+  const [peek, setPeek] = useState(false) // 살짝 보기: 2초 동안 다 보임
   const [game, setGame] = useState(null)
   const [now, setNow] = useState(0)
   const done = game && isDone(game)
@@ -50,12 +54,16 @@ export default function Pairs({ onFinish }) {
     <div className="game-stats"><span>{seconds}초</span><span>{game.moves}번</span></div>
     <div className="pairs-grid" style={{ '--cols': LEVELS[level].cols }}>
       {game.deck.map((c) => {
-        const up = c.matched || game.open.includes(c.id)
-        return <button key={c.id} className={`pairs-card${up ? ' up' : ''}${c.matched ? ' matched' : ''}`} aria-label={up ? c.face : '뒤집힌 카드'} disabled={c.matched} ref={(el) => { cards.current[c.id] = el }} onClick={() => choose(c.id)}>
-          <span className="pairs-back" /><img className="pairs-face" src={`/characters/${c.face}.png`} alt="" />
+        const up = peek || c.matched || game.open.includes(c.id)
+        return <button key={c.id} className={`pairs-card${up ? ' up' : ''}${c.matched ? ' matched' : ''}`} aria-label={up ? game.names[c.face] : '뒤집힌 카드'} disabled={c.matched} ref={(el) => { cards.current[c.id] = el }} onClick={() => choose(c.id)}>
+          <span className="pairs-back room-bg" style={roomStyle(game.room)} /><img className="pairs-face" src={c.face} alt="" />
         </button>
       })}
     </div>
+    <ItemBar key={game.startedAt} shop={shop} off={done} items={[
+      { id: 'peek', name: '살짝 보기', img: 'room/scope', price: 1, ok: () => !peek && !game.open.length, use: () => { setPeek(true); setTimeout(() => setPeek(false), 2000) } },
+      { id: 'pair', name: '짝 찾기', img: 'room/heart', price: 2, ok: () => !game.open.length, use: () => setGame((g) => { const c = g.deck.find((x) => !x.matched); return { ...g, deck: g.deck.map((x) => (x.face === c.face ? { ...x, matched: true } : x)) } }) },
+    ]} />
     {done && <div className="game-done"><b>다 찾았어요</b><span>{seconds}초, {game.moves}번 만에</span><button className="game-level" onClick={() => setGame(null)}>다시 하기</button></div>}
   </div>
 }
