@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { N, STAGES, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
-import { burst, buzz, confetti, pop, shake } from './fx'
+import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
 import { ROOMS } from './cleanRooms'
 import { COMP, GIFT, GIFT_EVERY, arcadeOf } from './wallet'
 import './games.css'
+
+const TRACKS = ['pairs', 'catch', 'tap', 'sequence', 'stack', 'merge', 'match']
 
 const IMG = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
@@ -120,7 +122,10 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const [view, setView] = useState(null) // 고른 방 (없으면 아직 안 끝난 첫 방)
   const [party, setParty] = useState(null) // 방을 다 고치면 축하 화면
   const partyRef = useRef(null)
-  useEffect(() => { if (party && partyRef.current) confetti(partyRef.current) }, [party])
+  useEffect(() => { if (party && partyRef.current) { confetti(partyRef.current); fanfare() } }, [party])
+  // 방마다 다른 곡: 지금 꾸미는 방(또는 고른 방)에 맞춰 부드럽게 바꿈
+  const musicRoom = view ?? Math.max(0, ROOMS.findIndex((r) => r.tasks.some((t) => !done.includes(t.id))))
+  useEffect(() => { playMusic('clean', TRACKS[musicRoom % TRACKS.length]) }, [musicRoom])
   const area = useRef(null)
   const tabs = useRef(null)
   // 고른 방 탭이 화면 밖이면 가운데로 끌어옴 (방이 30개라 옆으로 김)

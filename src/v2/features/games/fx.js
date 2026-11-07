@@ -120,11 +120,24 @@ export function confetti(host, count = 40) {
 const MUSIC_KEY = 'family-scheduler-music'
 export const isMusicOn = () => { try { return localStorage.getItem(MUSIC_KEY) !== 'off' } catch { return true } }
 let bgm = null
-export function playMusic(game) {
-  stopMusic()
-  if (!isMusicOn() || typeof Audio === 'undefined') return
-  bgm = new Audio(`/game/music/${game}.m4a`); bgm.loop = true; bgm.volume = 0.35
-  bgm.play().catch(() => {}) // 자동 재생이 막히면 조용히
+let bgmSrc = ''
+const VOL = 0.35
+// 서서히 소리 바꾸기 (아이폰은 볼륨을 못 바꿔 바로 바뀜)
+function fade(a, to, ms, done) {
+  const from = a.volume; const t0 = Date.now()
+  const id = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); a.volume = from + (to - from) * k; if (k >= 1) { clearInterval(id); done?.() } }, 50)
 }
-export function stopMusic() { if (bgm) { bgm.pause(); bgm = null } }
+export function playMusic(game, track = game) {
+  const src = `/game/music/${track}.m4a`
+  if (bgm && bgmSrc === src) return
+  const old = bgm; bgm = null
+  if (old) fade(old, 0, 800, () => old.pause())
+  if (!isMusicOn() || typeof Audio === 'undefined') return
+  bgm = new Audio(src); bgmSrc = src; bgm.loop = true; bgm.volume = old ? 0 : VOL
+  bgm.play().catch(() => {}) // 자동 재생이 막히면 조용히
+  if (old) fade(bgm, VOL, 1200)
+}
+export function stopMusic() { if (bgm) { bgm.pause(); bgm = null; bgmSrc = '' } }
+// 방 완성 '짜잔'
+export function fanfare() { const keep = sfx; sfx = { type: 'triangle' }; tone([523, 659, 784, 1047], 0.16); sfx = keep }
 export const setMusic = (on, game) => { try { localStorage.setItem(MUSIC_KEY, on ? 'on' : 'off') } catch { /* 이번만 */ } if (on && game) playMusic(game); else stopMusic() }
