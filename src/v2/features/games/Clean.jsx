@@ -124,8 +124,9 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const partyRef = useRef(null)
   useEffect(() => { if (party && partyRef.current) { confetti(partyRef.current); fanfare() } }, [party])
   // 방마다 다른 곡: 지금 꾸미는 방(또는 고른 방)에 맞춰 부드럽게 바꿈
-  const musicRoom = view ?? Math.max(0, ROOMS.findIndex((r) => r.tasks.some((t) => !done.includes(t.id))))
-  useEffect(() => { playMusic('clean', TRACKS[musicRoom % TRACKS.length]) }, [musicRoom])
+  // 단계 하는 중엔 단계마다, 방 화면에선 방마다 다른 곡
+  const musicNo = s ? s.stage : view ?? Math.max(0, ROOMS.findIndex((r) => r.tasks.some((t) => !done.includes(t.id))))
+  useEffect(() => { playMusic('clean', TRACKS[musicNo % TRACKS.length]) }, [musicNo])
   const area = useRef(null)
   const tabs = useRef(null)
   // 고른 방 탭이 화면 밖이면 가운데로 끌어옴 (방이 30개라 옆으로 김)
