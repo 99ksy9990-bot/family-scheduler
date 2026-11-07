@@ -290,8 +290,10 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     show(r)
   }
   const hitWithHammer = (i) => {
-    const r = smash(s, i); setHammer(false); setHint(null)
+    // 망치가 남아 있으면 계속 깰 수 있음 (망치 버튼을 다시 누르면 끝)
+    const r = smash(s, i); setHint(null)
     if (!r) return
+    if (items.hammer <= 1 || r.state.done) setHammer(false)
     setItems((it) => ({ ...it, hammer: it.hammer - 1 })); show(r)
   }
   const buy = (kind) => {
@@ -364,7 +366,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       <button className="buy" aria-pressed={eraser} disabled={!!s.done || wallet < PRICE.eraser} onClick={() => { setEraser((b) => !b); setHammer(false); setBroom(false) }} aria-label={`지우개: 한 종류 모두 지우기, 별 ${PRICE.eraser}개`}><img src="/game/room/eraser.png" alt="" /><small>한 색 ★{PRICE.eraser}</small></button>
     </div>
     <p className="clean-purse">가진 별 ★ {wallet}</p>
-    {hammer && <p className="clean-aim" role="status">깰 칸을 눌러 주세요 (이동은 줄지 않아요)</p>}
+    {hammer && <p className="clean-aim" role="status">깰 칸을 차례로 누르세요 · 망치 {items.hammer}개 남음 (그만하려면 망치를 다시 눌러요)</p>}
     {eraser && <p className="clean-aim" role="status">지울 종류를 하나 눌러 주세요 (별 {PRICE.eraser}개)</p>}
     {broom && <p className="clean-aim" role="status">치울 {broom === 'col' ? '세로' : '가로'} 줄의 칸을 눌러 주세요 (별 {PRICE[broom]}개)</p>}
     <details key="help" className="clean-all"><summary>블록 설명 보기</summary><ul className="clean-help">
