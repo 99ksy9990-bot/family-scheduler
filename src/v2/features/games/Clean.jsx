@@ -89,7 +89,7 @@ function specialFx(host, e) {
 }
 const Face = ({ player, mood = 'basic', size = 56 }) => <img className="clean-face" src={`/characters/${player}_${mood}.png`} alt="" width={size} height={size} />
 
-export default function Clean({ player, onFinish, progress, onProgress, autoStart }) {
+export default function Clean({ player, onFinish, progress, onProgress, autoStart, home }) {
   // 가족 데이터에 저장(폰이 바뀌어도 유지), 예전 폰 저장값은 처음 한 번 가져옴
   const [unlocked, setUnlocked] = useState(() => Math.max(progress?.unlocked || 0, readProgress(player)))
   const [stars, setStars] = useState(() => ({ ...readStars(player), ...progress?.stars }))
@@ -173,12 +173,12 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
         <span className="clean-wallet">★ {wallet}</span>
         {room.tasks.map((t) => <img key={t.id} className={`clean-room-thing${done.includes(t.id) ? ' on' : ''}`} src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}
       </section>
-      <div className="clean-talk"><Face player={player} mood={cheer ? 'done' : 'basic'} /><p>{roomIndex < 0 ? '우리집이 다 깨끗해졌어! 단계를 더 깨서 별을 모아 봐.' : cheer || room.say}</p></div>
-      {unlocked < STAGES.length && <button className={`primary-button clean-play${STAGES[unlocked].hard ? ' hard' : ''}`} onClick={() => startStage(unlocked)}>{unlocked + 1}단계 도전{STAGES[unlocked].hard ? ' · 어려움 별 2배' : ''}{(unlocked + 1) % GIFT_EVERY === 0 ? ' · 선물 상자' : ''}{streak ? ` · ${streak}연승 보너스` : ''}</button>}
-      <details className="clean-all"><summary>지난 단계 다시 하기</summary>
+      <div className="clean-talk"><Face player={player} mood={cheer ? 'done' : 'basic'} /><p>{roomIndex < 0 ? (home ? '우리집이 다 깨끗해졌어! 게임에서 별을 더 모아 봐.' : '우리집이 다 깨끗해졌어! 단계를 더 깨서 별을 모아 봐.') : cheer || room.say}</p></div>
+      {!home && unlocked < STAGES.length && <button className={`primary-button clean-play${STAGES[unlocked].hard ? ' hard' : ''}`} onClick={() => startStage(unlocked)}>{unlocked + 1}단계 도전{STAGES[unlocked].hard ? ' · 어려움 별 2배' : ''}{(unlocked + 1) % GIFT_EVERY === 0 ? ' · 선물 상자' : ''}{streak ? ` · ${streak}연승 보너스` : ''}</button>}
+      {!home && <details className="clean-all"><summary>지난 단계 다시 하기</summary>
         <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
-      </details>
-      <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (모든 단계)</p>
+      </details>}
+      <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (대청소) · <b>다른 게임 아이템 판마다 1번 무료</b> · 게임 배경으로 나와요</p>
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
       <div className="clean-week"><span><small>오늘 출석 · 연속 {runNow}일</small><span>매일 별 {CHECKIN}개, 7일째엔 {WEEK_BONUS}개 더 <b className="clean-dots" aria-hidden="true">{'●'.repeat(runNow % 7 || (runNow ? 7 : 0)).padEnd(7, '○')}</b></span></span>{day.checkin ? <em>받았어요</em> : <button onClick={() => { const run = runNow + 1; const extra = run % 7 === 0 ? WEEK_BONUS : 0; const a = { last: dayId(), run }; const d = { ...day, checkin: true }; const b = bonus + CHECKIN + extra; setAttend(a); setDay(d); setBonus(b); save({ day: d, bonus: b, attend: a }); setCheer(extra ? `7일 연속 출석! 별 ${CHECKIN + extra}개!` : `출석 고마워! 별 ${CHECKIN}개!`) }}>★{CHECKIN}{runNow % 7 === 6 ? `+${WEEK_BONUS}` : ''} 받기</button>}</div>
