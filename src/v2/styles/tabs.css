@@ -134,4 +134,4 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .shift-label[data-shift='blank'] { visibility: hidden; min-height: 16px; }
 /* 상주 근무자 연차·반차는 쉬는 날이라 휴무와 같은 회색 */
 .shift-label[data-shift^='leave-'] { background: var(--fill); color: var(--label-2); }
-.game-leader { position: absolute; top: 14px; right: 14px; } .game-leader i { position: absolute; right: -4px; top: -4px; width: 22px; height: 22px; border-radius: 50%; background: #ffcc00; color: #5a3d00; font: 800 13px/22px system-ui; text-align: center; font-style: normal; box-shadow: 0 0 0 2px var(--card, #fff); }
+.game-leader { position: absolute; top: 14px; right: 14px; }
