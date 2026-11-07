@@ -30,7 +30,7 @@
 @media (prefers-reduced-motion:reduce){.tap-face{animation:none}}
 .catch-area{position:relative;height:min(560px,62vh);border-radius:22px;background:linear-gradient(#cfe6ff,#f2f8ff);overflow:hidden;container-type:size;touch-action:none}
 .catch-area:focus-visible{outline:3px solid var(--tint)}
-.catch-item{position:absolute;left:0;top:0;width:12cqw;will-change:transform}
+.catch-item{position:absolute;left:0;top:0;width:8cqw;will-change:transform}
 .catch-basket{position:absolute;left:0;bottom:2cqh;height:25cqh;width:auto;will-change:transform}
 .catch-lives{display:flex;gap:4px}.catch-lives img{width:24px;height:24px}
 .match{position:relative}
@@ -253,3 +253,4 @@
 .game-sheet { overscroll-behavior: contain; }
 .sheet.game-sheet { overflow-x: hidden; overscroll-behavior: none; }
 .catch { touch-action: none; user-select: none; -webkit-user-select: none; }
+.catch, .catch-area { min-width: 0; max-width: 100%; }

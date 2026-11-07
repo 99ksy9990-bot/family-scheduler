@@ -1,5 +1,5 @@
 // 하늘 선물 받기 순수 로직. 좌표는 0~1 비율(가로 x, 세로 y)
-export const RULES = { easy: { speed: 0.25, every: 900, cloud: 0 }, normal: { speed: 0.35, every: 700, cloud: 0.15 }, hard: { speed: 0.45, every: 520, cloud: 0.25 } }
+export const RULES = { easy: { speed: 0.25, every: 900, cloud: 0, time: 60000 }, normal: { speed: 0.35, every: 700, cloud: 0.15 }, hard: { speed: 0.45, every: 520, cloud: 0.25 } }
 export const KINDS = ['star', 'heart', 'sun']
 export const BASKET = { y: 0.75, half: 0.11 } // 바구니 높이·반폭
 
@@ -32,5 +32,5 @@ export function step(s, dt, x, level, rand = Math.random) {
     items.push({ id: nextId, x: 0.08 + rand() * 0.84, y: -0.05, kind: rand() < r.cloud ? 'cloud' : KINDS[Math.floor(rand() * 3)] })
     nextId += 1
   }
-  return { ...s, items, score, lives, t, last, nextId, over: lives <= 0 }
+  return { ...s, items, score, lives, t, last, nextId, over: lives <= 0 || (r.time > 0 && t >= r.time) }
 }
