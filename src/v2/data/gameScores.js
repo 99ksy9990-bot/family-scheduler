@@ -17,6 +17,9 @@ export function recordGameScore(scores = {}, gameId, memberId, result, now) {
   return { ...scores, [gameId]: { ...scores?.[gameId], [memberId]: record } }
 }
 
+// 1등 구성원 id (기록 없으면 null)
+export const gameLeader = (scores, gameId) => rankGameScores(scores, gameId)[0]?.member || null
+
 // profiles를 주면 '1등 아빠 34초'처럼 누가 1등인지도 보여 줌
 export function bestGameLabel(scores, gameId, profiles) {
   const rows = Object.entries(scores?.[gameId] || {}).filter(([, record]) => Number.isFinite(record?.best))
