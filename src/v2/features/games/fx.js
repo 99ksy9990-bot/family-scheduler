@@ -66,7 +66,26 @@ export function bounce(el, scale = 1.15) {
   el.animate([{ scale: '1' }, { scale: `${scale}` }, { scale: '.96' }, { scale: '1' }], { duration: 380, easing: 'ease-out' })
 }
 
-export const buzz = (ms = 30) => { try { navigator.vibrate?.(ms) } catch { /* 지원 안 함 */ } }
+// 효과음 (놀이 화면에서 켜고 끔, 기기마다 저장)
+const SOUND_KEY = 'family-scheduler-sound'
+export const isSoundOn = () => { try { return localStorage.getItem(SOUND_KEY) !== 'off' } catch { return true } }
+export const setSound = (on) => { try { localStorage.setItem(SOUND_KEY, on ? 'on' : 'off') } catch { /* 저장 못 해도 이번만 */ } }
+let audio = null
+function tone(freqs, dur = 0.09) {
+  if (!isSoundOn()) return
+  try {
+    audio ||= new (window.AudioContext || window.webkitAudioContext)()
+    let t = audio.currentTime
+    for (const f of freqs) {
+      const o = audio.createOscillator(); const g = audio.createGain()
+      o.type = 'triangle'; o.frequency.value = f
+      g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur)
+      o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur); t += dur * 0.8
+    }
+  } catch { /* 소리 지원 안 함 */ }
+}
+// 진동 + 효과음: 배열(실패) = 낮은 소리, 긴 진동(큰 성공) = 두 음, 짧은 진동 = 한 음
+export const buzz = (ms = 30) => { try { navigator.vibrate?.(ms) } catch { /* 지원 안 함 */ } tone(Array.isArray(ms) ? [220, 165] : ms >= 25 ? [660, 880] : [880]) }
 
 export function confetti(host, count = 40) {
   if (!host || calm()) return

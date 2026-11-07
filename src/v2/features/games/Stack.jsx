@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LEVELS, begin, drop, height, move } from './stackLogic'
+import { LEVELS, begin, drop, height, move, stageOf } from './stackLogic'
 import { bounce, burst, buzz, confetti, pop, shake } from './fx'
 import ItemBar from './ItemBar'
 import { pickRoom, roomStyle } from './theme'
@@ -46,6 +46,7 @@ export default function Stack({ onFinish, shop }) {
     const y = H - (next.floors.length - 1) * FLOOR + shift - FLOOR / 2
     if (next.over) { shake(el); buzz([80, 40, 80]); onFinish?.({ level, score: height(next) }); if (height(next) >= 10) confetti(el); return }
     const top = next.floors.at(-1)
+    if (stageOf(next) > stageOf(before)) { pop(el, W / 2, H * 0.3, `${stageOf(next)}단계!`, 'gold'); confetti(el); buzz(40) }
     if (next.last.perfect) {
       burst(el, (top.x + top.w / 2) * W, y, 10)
       pop(el, (top.x + top.w / 2) * W, y - 10, next.combo >= 3 ? `딱! ×${next.combo}` : '딱!', 'gold'); buzz(25)
@@ -64,7 +65,7 @@ export default function Stack({ onFinish, shop }) {
   const shift = Math.max(0, (s.floors.length + 1) * FLOOR - H * 0.6)
   const floorStyle = (f, i) => ({ left: `${f.x * 100}%`, width: `${f.w * 100}%`, bottom: `${i * FLOOR - shift}px`, background: COLORS[i % 4] })
   return <div className="stack">
-    <div className="game-stats"><span>{height(s)}층</span><span>{s.combo >= 2 ? `딱 ${s.combo}번 연속` : '눌러서 쌓기'}</span></div>
+    <div className="game-stats"><span>{stageOf(s)}단계 · {height(s)}층</span><span>{s.combo >= 2 ? `딱 ${s.combo}번 연속` : '눌러서 쌓기'}</span></div>
     <div className="stack-area fx-host room-bg" style={roomStyle(room)} ref={area} role="button" tabIndex={0} aria-label="눌러서 층 쌓기" onPointerDown={tap} onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && (e.preventDefault(), tap())}>
       {s.floors.map((f, i) => <div key={i} className={`stack-floor${i === 0 ? ' base' : ''}`} style={floorStyle(f, i)}>{i > 0 && <img src={`/characters/${FACES[i % 4]}_${s.last?.perfect && i === s.floors.length - 1 ? 'done' : 'basic'}.png`} alt="" />}</div>)}
       {!s.over && <div className="stack-floor moving" style={floorStyle(s.moving, s.floors.length)}><img src={`/characters/${FACES[s.floors.length % 4]}_busy.png`} alt="" /></div>}

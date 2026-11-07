@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { BASKET, RULES, begin, halfOf, step } from './catchLogic'
+import { BASKET, RULES, begin, halfOf, stageOf, step } from './catchLogic'
 import ItemBar from './ItemBar'
 import { pickRoom, roomStyle } from './theme'
-import { burst, buzz, pop, shake } from './fx'
+import { burst, buzz, confetti, pop, shake } from './fx'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -33,6 +33,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
         const gain = cur.score - before.score
         burst(el, x, y, gain > 1 ? 12 : 6); pop(el, x, y - 10, `+${gain}`, gain > 1 ? 'gold' : 'good'); buzz(15)
       }
+      if (el && stageOf(cur.score) > stageOf(before.score)) { pop(el, el.clientWidth / 2, el.clientHeight * 0.3, `${stageOf(cur.score)}단계!`, 'gold'); confetti(el); buzz(40) }
       if (el && cur.lives < before.lives) { pop(el, xRef.current * el.clientWidth, BASKET.y * el.clientHeight - 10, '앗!', 'bad'); shake(el); buzz([60, 40, 60]) }
       live.current = cur; setS(cur)
       if (cur.over) { onFinish?.({ level, score: cur.score }); return }
@@ -59,7 +60,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
 
   return <div className="catch">
     <p className="game-room-name">{room.name}에서 선물 받기 · 맨 오른쪽 물건은 3점</p>
-    <div className="game-stats"><span>{s.score}점</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={i} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
+    <div className="game-stats"><span>{stageOf(s.score)}단계 · {s.score}점</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={i} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
     <div className="catch-area room-bg" style={roomStyle(room)} ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={move} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
       {s.items.map((it) => <img key={it.id} className="catch-item" src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
       <img className={`catch-basket${halfOf(s) > BASKET.half ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />

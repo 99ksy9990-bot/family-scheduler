@@ -4,6 +4,8 @@ export const KINDS = ['star', 'heart', 'sun']
 export const BASKET = { y: 0.62, half: 0.11 } // 바구니 높이·반폭
 
 export const begin = () => ({ items: [], score: 0, lives: 3, t: 0, last: 0, nextId: 1, over: false, bigUntil: 0, slowUntil: 0 })
+export const STAGE_EVERY = 20 // 20점마다 다음 단계
+export const stageOf = (score) => 1 + Math.floor(score / STAGE_EVERY)
 export const BIG = 1.6 // 큰 바구니 배율
 export const halfOf = (s) => BASKET.half * (s.t < s.bigUntil ? BIG : 1)
 
@@ -12,7 +14,7 @@ export function step(s, dt, x, level, rand = Math.random) {
   if (s.over) return s
   const r = RULES[level]
   const t = s.t + dt
-  const speed = r.speed * (1 + t / 60000) * (t < s.slowUntil ? 0.5 : 1) // 1분마다 2배 쪽으로, 느림 시계면 절반
+  const speed = r.speed * (1 + t / 60000) * (1 + (stageOf(s.score) - 1) * 0.08) * (t < s.slowUntil ? 0.5 : 1) // 1분마다 2배 쪽으로, 느림 시계면 절반
   const half = halfOf(s)
   let { score, lives, nextId } = s
   const items = []

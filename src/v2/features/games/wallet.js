@@ -5,6 +5,9 @@ import { ROOMS } from './cleanRooms.js'
 export const GIFT_EVERY = 10, GIFT = 5, COMP = 50
 export const DAILY = 2 // 다른 게임은 게임마다 하루 별 2개까지
 const dayId = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+// 오늘의 게임: 날마다 하나, 별 2배
+export const TODAY_GAMES = ['pairs', 'catch', 'tap', 'sequence', 'stack', 'merge', 'match']
+export const dailyGame = (d = new Date()) => TODAY_GAMES[Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5) % TODAY_GAMES.length]
 export const arcadeOf = (p) => ({ earned: 0, spent: 0, day: { id: '', by: {} }, ...p?.arcade })
 
 export function walletOf(p) {
@@ -21,8 +24,9 @@ export function walletOf(p) {
 export function earnStar(p, game, d = new Date()) {
   const a = arcadeOf(p); const id = dayId(d)
   const by = a.day.id === id ? a.day.by : {}
-  if ((by[game] || 0) >= DAILY) return { progress: p, got: false }
-  return { progress: { ...p, arcade: { ...a, earned: a.earned + 1, day: { id, by: { ...by, [game]: (by[game] || 0) + 1 } } } }, got: true }
+  if ((by[game] || 0) >= DAILY) return { progress: p, got: 0 }
+  const got = game === dailyGame(d) ? 2 : 1
+  return { got, progress: { ...p, arcade: { ...a, earned: a.earned + got, day: { id, by: { ...by, [game]: (by[game] || 0) + 1 } } } } }
 }
 export const spendStars = (p, n) => ({ ...p, arcade: { ...arcadeOf(p), spent: arcadeOf(p).spent + n } })
 

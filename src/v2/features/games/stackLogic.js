@@ -31,3 +31,5 @@ export function drop(s, level) {
 }
 
 export const height = (s) => s.floors.length - 1
+export const STAGE_FLOORS = 10 // 10층마다 다음 단계
+export const stageOf = (s) => 1 + Math.floor(height(s) / STAGE_FLOORS)
