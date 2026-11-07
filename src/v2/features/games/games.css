@@ -71,7 +71,7 @@
 .game-ranks .grouped-row { gap: 10px; }
 .rank-no { width: 20px; text-align: center; color: var(--label-2); font-variant-numeric: tabular-nums; }
 .rank-value { margin-left: auto; font-variant-numeric: tabular-nums; }
-.game-sheet .stack-area, .game-sheet .catch-area { height: calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.game-sheet .stack-area, .game-sheet .catch-area { height: calc(100dvh - 320px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
 /* 우리집 합치기 */
 .merge-area { position: relative; height: min(560px, 62vh); border-radius: 22px; overflow: hidden; background: linear-gradient(#fff6e5, #ffe9cc); touch-action: none; user-select: none; -webkit-user-select: none; }
 .game-sheet .merge-area { height: calc(100dvh - 260px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
@@ -234,3 +234,5 @@
 /* 방 배경 (대청소 방 그림을 게임판 뒤에) */
 .room-bg { background: linear-gradient(rgb(255 255 255 / .3), rgb(255 255 255 / .3)), var(--room) center / cover no-repeat; border-radius: 18px; }
 .game-room-name { margin: 0 0 6px; font-size: 13px; color: var(--secondary-label, #6e6e73); text-align: center; }
+.result-hero { display: grid; place-items: center; height: 150px; margin-bottom: 12px; }
+.result-hero .character img { width: 96px; height: 96px; filter: drop-shadow(0 6px 12px rgb(0 0 0 / .2)); }

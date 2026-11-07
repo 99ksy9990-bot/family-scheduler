@@ -1,12 +1,12 @@
 import { lazy } from 'react'
 // 놀이 탭이 읽는 목록. component 없는 게임은 "준비 중".
 export const GAMES = [
-  { id: 'pairs', name: '가족 카드 짝맞추기', image: 'tiles/heart', component: lazy(() => import('./Pairs.jsx')) },
-  { id: 'catch', name: '하늘 선물 받기', image: 'star', component: lazy(() => import('./Catch.jsx')) },
-  { id: 'tap', name: '가족 얼굴 톡톡', image: 'hole', component: lazy(() => import('./Tap.jsx')) },
-  { id: 'sequence', name: '순서 기억하기', image: 'sun', component: lazy(() => import('./Sequence.jsx')) },
-  { id: 'stack', name: '우리집 쌓기', image: 'tiles/house', component: lazy(() => import('./Stack.jsx')) },
-  { id: 'merge', name: '우리집 합치기', image: 'tiles/sprout', component: lazy(() => import('./Merge.jsx')) },
-  { id: 'match', name: '같은 그림 셋 맞추기', image: 'tiles/ribbon', component: lazy(() => import('./Match.jsx')) },
-  { id: 'clean', name: '우리집 대청소', image: 'sparkle', component: lazy(() => import('./Clean.jsx')) },
+  { id: 'pairs', name: '짝꿍 카드 찾기', image: 'icons/pairs', component: lazy(() => import('./Pairs.jsx')) },
+  { id: 'catch', name: '선물 비가 내려요', image: 'icons/catch', component: lazy(() => import('./Catch.jsx')) },
+  { id: 'tap', name: '두더지 가족 톡톡', image: 'icons/tap', component: lazy(() => import('./Tap.jsx')) },
+  { id: 'sequence', name: '따라쟁이 챌린지', image: 'icons/sequence', component: lazy(() => import('./Sequence.jsx')) },
+  { id: 'stack', name: '하늘 끝까지 집 쌓기', image: 'icons/stack', component: lazy(() => import('./Stack.jsx')) },
+  { id: 'merge', name: '쑥쑥 나무 키우기', image: 'icons/merge', component: lazy(() => import('./Merge.jsx')) },
+  { id: 'match', name: '달콤 3매치', image: 'icons/match', component: lazy(() => import('./Match.jsx')) },
+  { id: 'clean', name: '우리집 대청소', image: 'icons/clean', component: lazy(() => import('./Clean.jsx')) },
 ]
