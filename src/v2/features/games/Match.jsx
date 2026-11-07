@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MODES, N, adjacent, fresh, swap } from './matchLogic'
 import { burst, buzz, center, pop, shake } from './fx'
 import ItemBar from './ItemBar'
-import { pickObjects, pickRoom, roomStyle } from './theme'
+import { pickObjects, pickRoom, roomStyle, perkLevel } from './theme'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -32,7 +32,7 @@ export default function Match({ onFinish, shop }) {
 
   useEffect(() => { if (over) onFinish?.({ level, score }) }, [over]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!level) return <div className="game-levels">{Object.keys(MODES).map((lv) => <button key={lv} className="game-level" onClick={() => { setPics(pickObjects(6)); setBoard(fresh()); setScore(0); setMoves(0); setLeft(60); setLevel(lv) }}>{LEVEL_NAMES[lv]}<small>{HINT[lv]}</small></button>)}</div>
+  if (!level) return <div className="game-levels">{Object.keys(MODES).map((lv) => <button key={lv} className="game-level" onClick={() => { setPics(pickObjects(6)); setBoard(fresh()); setScore(0); setMoves(-3 * perkLevel('match')); setLeft(60 + 5 * perkLevel('match')); setLevel(lv) }}>{LEVEL_NAMES[lv]}<small>{HINT[lv]}</small></button>)}</div>
 
   const tryMove = (i, j) => {
     if (over) return

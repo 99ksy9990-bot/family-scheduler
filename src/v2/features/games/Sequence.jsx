@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { bounce, burst, buzz, center, pop, shake } from './fx'
 import { PADS, SPEED, press, stage, start } from './sequenceLogic'
 import ItemBar from './ItemBar'
-import { pickRoom, roomStyle } from './theme'
+import { pickRoom, roomStyle, perkLevel } from './theme'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -34,7 +34,7 @@ export default function Sequence({ onFinish, shop }) {
     return () => timers.forEach(clearTimeout)
   }, [len, lives, replay]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!game) return <div className="game-levels">{Object.keys(SPEED).map((lv) => <button key={lv} className="game-level" onClick={() => { setLevel(lv); setGame(start()); setMsg('') }}>{LEVEL_NAMES[lv]}<small>{lv === 'easy' ? '한 번 봐줘요' : lv === 'hard' ? '빨라요' : ''}</small></button>)}</div>
+  if (!game) return <div className="game-levels">{Object.keys(SPEED).map((lv) => <button key={lv} className="game-level" onClick={() => { const g = start(); const n = perkLevel('sequence'); setLevel(lv); setGame(n ? (lv === 'easy' ? { ...g, lives: g.lives + n } : { ...g, saved: true }) : g); setMsg('') }}>{LEVEL_NAMES[lv]}<small>{lv === 'easy' ? '한 번 봐줘요' : lv === 'hard' ? '빨라요' : ''}</small></button>)}</div>
 
   const tap = (i) => {
     if (showing || game.over) return

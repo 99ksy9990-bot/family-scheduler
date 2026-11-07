@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { LINE, STAGES, begin, drop, step } from './mergeLogic'
 import { burst, buzz, confetti, pop, shake } from './fx'
 import ItemBar from './ItemBar'
-import { pickRoom, roomStyle } from './theme'
+import { pickRoom, roomStyle, perkLevel } from './theme'
 import './games.css'
 
 export default function Merge({ onFinish, shop }) {
+  const seeds = useRef(0) // 마당 효과: 처음 몇 번은 씨앗
   const [room] = useState(pickRoom) // 판 뒤 배경 그림
   const area = useRef(null)
   const cur = useRef(null)
@@ -19,7 +20,7 @@ export default function Merge({ onFinish, shop }) {
 
   useEffect(() => {
     const el = area.current; if (!el) return undefined
-    cur.current = begin(el.clientHeight / el.clientWidth); setS(cur.current); setW(el.clientWidth)
+    seeds.current = 3 * perkLevel('merge'); cur.current = begin(el.clientHeight / el.clientWidth); if (seeds.current) cur.current = { ...cur.current, next: 0 }; setS(cur.current); setW(el.clientWidth)
     let raf = 0; let prev = 0
     const loop = (now) => {
       const dt = prev ? (now - prev) / 1000 : 0; prev = now
@@ -43,7 +44,7 @@ export default function Merge({ onFinish, shop }) {
   const release = (e) => {
     if (!cur.current || cur.current.over || performance.now() < ready.current) return
     ready.current = performance.now() + 450
-    cur.current = drop(cur.current, toX(e)); setS(cur.current); buzz(8)
+    cur.current = drop(cur.current, toX(e)); if (seeds.current > 1) { seeds.current -= 1; cur.current = { ...cur.current, next: 0 } } else seeds.current = 0; setS(cur.current); buzz(8)
   }
   const ball = (stage, x, y, key, extra = '') => { const r = STAGES[stage].r * W; return <div key={key} className={`merge-ball${extra}`} style={{ width: r * 2, height: r * 2, transform: `translate(${x * W - r}px, ${y * W - r}px)`, background: STAGES[stage].color }}><img src={STAGES[stage].img} alt="" draggable="false" /></div> }
 

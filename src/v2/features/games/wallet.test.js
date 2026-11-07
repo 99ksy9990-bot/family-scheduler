@@ -13,3 +13,16 @@ test('다른 게임 별: 하루 한도, 쓰면 줄고, 합치면 큰 쪽', () =>
   const m = mergeArcade({ earned: 5, spent: 1, day: { id: '2026-11-7', by: { catch: 2 } } }, { earned: 3, spent: 4, day: { id: '2026-11-7', by: { tap: 1 } } })
   assert.deepEqual(m, { earned: 5, spent: 4, day: { id: '2026-11-7', by: { catch: 2, tap: 1 } } })
 })
+
+test('다 꾸민 방 하나마다 하루 별 한도 +1, 방 효과는 맡은 게임만', async () => {
+  const { homeBonus, earnStar } = await import('./wallet.js')
+  const { ROOMS } = await import('./cleanRooms.js')
+  const { perkLevel } = await import('./theme.js')
+  const done = ROOMS[0].tasks.map((t) => t.id)
+  assert.equal(homeBonus({ done }), 1)
+  assert.equal(perkLevel('catch', done), 1)
+  assert.equal(perkLevel('tap', done), 0)
+  let p = { done }; const d = new Date('2026-11-01T10:00:00+09:00'); let total = 0
+  for (let i = 0; i < 5; i++) { const r = earnStar(p, 'tap', d); p = r.progress; total += r.got ? 1 : 0 }
+  assert.equal(total, 3)
+})

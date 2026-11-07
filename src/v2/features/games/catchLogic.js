@@ -21,7 +21,7 @@ export function step(s, dt, x, level, rand = Math.random) {
   for (const it of s.items) {
     const y = it.y + speed * dt / 1000
     if (y >= BASKET.y && it.y < BASKET.y && Math.abs(it.x - x) <= half) {
-      if (it.kind === 'cloud') lives -= 1; else score += it.kind === 'sun' ? 3 : 1
+      if (it.kind === 'cloud') lives -= 1; else score += (it.kind === 'sun' ? 3 : 1) * (s.mul || 1)
       continue
     }
     if (y < 1.05) items.push({ ...it, y })

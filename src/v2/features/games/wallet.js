@@ -21,10 +21,11 @@ export function walletOf(p) {
 }
 
 // 게임 한 판 끝 → 오늘 그 게임 한도 안이면 별 1개. { progress, got }
+export const homeBonus = (p) => Math.min(5, ROOMS.filter((r) => r.tasks.every((t) => (p?.done || []).includes(t.id))).length)
 export function earnStar(p, game, d = new Date()) {
   const a = arcadeOf(p); const id = dayId(d)
   const by = a.day.id === id ? a.day.by : {}
-  if ((by[game] || 0) >= DAILY) return { progress: p, got: 0 }
+  if ((by[game] || 0) >= DAILY + homeBonus(p)) return { progress: p, got: 0 } // 다 꾸민 방 하나마다 +1 (최대 5)
   const got = game === dailyGame(d) ? 2 : 1
   return { got, progress: { ...p, arcade: { ...a, earned: a.earned + got, day: { id, by: { ...by, [game]: (by[game] || 0) + 1 } } } } }
 }

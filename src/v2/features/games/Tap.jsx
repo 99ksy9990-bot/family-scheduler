@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { DURATION, RULES, empty, hit, spawn } from './tapLogic'
 import { burst, buzz, center, pop, shake } from './fx'
 import ItemBar from './ItemBar'
-import { pickRoom, roomStyle } from './theme'
+import { pickRoom, roomStyle, perkLevel } from './theme'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -22,7 +22,7 @@ export default function Tap({ onFinish, shop }) {
 
   useEffect(() => {
     if (!level) return undefined
-    startRef.current = clock()
+    startRef.current = clock() + 3000 * perkLevel('tap') // 거실 효과: 시간 더
     const tick = setInterval(() => {
       const t = clock() - startRef.current
       setLeft(Math.max(0, DURATION - t))
