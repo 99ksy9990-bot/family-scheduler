@@ -31,7 +31,7 @@
 .catch-area{position:relative;height:min(560px,62vh);border-radius:22px;background:linear-gradient(#cfe6ff,#f2f8ff);overflow:hidden;container-type:size;touch-action:none}
 .catch-area:focus-visible{outline:3px solid var(--tint)}
 .catch-item{position:absolute;left:0;top:0;width:12cqw;will-change:transform}
-.catch-basket{position:absolute;left:0;bottom:2cqh;height:38cqh;width:auto;will-change:transform}
+.catch-basket{position:absolute;left:0;bottom:2cqh;height:25cqh;width:auto;will-change:transform}
 .catch-lives{display:flex;gap:4px}.catch-lives img{width:24px;height:24px}
 .match{position:relative}
 .match-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;background:var(--card,var(--on-tint));border-radius:22px;padding:8px;touch-action:none;user-select:none}
@@ -230,7 +230,7 @@
 .item-btn:disabled { opacity: .45; }
 .item-btn:focus-visible { outline: 3px solid var(--blue, #0a84ff); outline-offset: 2px; }
 .item-wallet { align-self: center; padding: 4px 10px; border-radius: 999px; background: var(--fill); font-weight: 700; color: #b7791f; font-variant-numeric: tabular-nums; }
-.catch-basket.big { scale: 1.6 1.2; transform-origin: 50% 100%; }
+.catch-basket.big { scale: 1.3; transform-origin: 50% 100%; }
 /* 방 배경 (대청소 방 그림을 게임판 뒤에) */
 .room-bg { background: linear-gradient(rgb(255 255 255 / .3), rgb(255 255 255 / .3)), var(--things,) var(--room) center / cover no-repeat; border-radius: 18px; }
 .game-room-name { margin: 0 0 6px; font-size: 13px; color: var(--secondary-label, #6e6e73); text-align: center; }
