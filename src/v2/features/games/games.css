@@ -254,3 +254,12 @@
 .sheet.game-sheet { overflow-x: hidden; overscroll-behavior: none; }
 .catch { touch-action: none; user-select: none; -webkit-user-select: none; }
 .catch, .catch-area { min-width: 0; max-width: 100%; }
+/* 비구름: 어떤 방 배경에서도 또렷하게 */
+.catch-item.cloud { width: 11cqw; filter: brightness(.55) saturate(1.4) drop-shadow(0 0 3px #fff) drop-shadow(0 2px 4px rgb(0 0 0 / .5)); }
+/* 하트 잃을 때: 판이 빨갛게 번쩍, 잃은 하트가 튀었다 흐려짐 */
+.catch-area.hurt::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 6px #ff3b30, inset 0 0 60px rgb(255 59 48 / .6); animation: hurt .6s ease-out forwards; pointer-events: none; }
+@keyframes hurt { to { opacity: 0; } }
+.catch-lives img { width: 30px; height: 30px; }
+.catch-lives img.lost { opacity: .45; animation: heart-lost .6s ease-out; }
+@keyframes heart-lost { 0% { transform: scale(1.8); opacity: 1; } 40% { transform: scale(1.2) rotate(-12deg); } 100% { transform: none; opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .catch-area.hurt::after, .catch-lives img.lost { animation: none; } }

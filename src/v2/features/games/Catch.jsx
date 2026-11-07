@@ -29,7 +29,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
       const el = area.current
       // 받는 폭 = 실제 바구니 그림 폭 (조금 여유)
       const b = el?.querySelector('.catch-basket')
-      if (b?.offsetWidth && el.clientWidth) cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.02 }
+      if (b?.offsetWidth && el.clientWidth) cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.04 } // 바구니 반폭 + 물건 반폭(8cqw의 절반): 살짝만 닿아도 받음
       cur = step(cur, dt, xRef.current, level)
       if (el && cur.score > before.score) {
         const x = xRef.current * el.clientWidth; const y = BASKET.y * el.clientHeight
@@ -37,7 +37,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
         burst(el, x, y, gain > 1 ? 12 : 6); pop(el, x, y - 10, `+${gain}`, gain > 1 ? 'gold' : 'good'); buzz(15)
       }
       if (el && stageOf(cur.score) > stageOf(before.score)) { pop(el, el.clientWidth / 2, el.clientHeight * 0.3, `${stageOf(cur.score)}단계!`, 'gold'); confetti(el); buzz(40) }
-      if (el && cur.lives < before.lives) { pop(el, xRef.current * el.clientWidth, BASKET.y * el.clientHeight - 10, '앗!', 'bad'); shake(el); buzz([60, 40, 60]) }
+      if (el && cur.lives < before.lives) { pop(el, xRef.current * el.clientWidth, BASKET.y * el.clientHeight - 10, '앗!', 'bad'); shake(el); buzz([60, 40, 60]); el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt') }
       live.current = cur; setS(cur)
       if (cur.over) { onFinish?.({ level, score: cur.score }); return }
       if (!document.hidden) raf = requestAnimationFrame(loop)
@@ -66,9 +66,9 @@ export default function Catch({ onFinish, player = 'little', shop }) {
 
   return <div className="catch">
     <p className="game-room-name">{room.name}에서 선물 받기 · 맨 오른쪽 물건은 3점</p>
-    <div className="game-stats"><span>{stageOf(s.score)}단계 · {s.score}점{RULES[level].time ? ` · ${Math.max(0, Math.ceil((RULES[level].time - s.t) / 1000))}초` : ''}</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={i} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
+    <div className="game-stats"><span>{stageOf(s.score)}단계 · {s.score}점{RULES[level].time ? ` · ${Math.max(0, Math.ceil((RULES[level].time - s.t) / 1000))}초` : ''}</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={`${i}-${i < s.lives}`} className={i < s.lives ? '' : 'lost'} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
     <div className="catch-area room-bg" style={roomStyle(room)} ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); move(e) }} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
-      {s.items.map((it) => <img key={it.id} className="catch-item" src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
+      {s.items.map((it) => <img key={it.id} className={`catch-item${it.kind === 'cloud' ? ' cloud' : ''}`} src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
       <img className={`catch-basket${s.t < s.bigUntil ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
     </div>
     <ItemBar key={level} shop={shop} off={s.over} items={[

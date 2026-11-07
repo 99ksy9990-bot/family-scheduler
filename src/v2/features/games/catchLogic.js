@@ -1,7 +1,7 @@
 // 하늘 선물 받기 순수 로직. 좌표는 0~1 비율(가로 x, 세로 y)
 export const RULES = { easy: { speed: 0.25, every: 900, cloud: 0, time: 60000 }, normal: { speed: 0.35, every: 700, cloud: 0.15 }, hard: { speed: 0.45, every: 520, cloud: 0.25 } }
 export const KINDS = ['star', 'heart', 'sun']
-export const BASKET = { y: 0.75, half: 0.11 } // 바구니 높이·반폭
+export const BASKET = { y: 0.7, half: 0.11 } // 바구니 높이·반폭
 
 export const begin = () => ({ items: [], score: 0, lives: 3, t: 0, last: 0, nextId: 1, over: false, bigUntil: 0, slowUntil: 0 })
 export const STAGE_EVERY = 20 // 20점마다 다음 단계
