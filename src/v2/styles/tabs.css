@@ -146,3 +146,5 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .home-tile b { font-size: 17px; }
 .home-tile small { font-size: 13px; opacity: .7; }
 .home-tile:focus-visible { outline: 2px solid #0a84ff; outline-offset: 2px; }
+.home-stats { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 4px; font-style: normal; }
+.home-stats i { font-style: normal; font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--fill, rgb(120 120 128 / 12%)); white-space: nowrap; }
