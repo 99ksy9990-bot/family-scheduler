@@ -143,7 +143,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const spent = ROOMS.flatMap((r) => r.tasks).filter((t) => done.includes(t.id)).reduce((a, t) => a + t.cost, 0)
   const wallet = Math.max(0, earned - spent - bought) // 예전 계산으로 쓴 별이 많아도 0 아래로는 안 감
   const save = (next) => { onProgress?.({ unlocked, stars, done, bought, econ: 2, comp, seen, streak, streakAt: now(), bonus, day, attend, ...next }) }
-  const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk)
+  const perks = ROOMS.filter((r) => r.tasks.every((t) => done.includes(t.id))).map((r) => r.perk).filter(Boolean) // 대청소 담당 방만
   const startStage = (i) => {
     const st = begin(i)
     st.moves += perks.reduce((a, p) => a + (p.moves || 0), 0)
@@ -164,7 +164,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     if (party) return <div key="party" className="clean-party fx-host" ref={partyRef} role="dialog" aria-label="축하">
       <div className="clean-room on" style={{ backgroundImage: `url(/game/room/${party.room.bg}.jpg)` }}>{party.room.tasks.map((t) => <img key={t.id} className="clean-room-thing on" src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}</div>
       <h3>{party.last ? '우리집 완성!' : `${party.room.name} 완성!`}</h3>
-      <p className="clean-perk-new">새 효과: <b>{party.room.perk.text}</b><br />이제 모든 단계에서 받아요</p>
+      <p className="clean-perk-new">새 효과: <b>{party.room.perk ? `${party.room.perk.text} (대청소 모든 단계)` : `${GAME_NAMES[roomGame(ROOMS.indexOf(party.room))]} ${PERK_TEXT[roomGame(ROOMS.indexOf(party.room))]}`}</b></p>
       <div className="clean-talk"><Face player={player} mood="done" /><p>{party.last ? '모든 방이 반짝반짝해! 정말 고마워. 우리 가족 최고!' : `${party.room.name}이(가) 정말 예뻐졌어! 다음 방도 같이 고치자.`}</p></div>
       <button className="primary-button clean-play" onClick={() => { setParty(null); setCheer(''); setView(null) }}>{party.last ? '우리집 보기' : '다음 방으로'}</button>
     </div>
@@ -180,8 +180,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       {!home && <details className="clean-all"><summary>지난 단계 다시 하기</summary>
         <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
       </details>}
-      <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (대청소) · <b>다른 게임 아이템 판마다 1번 무료</b> · 게임 배경으로 나와요</p>
-      {roomGame(ROOMS.indexOf(room)) && <p className="clean-perk">이 방 담당 게임: <b>{GAME_NAMES[roomGame(ROOMS.indexOf(room))]}</b> ({PERK_TEXT[roomGame(ROOMS.indexOf(room))]})</p>}
+      <p className="clean-perk">이 방 담당: <b>{GAME_NAMES[roomGame(ROOMS.indexOf(room))]}</b> · 다 꾸미면 <b>{room.perk?.text || PERK_TEXT[roomGame(ROOMS.indexOf(room))]}</b><br />모든 게임 아이템 판마다 1번 무료, 게임 배경으로도 나와요</p>
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
       <div className="clean-week"><span><small>오늘 출석 · 연속 {runNow}일</small><span>매일 별 {CHECKIN}개, 7일째엔 {WEEK_BONUS}개 더 <b className="clean-dots" aria-hidden="true">{'●'.repeat(runNow % 7 || (runNow ? 7 : 0)).padEnd(7, '○')}</b></span></span>{day.checkin ? <em>받았어요</em> : <button onClick={() => { const run = runNow + 1; const extra = run % 7 === 0 ? WEEK_BONUS : 0; const a = { last: dayId(), run }; const d = { ...day, checkin: true }; const b = bonus + CHECKIN + extra; setAttend(a); setDay(d); setBonus(b); save({ day: d, bonus: b, attend: a }); setCheer(extra ? `7일 연속 출석! 별 ${CHECKIN + extra}개!` : `출석 고마워! 별 ${CHECKIN}개!`) }}>★{CHECKIN}{runNow % 7 === 6 ? `+${WEEK_BONUS}` : ''} 받기</button>}</div>

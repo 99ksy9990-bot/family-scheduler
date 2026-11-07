@@ -57,3 +57,17 @@ export const ROOMS = [
   { key: 39, name: '무대', bg: 'stage', say: '우리 가족 공연 무대야! 다 같이 노래하자.', tasks: [['mic', '마이크', 26, [50, 72, 12]], ['spotlight', '조명', 27, [18, 40, 18]], ['speaker', '스피커', 27, [84, 72, 18]]] },
   { key: 29, name: '우리집', bg: 'home', say: '마지막이야! 우리집을 반짝반짝하게 완성하자!', tasks: [['garland', '별 장식 달기', 28, [50, 18, 40]], ['bear', '곰인형 앉히기', 28, [24, 72, 22]], ['cake', '집들이 하기', 29, [72, 72, 24]]] },
 ].map((room, r) => ({ ...room, perk: PERKS[room.key ?? r], tasks: room.tasks.map(([img, name, cost, at], t) => ({ id: `${room.key ?? r}-${t}`, img: `/game/room/${img}.png`, name, cost: Math.max(1, Math.round(cost * COST_SCALE)), at })) }))
+
+// 방마다 게임 하나를 맡음 (현관→선물 비, 거실→두더지, … 8번째 방→대청소, 그 뒤 같은 순서). 마지막 '우리집'은 대청소.
+export const ROOM_GAMES = ['catch', 'tap', 'sequence', 'match', 'pairs', 'stack', 'merge', 'clean']
+export const roomGame = (k) => (k >= ROOMS.length - 1 ? 'clean' : ROOM_GAMES[k % ROOM_GAMES.length])
+// 대청소 담당 방은 수가 줄어든 만큼 효과를 크게
+const CLEAN_PERKS = [
+  { text: '이동 +5 · 망치 +2 · 시작할 때 로켓 1개', moves: 5, hammer: 2, start: ['row'] },
+  { text: '이동 +5 · 섞기 +2 · 시작할 때 폭탄·로켓', moves: 5, shuffle: 2, start: ['bomb', 'col'] },
+  { text: '이동 +5 · 망치 +2 · 시작할 때 프로펠러 2개', moves: 5, hammer: 2, start: ['prop', 'prop'] },
+  { text: '이동 +5 · 섞기 +1 · 시작할 때 폭탄·로켓', moves: 5, shuffle: 1, start: ['bomb', 'row'] },
+  { text: '이동 +5 · 망치 +2 · 시작할 때 무지개 1개', moves: 5, hammer: 2, start: ['rainbow'] },
+]
+let c = 0
+for (const [k, room] of ROOMS.entries()) room.perk = roomGame(k) === 'clean' ? CLEAN_PERKS[Math.min(c++, CLEAN_PERKS.length - 1)] : null
