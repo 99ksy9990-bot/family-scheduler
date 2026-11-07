@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BASKET, RULES, begin, halfOf, stageOf, step } from './catchLogic'
+import { BASKET, RULES, begin, stageOf, step } from './catchLogic'
 import ItemBar from './ItemBar'
 import { pickRoom, roomStyle, perkLevel } from './theme'
 import { burst, buzz, confetti, pop, shake } from './fx'
@@ -26,8 +26,11 @@ export default function Catch({ onFinish, player = 'little', shop }) {
       const dt = prev ? Math.min(50, now - prev) : 0
       prev = now
       const before = cur
-      cur = step(cur, dt, xRef.current, level)
       const el = area.current
+      // 받는 폭 = 실제 바구니 그림 폭 (조금 여유)
+      const b = el?.querySelector('.catch-basket')
+      if (b?.offsetWidth && el.clientWidth) cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.02 }
+      cur = step(cur, dt, xRef.current, level)
       if (el && cur.score > before.score) {
         const x = xRef.current * el.clientWidth; const y = BASKET.y * el.clientHeight
         const gain = cur.score - before.score
@@ -66,7 +69,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
     <div className="game-stats"><span>{stageOf(s.score)}단계 · {s.score}점{RULES[level].time ? ` · ${Math.max(0, Math.ceil((RULES[level].time - s.t) / 1000))}초` : ''}</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={i} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
     <div className="catch-area room-bg" style={roomStyle(room)} ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); move(e) }} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
       {s.items.map((it) => <img key={it.id} className="catch-item" src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
-      <img className={`catch-basket${halfOf(s) > BASKET.half ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
+      <img className={`catch-basket${s.t < s.bigUntil ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
     </div>
     <ItemBar key={level} shop={shop} off={s.over} items={[
       { id: 'big', name: '큰 바구니', img: 'room/basket', price: 1, use: () => { live.current = { ...live.current, bigUntil: live.current.t + 10000 } } },

@@ -6,8 +6,8 @@ export const BASKET = { y: 0.75, half: 0.11 } // 바구니 높이·반폭
 export const begin = () => ({ items: [], score: 0, lives: 3, t: 0, last: 0, nextId: 1, over: false, bigUntil: 0, slowUntil: 0 })
 export const STAGE_EVERY = 20 // 20점마다 다음 단계
 export const stageOf = (score) => 1 + Math.floor(score / STAGE_EVERY)
-export const BIG = 1.6 // 큰 바구니 배율
-export const halfOf = (s) => BASKET.half * (s.t < s.bigUntil ? BIG : 1)
+export const BIG = 1.3 // 큰 바구니 배율 (화면 scale과 같게)
+export const halfOf = (s) => (s.half || BASKET.half) * (s.t < s.bigUntil ? BIG : 1)
 
 // dt(ms)만큼 진행. x: 바구니 중심
 export function step(s, dt, x, level, rand = Math.random) {
