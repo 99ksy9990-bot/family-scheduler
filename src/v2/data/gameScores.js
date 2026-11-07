@@ -26,7 +26,7 @@ export function bestGameLabel(scores, gameId, profiles) {
   if (!rows.length) return '기록 없음'
   const [member, { best }] = rows.reduce((a, b) => ((gameId === 'pairs' ? b[1].best < a[1].best : b[1].best > a[1].best) ? b : a))
   const name = profiles?.find((p) => p.id === member)?.name
-  return `${name ? `1등 ${name}` : '최고'} ${best.toLocaleString('ko-KR')}${unitOf(gameId)}`
+  return `${name || '최고'} ${best.toLocaleString('ko-KR')}${unitOf(gameId)}`
 }
 
 export const unitOf = (gameId) => gameId === 'pairs' ? '초' : ['sequence', 'clean'].includes(gameId) ? '단계' : gameId === 'stack' ? '층' : '점'
