@@ -232,7 +232,7 @@
 .item-wallet { align-self: center; padding: 4px 10px; border-radius: 999px; background: var(--fill); font-weight: 700; color: #b7791f; font-variant-numeric: tabular-nums; }
 .catch-basket.big { scale: 1.6 1.2; transform-origin: 50% 100%; }
 /* 방 배경 (대청소 방 그림을 게임판 뒤에) */
-.room-bg { background: linear-gradient(rgb(255 255 255 / .3), rgb(255 255 255 / .3)), var(--room) center / cover no-repeat; border-radius: 18px; }
+.room-bg { background: linear-gradient(rgb(255 255 255 / .3), rgb(255 255 255 / .3)), var(--things,) var(--room) center / cover no-repeat; border-radius: 18px; }
 .game-room-name { margin: 0 0 6px; font-size: 13px; color: var(--secondary-label, #6e6e73); text-align: center; }
 .result-hero { display: grid; place-items: center; height: 150px; margin-bottom: 12px; }
 .result-hero .character img { width: 96px; height: 96px; filter: drop-shadow(0 6px 12px rgb(0 0 0 / .2)); }

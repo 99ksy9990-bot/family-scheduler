@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { N, STAGES, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
 import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
 import { ROOMS } from './cleanRooms'
+import { GAME_NAMES, PERK_TEXT, roomGame } from './theme'
 import { COMP, GIFT, GIFT_EVERY, arcadeOf } from './wallet'
 import './games.css'
 
@@ -180,6 +181,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
         <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
       </details>}
       <p className="clean-perk">다 꾸미면: <b>{room.perk.text}</b> (대청소) · <b>다른 게임 아이템 판마다 1번 무료</b> · 게임 배경으로 나와요</p>
+      {roomGame(ROOMS.indexOf(room)) && <p className="clean-perk">이 방 담당 게임: <b>{GAME_NAMES[roomGame(ROOMS.indexOf(room))]}</b> ({PERK_TEXT[roomGame(ROOMS.indexOf(room))]})</p>}
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
       <ul className="clean-tasks">{room.tasks.map((t) => { const ok = done.includes(t.id); return <li key={t.id}><img src={t.img} alt="" /><span>{t.name}</span>{ok ? <em>완료</em> : <button disabled={wallet < t.cost} onClick={() => fix(t)} aria-label={`${t.name} 별 ${t.cost}개 쓰기`}>★ {t.cost}</button>}</li> })}</ul>
       <div className="clean-week"><span><small>오늘 출석 · 연속 {runNow}일</small><span>매일 별 {CHECKIN}개, 7일째엔 {WEEK_BONUS}개 더 <b className="clean-dots" aria-hidden="true">{'●'.repeat(runNow % 7 || (runNow ? 7 : 0)).padEnd(7, '○')}</b></span></span>{day.checkin ? <em>받았어요</em> : <button onClick={() => { const run = runNow + 1; const extra = run % 7 === 0 ? WEEK_BONUS : 0; const a = { last: dayId(), run }; const d = { ...day, checkin: true }; const b = bonus + CHECKIN + extra; setAttend(a); setDay(d); setBonus(b); save({ day: d, bonus: b, attend: a }); setCheer(extra ? `7일 연속 출석! 별 ${CHECKIN + extra}개!` : `출석 고마워! 별 ${CHECKIN}개!`) }}>★{CHECKIN}{runNow % 7 === 6 ? `+${WEEK_BONUS}` : ''} 받기</button>}</div>
