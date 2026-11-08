@@ -46,9 +46,9 @@ export function scheduleForDate(state, date) {
       if (!option || option.code === 'OFF' || !option.start || !option.end) return []
       const overnight = option.end <= option.start
       if (index && !overnight) return []
-      return [{ id: `shift-${member}-${sourceKey}`, date: key, title: `근무 ${option.code}${index ? ' 마침' : ''}`, member, members: [member],
+      return [{ id: `shift-${member}-${sourceKey}`, date: key, title: `근무 ${option.code}`, member, members: [member],
         time: index ? '00:00' : option.start, end: option.end, type: 'shift', sourceDate: sourceKey,
-        crossesMidnight: !index && overnight, carryover: Boolean(index) }]
+        crossesMidnight: !index && overnight, carryover: Boolean(index), startedAt: option.start }]
     })
   }) : []
   const regular = regularWorkRows(state, date, new Set(shifts.filter((row) => !row.carryover).map((row) => row.member)))

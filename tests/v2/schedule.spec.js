@@ -46,7 +46,7 @@ test('연속 N은 전날 마침과 오늘 시작으로 구분하고 근무 중 �
     shifts: [{ member: 'mom', date: '2026-11-04', shift: 'night' }, { member: 'mom', date: '2026-11-05', shift: 'night' }],
     workSettings: { enabled: true, workerIds: ['mom'], shiftTypes: [{ id: 'night', code: 'N', start: '22:00', end: '07:00' }] } }
   const rows = scheduleForDate(consecutive, day)
-  expect(rows.map((row) => row.title)).toEqual(['근무 N 마침', '근무 N'])
+  expect(rows.map((row) => row.title)).toEqual(['근무 N', '근무 N'])
   expect(rows[0]).toMatchObject({ carryover: true, displayEnd: '07:00', sourceDate: '2026-11-04' })
   expect(rows[1]).toMatchObject({ crossesMidnight: true, displayStart: '22:00' })
   expect(groupShiftRows(rows)).toHaveLength(1)
