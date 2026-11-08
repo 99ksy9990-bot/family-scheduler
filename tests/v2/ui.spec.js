@@ -8,7 +8,7 @@ test('첫 화면 일정·캐릭터·24시간 표기·4개 탭·가로 넘침 없
   await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
   await expect(page.locator('.header-add')).toHaveCount(1)
   expect(await page.locator('.house-tile .character').evaluate((avatar) => avatar.getBoundingClientRect().width)).toBe(66)
-  expect(await page.locator('.today-remaining .person-group-head .character img').evaluate((img) => img.getBoundingClientRect().width)).toBe(32)
+  expect(await page.locator('.today-remaining .person-group-head .character img').evaluate((img) => img.getBoundingClientRect().width)).toBe(40)
   await expect(page.getByText('좋은 하루, 우리 가족')).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   const frame = await page.locator('.v2-app').boundingBox()

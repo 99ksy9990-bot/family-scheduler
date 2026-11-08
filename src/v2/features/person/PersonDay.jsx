@@ -7,7 +7,6 @@ import Sheet from '../../components/Sheet'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import RowEditor from '../../components/RowEditor'
 import TimeCell from '../../components/TimeCell'
-import { groupShiftRows } from '../../data/shiftGroups'
 import { houseStatus } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { personDayRows, editTarget } from '../../data/personDay'
@@ -32,7 +31,7 @@ export default function PersonDay({ memberId, state, today, now, updateState, ca
     <div className="person-hero" data-character={profile.characterId || 'unknown'}><CharacterAvatar profile={profile} expression={status.expression} size={96} glass /><h2>{profile.name}</h2><p>{status.badge ? `${status.badge} · ${status.detail}` : status.detail}</p></div>
     {[['오늘', today], ['내일', addDays(today, 1)]].map(([label, date]) => {
       const rows = personDayRows(state, memberId, date, today)
-      return <section className="person-section" key={label}><h3 className="house-section-title">{label}</h3>{rows.length ? <ul className="grouped-list" aria-label={`${label}의 일정과 할 일`}>{groupShiftRows(rows).map((group) => <li className={group.length > 1 ? 'person-shift-group' : 'person-item'} key={group[0].id}>{group.length > 1 ? <><DayIcon kind="shift" /><div>{group.map((row) => renderRow(row, label, date, true))}</div></> : renderRow(group[0], label, date)}</li>)}</ul> : <div className="empty-state">{label} 일정과 할 일이 없어요.</div>}</section>
+      return <section className="person-section" key={label}><h3 className="house-section-title">{label}</h3>{rows.length ? <ul className="grouped-list" aria-label={`${label}의 일정과 할 일`}>{rows.map((row) => [row]).map((group) => <li className={group.length > 1 ? 'person-shift-group' : 'person-item'} key={group[0].id}>{group.length > 1 ? <><DayIcon kind="shift" /><div>{group.map((row) => renderRow(row, label, date, true))}</div></> : renderRow(group[0], label, date)}</li>)}</ul> : <div className="empty-state">{label} 일정과 할 일이 없어요.</div>}</section>
     })}
     {skipped && <div role="status" className="undo-toast">{skipped.title}을(를) 이 날만 뺐어요.<button onClick={() => { updateState((current) => ({ ...current, scheduleExceptions: current.scheduleExceptions.filter((item) => item.id !== skipped.exception.id) })); setSkipped(null) }}>되돌리기</button></div>}
   </Sheet>

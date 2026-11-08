@@ -22,7 +22,7 @@ export function ByPerson({ rows, profiles, onRow, nextId }) {
   }
   const order = [['all', '가족'], ['together', '함께'], ...profiles.filter((p) => p.active !== false).map((p) => [p.id, p.name, p])]
   return order.filter(([key]) => groups.has(key)).map(([key, name, profile]) => <div className={`person-group${profile ? " solo" : ""}`} key={key}>
-    <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} size={32} /> : null}{name}<small>{groups.get(key).length}</small></h3>
+    <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} size={40} /> : null}{name}<small>{groups.get(key).length}</small></h3>
     <ScheduleList rows={groups.get(key)} profiles={profiles} onRow={onRow} nextId={nextId} label={`${name} 일정`} solo={Boolean(profile)} />
   </div>)
 }

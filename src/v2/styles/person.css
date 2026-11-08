@@ -228,3 +228,6 @@
   .day-icon[data-tone='anniversary'] { --di-bg: #46202b; --di-fg: #ff9db3; }
   .day-icon[data-tone='holiday'] { --di-bg: #2c2c2e; --di-fg: #aeaeb2; }
 }
+/* 목록 앞 얼굴·아이콘 40px (홈 남은 일정·달력·사람 칸·할 일·가족 목록 같은 위계) */
+.member-stack { zoom: 1.25; }
+.grouped-row + .grouped-row::before, .todo-row + .todo-row::before, .person-row + .person-row::before, .schedule-shift-group + li::before, .grouped-row + .schedule-shift-group::before, .schedule-shift-group + .schedule-shift-group::before, .person-item + li::before, .person-shift-group + li::before, .family-page .settings-entry::before { left: 68px; }

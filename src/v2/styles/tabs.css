@@ -171,3 +171,5 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .heading-line .greeting { margin-right: auto; align-self: flex-end; margin-bottom: 9px; }
 .grouped-row.next .time-start { color: var(--tint-label); font-weight: 600; } /* 다음 일정 강조 */
 .heading-line:has(.greeting) { align-items: baseline; } .heading-line .greeting { align-self: baseline; margin-bottom: 0; } /* 인사말 글자 밑선을 '우리집' 밑선에 맞춤 */
+#now-heading + * { margin-top: 12px; } /* 제목 줄 아래 바로 가족 칸 */
+.grouped-icon { width: 40px; height: 40px; } .family-page .grouped-icon { flex: 0 0 40px; } /* 목록 앞 아이콘 칸 40px 통일 */

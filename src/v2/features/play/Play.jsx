@@ -67,7 +67,7 @@ function GameRanks({ scores, gameId, profiles, highlight }) {
   const ranks = rankGameScores(scores, gameId)
   if (!ranks.length) return null
   const when = (at) => { const d = new Date(at); return Number.isNaN(d.getTime()) ? '' : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
-  return <section className="game-ranks"><h3>가족 순위</h3><ol className="grouped-list" aria-label="가족 순위">{ranks.map((item, index) => { const profile = profiles.find((p) => p.id === item.member); return <li className={`grouped-row${item.at === highlight ? ' is-new' : ''}`} key={`${item.member}-${item.at}-${index}`}><b className="rank-no">{index + 1}</b>{profile && <CharacterAvatar profile={profile} size={32} />}<span className="grouped-body"><strong>{profile?.name || '가족'}{item.at === highlight && <em className="rank-new">방금</em>}</strong><small>{when(item.at)}</small></span><b className="rank-value">{item.value.toLocaleString('ko-KR')}{unitOf(gameId)}</b></li> })}</ol></section>
+  return <section className="game-ranks"><h3>가족 순위</h3><ol className="grouped-list" aria-label="가족 순위">{ranks.map((item, index) => { const profile = profiles.find((p) => p.id === item.member); return <li className={`grouped-row${item.at === highlight ? ' is-new' : ''}`} key={`${item.member}-${item.at}-${index}`}><b className="rank-no">{index + 1}</b>{profile && <CharacterAvatar profile={profile} size={40} />}<span className="grouped-body"><strong>{profile?.name || '가족'}{item.at === highlight && <em className="rank-new">방금</em>}</strong><small>{when(item.at)}</small></span><b className="rank-value">{item.value.toLocaleString('ko-KR')}{unitOf(gameId)}</b></li> })}</ol></section>
 }
 
 // 대청소는 한 판 기록 대신 가족 순위: 깬 단계 → 꾸민 물건 순
@@ -80,5 +80,5 @@ function cleanLeader(progress, profiles) {
 function CleanRanks({ progress, profiles, me }) {
   const rows = cleanRows(progress, profiles)
   if (!rows.length) return null
-  return <section className="game-ranks"><h3>가족 순위</h3><ol className="grouped-list" aria-label="가족 순위">{rows.map((r, index) => <li className={`grouped-row${r.member === me ? ' is-new' : ''}`} key={r.member}><b className="rank-no">{index + 1}</b><CharacterAvatar profile={r.profile} size={32} /><span className="grouped-body"><strong>{r.profile.name}{r.member === me && <em className="rank-new">나</em>}</strong><small>꾸민 물건 {r.things}개</small></span><b className="rank-value">{r.stage}단계</b></li>)}</ol></section>
+  return <section className="game-ranks"><h3>가족 순위</h3><ol className="grouped-list" aria-label="가족 순위">{rows.map((r, index) => <li className={`grouped-row${r.member === me ? ' is-new' : ''}`} key={r.member}><b className="rank-no">{index + 1}</b><CharacterAvatar profile={r.profile} size={40} /><span className="grouped-body"><strong>{r.profile.name}{r.member === me && <em className="rank-new">나</em>}</strong><small>꾸민 물건 {r.things}개</small></span><b className="rank-value">{r.stage}단계</b></li>)}</ol></section>
 }
