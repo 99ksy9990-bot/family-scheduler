@@ -18,10 +18,10 @@ export default function Match({ onFinish, shop }) {
   const [moves, setMoves] = useState(0)
   const [left, setLeft] = useState(60)
   const [cheer, setCheer] = useState(0)
-  const [hint, setHint] = useState(null) // 5초 동안 안 움직이면 바꿀 두 칸을 흔들어 보여 줌
+  const [hint, setHint] = useState(null) // 3초 동안 안 움직이면 바꿀 두 칸을 흔들어 보여 줌
   useEffect(() => {
     if (!board) return undefined
-    const t = setTimeout(() => setHint(findMove(board)), 5000)
+    const t = setTimeout(() => setHint(findMove(board)), 3000)
     return () => { clearTimeout(t); setHint(null) }
   }, [board])
   const startY = useRef(null)
