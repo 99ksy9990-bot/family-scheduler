@@ -205,3 +205,5 @@
 .form-like .grouped-body strong { font-weight: 400; } /* 입력 창 줄 이름은 보통 굵기 */
 .bulk-shift { margin-top: 16px; } .bulk-shift textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 17px; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); margin: 8px 0; } .bulk-shift .primary-button { width: 100%; }
 .member-hero { padding-top: 28px; } /* 경로 줄 아래 얼굴이 가리지 않게 */
+.person-section li:not(:has(.round-check))::before { left: 16px !important; right: 16px; } .person-section li:has(.round-check)::before { right: 16px; } /* 아이콘 없는 줄은 선을 글자 시작부터 */
+.person-row { min-height: 60px; box-sizing: border-box; } /* 달력 줄과 같은 높이 */
