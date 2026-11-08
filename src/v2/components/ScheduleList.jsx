@@ -29,7 +29,8 @@ export default function ScheduleList({ rows, profiles, label = '시간순 일정
   }
   // 오늘 이미 끝난 일정은 아래에 접어 둠 (지난 날짜는 그대로 흐리게만)
   const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  const all = groupShiftRows(rows)
+  // 근무 묶음은 줄마다 따로 판단 (어제부터 이어진 근무만 끝났을 수 있음)
+  const all = groupShiftRows(rows).flatMap((group) => { const past = group.filter((row) => row.date === today && isPast(row, now)); return past.length && past.length < group.length ? [past, group.filter((row) => !past.includes(row))] : [group] })
   const done = all.filter((group) => group[0].date === today && group.every((row) => isPast(row, now)))
   const left = all.filter((group) => !done.includes(group))
   return <>
