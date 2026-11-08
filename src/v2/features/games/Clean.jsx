@@ -144,7 +144,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   // 5초 동안 안 움직이면 바꿀 수 있는 두 칸을 깜빡여 알려 줌
   useEffect(() => {
     if (!s || s.done) return
-    const t = setTimeout(() => setHint(findMove(s.board)), 5000)
+    const t = setTimeout(() => setHint(findMove(s.board)), 3000)
     return () => clearTimeout(t)
   }, [s])
   const earned = Object.entries(stars).reduce((a, [i, n]) => a + n * (STAGES[i]?.hard ? 2 : 1), 0) + GIFT * Math.floor(unlocked / GIFT_EVERY) + bonus + comp + arcadeOf(progress).earned - arcadeOf(progress).spent // 다른 게임에서 번 별·쓴 별 포함
