@@ -231,3 +231,5 @@
 /* 목록 앞 얼굴·아이콘 40px (홈 남은 일정·달력·사람 칸·할 일·가족 목록 같은 위계) */
 .member-stack { zoom: 1.25; }
 .grouped-row + .grouped-row::before, .todo-row + .todo-row::before, .person-row + .person-row::before, .schedule-shift-group + li::before, .grouped-row + .schedule-shift-group::before, .schedule-shift-group + .schedule-shift-group::before, .person-item + li::before, .person-shift-group + li::before, .family-page .settings-entry::before { left: 68px; }
+/* 한 사람 목록의 종류 아이콘은 그 사람 고유색 (연한 바탕 + 진한 아이콘) */
+.person-group.solo .day-icon, .person-section .day-icon { --di-fg: var(--pc); --di-bg: color-mix(in srgb, var(--pc) 16%, var(--card)); }
