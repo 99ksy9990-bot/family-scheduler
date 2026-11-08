@@ -40,7 +40,7 @@ test('일정 추가·날짜 한 칸·자동 종료 시간·저장 및 새로고�
   await page.getByRole('button', { name: '추가', exact: true }).click()
   await page.getByRole('button', { name: '일정', exact: true }).click()
   const dialog = page.getByRole('dialog')
-  await expect(dialog.getByRole('switch', { name: '하루 종일' })).toHaveAttribute('aria-checked', 'false')
+  await expect(dialog.getByRole('switch', { name: '시간 없음' })).toHaveAttribute('aria-checked', 'false')
   await expect(dialog.locator('input[type="date"]')).toHaveCount(1)
   await expect(dialog.locator('input[type="checkbox"],select,fieldset')).toHaveCount(0)
   await dialog.getByLabel('무슨 일정인가요?').fill('새 가족 일정')

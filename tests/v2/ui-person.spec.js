@@ -113,7 +113,7 @@ test('연속 N 한 칸 두 행·마침 흐리게·두 줄 시간 칸·상단 불
   await expect(group.locator('.is-carryover h3')).toHaveCSS('color', 'rgb(69, 69, 80)')
   const cells = page.locator('.selected-schedule .time-cell')
   expect(await cells.evaluateAll((elements) => new Set(elements.map((element) => element.getBoundingClientRect().height)).size)).toBe(1)
-  await expect(page.locator('.grouped-row').filter({ hasText: '종일 일정' }).locator('.time-start')).toHaveText('하루 종일')
+  await expect(page.locator('.grouped-row').filter({ hasText: '종일 일정' }).locator('.time-start')).toHaveText('시간 없음')
   const date = page.locator('.app-date')
   await expect(date).toHaveCSS('color', 'rgb(110, 110, 115)')
   await expect(date).toHaveCSS('filter', 'none')

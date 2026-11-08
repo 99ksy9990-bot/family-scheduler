@@ -39,7 +39,7 @@ test('여러 가족 선택·흑백 구분·종일 저장 형식과 반복·알�
   await expect(child).toHaveAttribute('aria-pressed', 'true')
   expect(await child.locator('img').evaluate((img) => getComputedStyle(img).filter)).toBe('none')
   await dialog.getByLabel('무슨 일정인가요?').fill('함께하는 종일 일정')
-  await dialog.getByRole('switch', { name: '하루 종일' }).click()
+  await dialog.getByRole('switch', { name: '시간 없음' }).click()
   await expect(dialog.locator('input[type="time"]')).toHaveCount(0)
   await dialog.locator('.form-disclosure').filter({ has: page.locator('summary', { hasText: /^반복/ }) }).locator('summary').click()
   await dialog.getByRole('button', { name: '매주', exact: true }).click()
