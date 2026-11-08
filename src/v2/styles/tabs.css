@@ -32,7 +32,7 @@ main { padding-top: 12px; }
 .month-grid [aria-pressed='true'] .day-number { background: rgba(10,132,255,.14); color: var(--tint-label); font-weight: 700; }
 .month-grid [data-today='true'] .day-number { background: var(--control); color: var(--on-control); font-weight: 700; }
 .selected-schedule { margin-top: 0; }
-.task-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .task-section-heading small { font-size: 13px; font-weight: 400; color: var(--label-2); margin-left: 6px; }
 .text-button { border: 0; padding: 0 4px; font-size: 13px; background: none; color: var(--tint-label); }
 .task-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }

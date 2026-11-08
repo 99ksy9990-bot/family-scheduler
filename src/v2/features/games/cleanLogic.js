@@ -59,7 +59,7 @@ const has = (i, kind) => {
   const f = CH[(Math.floor(i / 10) - 2) % CH.length], p = i % 10
   return p % 2 === 1 && (p === 9 || f.length < 3 ? f.includes(kind) : f[((p - 1) / 2) % f.length] === kind)
 }
-// 얼룩: 3번 움직일 때마다 저절로 옆 칸으로 번짐 (거품은 못 닦을 때만 번짐)
+// 얼룩: 4번 움직일 때마다 저절로 옆 칸으로 번짐 (거품은 못 닦을 때만 번짐)
 const binFor = (i) => (has(i, 'bin') ? { cells: i % 2 ? [21, 27] : [3, 45], hp: i >= 100 ? 5 : 3 } : null)
 const webFor = (i) => (has(i, 'web') ? (i % 2 ? [8, 9, 11, 12] : [36, 37, 39, 40]) : [])
 const catsFor = (i) => (has(i, 'cat') ? (i >= 100 ? 3 : 2) : 0)

@@ -33,7 +33,7 @@ const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const now = () => Date.now()
 // 새 방해물이 처음 나오는 단계에서 한 번 설명
-const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'], [STAGES.findIndex((st) => st.stain.length)]: ['stain-icon', '얼룩이 나왔어요!', '얼룩 칸에서 맞추면 지워져요. 3번 움직일 때마다 저절로 옆으로 번지니 빨리 지워요.'], [STAGES.findIndex((st) => st.bins)]: ['bin-img', '쓰레기통이 나왔어요!', '쓰레기통 옆에서 여러 번 맞추면 가득 차서 비워져요. 숫자만큼 더 채우면 돼요.'], [STAGES.findIndex((st) => st.web.length)]: ['web-icon', '거미줄이 나왔어요!', '거미줄에 걸린 물건은 못 움직여요. 바로 옆 칸에서 맞추면 걷혀요.'], [STAGES.findIndex((st) => st.cats)]: ['cat-img', '고양이가 나왔어요!', '고양이는 움직일 때마다 옆 칸으로 돌아다녀요. 옆에서 두 번 맞추면 잡혀요.'] }
+const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'], [STAGES.findIndex((st) => st.stain.length)]: ['stain-icon', '얼룩이 나왔어요!', '얼룩 칸에서 맞추면 지워져요. 4번 움직일 때마다 저절로 옆으로 번지니 빨리 지워요.'], [STAGES.findIndex((st) => st.bins)]: ['bin-img', '쓰레기통이 나왔어요!', '쓰레기통 옆에서 여러 번 맞추면 가득 차서 비워져요. 숫자만큼 더 채우면 돼요.'], [STAGES.findIndex((st) => st.web.length)]: ['web-icon', '거미줄이 나왔어요!', '거미줄에 걸린 물건은 못 움직여요. 바로 옆 칸에서 맞추면 걷혀요.'], [STAGES.findIndex((st) => st.cats)]: ['cat-img', '고양이가 나왔어요!', '고양이는 움직일 때마다 옆 칸으로 돌아다녀요. 옆에서 맞추면 잡혀요.'] }
 const EXTRA_MOVES = 5 // 다 쓰면 별로 사기
 // 받은 효과를 종류별로 합쳐서 한 줄로
 const START_NAME = { row: '로켓', col: '로켓', bomb: '폭탄', prop: '프로펠러', rainbow: '무지개' }
@@ -338,6 +338,10 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       <li><b>오리</b> 맨 아래 줄까지 내리면 구출</li>
       <li><b>얼음</b> 그 칸에서 맞추면 깨짐 (그 전엔 못 움직임)</li>
       <li><b>거품</b> 그 칸에서 맞추기, 안 닦으면 번짐</li>
+      <li><b>얼룩</b> 그 칸에서 맞추기, 4번 움직일 때마다 저절로 번짐</li>
+      <li><b>쓰레기통</b> 옆에서 숫자만큼 맞추면 비워짐</li>
+      <li><b>거미줄</b> 바로 옆에서 맞추면 걷힘 (그 전엔 못 움직임)</li>
+      <li><b>고양이</b> 움직일 때마다 돌아다님, 옆에서 맞추면 잡힘</li>
       <li><b>4개</b> 로켓 · <b>네모</b> 프로펠러</li>
       <li><b>ㄱ·T</b> 폭탄 · <b>5개</b> 무지개</li>
     </ul></details>
