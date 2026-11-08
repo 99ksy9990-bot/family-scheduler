@@ -11,7 +11,6 @@ import './games.css'
 const PERK_COMP = 5
 // 방 효과를 담당 게임으로 나누면서 대청소 효과가 빠진 방: 방 하나마다 별 PERK_COMP개 (한 번만)
 const perkCompOf = (p) => (!p || p.perkComp ? 0 : ROOMS.filter((r, k) => roomGame(k) !== 'clean' && r.tasks.every((t) => (p.done || []).includes(t.id))).length * PERK_COMP)
-const TRACKS = ['pairs', 'catch', 'tap', 'sequence', 'stack', 'merge', 'match']
 
 const IMG0 = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 // 블록 그림: 1~10단계는 기본, 그 뒤 10단계마다 그 방과 다음 방의 꾸미기 물건 6개로 바꿈
@@ -135,9 +134,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const partyRef = useRef(null)
   useEffect(() => { if (party && partyRef.current) { confetti(partyRef.current); fanfare() } }, [party])
   // 방마다 다른 곡: 지금 꾸미는 방(또는 고른 방)에 맞춰 부드럽게 바꿈
-  // 단계 하는 중엔 단계마다, 방 화면에선 방마다 다른 곡
-  const musicNo = s ? s.stage : view ?? Math.max(0, ROOMS.findIndex((r) => r.tasks.some((t) => !done.includes(t.id))))
-  useEffect(() => { playMusic('clean', TRACKS[musicNo % TRACKS.length]) }, [musicNo])
+  useEffect(() => { playMusic('clean') }, [])
   const area = useRef(null)
   const tabs = useRef(null)
   const [slide, setSlide] = useState(null)

@@ -127,17 +127,27 @@ function fade(a, to, ms, done) {
   const from = a.volume; const t0 = Date.now()
   const id = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); a.volume = from + (to - from) * k; if (k >= 1) { clearInterval(id); done?.() } }, 50)
 }
-export function playMusic(game, track = game) {
-  const src = `/game/music/${track}.m4a`
-  if (bgm && bgmSrc === src) return
+// 모든 게임이 곡 목록에서 무작위로 틀고, 한 곡이 끝나면 다른 곡으로 (clean은 pairs와 같은 곡이라 뺌)
+// shortcut: 곡 목록을 손으로 적음, 수노 곡을 더 받으면 여기에 이름 추가
+const TRACKS = ['pairs', 'catch', 'tap', 'sequence', 'stack', 'merge', 'match']
+let bgmGame = ''
+const pickTrack = (not) => { const list = TRACKS.filter((t) => `/game/music/${t}.m4a` !== not); return list[Math.floor(Math.random() * list.length)] }
+function startTrack(src, fadeIn) {
+  bgm = new Audio(src); bgmSrc = src; bgm.volume = fadeIn ? 0 : VOL
+  const me = bgm
+  bgm.onended = () => { if (bgm === me) startTrack(`/game/music/${pickTrack(src)}.m4a`, false) }
+  bgm.play().catch(() => {}) // 자동 재생이 막히면 조용히
+  if (fadeIn) fade(bgm, VOL, 1200)
+}
+export function playMusic(game) {
+  if (bgm && bgmGame === game) return // 같은 게임 안에서는 곡을 끊지 않음
   const old = bgm; bgm = null
   if (old) fade(old, 0, 800, () => old.pause())
+  bgmGame = game
   if (!isMusicOn() || typeof Audio === 'undefined') return
-  bgm = new Audio(src); bgmSrc = src; bgm.loop = true; bgm.volume = old ? 0 : VOL
-  bgm.play().catch(() => {}) // 자동 재생이 막히면 조용히
-  if (old) fade(bgm, VOL, 1200)
+  startTrack(`/game/music/${pickTrack(bgmSrc)}.m4a`, !!old)
 }
-export function stopMusic() { if (bgm) { bgm.pause(); bgm = null; bgmSrc = '' } }
+export function stopMusic() { if (bgm) { bgm.pause(); bgm = null; bgmSrc = ''; bgmGame = '' } }
 // 방 완성 '짜잔'
 export function fanfare() { const keep = sfx; sfx = { type: 'triangle' }; tone([523, 659, 784, 1047], 0.16); sfx = keep }
 export const setMusic = (on, game) => { try { localStorage.setItem(MUSIC_KEY, on ? 'on' : 'off') } catch { /* 이번만 */ } if (on && game) playMusic(game); else stopMusic() }
