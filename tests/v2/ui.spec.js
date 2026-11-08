@@ -143,11 +143,10 @@ test('할 일 추가·완료·캐릭터 반응·삭제 되돌리기·개수 일�
   for (let i = 1; i < await faces.count(); i++) await faces.nth(i).click() // 첫 사람만 남기기
   await dialog.getByRole('button', { name: '추가', exact: true }).click()
   await expect(page.getByTestId('task-count')).toHaveText('1개 남음')
-  await page.locator('.task-group').filter({ has: page.locator('summary', { hasText: '언젠가' }) }).locator('summary').click()
   await page.getByRole('checkbox', { name: '방 정리 완료', exact: true }).click()
   await expect(page.getByTestId('task-count')).toHaveText('0개 남음')
   await expect(page.locator('[role="status"] img')).toHaveAttribute('src', '/characters/dad_done.png')
-  await page.locator('.task-group').filter({ has: page.locator('summary', { hasText: '오늘 끝낸 일' }) }).locator('summary').click()
+  await page.locator('.task-group').filter({ has: page.locator('summary', { hasText: '끝낸 일' }) }).locator('summary').click()
   await page.getByRole('button', { name: /^방 정리/ }).click()
   await page.getByRole('button', { name: '할 일 삭제', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)

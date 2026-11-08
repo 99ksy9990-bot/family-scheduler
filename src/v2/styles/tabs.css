@@ -162,3 +162,4 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .person-group-head small { color: var(--secondary-label, #8e8e93); font-weight: 600; }
 .task-search { width: 100%; margin: 8px 0 4px; padding: 10px 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: inherit; }
 .task-search:focus-visible { outline: 3px solid var(--tint); }
+.task-late{color:var(--red,#d93025)}
