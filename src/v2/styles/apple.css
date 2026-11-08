@@ -107,3 +107,14 @@
   .bottom-nav button[aria-current='page'] { background: rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.15); }
 }
 @media (prefers-reduced-transparency: reduce) { .bottom-nav { background: var(--solid-card); -webkit-backdrop-filter: none; backdrop-filter: none; } .bottom-nav::before { display: none; } }
+
+/* 유리 효과: 위 제목 줄, 할 일 칩, 올라오는 창 윗부분, 잠깐 뜨는 알림 (아래 메뉴와 같은 느낌) */
+.app-heading { position: sticky; top: calc(env(safe-area-inset-top) - 28px); /* 날짜 줄은 올라가고 큰 제목만 위 띠 바로 아래 붙음 */ z-index: var(--z-raised); margin: 0 -16px; padding-left: 20px; padding-right: 72px; padding-bottom: 8px; background: var(--glass-bg); -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8); }
+.task-chips { position: sticky; top: calc(env(safe-area-inset-top) - 28px + var(--head-h, 89px)); z-index: calc(var(--z-raised) - 1); margin: 0 -16px; padding: 6px 16px; background: var(--glass-bg); -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8); }
+.sheet-heading, .event-sheet .sheet-toolbar { position: sticky; top: 0; z-index: 2; background: var(--glass-sheet); -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8); }
+.undo-toast, .task-celebration { background: var(--glass-bg); border: 1px solid rgba(255,255,255,.5); -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8); box-shadow: 0 8px 28px rgba(0,0,0,.12); }
+:root { --glass-bg: rgba(242,242,247,.72); --glass-sheet: rgba(255,255,255,.75); }
+.person-sheet > .sheet-heading { background: var(--glass-bg); }
+@media (prefers-color-scheme: dark) { :root { --glass-bg: rgba(20,20,22,.72); --glass-sheet: rgba(28,28,30,.75); } .undo-toast, .task-celebration { border-color: rgba(255,255,255,.14); } }
+@media (prefers-reduced-transparency: reduce) { .app-heading, .task-chips, .sheet-heading, .event-sheet .sheet-toolbar, .undo-toast, .task-celebration { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+.app-heading .header-add { top: 38px; bottom: auto; right: 16px; } /* 큰 제목 줄과 같은 높이 (붙는 제목 줄 안에서 보이도록) */
