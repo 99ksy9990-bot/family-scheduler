@@ -105,3 +105,4 @@
 .paste-bar { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .paste-bar .paste-event { margin-left: 0; }
 .paste-done { flex: none; width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--label-2); display: grid; place-items: center; }
+.repeat-choice { display: grid; gap: 10px; } .repeat-choice button { min-height: 50px; border: 0; border-radius: 12px; background: var(--fill); font-size: 17px; color: var(--tint-label); }
