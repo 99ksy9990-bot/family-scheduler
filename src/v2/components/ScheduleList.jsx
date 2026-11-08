@@ -23,7 +23,7 @@ export default function ScheduleList({ rows, profiles, label = '시간순 일정
   const item = (group) => {
     const row = group[0]
     const members = membersFor(row, profiles)
-    const primary = members[0] || { name: row.holiday ? '공휴일' : row.anniversary ? '기념일' : '가족' }
+    const primary = members[0] || { name: row.holiday ? '공휴일' : row.anniversary ? row.anniversaryKind || '기념일' : '가족' }
     if (row.type === 'shift' && row.sourceDate) return <li key={row.id} className="schedule-shift-group">{!solo && <MemberAvatars item={row} profiles={profiles} />}<div>{group.map((shift) => <div className={`shift-line${shift.carryover ? ' is-carryover' : ''}${isPast(shift, now) ? ' is-past' : ''}`} key={shift.id}><span><h3>{shift.title}</h3>{!solo && <small>{members.map((profile) => profile.name).join(' · ')}</small>}</span><TimeCell row={shift} /></div>)}</div></li>
     return <GroupedRow key={row.id} className={isPast(row, now) ? 'is-past' : ''} icon={solo ? undefined : <MemberAvatars item={row} profiles={profiles} />} title={<h3>{row.title}</h3>} subtitle={[solo ? '' : members.map((profile) => profile.name).join(' · ') || primary.name, row.kind, row.location].filter(Boolean).join(' · ')} value={<TimeCell row={row} />} />
   }

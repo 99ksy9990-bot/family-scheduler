@@ -190,3 +190,8 @@
 .crumb button { border: 0; background: none; padding: 4px 2px; min-height: 44px; font-size: 22px; font-weight: 600; color: var(--tint-label); }
 .crumb strong { font-size: 28px; font-weight: 700; line-height: 34px; padding: 4px 2px; word-break: keep-all; }
 .crumb-sep { color: var(--label-3, #aeaeb2); flex: none; }
+/* 생일·기념일·공휴일 아이콘 */
+.day-icon { flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; }
+.day-icon[data-tone='birthday'] { background: #ff9f0a; }
+.day-icon[data-tone='anniversary'] { background: #ff375f; }
+.day-icon[data-tone='holiday'] { background: #8e8e93; }

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState } from 'react'
-import { Bell, ChevronDown, ChevronRight, Cloud, Download, Heart, Info } from 'lucide-react'
+import { Bell, ChevronDown, ChevronRight, Cloud, Download, Info } from 'lucide-react'
 import MemberDetail from './MemberDetail'
 import AddMember from './AddMember'
 import Sheet from '../../components/Sheet'
 import CharacterAvatar from '../../components/CharacterAvatar'
+import DayIcon from '../../components/DayIcon'
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import { usePushNotifications } from '../../../hooks/usePushNotifications'
 
@@ -39,7 +40,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
 
     </GroupedList>}
     <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2>{canEdit && <button className="text-button" onClick={() => setDay({})}>추가</button>}</div>
-    {!fold.days && <GroupedList label="생일·기념일">{days.length ? days.map((row) => <GroupedRow key={row.id} icon={<span className="settings-color-icon" data-tone="pink"><Heart size={19} /></span>} title={row.name} subtitle={`${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
+    {!fold.days && <GroupedList label="생일·기념일">{days.length ? days.map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${row.kind || '기념일'} · ${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
       return <GroupedRow key={id} className="settings-entry" icon={<span className="settings-color-icon" data-icon={id}><Icon size={20} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />

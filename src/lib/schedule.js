@@ -55,6 +55,7 @@ const anniversaryEventsForDate = (date, anniversaries) => anniversaries.flatMap(
     type: 'anniversary',
     recurring: true,
     anniversary: true,
+    anniversaryKind: anniversary.kind || '기념일',
     anniversaryCalendarType: anniversary.calendarType,
     anniversaryLeapMonth: Boolean(anniversary.leapMonth),
     anniversaryMonth: Number(anniversary.month),
