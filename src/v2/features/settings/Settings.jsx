@@ -24,7 +24,8 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
   const panel = selected?.startsWith('profile:') ? 'family' : selected
   if (member) return <MemberDetail profile={member} state={state} updateState={updateState} canEdit={canEdit} onBack={() => setMemberId(null)} />
   const summary = (profile) => {
-    if (state.workSettings.workerIds?.includes(profile.id)) return '근무표 있음'
+    if (state.workSettings.workerIds?.includes(profile.id)) return '교대 근무'
+    if (profile.regularWork) return '상주 근무'
     const school = state.childProfiles.find((row) => row.member === profile.id)
     if (school?.school) return [school.school, school.grade && `${school.grade}학년`].filter(Boolean).join(' ')
     const count = state.childSchedules.filter((row) => row.member === profile.id || row.members?.includes(profile.id)).length
