@@ -32,6 +32,13 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
     const count = state.childSchedules.filter((row) => row.member === profile.id || row.members?.includes(profile.id)).length
     return count ? `수업·학원 ${count}개` : ''
   }
+  // 다가오는 그날 기준 몇 주년·만 몇 세 (음력은 월·일을 그대로 비교해 근사)
+  const milestone = (row) => {
+    const base = Number(row.baseYear); if (!base) return ''
+    const now = new Date(), passed = now.getMonth() + 1 > row.month || (now.getMonth() + 1 === Number(row.month) && now.getDate() > row.day)
+    const n = now.getFullYear() + (passed ? 1 : 0) - base
+    return n > 0 ? `${row.kind === '생일' ? `만 ${n}세` : `${n}주년`} · ` : ''
+  }
   const days = [...state.anniversaries].sort((a, b) => a.month - b.month || a.day - b.day)
   const groups = [['연결', ['connection']], ['앱', ['notifications', 'backup']], ['정보', ['about']]]
   return <section className="family-page" aria-label="가족 목록">
@@ -40,13 +47,13 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
 
     </GroupedList>}
     <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2>{canEdit && <button className="text-button" onClick={() => setDay({})}>추가</button>}</div>
-    {!fold.days && <GroupedList label="생일·기념일">{days.length ? days.map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${row.kind || '기념일'} · ${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
+    {!fold.days && <GroupedList label="생일·기념일">{days.length ? days.map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
       return <GroupedRow key={id} className="settings-entry" icon={<span className="settings-color-icon" data-icon={id}><Icon size={20} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />
     })}</GroupedList></section>)}
     {adding && <AddMember state={state} updateState={updateState} onClose={(id) => { setAdding(false); if (id) setMemberId(id) }} />}
-    {day && <Sheet title={day.id ? day.name : '가족 날 추가'} onClose={() => setDay(null)}><Suspense fallback={null}><Family state={state} updateState={updateState} canEdit={canEdit} editorOnly initialSection="anniversaries" initialRecord={day} onSaved={() => setDay(null)} onCancel={() => setDay(null)} /></Suspense></Sheet>}
+    {day && <Sheet title={day.id ? day.name : '생일·기념일 추가'} onClose={() => setDay(null)}><Suspense fallback={null}><Family state={state} updateState={updateState} canEdit={canEdit} editorOnly initialSection="anniversaries" initialRecord={day} onSaved={() => setDay(null)} onCancel={() => setDay(null)} /></Suspense></Sheet>}
     {selected && <Sheet title={entries.find(([id]) => id === panel)[1]} onClose={() => onSelect(null)}><Suspense fallback={<p role="status">설정을 불러오고 있어요…</p>}>
       {panel === 'connection' && <Connection sync={sync} state={state} updateState={updateState} canEdit={canEdit} />}
       {panel === 'family' && <Family initialProfile={selected?.startsWith('profile:') ? selected.slice(8) : null} state={state} updateState={updateState} canEdit={canEdit} />}

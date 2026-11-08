@@ -22,6 +22,7 @@ const days = (row) => (row.weekdays || [row.weekday]).filter((d) => d !== undefi
 const crumbs = (items) => <nav className="crumbs" aria-label="위치">{items.map(([label, go], i) => <span key={i} className="crumb">{i > 0 && <ChevronRight size={18} aria-hidden="true" className="crumb-sep" />}{go ? <button type="button" onClick={go}>{label}</button> : <strong aria-current="page">{label}</strong>}</span>)}</nav>
 
 export default function MemberDetail({ profile, state, updateState, canEdit, onBack }) {
+  const [showPast, setShowPast] = useState(false) // 지난 학기는 접어 둠
   const [edit, setEdit] = useState(null) // { section, record, title }
   const works = state.workSettings.workerIds?.includes(profile.id)
   const mode = profile.regularWork ? 'regular' : works ? 'shift' : null
@@ -83,10 +84,11 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
 
     {!mode && <><section><h3 className="house-section-title">학교</h3><GroupedList label="학교">
       {row('school', icon(GraduationCap, 'green'), '학교 정보', school ? [school.school, school.grade && `${school.grade}학년 ${school.classNumber || ''}반`].filter(Boolean).join(' ') : '아직 없음', () => open('schools', '학교 정보', school))}
-      {periods.map((p) => row(p.id, icon(CalendarDays, seasonOf(p.season) === '방학' ? 'blue' : 'orange'), `${periodName(p, school)}${p.start <= todayKey && todayKey <= p.end ? ' (지금)' : ''}`, `${dot(p.start)} – ${dot(p.end)}`, () => { const parts = periodParts(p, school); open('periods', '학기·방학', { ...p, term: parts.term, grade: parts.grade ? String(parts.grade) : p.grade }) }))}
+      {periods.filter((p) => showPast || !(p.end < todayKey)).map((p) => row(p.id, icon(CalendarDays, seasonOf(p.season) === '방학' ? 'blue' : 'orange'), `${periodName(p, school)}${p.start <= todayKey && todayKey <= p.end ? ' (지금)' : ''}`, `${dot(p.start)} – ${dot(p.end)}`, () => { const parts = periodParts(p, school); open('periods', '학기·방학', { ...p, term: parts.term, grade: parts.grade ? String(parts.grade) : p.grade }) }))}
+      {periods.some((p) => p.end < todayKey) && <GroupedRow key="past-toggle" className="past-toggle" title={showPast ? '지난 학기 접기' : `지난 학기 ${periods.filter((p) => p.end < todayKey).length}개 보기`} onClick={() => setShowPast((v) => !v)} />}
       {addRow('period-add', '학기·방학 추가', () => open('periods', '학기·방학 추가', { member: profile.id }))}
     </GroupedList></section>
-    {[...periods.map((p) => ({ key: p.id, title: `${periodName(p, school)}${p.start <= todayKey && todayKey <= p.end ? ' (지금)' : ''}`, list: lessons.filter((l) => scheduleInPeriod(l, p)), add: { season: p.season, periodId: p.id } })),
+    {[...periods.filter((p) => showPast || !(p.end < todayKey)).map((p) => ({ key: p.id, title: `${periodName(p, school)}${p.start <= todayKey && todayKey <= p.end ? ' (지금)' : ''}`, list: lessons.filter((l) => scheduleInPeriod(l, p)), add: { season: p.season, periodId: p.id } })),
       ...(periods.length ? [] : [{ key: 'none', title: '시간표', list: lessons, add: { season: '학기' } }])].map((g) => <section key={g.key}><h3 className="house-section-title">{g.title}</h3><GroupedList label={g.title}>
       {g.list.map((l) => row(`${g.key}-${l.id}`, <span className={`kind-chip${l.kind === '학원' ? ' academy' : ''}`}>{l.kind || '학원'}</span>, l.title, `${days(l)} ${clock(l.time)}${l.end ? `–${clock(l.end)}` : ''}${l.periodId ? '' : ` · ${seasonOf(l.season) || '학기'} 전체`}`, () => open('schedules', l.title, l)))}
       {addRow(`add-${g.key}`, '수업·학원 추가', () => open('schedules', '수업·학원 추가', g.add))}
