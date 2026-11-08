@@ -170,7 +170,6 @@
 .settings-color-icon[data-tone='blue'] { background: var(--tint); }
 
 /* 한 사람 묶음: 얼굴이 없으니 구분선도 글 시작부터 */
-.person-group.solo :is(.grouped-row, .schedule-shift-group, .todo-row)::before { left: 16px; }
 .is-past { opacity: .45; }
 /* 요일 줄: 위아래 여백을 다른 줄과 맞춤 */
 .settings-content .event-form > fieldset { padding: 14px 0 12px; row-gap: 10px; column-gap: 0; justify-content: space-between; }
@@ -205,5 +204,27 @@
 .form-like .grouped-body strong { font-weight: 400; } /* 입력 창 줄 이름은 보통 굵기 */
 .bulk-shift { margin-top: 16px; } .bulk-shift textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 17px; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); margin: 8px 0; } .bulk-shift .primary-button { width: 100%; }
 .member-hero { padding-top: 28px; } /* 경로 줄 아래 얼굴이 가리지 않게 */
-.person-section li:not(:has(.round-check))::before { left: 16px !important; right: 16px; } .person-section li:has(.round-check)::before { right: 16px; } /* 아이콘 없는 줄은 선을 글자 시작부터 */
+.person-section li::before { right: 16px; } /* 아이콘 없는 줄은 선을 글자 시작부터 */
 .person-row { min-height: 60px; box-sizing: border-box; } /* 달력 줄과 같은 높이 */
+.day-icon[data-tone='shift'] { background: #5e5ce6; }
+.day-icon[data-tone='school'] { background: #34c759; }
+.day-icon[data-tone='academy'] { background: #ff9f0a; }
+.day-icon[data-tone='event'] { background: #0a84ff; }
+/* 종류 아이콘: 근무 칩(N·D·E)처럼 연한 바탕 + 진한 아이콘 */
+.day-icon { color: var(--di-fg); background: var(--di-bg) !important; }
+.day-icon[data-tone='shift'] { --di-bg: #e4e3fb; --di-fg: #4b48c9; }
+.day-icon[data-tone='school'] { --di-bg: #dcf3e3; --di-fg: #1f8a46; }
+.day-icon[data-tone='academy'] { --di-bg: #fdecd6; --di-fg: #b0650a; }
+.day-icon[data-tone='event'] { --di-bg: #dde9fd; --di-fg: #1f63c9; }
+.day-icon[data-tone='birthday'] { --di-bg: #fff0c9; --di-fg: #a86b00; }
+.day-icon[data-tone='anniversary'] { --di-bg: #fde0e6; --di-fg: #c92f55; }
+.day-icon[data-tone='holiday'] { --di-bg: #ececef; --di-fg: #6e6e73; }
+@media (prefers-color-scheme: dark) {
+  .day-icon[data-tone='shift'] { --di-bg: #2e2d55; --di-fg: #a9a7ff; }
+  .day-icon[data-tone='school'] { --di-bg: #1d3a28; --di-fg: #7fdc9c; }
+  .day-icon[data-tone='academy'] { --di-bg: #3e2c14; --di-fg: #ffbe6b; }
+  .day-icon[data-tone='event'] { --di-bg: #1c2f4d; --di-fg: #8cb8ff; }
+  .day-icon[data-tone='birthday'] { --di-bg: #3d3315; --di-fg: #ffd36b; }
+  .day-icon[data-tone='anniversary'] { --di-bg: #46202b; --di-fg: #ff9db3; }
+  .day-icon[data-tone='holiday'] { --di-bg: #2c2c2e; --di-fg: #aeaeb2; }
+}

@@ -1,3 +1,5 @@
+import DayIcon from '../../components/DayIcon'
+import { kindOf } from '../../data/kinds'
 import { useState } from 'react'
 import { BriefcaseBusiness, CalendarDays, GraduationCap, Check } from 'lucide-react'
 import { addDays } from '../../../lib/dates'
@@ -22,7 +24,7 @@ export default function PersonDay({ memberId, state, today, now, updateState, ca
   const renderRow = (row, label, date, grouped = false) => {
     return <div className={`person-row${row.carryover ? ' is-carryover' : ''}${grouped ? ' is-grouped' : ''}`} key={row.id}>
       {!grouped && (row.task ? <label className="round-check"><input type="checkbox" aria-label={`${label} ${row.title} 완료`} checked={Boolean(row.done)} disabled={!canEdit} onChange={() => updateState((current) => ({ ...current, tasks: toggleTask(current.tasks, row, date) }))} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
-        : null)}
+        : <DayIcon kind={kindOf(row)} />)}
       <button className="person-row-body" disabled={!canEdit || !editTarget(row, state).record} onClick={() => setEditing(row)}><strong className={row.done ? 'task-done' : ''}>{row.title}</strong>{(row.task || row.kind || row.location) && <small>{row.task ? '할 일' : [row.kind, row.location].filter(Boolean).join(' · ')}</small>}</button><TimeCell row={row} />
     </div>
   }
