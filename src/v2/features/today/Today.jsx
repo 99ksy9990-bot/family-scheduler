@@ -1,3 +1,4 @@
+import ArrowText from '../../components/ArrowText'
 import { useState } from 'react'
 import RowEditor from '../../components/RowEditor'
 import { ByPerson } from '../calendar/Calendar'
@@ -15,7 +16,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
         return <button className="house-tile" data-character={profile.characterId || 'unknown'} key={profile.id} onClick={() => onPerson(profile.id)} aria-label={`${profile.name}의 오늘 일정, ${status.label}`}>
-          {status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={status.expression} size={66} glass /><strong>{profile.name}</strong><small>{status.detail}</small>
+          {status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={status.expression} size={66} glass /><strong>{profile.name}</strong><small>{<ArrowText text={status.detail} />}</small>
         </button>
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>

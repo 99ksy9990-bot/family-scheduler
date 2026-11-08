@@ -121,3 +121,4 @@
 /* 새 일정 창 윗줄: 창 바탕(회색)과 같은 유리색, 좌우 끝까지, 위 모서리 둥글게 */
 .sheet.event-sheet .sheet-toolbar { background: var(--glass-bg); box-shadow: -16px 0 0 var(--glass-bg), 16px 0 0 var(--glass-bg); } /* 창 바탕과 같은 색, 좌우 여백까지 이어 칠함 */
 .month-center button { color: var(--label-2); } /* 11월 글자보다 조금 연한 회색 */
+.arrow-text { display: inline-flex; align-items: center; gap: 2px; } .inline-arrow { flex: none; }
