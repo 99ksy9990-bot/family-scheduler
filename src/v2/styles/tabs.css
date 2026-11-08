@@ -170,3 +170,4 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .heading-line .greeting { font-size: 15px; font-weight: 500; color: var(--label-2); letter-spacing: 0; align-self: flex-end; margin-bottom: 7px; white-space: nowrap; }
 .heading-line .greeting { margin-right: auto; align-self: flex-end; margin-bottom: 9px; }
 .grouped-row.next .time-start { color: var(--tint-label); font-weight: 600; } /* 다음 일정 강조 */
+.heading-line:has(.greeting) { align-items: baseline; } .heading-line .greeting { align-self: baseline; margin-bottom: 0; } /* 인사말 글자 밑선을 '우리집' 밑선에 맞춤 */

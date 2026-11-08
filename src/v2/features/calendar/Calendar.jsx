@@ -1,6 +1,4 @@
-import Sheet from '../../components/Sheet'
-import { editTarget } from '../../data/personDay'
-import DayRowEditor from '../../components/DayRowEditor'
+import RowEditor from '../../components/RowEditor'
 import { X } from 'lucide-react'
 import { getClip, clearClip } from '../../data/clip'
 import { useMemo, useRef, useState } from 'react'
@@ -88,12 +86,6 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
       </div></DataState>
     </section>
     <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <span className="paste-bar">{!rows.some((row) => row.title === clip.title && (row.displayStart || '') === (clip.time || '')) && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>‘{clip.title}’ 붙여넣기</button>}<button type="button" className="paste-done" aria-label="붙여넣기 끝내기" onClick={() => { clearClip(); setClipTick((n) => n + 1) }}><X size={16} /></button></span>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></DataState></section>
-    {editing && (editing.recurrence || editing.recurrenceType === 'child') && !editing.whole
-      ? <Sheet title={editing.title} onClose={() => setEditing(null)}><div className="settings-content repeat-choice">
-          <p className="quiet">반복 일정이에요. 어떻게 할까요?</p>
-          <button type="button" onClick={() => { const scheduleId = editing.recurrenceType === 'child' ? editing.scheduleId : editTarget(editing, state).record?.id; if (scheduleId) updateState((current) => ({ ...current, scheduleExceptions: [...(current.scheduleExceptions || []), { id: crypto.randomUUID(), scheduleId, date: editing.date, type: 'skip' }] })); setEditing(null) }}>이 날만 빼기</button>
-          <button type="button" onClick={() => setEditing({ ...editing, whole: true })}>반복 전체 수정</button>
-        </div></Sheet>
-      : editing && <DayRowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onClose={() => setEditing(null)} />}
+    {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}
   </div>
 }
