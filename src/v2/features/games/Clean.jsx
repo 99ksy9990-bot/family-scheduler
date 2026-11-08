@@ -343,17 +343,19 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     {eraser && <p className="clean-aim" role="status">지울 종류를 하나 눌러 주세요 (별 {PRICE.eraser}개)</p>}
     {broom && <p className="clean-aim" role="status">치울 {broom === 'col' ? '세로' : '가로'} 줄의 칸을 눌러 주세요 (별 {PRICE[broom]}개)</p>}
     <details key="help" className="clean-all"><summary>블록 설명 보기</summary><ul className="clean-help">
-      <li><b>먼지</b> 그 칸에서 맞추기 (숫자 2는 두 번)</li>
-      <li><b>상자</b> 옆에서 맞추기</li>
-      <li><b>오리</b> 맨 아래 줄까지 내리면 구출</li>
-      <li><b>얼음</b> 그 칸에서 맞추면 깨짐 (그 전엔 못 움직임)</li>
-      <li><b>거품</b> 그 칸에서 맞추기, 안 닦으면 번짐</li>
-      <li><b>얼룩</b> 그 칸에서 맞추기, 4번 움직일 때마다 저절로 번짐</li>
-      <li><b>쓰레기통</b> 옆에서 숫자만큼 맞추면 비워짐</li>
-      <li><b>거미줄</b> 바로 옆에서 맞추면 걷힘 (그 전엔 못 움직임)</li>
-      <li><b>고양이</b> 움직일 때마다 돌아다님, 옆에서 맞추면 잡힘</li>
-      <li><b>4개</b> 로켓 · <b>네모</b> 프로펠러</li>
-      <li><b>ㄱ·T</b> 폭탄 · <b>5개</b> 무지개</li>
+      <li><i className="dust-icon" /><span><b>먼지</b> 그 칸에서 맞추기 (숫자 2는 두 번)</span></li>
+      <li><i className="box-icon" /><span><b>상자</b> 옆에서 맞추기</span></li>
+      <li><img src="/game/room/duck.png" alt="" /><span><b>오리</b> 맨 아래 줄까지 내리면 구출</span></li>
+      <li><i className="ice-icon" /><span><b>얼음</b> 그 칸에서 맞추면 깨짐 (그 전엔 못 움직임)</span></li>
+      <li><i className="foam-icon" /><span><b>거품</b> 그 칸에서 맞추기, 안 닦으면 번짐</span></li>
+      <li><img src="/game/pieces/stain.png" alt="" /><span><b>얼룩</b> 그 칸에서 맞추기, 4번 움직일 때마다 저절로 번짐</span></li>
+      <li><img src="/game/pieces/bin.png" alt="" /><span><b>쓰레기통</b> 옆에서 숫자만큼 맞추면 비워짐</span></li>
+      <li><img src="/game/pieces/web.png" alt="" /><span><b>거미줄</b> 바로 옆에서 맞추면 걷힘 (그 전엔 못 움직임)</span></li>
+      <li><img src="/game/pieces/cat.png" alt="" /><span><b>고양이</b> 움직일 때마다 돌아다님, 옆에서 맞추면 잡힘</span></li>
+      <li><i className="sp-icon sp-row">↔</i><span><b>로켓</b> 4개 한 줄로 맞추면 생김, 한 줄을 다 치움</span></li>
+      <li><i className="sp-icon sp-prop" /><span><b>프로펠러</b> 네모(2×2)로 맞추면 생김, 날아가서 치움</span></li>
+      <li><i className="sp-icon sp-bomb" /><span><b>폭탄</b> ㄱ·T 모양으로 맞추면 생김, 주변을 치움</span></li>
+      <li><i className="sp-icon sp-rainbow" /><span><b>무지개</b> 5개 한 줄로 맞추면 생김, 바꾼 종류를 모두 치움</span></li>
     </ul></details>
     {tip && !s.done && <div className="game-done clean-tip" role="dialog" aria-label={tip[1]}><i className={tip[0]} /><b>{tip[1]}</b><p>{tip[2]}</p><button className="primary-button clean-play" autoFocus onClick={() => { const n = [...seen, s.stage]; setSeen(n); save({ seen: n }); setTip(null) }}>알겠어요</button></div>}
     {s.done === 'win' && <div className="game-done clean-tip clean-win" role="dialog" aria-label="단계 성공"><Face player={player} mood="done" size={72} /><b>{s.stage + 1}단계 깨끗해졌어요!</b><span className="clean-win-stars" aria-label={`별 ${(s.stars || 1) * (STAGES[s.stage].hard ? 2 : 1)}개`}>{'★'.repeat((s.stars || 1) * (STAGES[s.stage].hard ? 2 : 1))}</span>{(s.gift || s.streak > 1) && <p>{[s.gift && `선물 상자 ★${GIFT}`, s.streak > 1 && `${s.streak}연승`].filter(Boolean).join(' · ')}</p>}<div className="clean-win-actions">{unlocked < STAGES.length && <button className="primary-button clean-play" autoFocus onClick={() => { setSel(null); startStage(unlocked) }}>{unlocked + 1}단계 도전</button>}<button className="game-level" onClick={() => { setS(null); setSel(null) }}>별 쓰러 집으로</button></div></div>}
