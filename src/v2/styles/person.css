@@ -25,10 +25,10 @@
 .person-row-body:disabled { background: none; color: var(--label); }
 .person-row-body strong { display: block; font-size: 17px; line-height: 21px; font-weight: 600; }
 .person-row-body small { display: block; color: var(--label-2); font-size: 13px; line-height: 17px; margin-top: 2px; }
-.time-cell { display: flex; justify-content: flex-end; align-items: baseline; min-width: 92px; height: 22px; line-height: 22px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.time-start { font-size: 17px; line-height: 21px; color: var(--label); }
-.time-end { font-size: 15px; color: var(--label-2); }
-.time-end::before { content: '–'; margin: 0 2px; }
+.time-cell { display: flex; justify-content: flex-end; align-items: center; gap: 3px; min-width: 92px; height: 22px; line-height: 22px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.time-start { font-size: 17px; line-height: 22px; color: var(--label); }
+.time-end { font-size: 17px; line-height: 22px; color: var(--label-2); }
+.time-arrow { flex: none; color: var(--label-3, #aeaeb2); }
 .house-row.next .time-start { color: var(--tint-label); font-weight: 600; }
 .schedule-shift-group { display: flex; gap: 12px; align-items: center; padding: 0 16px; position: relative; }
 .schedule-shift-group > div:not(.character) { flex: 1; min-width: 0; }
