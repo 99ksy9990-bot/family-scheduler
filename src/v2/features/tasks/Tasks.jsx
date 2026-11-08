@@ -43,7 +43,8 @@ export default function Tasks({ state, updateState, canEdit, today }) {
     ['언젠가', rows.filter((row) => !row.done && (!row.dueDate || row.dueDate > iso(today)))],
     // 끝낸 일은 오늘 것만 바로 보이고, 지난 것은 따로 접어 둠 (쌓여도 안 지저분하게)
     ['오늘 끝낸 일', rows.filter((row) => row.done && (row.occurrenceDate ? row.occurrenceDate === iso(today) : row.completedDate === iso(today)))],
-    ['지난 끝낸 일', rows.filter((row) => row.done && !(row.occurrenceDate ? row.occurrenceDate === iso(today) : row.completedDate === iso(today)))],
+    // 지난 끝낸 일은 7일 안 것만, 더 오래된 건 검색할 때만
+    ['지난 끝낸 일', rows.filter((row) => row.done && !(row.occurrenceDate ? row.occurrenceDate === iso(today) : row.completedDate === iso(today)) && (q || (row.occurrenceDate || row.completedDate || '') >= iso(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7))))],
   ]
   return <section className="home-tasks" aria-label="할 일 목록">
     <div className="task-section-heading"><h2 className="house-section-title">할 일 <small data-testid="task-count">{rows.filter((row) => !row.done).length}개 남음</small></h2><button className="text-button" disabled={!canEdit} onClick={() => setEditCategories(true)}>분류 편집</button></div>
