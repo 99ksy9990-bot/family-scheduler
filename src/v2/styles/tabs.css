@@ -166,3 +166,4 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .member-hidden { opacity: .5; }
 .month-grid .calendar-day .day-number { width: 26px; height: 26px; margin-bottom: 2px; } /* 선택 동그라미 작게, 아래 근무 표시와 간격 */
 .app-heading .sound-toggles { margin-right: -40px; } /* + 버튼과 같은 오른쪽 여백(16px) */
+.section-add { width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--tint); display: grid; place-items: center; } .section-add svg { stroke-width: 2.4; } /* 홈·달력 + 버튼과 같은 모양 */

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { Bell, ChevronDown, ChevronRight, Cloud, Download, Info } from 'lucide-react'
+import { Bell, ChevronDown, Plus, ChevronRight, Cloud, Download, Info } from 'lucide-react'
 import MemberDetail from './MemberDetail'
 import AddMember from './AddMember'
 import Sheet from '../../components/Sheet'
@@ -42,11 +42,11 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
   const days = [...state.anniversaries].sort((a, b) => a.month - b.month || a.day - b.day)
   const groups = [['연결', ['connection']], ['앱', ['notifications', 'backup']], ['정보', ['about']]]
   return <section className="family-page" aria-label="가족 목록">
-    <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.members} onClick={() => setFold((f) => ({ ...f, members: !f.members }))}>구성원<ChevronDown size={16} aria-hidden="true" /></button></h2>{canEdit && <button className="text-button" onClick={() => setAdding(true)}>추가</button>}</div>{!fold.members && <GroupedList label="구성원">{state.profiles.filter((profile) => profile.active !== false).map((profile) => <GroupedRow key={profile.id} icon={<CharacterAvatar profile={profile} size={32} />} title={profile.name} subtitle={summary(profile)} value={<ChevronRight size={18} />} onClick={() => setMemberId(profile.id)} />)}
+    <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.members} onClick={() => setFold((f) => ({ ...f, members: !f.members }))}>구성원<ChevronDown size={16} aria-hidden="true" /></button></h2>{canEdit && <button className="section-add" aria-label="추가" onClick={() => setAdding(true)}><Plus size={24} /></button>}</div>{!fold.members && <GroupedList label="구성원">{state.profiles.filter((profile) => profile.active !== false).map((profile) => <GroupedRow key={profile.id} icon={<CharacterAvatar profile={profile} size={32} />} title={profile.name} subtitle={summary(profile)} value={<ChevronRight size={18} />} onClick={() => setMemberId(profile.id)} />)}
     {state.profiles.filter((profile) => profile.active === false).map((profile) => <GroupedRow key={profile.id} className="member-hidden" icon={<CharacterAvatar profile={profile} size={32} />} title={profile.name} subtitle="숨김 · 눌러서 다시 표시" onClick={() => canEdit && updateState((current) => ({ ...current, profiles: current.profiles.map((item) => item.id === profile.id ? { ...item, active: true } : item) }))} />)}
 
     </GroupedList>}
-    <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2>{canEdit && <button className="text-button" onClick={() => setDay({})}>추가</button>}</div>
+    <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2>{canEdit && <button className="section-add" aria-label="추가" onClick={() => setDay({})}><Plus size={24} /></button>}</div>
     {!fold.days && <GroupedList label="생일·기념일">{days.length ? days.map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
