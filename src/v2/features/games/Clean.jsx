@@ -1,3 +1,4 @@
+import { Cat, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { N, STAGES, FINITE, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
 import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
@@ -12,7 +13,9 @@ const PERK_COMP = 5
 const perkCompOf = (p) => (!p || p.perkComp ? 0 : ROOMS.filter((r, k) => roomGame(k) !== 'clean' && r.tasks.every((t) => (p.done || []).includes(t.id))).length * PERK_COMP)
 const TRACKS = ['pairs', 'catch', 'tap', 'sequence', 'stack', 'merge', 'match']
 
-const IMG = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
+const IMG0 = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
+// 블록 그림: 1~10단계는 기본, 그 뒤 10단계마다 그 방과 다음 방의 꾸미기 물건 6개로 바꿈
+const piecesFor = (stage) => { const c = Math.floor(stage / 10); if (!c) return IMG0; const a = ROOMS[c % ROOMS.length], b = ROOMS[(c + 1) % ROOMS.length]; const imgs = [...new Set([...a.tasks, ...b.tasks].map((t) => t.img))]; return imgs.length >= 6 ? imgs.slice(0, 6) : IMG0 }
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
 const ITEMS = { hammer: 3, shuffle: 1 } // 단계마다 새로 받는 아이템 수
 // 별: 단계마다 받은 별(1~3, 어려운 단계는 2배) + 10단계마다 선물 상자 + 주간 이벤트 보상
@@ -32,7 +35,7 @@ const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const now = () => Date.now()
 // 새 방해물이 처음 나오는 단계에서 한 번 설명
-const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'], [STAGES.findIndex((st) => st.stain.length)]: ['stain-icon', '얼룩이 나왔어요!', '얼룩 칸에서 맞추면 지워져요. 3번 움직일 때마다 저절로 옆으로 번지니 빨리 지워요.'] }
+const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'], [STAGES.findIndex((st) => st.stain.length)]: ['stain-icon', '얼룩이 나왔어요!', '얼룩 칸에서 맞추면 지워져요. 3번 움직일 때마다 저절로 옆으로 번지니 빨리 지워요.'], [STAGES.findIndex((st) => st.bins)]: ['bin-icon', '쓰레기통이 나왔어요!', '쓰레기통 옆에서 여러 번 맞추면 가득 차서 비워져요. 숫자만큼 더 채우면 돼요.'], [STAGES.findIndex((st) => st.web.length)]: ['web-icon', '거미줄이 나왔어요!', '거미줄에 걸린 물건은 못 움직여요. 바로 옆 칸에서 맞추면 걷혀요.'], [STAGES.findIndex((st) => st.cats)]: ['cat-icon', '고양이가 나왔어요!', '고양이는 움직일 때마다 옆 칸으로 돌아다녀요. 옆에서 두 번 맞추면 잡혀요.'] }
 const EXTRA_MOVES = 5 // 다 쓰면 별로 사기
 // 받은 효과를 종류별로 합쳐서 한 줄로
 const START_NAME = { row: '로켓', col: '로켓', bomb: '폭탄', prop: '프로펠러', rainbow: '무지개' }
@@ -212,7 +215,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       const x = (e.i % N + 0.5) * cell; const y = (Math.floor(e.i / N) + 0.5) * cell
       if (e.type === 'make') pop(el, x, y, SP_LABEL[e.sp], 'gold')
       else if (e.type === 'combo') pop(el, x, y, '합체!', 'gold')
-      else if (['smash', 'box', 'ice', 'foam', 'stain'].includes(e.type)) burst(el, x, y, 10)
+      else if (['smash', 'box', 'ice', 'foam', 'stain', 'web', 'cat'].includes(e.type)) burst(el, x, y, 10)
       else if (e.type === 'drop') { burst(el, x, y, 16); pop(el, x, y, '오리 구출!', 'gold') }
       if (['row', 'col', 'bomb', 'rainbow', 'prop', 'combo'].includes(e.type)) specialFx(el, e)
     }
@@ -228,7 +231,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       const w = { ...day, n: day.n + dustNow.current + won }; dustNow.current = 0
       r.state.gift = next > unlocked && next % GIFT_EVERY === 0; r.state.streak = streak + 1
       setDay(w); setStreak(streak + 1)
-      setUnlocked(next); setStars(nextStars); const mon = mondayKey(new Date()); const wk = { mon, n: (week?.mon === mon ? week.n : 0) + 1 }; setWeek(wk); save({ unlocked: next, stars: nextStars, streak: streak + 1, day: w, week: wk }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
+      setUnlocked(next); setStars(nextStars); const mon = mondayKey(new Date()); const wk = { mon, n: (week?.mon === mon ? week.n : 0) + 1 }; const pw = week && week.mon !== mon ? { prevWeek: week } : {}; setWeek(wk); save({ unlocked: next, stars: nextStars, streak: streak + 1, day: w, week: wk, ...pw }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
       const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
       if (el) confetti(el)
       onFinish?.({ level: 'normal', score: s.stage + 1, tried: s.stage + 1, win: true })
@@ -306,16 +309,17 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   }
 
   const gs = goals(s)
+  const IMG = piecesFor(s.stage)
   const mood = s.done === 'win' ? 'done' : s.done === 'lose' || s.moves <= 3 ? 'busy' : cheer ? 'done' : 'basic'
   return <div className="clean" style={{ '--room-bg': `url(/game/room/${ROOMS[Math.floor(s.stage / 10) % ROOMS.length].bg}.jpg)` }}>
     <div className="clean-hud">
-      <div className="clean-panel"><small>목표</small><span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-label="먼지" /> : g.kind === 'box' ? <i className="box-icon" aria-label="상자" /> : g.kind === 'drop' ? <img src="/game/room/duck.png" alt="오리" /> : g.kind === 'ice' ? <i className="ice-icon" aria-label="얼음" /> : g.kind === 'foam' ? <i className="foam-icon" aria-label="거품" /> : g.kind === 'stain' ? <i className="stain-icon" aria-label="얼룩" /> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span></div>
+      <div className="clean-panel"><small>목표</small><span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-label="먼지" /> : g.kind === 'box' ? <i className="box-icon" aria-label="상자" /> : g.kind === 'drop' ? <img src="/game/room/duck.png" alt="오리" /> : g.kind === 'ice' ? <i className="ice-icon" aria-label="얼음" /> : g.kind === 'foam' ? <i className="foam-icon" aria-label="거품" /> : g.kind === 'stain' ? <i className="stain-icon" aria-label="얼룩" /> : g.kind === 'bin' ? <i className="bin-icon" aria-label="쓰레기통"><Trash2 size={18} /></i> : g.kind === 'web' ? <i className="web-icon" aria-label="거미줄" /> : g.kind === 'cat' ? <i className="cat-icon" aria-label="고양이"><Cat size={18} /></i> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span></div>
       <div className="clean-hero"><Face player={player} mood={mood} size={64} /><b className={`clean-stage-no${STAGES[s.stage].hard ? ' hard' : ''}`}>{s.stage + 1}단계</b>{s.stage >= FINITE && <small className="clean-hard-tag">무한</small>}{STAGES[s.stage].hard && <small className="clean-hard-tag">어려움</small>}</div>
       <div className="clean-panel"><small>이동 횟수</small><b className="clean-moves">{s.moves}</b></div>
     </div>
     <div className={`clean-board fx-host${hammer || broom || eraser ? ' aiming' : ''}`} ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>
-      {s.board.map((t, i) => t.fix === 'hole' ? <span key={i} className="clean-hole" /> : <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}${hint?.includes(i) ? ' hint' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} data-box={t.fix === 'box' ? t.hp : undefined} data-ice={t.ice || undefined} data-foam={s.foam?.[i] || undefined} data-stain={s.stain?.[i] || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.fix === 'box' ? ' 상자' : ''}${t.drop ? ' 오리' : ''}${t.ice ? ' 얼음' : ''}${s.foam?.[i] ? ' 거품' : ''}${s.stain?.[i] ? ' 얼룩' : ''}${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ` 먼지 ${s.dust[i]}겹` : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
-        {t.k >= 0 ? <img src={IMG[t.k]} alt="" draggable="false" /> : t.drop ? <img className="clean-duck" src="/game/room/duck.png" alt="" draggable="false" /> : null}{s.dust[i] > 1 && <i className="dust-badge" aria-hidden="true">{s.dust[i]}</i>}
+      {s.board.map((t, i) => t.fix === 'hole' ? <span key={i} className="clean-hole" /> : <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}${hint?.includes(i) ? ' hint' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} data-box={t.fix === 'box' ? t.hp : undefined} data-ice={t.ice || undefined} data-foam={s.foam?.[i] || undefined} data-stain={s.stain?.[i] || undefined} data-bin={t.fix === 'bin' ? t.hp : undefined} data-web={t.web || undefined} data-cat={t.cat || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.fix === 'box' ? ' 상자' : ''}${t.drop ? ' 오리' : ''}${t.ice ? ' 얼음' : ''}${s.foam?.[i] ? ' 거품' : ''}${s.stain?.[i] ? ' 얼룩' : ''}${t.fix === 'bin' ? ` 쓰레기통 ${t.hp}` : ''}${t.web ? ' 거미줄' : ''}${t.cat ? ' 고양이' : ''}${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ` 먼지 ${s.dust[i]}겹` : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
+        {t.k >= 0 ? <img src={IMG[t.k]} alt="" draggable="false" /> : t.drop ? <img className="clean-duck" src="/game/room/duck.png" alt="" draggable="false" /> : t.cat ? <Cat className="clean-cat" size={26} strokeWidth={2.2} /> : t.fix === 'bin' ? <><Trash2 className="clean-bin" size={24} /><i className="dust-badge" aria-hidden="true">{t.hp}</i></> : null}{s.dust[i] > 1 && <i className="dust-badge" aria-hidden="true">{s.dust[i]}</i>}
       </button>)}
     </div>
     <div className="clean-tools">

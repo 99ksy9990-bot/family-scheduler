@@ -12,7 +12,10 @@ export function recordGameScore(scores = {}, gameId, memberId, result, now) {
   // 5등까지 언제 세웠는지 보관 (구성원별 top, 가족 순위는 rankGameScores에서 합침)
   const lower = gameId === 'pairs'
   const top = [...(previous?.top || (Number.isFinite(previous?.best) ? [{ value: previous.best, level: previous.level, at: previous.playedAt }] : [])), { value: metric, level: result.level, at: now.toISOString() }].sort((a, b) => lower ? a.value - b.value : b.value - a.value).slice(0, 5)
-  const record = { ...previous, top, ...(better ? { best: metric, level: result.level, ...(gameId === 'pairs' ? { moves: result.moves } : {}) } : {}),
+  const mon = mondayKey(now), wk = previous?.week
+  const week = wk?.mon === mon ? { mon, best: (lower ? metric < wk.best : metric > wk.best) ? metric : wk.best } : { mon, best: metric }
+  const prevWeek = wk && wk.mon !== mon ? wk : previous?.prevWeek
+  const record = { ...previous, top, week, ...(prevWeek && { prevWeek }), ...(better ? { best: metric, level: result.level, ...(gameId === 'pairs' ? { moves: result.moves } : {}) } : {}),
     playedAt: now.toISOString(), playsToday: (previous && iso(new Date(previous.playedAt)) === iso(now) ? previous.playsToday || 1 : 0) + 1 }
   return { ...scores, [gameId]: { ...scores?.[gameId], [memberId]: record } }
 }
@@ -40,19 +43,29 @@ export function rankGameScores(scores, gameId) {
 
 // 이번 주(월요일 0시부터) 1등 — 왕관은 월요일마다 새로 다툼
 export const mondayKey = (now = new Date()) => iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)))
-// 대청소: 이번 주에 깬 단계 수가 가장 많은 사람
-export function weeklyCleanLeader(progress, now = new Date()) {
-  const k = mondayKey(now)
-  const rows = Object.entries(progress || {}).filter(([, p]) => p?.week?.mon === k && p.week.n > 0)
-  return rows.length ? rows.reduce((a, b) => (b[1].week.n > a[1].week.n ? b : a))[0] : null
+const lastMonday = (now = new Date()) => mondayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7))
+// 그 주(월요일 key) 기록: 주간 기록 → 없으면 5등 기록 중 그 주에 세운 것
+const weekValue = (record, key, lower) => {
+  const vals = [record?.week, record?.prevWeek].filter((w) => w?.mon === key).map((w) => w.best)
+  for (const t of record?.top || []) if (t?.at && mondayKey(new Date(t.at)) === key && Number.isFinite(t.value)) vals.push(t.value)
+  return vals.length ? (lower ? Math.min(...vals) : Math.max(...vals)) : null
 }
-export function weeklyLeader(scores, gameId, now = new Date()) {
-  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7))
-  const lower = gameId === 'pairs'
-  let best = null
-  for (const [member, record] of Object.entries(scores?.[gameId] || {})) for (const t of record?.top || []) {
-    if (!t?.at || new Date(t.at) < mon || !Number.isFinite(t.value)) continue
-    if (!best || (lower ? t.value < best.value : t.value > best.value)) best = { member, value: t.value }
+// 그 주 1등 { member, value } — 왕관은 월요일마다 새로 다툼
+export function weekWinner(scores, gameId, key) {
+  const lower = gameId === 'pairs'; let best = null
+  for (const [member, record] of Object.entries(scores?.[gameId] || {})) {
+    const v = weekValue(record, key, lower); if (v === null) continue
+    if (!best || (lower ? v < best.value : v > best.value)) best = { member, value: v }
   }
-  return best?.member || null
+  return best
 }
+export const weeklyLeader = (scores, gameId, now = new Date()) => weekWinner(scores, gameId, mondayKey(now))?.member || null
+// 대청소: 그 주에 깬 단계 수가 가장 많은 사람
+export function cleanWeekWinner(progress, key) {
+  const rows = Object.entries(progress || {}).map(([m, p]) => [m, [p?.week, p?.prevWeek].find((w) => w?.mon === key)?.n || 0]).filter(([, n]) => n > 0)
+  if (!rows.length) return null
+  const [member, value] = rows.reduce((a, b) => (b[1] > a[1] ? b : a))
+  return { member, value }
+}
+export const weeklyCleanLeader = (progress, now = new Date()) => cleanWeekWinner(progress, mondayKey(now))?.member || null
+export { lastMonday }

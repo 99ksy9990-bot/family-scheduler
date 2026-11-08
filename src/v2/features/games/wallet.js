@@ -27,7 +27,15 @@ export function earnStar(p, game, d = new Date()) {
   const by = a.day.id === id ? a.day.by : {}
   if ((by[game] || 0) >= DAILY + homeBonus(p)) return { progress: p, got: 0 } // 다 꾸민 방 하나마다 +1 (최대 5)
   const got = game === dailyGame(d) ? 2 : 1
-  return { got, progress: { ...p, arcade: { ...a, earned: a.earned + got, day: { id, by: { ...by, [game]: (by[game] || 0) + 1 } } } } }
+  return { got, progress: { ...p, arcade: { ...a, earned: a.earned + got, day: { ...(a.day.id === id ? a.day : {}), id, by: { ...by, [game]: (by[game] || 0) + 1 } } } } }
+}
+// 게임마다 하루 첫 판은 점수와 상관없이 고마움 별 (하루 한 번)
+export const FIRST_PLAY = 2
+export function firstPlayBonus(p, game, d = new Date()) {
+  const a = arcadeOf(p); const id = dayId(d)
+  const day = a.day.id === id ? a.day : { id, by: {} }
+  if (day.first?.[game]) return { progress: p, got: 0 }
+  return { got: FIRST_PLAY, progress: { ...p, arcade: { ...a, earned: a.earned + FIRST_PLAY, day: { ...day, first: { ...day.first, [game]: 1 } } } } }
 }
 export const spendStars = (p, n) => ({ ...p, arcade: { ...arcadeOf(p), spent: arcadeOf(p).spent + n } })
 
@@ -35,6 +43,6 @@ export const spendStars = (p, n) => ({ ...p, arcade: { ...arcadeOf(p), spent: ar
 export function mergeArcade(a, b) {
   if (!a || !b) return a || b
   const t = (x) => (x?.day?.id ? new Date(x.day.id.replace(/-/g, '/')).getTime() : 0)
-  const day = t(a) === t(b) ? { id: a.day.id, by: Object.fromEntries([...new Set([...Object.keys(a.day.by || {}), ...Object.keys(b.day.by || {})])].map((k) => [k, Math.max(a.day.by?.[k] || 0, b.day.by?.[k] || 0)])) } : (t(a) > t(b) ? a : b).day
+  const day = t(a) === t(b) ? { id: a.day.id, ...((a.day.first || b.day.first) && { first: { ...a.day.first, ...b.day.first } }), by: Object.fromEntries([...new Set([...Object.keys(a.day.by || {}), ...Object.keys(b.day.by || {})])].map((k) => [k, Math.max(a.day.by?.[k] || 0, b.day.by?.[k] || 0)])) } : (t(a) > t(b) ? a : b).day
   return { earned: Math.max(a.earned || 0, b.earned || 0), spent: Math.max(a.spent || 0, b.spent || 0), day }
 }

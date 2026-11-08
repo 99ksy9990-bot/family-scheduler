@@ -23,6 +23,8 @@ export function mergeProgress(a, b) {
     ...((a.perkComp || b.perkComp) && { perkComp: true }), // 방 효과 바꾼 보상 받음
     seen: [...new Set([...(a.seen || []), ...(b.seen || [])])],
     ...((a.week || b.week) && { week: !a.week || !b.week ? a.week || b.week : a.week.mon === b.week.mon ? { mon: a.week.mon, n: Math.max(a.week.n, b.week.n) } : a.week.mon > b.week.mon ? a.week : b.week }), // 이번 주 깬 단계 수 (왕관)
+    ...((a.prevWeek || b.prevWeek) && { prevWeek: (a.prevWeek?.mon || '') >= (b.prevWeek?.mon || '') ? a.prevWeek : b.prevWeek }),
+    ...((a.crownMon || b.crownMon) && { crownMon: (a.crownMon || '') > (b.crownMon || '') ? a.crownMon : b.crownMon }), // 지난주 왕관 보너스 받은 주
     day: mergeWeek(a.day, b.day), // 오늘의 이벤트·출석
     ...((a.arcade || b.arcade) && { arcade: mergeArcade(a.arcade, b.arcade) }),
     attend: !a.attend || !b.attend ? a.attend || b.attend : weekNo({ id: a.attend.last }) === weekNo({ id: b.attend.last }) ? { last: a.attend.last, run: Math.max(a.attend.run, b.attend.run) } : weekNo({ id: a.attend.last }) > weekNo({ id: b.attend.last }) ? a.attend : b.attend,

@@ -269,3 +269,14 @@
 .clean-tip .stain-icon { width: 56px; height: 56px; }
 /* 대청소 판 뒤 배경: 10단계마다 다른 방 (흐리게 깔아 물건이 잘 보이게) */
 .clean .clean-board { background: linear-gradient(rgb(232 240 251 / .72), rgb(232 240 251 / .72)), var(--room-bg, none) center / cover, #e8f0fb; }
+/* 쓰레기통·거미줄·고양이 */
+.clean-cell[data-bin] { background: #dfe6ee; color: #4d5b6b; }
+.clean-cell[data-bin] .dust-badge { background: #4d5b6b; }
+.bin-icon, .web-icon, .cat-icon { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; }
+.bin-icon { background: #dfe6ee; color: #4d5b6b; }
+.cat-icon { background: #fde6c8; color: #b0650a; }
+.web-icon, .clean-cell[data-web]::after { background: repeating-conic-gradient(from 0deg at 50% 50%, rgb(120 120 130 / .55) 0 2deg, transparent 2deg 45deg), repeating-radial-gradient(circle at 50% 50%, transparent 0 5px, rgb(120 120 130 / .5) 5px 6px), rgb(255 255 255 / .35); }
+.clean-cell[data-web]::after { content: ''; position: absolute; inset: 2px; border-radius: 10px; pointer-events: none; z-index: 1; }
+.clean-cell[data-cat] { background: #fde6c8; color: #b0650a; }
+.clean-cell[data-cat='1'] { background: #fbd3a3; }
+.clean-tip .bin-icon, .clean-tip .web-icon, .clean-tip .cat-icon { width: 56px; height: 56px; }
