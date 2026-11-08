@@ -172,13 +172,6 @@
 /* 한 사람 묶음: 얼굴이 없으니 구분선도 글 시작부터 */
 .person-group.solo :is(.grouped-row, .schedule-shift-group, .todo-row)::before { left: 16px; }
 .is-past { opacity: .45; }
-.past-fold { margin-top: 6px; }
-.past-fold summary { list-style: none; display: flex; align-items: center; gap: 4px; padding: 6px 4px; font-size: 15px; color: var(--label-2); cursor: pointer; }
-.past-fold[open] summary { margin-bottom: 6px; }
-.past-fold summary::-webkit-details-marker { display: none; }
-.past-fold svg { transition: transform .2s; transform: rotate(-90deg); }
-.past-fold[open] svg { transform: none; }
-@media (prefers-reduced-motion: reduce) { .past-fold svg { transition: none; } }
 /* 요일 줄: 위아래 여백을 다른 줄과 맞춤 */
 .settings-content .event-form > fieldset { padding: 14px 0 12px; row-gap: 10px; column-gap: 0; justify-content: space-between; }
 .settings-content .event-form > fieldset legend { margin: 0; line-height: 22px; }
