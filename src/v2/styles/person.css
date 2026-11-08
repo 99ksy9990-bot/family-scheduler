@@ -32,12 +32,12 @@
 .house-row.next .time-start { color: var(--tint-label); font-weight: 600; }
 .schedule-shift-group { display: flex; gap: 12px; align-items: center; padding: 0 16px; position: relative; }
 .schedule-shift-group > div:not(.character) { flex: 1; min-width: 0; }
-.shift-line { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 11px 0; }
+.shift-line { display: flex; gap: 8px; align-items: center; justify-content: space-between; min-height: 60px; padding: 11px 0; box-sizing: border-box; }
 .shift-line h3 { font-size: 17px; font-weight: 600; line-height: 21px; }
 .shift-line small { font-size: 13px; color: var(--label-2); }
 .shift-line + .shift-line { border-top: .5px solid var(--sep); }
 .is-carryover :is(h3,strong,.time-start) { color: var(--label-2); font-weight: 400; }
-.schedule-shift-group + li::before,.grouped-row + .schedule-shift-group::before,.schedule-shift-group + .schedule-shift-group::before { content: ''; position: absolute; top: 0; left: 60px; right: 0; height: .5px; background: var(--sep); }
+.schedule-shift-group + li::before,.grouped-row + .schedule-shift-group::before,.schedule-shift-group + .schedule-shift-group::before { content: ''; position: absolute; top: 0; left: 60px; right: 16px; height: .5px; background: var(--sep); }
 .person-item,.person-shift-group { position: relative; }
 .person-item + li::before,.person-shift-group + li::before { content: ''; position: absolute; top: 0; left: 60px; right: 0; height: .5px; background: var(--sep); }
 .person-shift-group { display: flex; align-items: center; gap: 12px; padding: 0 16px; }
@@ -168,3 +168,7 @@
 .plain-input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 17px; text-align: right; color: var(--label-2); padding: 8px 0; }
 .shift-cell[data-leave] b { background: var(--fill) !important; color: var(--label-2) !important; }
 .settings-color-icon[data-tone='blue'] { background: var(--tint); }
+
+/* 한 사람 묶음: 얼굴이 없으니 구분선도 글 시작부터 */
+.person-group.solo :is(.grouped-row, .schedule-shift-group, .todo-row)::before { left: 16px; }
+.is-past { opacity: .45; }
