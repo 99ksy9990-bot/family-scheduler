@@ -10,6 +10,8 @@ import { todayPlays } from './data/gameScores'
 import Today from './features/today/Today'
 
 // 위에 붙는 제목 줄 높이를 CSS에 알려줌 (할 일 칩이 그 아래에 붙도록)
+// 시간대별 인사 (로고 옆)
+const greeting = (d) => { const h = d.getHours(); return h < 5 ? '좋은 밤 되세요' : h < 11 ? '좋은 아침이에요' : h < 14 ? '맛있는 점심 드세요' : h < 18 ? '오후도 힘내요' : h < 22 ? '편안한 저녁 보내요' : '좋은 밤 되세요' }
 const watchHeading = (el) => {
   if (!el || typeof ResizeObserver === 'undefined') return
   const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--head-h', `${el.offsetHeight}px`))
@@ -63,7 +65,7 @@ function Workspace({ scheduler }) {
   return <div className="v2-app" data-view={tab}>
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
-    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a><p className="app-date">{subtitle}</p>{tab === 'calendar' ? <div className="heading-line month-center"><button className="month-arrow" aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={22} /></button><h1>{title}</h1><button className="month-arrow" aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={22} /></button></div> : <div className="heading-line"><h1>{tab === 'today' ? <span className="app-logo"><img src="/app-icon-192.png" alt="" width="40" height="40" />{title}</span> : title}</h1>{tab === 'play' && <SoundToggles />}</div>}
+    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a><p className="app-date">{subtitle}</p>{tab === 'calendar' ? <div className="heading-line month-center"><button className="month-arrow" aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={22} /></button><h1>{title}</h1><button className="month-arrow" aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={22} /></button></div> : <div className="heading-line"><h1>{tab === 'today' ? <span className="app-logo"><img src="/app-icon-192.png" alt="" width="40" height="40" />{title}<small className="greeting">{greeting(now)}</small></span> : title}</h1>{tab === 'play' && <SoundToggles />}</div>}
       {canEdit && ['today', 'calendar'].includes(tab) && <button className="header-add" onClick={() => { setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} aria-label={tab === 'today' ? '추가' : '일정 추가'}><Plus size={26} /></button>}
     </header>
     <main id="main" tabIndex={-1}>
