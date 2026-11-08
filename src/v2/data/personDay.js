@@ -4,6 +4,14 @@ import { rowsForMember } from './house'
 import { taskRows } from './tasks'
 import { membersFor } from './members'
 
+// 교대 근무자의 OFF도 한 줄로 (밤 근무가 이어져 와도 그날이 쉬는 날임을 보여 줌)
+export function offRows(state, date) {
+  const key = iso(date), ws = state.workSettings || {}
+  if (!ws.enabled) return []
+  return (ws.workerIds || []).filter((m) => state.shifts.findLast((s) => s.member === m && s.date === key)?.shift === 'off')
+    .map((m) => ({ id: `off-${m}-${key}`, type: 'shift', title: 'OFF', member: m, date: key, displayStart: '하루 종일' }))
+}
+
 export function personDayRows(state, memberId, date, today) {
   const key = iso(date)
   const isToday = key === iso(today)
@@ -15,10 +23,7 @@ export function personDayRows(state, memberId, date, today) {
     if (task.done) return task.completedDate === key
     return !task.dueDate || task.dueDate < key
   }).map((task) => ({ ...task, id: `task-${task.id}`, task: true, displayStart: clock(task.time), displayEnd: clock(task.end) }))
-  // 교대 근무자의 오프도 한 줄로 (밤 근무가 이어져 와도 그날이 쉬는 날임을 보여 줌)
-  const ws = state.workSettings || {}
-  const off = ws.enabled && ws.workerIds?.includes(memberId) && state.shifts.findLast((s) => s.member === memberId && s.date === key)?.shift === 'off'
-    ? [{ id: `off-${memberId}-${key}`, type: 'shift', title: 'OFF', member: memberId, date: key, displayStart: '하루 종일' }] : []
+  const off = offRows(state, date).filter((r) => r.member === memberId)
   return [...rowsForMember(scheduleForDate(state, date), memberId), ...off, ...tasks]
     .sort((a, b) => (a.displayStart || '').localeCompare(b.displayStart || '') || a.title.localeCompare(b.title, 'ko'))
 }

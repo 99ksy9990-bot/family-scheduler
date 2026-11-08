@@ -10,6 +10,7 @@ import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import { membersFor } from '../../data/members'
+import { offRows } from '../../data/personDay'
 import { personColor } from '../../data/kinds'
 
 // 그날 일정을 사람별로 묶음: 가족 전체(공휴일·기념일) → 함께 하는 일정 → 한 사람씩
@@ -42,7 +43,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     const count = Math.ceil((first.getDay() + new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()) / 7) * 7
     return Array.from({ length: count }, (_, index) => addDays(start, index))
   }, [cursor])
-  const rows = scheduleForDate(state, selected)
+  const rows = [...scheduleForDate(state, selected), ...offRows(state, selected)]
   // 교대 근무자(엄마 등)의 근무만 날짜 칸에 이름표로 (사용자 요청 2026-11-06, 달력 A 방식)
   const shiftLabels = useMemo(() => {
     const ws = state.workSettings || {}
