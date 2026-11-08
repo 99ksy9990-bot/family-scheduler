@@ -282,3 +282,13 @@
 .clean-tip .bin-icon, .clean-tip .web-icon, .clean-tip .cat-icon { width: 56px; height: 56px; }
 .bin-img, .cat-img { display: inline-block; width: 64px; height: 64px; background: center / contain no-repeat; }
 .bin-img { background-image: url(/game/pieces/bin.png); } .cat-img { background-image: url(/game/pieces/cat.png); }
+/* 거미줄·얼룩 그림 (기존 그린 무늬 대신) */
+.clean-cell[data-web]::after { background: url(/game/pieces/web.png) center / 92% no-repeat; opacity: .9; }
+.clean-cell[data-stain] { background: url(/game/pieces/stain.png) center / 86% no-repeat, #f3e7da; }
+.web-icon { background: url(/game/pieces/web.png) center / contain no-repeat; }
+.stain-icon { background: url(/game/pieces/stain.png) center / contain no-repeat; }
+/* 바구니는 화면 안에서만 (커진 바구니는 양옆 15% 더 여유) */
+.catch-basket { --pad: 0%; } .catch-basket.big { --pad: 15%; }
+/* 3매치 힌트: 대청소처럼 바꿀 두 칸이 흔들림 */
+.match-cell.hint { animation: clean-hint 0.9s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .match-cell.hint { animation: none; outline: 3px solid var(--tint); } }

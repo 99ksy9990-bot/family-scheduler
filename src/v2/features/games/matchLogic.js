@@ -30,10 +30,12 @@ export function findMatches(b) {
 const swapped = (b, i, j) => { const n = [...b]; [n[i], n[j]] = [n[j], n[i]]; return n }
 export const adjacent = (i, j) => (Math.abs(i - j) === 1 && Math.floor(i / N) === Math.floor(j / N)) || Math.abs(i - j) === N
 
-export function hasMove(b) {
-  for (let i = 0; i < N * N; i += 1) for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && findMatches(swapped(b, i, j)).size) return true
-  return false
+// 바꿀 수 있는 두 칸 [i, j] (힌트용), 없으면 null
+export function findMove(b) {
+  for (let i = 0; i < N * N; i += 1) for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && findMatches(swapped(b, i, j)).size) return [i, j]
+  return null
 }
+export const hasMove = (b) => !!findMove(b)
 
 // 맞는 줄이 생길 때만 바꿈. 연쇄 끝까지 처리. → { board, gained, chains } 또는 null(무효)
 export function swap(b, i, j, rand = Math.random) {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MODES, N, adjacent, fresh, swap } from './matchLogic'
+import { MODES, N, adjacent, findMove, fresh, swap } from './matchLogic'
 import { burst, buzz, center, pop, shake } from './fx'
 import ItemBar from './ItemBar'
 import { pickObjects, pickRoom, roomStyle, perkLevel } from './theme'
@@ -18,6 +18,12 @@ export default function Match({ onFinish, shop }) {
   const [moves, setMoves] = useState(0)
   const [left, setLeft] = useState(60)
   const [cheer, setCheer] = useState(0)
+  const [hint, setHint] = useState(null) // 5초 동안 안 움직이면 바꿀 두 칸을 흔들어 보여 줌
+  useEffect(() => {
+    if (!board) return undefined
+    const t = setTimeout(() => setHint(findMove(board)), 5000)
+    return () => { clearTimeout(t); setHint(null) }
+  }, [board])
   const startY = useRef(null)
   const host = useRef(null)
   const grid = useRef(null)
@@ -60,7 +66,7 @@ export default function Match({ onFinish, shop }) {
   return <div className="match fx-host" ref={host}>
     <div className="game-stats"><span>{score.toLocaleString()}점</span><span>{mode.moves ? `${mode.moves - moves}번 남음` : mode.seconds ? `${left}초` : `${moves}번`}</span></div>
     <div className="match-grid room-bg" style={roomStyle(room)} ref={grid} onPointerUp={up}>
-      {board.map((v, i) => <button key={i} className={`match-cell${pick === i ? ' picked' : ''}`} aria-label={pics[v].name} onPointerDown={(e) => down(i, e)} onKeyDown={(e) => e.key === 'Enter' && tap(i)}>
+      {board.map((v, i) => <button key={i} className={`match-cell${pick === i ? ' picked' : ''}${hint?.includes(i) ? ' hint' : ''}`} aria-label={pics[v].name} onPointerDown={(e) => down(i, e)} onKeyDown={(e) => e.key === 'Enter' && tap(i)}>
         <img src={pics[v].img} alt="" draggable="false" />
       </button>)}
     </div>
