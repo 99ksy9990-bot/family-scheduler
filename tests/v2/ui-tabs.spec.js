@@ -7,7 +7,7 @@ test.describe('공개 예시', () => {
     await expect(page.locator('.demo-banner')).toHaveText('예시 화면이에요 · 가족 연결하면 우리 일정이 보여요')
     await expect(page.getByRole('navigation').getByRole('button')).toHaveText(['우리집', '달력', '놀이', '가족'])
     await expect(page.locator('.house-tile strong')).toHaveText(['아빠', '엄마', '초롱', '연두'])
-    await expect(page.locator('.task-group')).toHaveCount(3)
+    await expect(page.locator('.task-group')).toHaveCount(4)
     expect(await page.locator('.task-group').evaluateAll((groups) => groups.every((group) => !group.open))).toBe(true)
     await page.getByRole('navigation').getByRole('button', { name: '달력', exact: true }).click()
     await expect(page.locator('.app-date')).toHaveText('2026년')

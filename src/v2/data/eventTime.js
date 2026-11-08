@@ -7,6 +7,9 @@ export function oneHourLater(time, date) {
     endDate: total >= 1440 ? iso(addDays(new Date(`${date}T00:00:00`), 1)) : date }
 }
 
+// 끝 시간이 없는 일정은 1시간짜리로 봄 (시작하자마자 '끝남'으로 바뀌던 문제)
+export const endOf = (row) => row.displayEnd || (row.displayStart && /^\d\d:\d\d$/.test(row.displayStart) ? oneHourLater(row.displayStart, '2000-01-01').time : '')
+
 export function eventPhase(row, date, now) {
   const key = iso(date)
   const current = iso(now)
@@ -16,5 +19,7 @@ export function eventPhase(row, date, now) {
   const clock = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   if (row.displayStart > clock) return 'future'
   if (row.crossesMidnight || row.endDate > key) return 'active'
-  return (row.displayEnd || row.displayStart) <= clock ? 'past' : 'active'
+  const end = endOf(row)
+  if (end && end <= row.displayStart) return 'active' // 자정 넘는 1시간
+  return !end || end <= clock ? 'past' : 'active'
 }

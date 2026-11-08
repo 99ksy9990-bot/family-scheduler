@@ -22,7 +22,9 @@ export default function Tasks({ state, updateState, canEdit, today }) {
     if (ids.includes('family')) return state.profiles.filter((profile) => profile.active !== false).length ? state.profiles.filter((profile) => profile.active !== false) : [{ id: 'family', name: '가족' }]
     return [...new Set(ids)].map((id) => state.profiles.find((profile) => profile.id === id) || { id, name: '가족' })
   }
-  const rows = taskRows(state.tasks, today, category, true)
+  const [query, setQuery] = useState('')
+  const q = query.trim().toLowerCase()
+  const rows = taskRows(state.tasks, today, category, true).filter((row) => !q || [row.title, row.category].join(' ').toLowerCase().includes(q))
   useEffect(() => {
     if (!celebrating) return
     const timer = window.setTimeout(() => setCelebrating(null), 1400)
@@ -39,18 +41,21 @@ export default function Tasks({ state, updateState, canEdit, today }) {
   const groups = [
     ['오늘까지', rows.filter((row) => !row.done && row.dueDate && row.dueDate <= iso(today))],
     ['언젠가', rows.filter((row) => !row.done && (!row.dueDate || row.dueDate > iso(today)))],
-    ['끝낸 일', rows.filter((row) => row.done)],
+    // 끝낸 일은 오늘 것만 바로 보이고, 지난 것은 따로 접어 둠 (쌓여도 안 지저분하게)
+    ['오늘 끝낸 일', rows.filter((row) => row.done && (row.occurrenceDate ? row.occurrenceDate === iso(today) : row.completedDate === iso(today)))],
+    ['지난 끝낸 일', rows.filter((row) => row.done && !(row.occurrenceDate ? row.occurrenceDate === iso(today) : row.completedDate === iso(today)))],
   ]
   return <section className="home-tasks" aria-label="할 일 목록">
     <div className="task-section-heading"><h2 className="house-section-title">할 일 <small data-testid="task-count">{rows.filter((row) => !row.done).length}개 남음</small></h2><button className="text-button" disabled={!canEdit} onClick={() => setEditCategories(true)}>분류 편집</button></div>
     <div className="task-chips"><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>전체</button>{categories.map((name) => <button key={name} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
+    <input className="task-search" type="search" placeholder="할 일 찾기" aria-label="할 일 찾기" value={query} onChange={(e) => setQuery(e.target.value)} />
     <p className="quiet task-hint">반복 할 일은 오늘부터 이달 말까지 보여요.</p>
-    {groups.map(([title, items]) => <details className="task-group" key={title}><summary>{title}<span>{items.length}<ChevronRight size={16} /></span></summary>
+    {groups.map(([title, items]) => <details className="task-group" key={title} open={q && items.length ? true : undefined}><summary>{title}<span>{items.length}<ChevronRight size={16} /></span></summary>
       {items.length ? <GroupedList label={title}>{items.map((row) => <li className="todo-row" key={row.id}>
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
-        <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : ''}>{row.title}</strong><small>{row.done ? '끝냄' : [row.time || row.dueDate, row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
+        <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : ''}>{row.title}</strong><small>{row.done ? `끝냄${row.completedDate && row.completedDate !== iso(today) ? ` · ${row.completedDate.slice(5).replace('-', '/')}` : ''}` : [row.time || row.dueDate, row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
         <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={32} expression={row.done ? 'done' : 'basic'} />)}</span>
-      </li>)}</GroupedList> : <div className="empty-state">{title === '끝낸 일' ? '아직 끝낸 일이 없어요.' : '할 일이 없어요.'}</div>}
+      </li>)}</GroupedList> : <div className="empty-state">{title.includes('끝낸') ? (q ? '찾는 할 일이 없어요.' : '아직 끝낸 일이 없어요.') : '할 일이 없어요.'}</div>}
     </details>)}
 {editCategories && <Sheet title="분류 편집" onClose={() => setEditCategories(false)}><div className="settings-content">{categories.map((name) => <form key={name} className="category-form" onSubmit={(event) => { event.preventDefault(); const next = String(new FormData(event.currentTarget).get('name')).trim(); if (!next || (next !== name && categories.includes(next))) { setMessage('다른 분류 이름을 입력해 주세요.'); return }; updateState((current) => renameCategory({ ...current, taskCategories: categories }, name, next)); if (category === name) setCategory(next) }}><input name="name" aria-label={`${name} 분류 이름`} defaultValue={name} required /><button disabled={!canEdit}>이름 저장</button><button type="button" disabled={!canEdit || state.tasks.some((task) => task.category === name) || categories.length < 2} onClick={() => { updateState((current) => ({ ...current, taskCategories: categories.filter((value) => value !== name) })); if (category === name) setCategory('all') }}>삭제</button></form>)}<form className="category-form" onSubmit={(event) => { event.preventDefault(); const value = String(new FormData(event.currentTarget).get('name')).trim(); if (!value || categories.includes(value)) { setMessage('새 분류 이름을 입력해 주세요.'); return }; updateState((current) => ({ ...current, taskCategories: [...categories, value] })); event.currentTarget.reset() }}><input name="name" aria-label="새 분류" required /><button disabled={!canEdit}>분류 추가</button></form></div></Sheet>}
     {selected && <Sheet title={selected.title} onClose={() => setSelected(null)}><div className="settings-content"><p>{selected.category} · {selected.dueDate || '날짜 없음'}</p><button disabled={!canEdit} onClick={() => { setEditing(state.tasks.find((task) => task.id === selected.sourceTaskId)); setSelected(null) }}>할 일 수정</button><button disabled={!canEdit} onClick={() => { remove(selected); setSelected(null) }}>할 일 삭제{selected.occurrenceDate ? ' (반복 전체)' : ''}</button></div></Sheet>}

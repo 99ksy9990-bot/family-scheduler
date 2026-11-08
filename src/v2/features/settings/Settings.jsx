@@ -18,7 +18,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
   const [adding, setAdding] = useState(false)
   const [day, setDay] = useState(null) // 기념일 편집: {} 새로, 또는 기존 기록
   const member = state.profiles.find((profile) => profile.id === memberId)
-  const [fold, setFold] = useState({}) // 접은 칸 (가족이 늘면 길어져서)
+  const [fold, setFold] = useState({ days: true }) // 접은 칸 (가족이 늘면 길어져서)
   const push = usePushNotifications({ session: sync.session, family: sync.family })
   const descriptions = { connection: sync.family ? `${sync.family.household.name} · ${canEdit ? '편집 가능' : '보기 전용'}` : sync.session ? '가족방을 연결해 주세요' : '로그인하고 가족 일정을 불러오세요', family: `${state.profiles.filter((profile) => profile.active !== false).length}명 · 캐릭터·근무·자녀 일정·기념일`, notifications: pushLabels[push.status], backup: 'JSON 저장·미리보기·버전 복원', about: `버전 ${import.meta.env.VITE_APP_VERSION || 'local'}` }
   const panel = selected?.startsWith('profile:') ? 'family' : selected

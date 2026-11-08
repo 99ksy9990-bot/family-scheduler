@@ -5,6 +5,24 @@ import { LEAVES, scheduleForDate } from '../../data/schedule'
 import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
 import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
+import CharacterAvatar from '../../components/CharacterAvatar'
+import { membersFor } from '../../data/members'
+
+// 그날 일정을 사람별로 묶음: 가족 전체(공휴일·기념일) → 함께 하는 일정 → 한 사람씩
+function ByPerson({ rows, profiles }) {
+  if (!rows.length) return <ScheduleList rows={rows} profiles={profiles} />
+  const groups = new Map()
+  for (const row of rows) {
+    const m = membersFor(row, profiles)
+    const key = m.length === 1 ? m[0].id : m.length ? 'together' : 'all'
+    groups.set(key, [...groups.get(key) || [], row])
+  }
+  const order = [['all', '가족'], ['together', '함께'], ...profiles.filter((p) => p.active !== false).map((p) => [p.id, p.name, p])]
+  return order.filter(([key]) => groups.has(key)).map(([key, name, profile]) => <div className="person-group" key={key}>
+    <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} size={24} /> : null}{name}<small>{groups.get(key).length}</small></h3>
+    <ScheduleList rows={groups.get(key)} profiles={profiles} label={`${name} 일정`} />
+  </div>)
+}
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -61,6 +79,6 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         })}
       </div></DataState>
     </section>
-    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span></h2><DataState loading={loading} error={error} onRetry={onRetry}><ScheduleList rows={rows} profiles={state.profiles} /></DataState></section>
+    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span></h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} /></DataState></section>
   </div>
 }

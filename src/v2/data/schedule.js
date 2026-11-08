@@ -3,6 +3,7 @@ import { eventsForDate } from '../../lib/schedule'
 import { assignedMemberIds, DEFAULT_SHIFT_TYPES } from '../../lib/legacyState'
 import { hasRecurrence, isRecurrenceStart } from '../../lib/recurrence'
 import { holidaysForYear } from '../../lib/holidays'
+import { endOf } from './eventTime'
 
 // 고정 근무(예: 평일 08:00–17:00, 공휴일 쉼). 프로필에 regularWork가 있을 때만. 옛 앱은 이 필드를 모르고 그대로 보존함.
 // 연차·반차: regularWork.leaves[날짜] = 'full'|'am'|'pm'. 반차 시간은 고정(오전 08–12, 오후 12:45–17)
@@ -66,13 +67,13 @@ export function memberStatus(profile, rows, tasks, now) {
   const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   const own = rows.filter((row) => assignedMemberIds(row).includes(profile.id) || assignedMemberIds(row).includes('family'))
   const active = own.find((row) => row.displayStart && row.displayStart <= time
-    && (row.crossesMidnight || (row.displayEnd && time < row.displayEnd)))
+    && (row.crossesMidnight || (endOf(row) && time < endOf(row))))
   if (active) return { expression: 'busy', label: `${active.title} ${active.displayStart}–${active.displayEnd || ''}`, shortLabel: active.type === 'shift' ? active.title : `${active.title} 중` }
   const next = own.find((row) => row.displayStart > time)
   if (next) return { expression: 'basic', label: `${next.title} ${next.displayStart}` }
   const ownTasks = tasks.filter((task) => taskOccursOn(task, now)
     && assignedMemberIds(task, 'assignees', 'assignee').some((id) => id === profile.id || id === 'family'))
-  const allEnded = own.length > 0 && own.every((row) => row.displayEnd && !row.crossesMidnight && row.displayEnd <= time)
+  const allEnded = own.length > 0 && own.every((row) => endOf(row) && !row.crossesMidnight && endOf(row) <= time)
   const tasksDone = ownTasks.every((task) => hasRecurrence(task) ? task.completedDates?.includes(key) : task.done)
   if ((allEnded || (!own.length && ownTasks.length)) && tasksDone) return { expression: 'done', label: '오늘 완료' }
   return { expression: 'basic', label: ownTasks.some((task) => !task.done) ? '할 일 남음' : '쉬는 중' }
