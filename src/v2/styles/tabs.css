@@ -164,3 +164,4 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .task-search:focus-visible { outline: 3px solid var(--tint); }
 .task-late{color:var(--red,#d93025)}
 .member-hidden { opacity: .5; }
+.month-grid .calendar-day .day-number { width: 26px; height: 26px; margin-bottom: 2px; } /* 선택 동그라미 작게, 아래 근무 표시와 간격 */
