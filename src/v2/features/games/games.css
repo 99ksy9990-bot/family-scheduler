@@ -280,3 +280,5 @@
 .clean-cell[data-cat] { background: #fde6c8; color: #b0650a; }
 .clean-cell[data-cat='1'] { background: #fbd3a3; }
 .clean-tip .bin-icon, .clean-tip .web-icon, .clean-tip .cat-icon { width: 56px; height: 56px; }
+.bin-img, .cat-img { display: inline-block; width: 64px; height: 64px; background: center / contain no-repeat; }
+.bin-img { background-image: url(/game/pieces/bin.png); } .cat-img { background-image: url(/game/pieces/cat.png); }
