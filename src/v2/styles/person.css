@@ -183,3 +183,10 @@
 .settings-content .event-form > fieldset { padding: 14px 0 12px; row-gap: 10px; column-gap: 0; justify-content: space-between; }
 .settings-content .event-form > fieldset legend { margin: 0; line-height: 22px; }
 .settings-content .event-form > fieldset .check-label { flex: none; width: 38px; height: 38px; min-height: 38px; max-width: none; padding: 0; justify-content: center; border-radius: 50%; }
+/* 구성원 화면: 큰 제목 대신 폴더 경로를 맨 위 줄에 */
+.v2-app:has(.member-page) .app-heading { display: none; }
+.crumbs { position: sticky; top: calc(env(safe-area-inset-top) + 12px); z-index: var(--z-raised); display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin: 0 -16px 8px; padding: 20px 16px 10px; background: var(--glass-bg); -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8); }
+.crumb { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
+.crumb button { border: 0; background: none; padding: 4px 2px; min-height: 44px; font-size: 22px; font-weight: 600; color: var(--tint-label); }
+.crumb strong { font-size: 28px; font-weight: 700; line-height: 34px; padding: 4px 2px; word-break: keep-all; }
+.crumb-sep { color: var(--label-3, #aeaeb2); flex: none; }

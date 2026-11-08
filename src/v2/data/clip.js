@@ -1,6 +1,7 @@
 // 일정 복사·붙여넣기: 이 폰에만 잠깐 보관 (가족과 공유 안 함)
 const KEY = 'family-scheduler-clip'
 export const getClip = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null') } catch { return null } }
+export const clearClip = () => { try { localStorage.removeItem(KEY) } catch { /* 없음 */ } }
 export const setClip = (event) => { try { localStorage.setItem(KEY, JSON.stringify(event)) } catch { /* 저장 못 하면 복사만 안 됨 */ } }
 
 // 복사한 일정을 다른 날짜로: 새 일정이 되도록 id 빼고, 여러 날 일정은 길이 유지

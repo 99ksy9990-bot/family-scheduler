@@ -1,5 +1,6 @@
-import { getClip } from '../../data/clip'
-import { useMemo, useRef } from 'react'
+import { X } from 'lucide-react'
+import { getClip, clearClip } from '../../data/clip'
+import { useMemo, useRef, useState } from 'react'
 import { addDays, iso } from '../../../lib/dates'
 import { holidaysForYear } from '../../../lib/holidays'
 import { LEAVES, scheduleForDate } from '../../data/schedule'
@@ -28,6 +29,7 @@ function ByPerson({ rows, profiles }) {
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
 export default function Calendar({ today, state, loading, error, onRetry, cursor, onMove, selectedDate, onSelectDate, onPaste }) {
+  const [, setClipTick] = useState(0) // 복사 취소 후 다시 그리기
   const clip = onPaste ? getClip() : null
   const touch = useRef(null)
   const selected = selectedDate ? new Date(`${selectedDate}T00:00:00`) : today
@@ -81,6 +83,6 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         })}
       </div></DataState>
     </section>
-    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>‘{clip.title}’ 붙여넣기</button>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} /></DataState></section>
+    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <span className="paste-bar">{!rows.some((row) => row.title === clip.title && (row.displayStart || '') === (clip.time || '')) && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>‘{clip.title}’ 붙여넣기</button>}<button type="button" className="paste-done" aria-label="붙여넣기 끝내기" onClick={() => { clearClip(); setClipTick((n) => n + 1) }}><X size={16} /></button></span>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} /></DataState></section>
   </div>
 }

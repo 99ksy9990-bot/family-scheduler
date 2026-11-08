@@ -2,7 +2,7 @@ import { periodName, periodParts } from '../../data/periods'
 import { iso } from '../../../lib/dates'
 import { scheduleInPeriod, seasonOf } from '../../../lib/schedule'
 import { useState } from 'react'
-import { Briefcase, CalendarDays, ChevronLeft, ChevronRight, GraduationCap, Plus } from 'lucide-react'
+import { Briefcase, CalendarDays, ChevronRight, GraduationCap, Plus } from 'lucide-react'
 import { MEMBER_COLORS } from '../../../lib/colors'
 import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
 import CharacterAvatar from '../../components/CharacterAvatar'
@@ -18,6 +18,9 @@ const md = (date) => `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))
 const days = (row) => (row.weekdays || [row.weekday]).filter((d) => d !== undefined).map((d) => DAYS[d]).join('·')
 
 // 구성원 한 사람 화면. 각 행은 그 항목만 편집하는 화면(Family editorOnly)을 연다.
+// 폴더 경로처럼: 가족 › 아빠 › 상주 근무 (앞 칸을 누르면 그 단계로)
+const crumbs = (items) => <nav className="crumbs" aria-label="위치">{items.map(([label, go], i) => <span key={i} className="crumb">{i > 0 && <ChevronRight size={18} aria-hidden="true" className="crumb-sep" />}{go ? <button type="button" onClick={go}>{label}</button> : <strong aria-current="page">{label}</strong>}</span>)}</nav>
+
 export default function MemberDetail({ profile, state, updateState, canEdit, onBack }) {
   const [edit, setEdit] = useState(null) // { section, record, title }
   const works = state.workSettings.workerIds?.includes(profile.id)
@@ -45,8 +48,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   const open = (section, title, record = {}) => canEdit && setEdit({ section, title, record: { member: profile.id, ...record } })
 
   if (edit) return <div className="member-page">
-    <nav className="member-nav"><button className="text-button" onClick={() => setEdit(null)}><ChevronLeft size={20} />{profile.name}</button></nav>
-    <h2 className="member-edit-title">{edit.title}</h2>
+    {crumbs([['가족', onBack], [profile.name, () => setEdit(null)], [edit.title]])}
     {edit.section === 'regular' ? <RegularWorkEditor profile={profile} canEdit={canEdit} onCancel={() => setEdit(null)} onSave={(regularWork) => { set({ regularWork }); setEdit(null) }} />
       : edit.section === 'leave' ? <LeaveMonthEditor profile={profile} canEdit={canEdit} onSave={(regularWork) => set({ regularWork })} />
       : edit.section === 'month' ? <ShiftMonthEditor profile={profile} state={state} updateState={updateState} canEdit={canEdit} />
@@ -57,7 +59,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   const addRow = (key, label, onClick) => <GroupedRow key={key} className="member-add" icon={<span className="settings-color-icon" data-tone="add"><Plus size={19} /></span>} title={label} onClick={onClick} />
 
   return <div className="member-page">
-    <nav className="member-nav"><button className="text-button" onClick={onBack}><ChevronLeft size={20} />가족</button></nav>
+    {crumbs([['가족', onBack], [profile.name]])}
     <header className="member-hero">
       <CharacterAvatar profile={profile} size={92} glass />
       <h2>{profile.name}</h2>
