@@ -22,9 +22,9 @@ const seed = async (page) => {
 
 test('모두 4명·여러 명 얼굴이 32px 안에 겹쳐 표시, 달력도 동일', async ({ page }) => {
   await seed(page)
-  const all = page.locator('.house-row').filter({ hasText: '공통 일정' }).locator('.member-stack')
+  const all = page.locator('.today-remaining .grouped-row').filter({ hasText: '공통 일정' }).locator('.member-stack')
   await expect(all.locator('img')).toHaveCount(4)
-  await expect(page.locator('.house-row').filter({ hasText: '두 명 일정' }).locator('.member-stack img')).toHaveCount(2)
+  await expect(page.locator('.today-remaining .grouped-row').filter({ hasText: '두 명 일정' }).locator('.member-stack img')).toHaveCount(2)
   expect(await all.evaluate((element) => {
     const r = element.getBoundingClientRect()
     return r.width === 32 && r.height === 32 && [...element.querySelectorAll('img')].every((img) => { const face = img.getBoundingClientRect(); return face.x >= r.x && face.y >= r.y && face.right <= r.right && face.bottom <= r.bottom })

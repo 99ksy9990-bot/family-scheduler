@@ -1,9 +1,7 @@
+import { ByPerson } from '../calendar/Calendar'
 import CharacterAvatar from '../../components/CharacterAvatar'
-import MemberAvatars from '../../components/MemberAvatars'
-import TimeCell from '../../components/TimeCell'
 import { DataState } from '../../components/DataState'
 import { houseStatus, remainingSchedule } from '../../data/house'
-import { membersFor } from '../../data/members'
 
 export default function Today({ today, now, state, rows, loading, error, onRetry, onPerson }) {
   const profiles = state.profiles.filter((profile) => profile.active !== false)
@@ -19,11 +17,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>
     <section aria-labelledby="remaining-heading"><h2 id="remaining-heading" className="house-section-title">오늘 남은 일정<span className="visually-hidden" data-testid="today-count">{remaining.length}</span></h2>
-      <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <ol className="house-list" aria-label="오늘 남은 일정">{remaining.map((row) => {
-        const members = membersFor(row, state.profiles)
-        const profile = members[0] || { name: row.holiday ? '공휴일' : '기념일' }
-        return <li key={row.id} className={`house-row${row.id === nextTimed?.id ? ' next' : ''}`}><MemberAvatars item={row} profiles={state.profiles} /><div><h3>{row.title}</h3><small>{members.map((member) => member.name).join(' · ') || profile.name}</small></div><TimeCell row={row} /></li>
-      })}</ol> : <div className="empty-state"><h3>오늘 남은 일정이 없어요</h3><p>가족 타일을 누르면 지난 일정도 볼 수 있어요.</p></div>}</DataState>
+      <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} nextId={nextTimed?.id} /></div> : <div className="empty-state"><h3>오늘 남은 일정이 없어요</h3><p>가족 타일을 누르면 지난 일정도 볼 수 있어요.</p></div>}</DataState>
     </section>
 
   </div>

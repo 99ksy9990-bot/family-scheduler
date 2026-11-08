@@ -167,8 +167,6 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .month-grid .calendar-day .day-number { width: 26px; height: 26px; margin-bottom: 2px; } /* 선택 동그라미 작게, 아래 근무 표시와 간격 */
 .app-heading .sound-toggles { margin-right: -40px; } /* + 버튼과 같은 오른쪽 여백(16px) */
 .section-add { width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--tint); display: grid; place-items: center; } .section-add svg { stroke-width: 2.4; } /* 홈·달력 + 버튼과 같은 모양 */
-/* 우리집 로고: 앱 아이콘 + 이름 */
-.app-logo { display: inline-flex; align-items: center; gap: 10px; }
-.app-logo img { width: 40px; height: 40px; border-radius: 11px; box-shadow: 0 2px 8px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.08); flex: none; }
 .heading-line .greeting { font-size: 15px; font-weight: 500; color: var(--label-2); letter-spacing: 0; align-self: flex-end; margin-bottom: 7px; white-space: nowrap; }
 .heading-line .greeting { margin-right: auto; align-self: flex-end; margin-bottom: 9px; }
+.grouped-row.next .time-start { color: var(--tint-label); font-weight: 600; } /* 다음 일정 강조 */
