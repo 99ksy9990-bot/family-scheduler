@@ -43,7 +43,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     const count = Math.ceil((first.getDay() + new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()) / 7) * 7
     return Array.from({ length: count }, (_, index) => addDays(start, index))
   }, [cursor])
-  const rows = [...scheduleForDate(state, selected), ...offRows(state, selected)]
+  const rows = [...scheduleForDate(state, selected).filter((row) => !row.carryover), ...offRows(state, selected)] // 전날 밤 근무는 빼고 그날 근무(또는 OFF)만
   // 교대 근무자(엄마 등)의 근무만 날짜 칸에 이름표로 (사용자 요청 2026-11-06, 달력 A 방식)
   const shiftLabels = useMemo(() => {
     const ws = state.workSettings || {}

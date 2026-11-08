@@ -24,7 +24,7 @@ export function personDayRows(state, memberId, date, today) {
     return !task.dueDate || task.dueDate < key
   }).map((task) => ({ ...task, id: `task-${task.id}`, task: true, displayStart: clock(task.time), displayEnd: clock(task.end) }))
   const off = offRows(state, date).filter((r) => r.member === memberId)
-  return [...rowsForMember(scheduleForDate(state, date), memberId), ...off, ...tasks]
+  return [...rowsForMember(scheduleForDate(state, date), memberId).filter((row) => !row.carryover), ...off, ...tasks] // 전날 밤 근무는 빼고 그날 근무만
     .sort((a, b) => (a.displayStart || '').localeCompare(b.displayStart || '') || a.title.localeCompare(b.title, 'ko'))
 }
 
