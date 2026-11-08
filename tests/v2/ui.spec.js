@@ -192,7 +192,7 @@ test('자녀 시간표·학기와 기념일 편집 저장', async ({ page }) => 
   await page.clock.runFor(500)
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-child-schedules-v1'))[0].weekdays)).toEqual([4])
   await page.locator('.member-nav button').click()
-  await page.locator('.family-section-heading').filter({ hasText: '우리 가족 날' }).getByRole('button', { name: '추가' }).click()
+  await page.locator('.family-section-heading').filter({ hasText: '생일·기념일' }).getByRole('button', { name: '추가' }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('textbox', { name: '이름', exact: true }).fill('가족 기념')
   await dialog.getByLabel('월', { exact: true }).fill('11')
@@ -209,7 +209,7 @@ test.describe('로그인 전', () => {
 test('설정 순서·가족 연결 로그인/회원가입 화면·실제 전송 없는 오류 표시', async ({ page }) => {
   await page.route('**/auth/v1/**', (route) => route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'invalid_grant', error_description: '테스트용 연결 오류' }) }))
   await page.getByRole('navigation').getByRole('button', { name: '가족', exact: true }).click()
-  await expect(page.locator('.family-page .house-section-title')).toHaveText(['구성원', '우리 가족 날', '연결', '앱', '정보'])
+  await expect(page.locator('.family-page .house-section-title')).toHaveText(['구성원', '생일·기념일', '연결', '앱', '정보'])
   await page.getByRole('button', { name: /^가족 연결/ }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByRole('heading', { name: '가족 연결', exact: true })).toBeVisible()

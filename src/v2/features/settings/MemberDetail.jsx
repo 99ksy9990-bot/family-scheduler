@@ -21,9 +21,10 @@ const days = (row) => (row.weekdays || [row.weekday]).filter((d) => d !== undefi
 export default function MemberDetail({ profile, state, updateState, canEdit, onBack }) {
   const [edit, setEdit] = useState(null) // { section, record, title }
   const [undo, setUndo] = useState(false)
-  const child = profile.type === 'child'
   const works = state.workSettings.workerIds?.includes(profile.id)
   const mode = profile.regularWork ? 'regular' : works ? 'shift' : null
+  // 근무가 있으면 근무만, 학교·수업이 있으면 학교만, 둘 다 없으면 둘 다 보여 고르게
+  const hasSchool = state.childProfiles.some((row) => row.member === profile.id) || state.childSchedules.some((row) => row.member === profile.id || row.members?.includes(profile.id))
   // 상주 ↔ 교대 바꾸기. 교대 기록(shifts)은 지우지 않고 근무자 목록만 바꿈
   const setMode = (next) => {
     if (next === mode) return
@@ -62,10 +63,10 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
     <header className="member-hero">
       <CharacterAvatar profile={profile} size={92} glass />
       <h2>{profile.name}</h2>
-      <p>{[child ? '아이' : '어른', school && [school.school, school.grade && `${school.grade}학년`].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}</p>
+      <p>{[school && [school.school, school.grade && `${school.grade}학년`].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}</p>
     </header>
 
-    {!child && <section><h3 className="house-section-title">근무</h3>
+    {!hasSchool && <section><h3 className="house-section-title">근무</h3>
       <div className="ui-segments work-mode" role="group" aria-label="근무 방식">{[['regular', '상주 근무'], ['shift', '교대 근무'], [null, '근무 없음']].map(([id, label]) => <button type="button" key={label} aria-pressed={mode === id} disabled={!canEdit} onClick={() => setMode(id)}>{label}</button>)}</div>
       {mode && <GroupedList label="근무">
       {mode === 'regular' ? <>
@@ -77,7 +78,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
       </>}
     </GroupedList>}</section>}
 
-    {child && <><section><h3 className="house-section-title">학교</h3><GroupedList label="학교">
+    {!mode && <><section><h3 className="house-section-title">학교</h3><GroupedList label="학교">
       {row('school', icon(GraduationCap, 'green'), '학교 정보', school ? [school.school, school.grade && `${school.grade}학년 ${school.classNumber || ''}반`].filter(Boolean).join(' ') : '아직 없음', () => open('schools', '학교 정보', school))}
       {periods.map((p) => row(p.id, icon(CalendarDays, seasonOf(p.season) === '방학' ? 'blue' : 'orange'), `${periodName(p, school)}${p.start <= todayKey && todayKey <= p.end ? ' (지금)' : ''}`, `${dot(p.start)} – ${dot(p.end)}`, () => { const parts = periodParts(p, school); open('periods', '학기·방학', { ...p, term: parts.term, grade: parts.grade ? String(parts.grade) : p.grade }) }))}
       {addRow('period-add', '학기·방학 추가', () => open('periods', '학기·방학 추가', { member: profile.id }))}
