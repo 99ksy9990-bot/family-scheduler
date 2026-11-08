@@ -8,7 +8,7 @@ export function center(host, el) {
   return { x: r.left - h.left + r.width / 2, y: r.top - h.top + r.height / 2 }
 }
 
-export function pop(host, x, y, text, tone = 'good') {
+export function pop(host, x, y, text, tone = 'good', duration = 1500) {
   if (!host) return
   const n = document.createElement('span')
   n.className = `fx-pop fx-${tone}`; n.textContent = text
@@ -23,7 +23,7 @@ export function pop(host, x, y, text, tone = 'good') {
     { transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 },
     { transform: 'translate(-50%,-80%) scale(1.15)', opacity: 1, offset: 0.15 },
     { transform: 'translate(-50%,-90%) scale(1)', opacity: 1, offset: 0.7 },
-    { transform: 'translate(-50%,-160%) scale(1)', opacity: 0 }], { duration: 1500, easing: 'ease-out' })
+    { transform: 'translate(-50%,-160%) scale(1)', opacity: 0 }], { duration, easing: 'ease-out' })
   a.onfinish = () => n.remove()
 }
 

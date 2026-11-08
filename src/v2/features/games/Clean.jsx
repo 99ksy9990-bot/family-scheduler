@@ -238,7 +238,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       r.state.gift = next > unlocked && next % GIFT_EVERY === 0; r.state.streak = streak + 1
       setDay(w); setStreak(streak + 1)
       setUnlocked(next); setStars(nextStars); const mon = mondayKey(new Date()); const wk = { mon, n: (week?.mon === mon ? week.n : 0) + 1 }; const pw = week && week.mon !== mon ? { prevWeek: week } : {}; setWeek(wk); save({ unlocked: next, stars: nextStars, streak: streak + 1, day: w, week: wk, ...pw }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
-      const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
+      const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n}번 보너스!`, 'gold', 2600)
       if (el) confetti(el)
       onFinish?.({ level: 'normal', score: s.stage + 1, tried: s.stage + 1, win: true })
     }
@@ -356,7 +356,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       <li><b>ㄱ·T</b> 폭탄 · <b>5개</b> 무지개</li>
     </ul></details>
     {tip && !s.done && <div className="game-done clean-tip" role="dialog" aria-label={tip[1]}><i className={tip[0]} /><b>{tip[1]}</b><p>{tip[2]}</p><button className="primary-button clean-play" autoFocus onClick={() => { const n = [...seen, s.stage]; setSeen(n); save({ seen: n }); setTip(null) }}>알겠어요</button></div>}
-    {s.done === 'win' && <div className="game-done"><b>{s.stage + 1}단계 깨끗해졌어요! {'★'.repeat((s.stars || 1) * (STAGES[s.stage].hard ? 2 : 1))}{s.gift ? ` · 선물 상자 ★${GIFT}` : ''}{s.streak > 1 ? ` · ${s.streak}연승` : ''}</b><button className="game-level" onClick={() => { setS(null); setSel(null) }}>별 쓰러 집으로</button></div>}
+    {s.done === 'win' && <div className="game-done clean-tip clean-win" role="dialog" aria-label="단계 성공"><Face player={player} mood="done" size={72} /><b>{s.stage + 1}단계 깨끗해졌어요!</b><span className="clean-win-stars" aria-label={`별 ${(s.stars || 1) * (STAGES[s.stage].hard ? 2 : 1)}개`}>{'★'.repeat((s.stars || 1) * (STAGES[s.stage].hard ? 2 : 1))}</span>{(s.gift || s.streak > 1) && <p>{[s.gift && `선물 상자 ★${GIFT}`, s.streak > 1 && `${s.streak}연승`].filter(Boolean).join(' · ')}</p>}<div className="clean-win-actions">{unlocked < STAGES.length && <button className="primary-button clean-play" autoFocus onClick={() => { setSel(null); startStage(unlocked) }}>{unlocked + 1}단계 도전</button>}<button className="game-level" onClick={() => { setS(null); setSel(null) }}>별 쓰러 집으로</button></div></div>}
     {s.done === 'lose' && <div className="game-done"><b>이동을 다 썼어요{streak ? ` (지면 ${streak}연승이 끊겨요)` : ''}</b><button className="game-level" disabled={wallet < PRICE.moves} onClick={keepGoing}>이동 +{EXTRA_MOVES} 이어하기 ★{PRICE.moves}</button><button className="game-level" onClick={giveUp}>그만하기</button></div>}
   </div>
 }
