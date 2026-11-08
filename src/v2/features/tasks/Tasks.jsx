@@ -8,6 +8,9 @@ import { assignedMemberIds } from '../../../lib/legacyState'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import TaskForm from './TaskForm'
 
+// 2026-11-05 → 11/5(목)
+const shortDate = (d) => { if (!d) return ''; const t = new Date(`${d}T00:00:00`); return `${t.getMonth() + 1}/${t.getDate()}(${'일월화수목금토'[t.getDay()]})` }
+
 export default function Tasks({ state, updateState, canEdit, today }) {
   const [category, setCategory] = useState('all')
   const [selected, setSelected] = useState(null)
@@ -53,7 +56,7 @@ export default function Tasks({ state, updateState, canEdit, today }) {
     {groups.map(([title, items]) => <details className="task-group" key={title} open={(title === '할 일' && items.length > 0) || (q && items.length) ? true : undefined}><summary>{title}<span>{items.length}<ChevronRight size={16} /></span></summary>
       {items.length ? <GroupedList label={title}>{items.map((row) => <li className="todo-row" key={row.id}>
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
-        <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? `끝냄${row.completedDate && row.completedDate !== iso(today) ? ` · ${row.completedDate.slice(5).replace('-', '/')}` : ''}` : [row.time || row.dueDate, row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
+        <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? `끝냄${row.completedDate && row.completedDate !== iso(today) ? ` · ${row.completedDate.slice(5).replace('-', '/')}` : ''}` : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
         <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={32} expression={row.done ? 'done' : 'basic'} />)}</span>
       </li>)}</GroupedList> : <div className="empty-state">{title.includes('끝낸') ? (q ? '찾는 할 일이 없어요.' : '아직 끝낸 일이 없어요.') : '할 일이 없어요.'}</div>}
     </details>)}

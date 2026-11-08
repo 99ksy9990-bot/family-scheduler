@@ -66,7 +66,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
     {crumbs([['가족', onBack], [profile.name]])}
     <header className="member-hero">
       <CharacterAvatar profile={profile} size={92} glass />
-      <h2>{profile.name}</h2>
+      <h2 className="visually-hidden">{profile.name}</h2>
       <p>{[school && [school.school, school.grade && `${school.grade}학년`].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}</p>
     </header>
 
