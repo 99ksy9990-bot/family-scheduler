@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { N, STAGES, FINITE, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
 import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
 import { ROOMS } from './cleanRooms'
+import { HUES } from './pieceHues'
 import { mondayKey } from '../../data/gameScores'
 import { GAME_NAMES, PERK_TEXT, roomGame } from './theme'
 import { COMP, GIFT, GIFT_EVERY, arcadeOf } from './wallet'
@@ -13,7 +14,16 @@ const perkCompOf = (p) => (!p || p.perkComp ? 0 : ROOMS.filter((r, k) => roomGam
 
 const IMG0 = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 // 블록 그림: 1~10단계는 기본, 그 뒤 10단계마다 그 방과 다음 방의 꾸미기 물건 6개로 바꿈
-const piecesFor = (stage) => { const c = Math.floor(stage / 10); if (!c) return IMG0; const a = ROOMS[c % ROOMS.length], b = ROOMS[(c + 1) % ROOMS.length]; const imgs = [...new Set([...a.tasks, ...b.tasks].map((t) => t.img))]; return imgs.length >= 6 ? imgs.slice(0, 6) : IMG0 }
+const hueGap = (a, b) => (a < 0 || b < 0 ? (a === b ? 0 : 60) : Math.min(Math.abs(a - b), 360 - Math.abs(a - b)))
+// 그 방부터 열두 방의 물건 중 (그 방 물건이 먼저), 색이 서로 가장 멀리 떨어지게 6개를 고름 (톤이 비슷하면 눈이 아파서)
+const piecesFor = (stage) => {
+  const c = Math.floor(stage / 10); if (!c) return IMG0
+  const pool = [...new Map(Array.from({ length: 12 }, (_, d) => d).flatMap((d) => ROOMS[(c + d) % ROOMS.length].tasks).map((t) => [t.img, HUES[t.img.slice(11, -4)] ?? -1])).entries()]
+  if (pool.length < 6) return IMG0
+  const pick = [pool[0]]
+  while (pick.length < 6) { let best = null, gap = -1; for (const x of pool) { if (pick.includes(x)) continue; const g = Math.min(...pick.map((p) => hueGap(p[1], x[1]))); if (g > gap) { gap = g; best = x } } pick.push(best) }
+  return pick.map(([img]) => img)
+}
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }
 const ITEMS = { hammer: 3, shuffle: 1 } // 단계마다 새로 받는 아이템 수
 // 별: 단계마다 받은 별(1~3, 어려운 단계는 2배) + 10단계마다 선물 상자 + 주간 이벤트 보상
