@@ -18,7 +18,7 @@ export function personDayRows(state, memberId, date, today) {
   // 교대 근무자의 오프도 한 줄로 (밤 근무가 이어져 와도 그날이 쉬는 날임을 보여 줌)
   const ws = state.workSettings || {}
   const off = ws.enabled && ws.workerIds?.includes(memberId) && state.shifts.findLast((s) => s.member === memberId && s.date === key)?.shift === 'off'
-    ? [{ id: `off-${memberId}-${key}`, type: 'shift', title: '오프', member: memberId, date: key, displayStart: '하루 종일' }] : []
+    ? [{ id: `off-${memberId}-${key}`, type: 'shift', title: 'OFF', member: memberId, date: key, displayStart: '하루 종일' }] : []
   return [...rowsForMember(scheduleForDate(state, date), memberId), ...off, ...tasks]
     .sort((a, b) => (a.displayStart || '').localeCompare(b.displayStart || '') || a.title.localeCompare(b.title, 'ko'))
 }
