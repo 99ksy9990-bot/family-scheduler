@@ -69,8 +69,11 @@ test('승리하면 별과 남은 이동 보너스', () => {
   assert.ok(r.events.some((e) => e.type === 'bonus' && e.n === STAGES[0].moves - 1))
 })
 
-test('300단계·먼지 최대 2겹', () => {
-  assert.equal(STAGES.length, 300)
+test('400단계 + 무한·먼지 최대 2겹·얼룩·모든 단계 시작 가능', () => {
+  assert.ok(STAGES.length > 9000)
+  for (let i = 0; i < 420; i++) assert.ok(begin(i).moves > 0, `${i + 1}단계`)
+  const st = STAGES.findIndex((x) => x.stain.length)
+  assert.ok(st >= 20 && begin(st).stain.some(Boolean))
   assert.ok(STAGES.every((st) => !st.dust || st.dust.hp <= 2))
   assert.ok(begin(99).moves > 0)
 })

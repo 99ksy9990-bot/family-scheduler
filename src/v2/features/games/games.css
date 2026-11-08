@@ -263,3 +263,9 @@
 .catch-lives img.lost { opacity: .45; animation: heart-lost .6s ease-out; }
 @keyframes heart-lost { 0% { transform: scale(1.8); opacity: 1; } 40% { transform: scale(1.2) rotate(-12deg); } 100% { transform: none; opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .catch-area.hurt::after, .catch-lives img.lost { animation: none; } }
+/* 얼룩: 저절로 번지는 갈색 자국 */
+.clean-cell[data-stain] { background: radial-gradient(ellipse at 40% 45%, #b07a4a 0 30%, transparent 31%), radial-gradient(circle at 68% 68%, #c4936a 0 16%, transparent 17%), radial-gradient(circle at 26% 74%, #c4936a 0 10%, transparent 11%), #ecd9c4; }
+.stain-icon { display: inline-block; width: 28px; height: 28px; border-radius: 8px; background: radial-gradient(ellipse at 45% 45%, #b07a4a 0 34%, transparent 35%), radial-gradient(circle at 72% 70%, #c4936a 0 16%, transparent 17%), #ecd9c4; }
+.clean-tip .stain-icon { width: 56px; height: 56px; }
+/* 대청소 판 뒤 배경: 10단계마다 다른 방 (흐리게 깔아 물건이 잘 보이게) */
+.clean .clean-board { background: linear-gradient(rgb(232 240 251 / .72), rgb(232 240 251 / .72)), var(--room-bg, none) center / cover, #e8f0fb; }

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { N, STAGES, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
+import { N, STAGES, FINITE, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
 import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
 import { ROOMS } from './cleanRooms'
+import { mondayKey } from '../../data/gameScores'
 import { GAME_NAMES, PERK_TEXT, roomGame } from './theme'
 import { COMP, GIFT, GIFT_EVERY, arcadeOf } from './wallet'
 import './games.css'
@@ -31,7 +32,7 @@ const PRICE = { hammer: 1, shuffle: 1, moves: 2, row: 2, col: 2, eraser: 3 } // 
 const STREAK = ['row', 'bomb', 'rainbow'] // 연승 1·2·3번째부터 시작 아이템 하나씩 더
 const now = () => Date.now()
 // 새 방해물이 처음 나오는 단계에서 한 번 설명
-const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'] }
+const FIRST = { [STAGES.findIndex((st) => st.ice.length)]: ['ice-icon', '얼음이 나왔어요!', '얼음 속 물건은 못 움직여요. 그 칸에서 맞추면 얼음이 깨져요.'], [STAGES.findIndex((st) => st.foam.length)]: ['foam-icon', '거품이 나왔어요!', '거품 칸에서 맞추면 닦여요. 한 번 움직일 때 하나도 못 닦으면 옆으로 번져요.'], [STAGES.findIndex((st) => st.stain.length)]: ['stain-icon', '얼룩이 나왔어요!', '얼룩 칸에서 맞추면 지워져요. 3번 움직일 때마다 저절로 옆으로 번지니 빨리 지워요.'] }
 const EXTRA_MOVES = 5 // 다 쓰면 별로 사기
 // 받은 효과를 종류별로 합쳐서 한 줄로
 const START_NAME = { row: '로켓', col: '로켓', bomb: '폭탄', prop: '프로펠러', rainbow: '무지개' }
@@ -107,6 +108,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return dayId(d) })()
   const runNow = attend.last === dayId() || attend.last === yesterday ? attend.run : 0
   const [tip, setTip] = useState(null)
+  const [week, setWeek] = useState(() => progress?.week || null) // 이번 주 깬 단계 수 (왕관용)
   const [seen, setSeen] = useState(() => progress?.seen || []) // 이미 본 설명 (단계 번호)
   // 별 계산을 바꾸면서 줄어든 별을 한 번 보상 (예전부터 하던 사람만)
   const [comp] = useState(() => progress?.comp || ((progress?.unlocked || 0) > 0 ? COMP : 0))
@@ -190,7 +192,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       <div className="clean-talk"><Face player={player} mood={cheer ? 'done' : 'basic'} /><p>{roomIndex < 0 ? (home ? '우리집이 다 깨끗해졌어! 게임에서 별을 더 모아 봐.' : '우리집이 다 깨끗해졌어! 단계를 더 깨서 별을 모아 봐.') : cheer || room.say}</p></div>
       {!home && unlocked < STAGES.length && <button className={`primary-button clean-play${STAGES[unlocked].hard ? ' hard' : ''}`} onClick={() => startStage(unlocked)}>{unlocked + 1}단계 도전{STAGES[unlocked].hard ? ' · 어려움 별 2배' : ''}{(unlocked + 1) % GIFT_EVERY === 0 ? ' · 선물 상자' : ''}{streak ? ` · ${streak}연승 보너스` : ''}</button>}
       {!home && <details className="clean-all"><summary>지난 단계 다시 하기</summary>
-        <div className="clean-stages">{STAGES.map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
+        <div className="clean-stages">{STAGES.slice(0, Math.max(FINITE, unlocked + 1)).map((st, i) => <button key={i} className={`clean-stage${st.hard ? ' hard' : ''}`} disabled={i > unlocked} aria-label={`${i + 1}단계${i > unlocked ? ' 잠김' : ''}`} onClick={() => startStage(i)}><b>{i + 1}</b><small className="clean-stars">{i < unlocked ? '★'.repeat(stars[i] || 1).padEnd(3, '☆') : i === unlocked ? '도전' : '잠김'}</small></button>)}</div>
       </details>}
       <p className="clean-perk">이 방 담당: <b>{GAME_NAMES[roomGame(ROOMS.indexOf(room))]}</b> · 다 꾸미면 <b>{room.perk?.text || PERK_TEXT[roomGame(ROOMS.indexOf(room))]}</b><br />모든 게임 아이템 판마다 1번 무료, 게임 배경으로도 나와요</p>
       {perks.length > 0 && <p className="clean-perk">지금 받는 효과: {perkSummary(perks)}</p>}
@@ -210,7 +212,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       const x = (e.i % N + 0.5) * cell; const y = (Math.floor(e.i / N) + 0.5) * cell
       if (e.type === 'make') pop(el, x, y, SP_LABEL[e.sp], 'gold')
       else if (e.type === 'combo') pop(el, x, y, '합체!', 'gold')
-      else if (['smash', 'box', 'ice', 'foam'].includes(e.type)) burst(el, x, y, 10)
+      else if (['smash', 'box', 'ice', 'foam', 'stain'].includes(e.type)) burst(el, x, y, 10)
       else if (e.type === 'drop') { burst(el, x, y, 16); pop(el, x, y, '오리 구출!', 'gold') }
       if (['row', 'col', 'bomb', 'rainbow', 'prop', 'combo'].includes(e.type)) specialFx(el, e)
     }
@@ -226,7 +228,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       const w = { ...day, n: day.n + dustNow.current + won }; dustNow.current = 0
       r.state.gift = next > unlocked && next % GIFT_EVERY === 0; r.state.streak = streak + 1
       setDay(w); setStreak(streak + 1)
-      setUnlocked(next); setStars(nextStars); save({ unlocked: next, stars: nextStars, streak: streak + 1, day: w }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
+      setUnlocked(next); setStars(nextStars); const mon = mondayKey(new Date()); const wk = { mon, n: (week?.mon === mon ? week.n : 0) + 1 }; setWeek(wk); save({ unlocked: next, stars: nextStars, streak: streak + 1, day: w, week: wk }); try { localStorage.setItem(progressKey(player), String(next)); localStorage.setItem(starKey(player), JSON.stringify(nextStars)) } catch { /* 진행도 저장 못 해도 게임은 계속 */ }
       const bonus = r.events.find((e) => e.type === 'bonus'); if (bonus?.n && el) pop(el, el.clientWidth / 2, el.clientWidth / 3, `남은 이동 ${bonus.n} → 보너스!`, 'gold')
       if (el) confetti(el)
       onFinish?.({ level: 'normal', score: s.stage + 1, tried: s.stage + 1, win: true })
@@ -305,14 +307,14 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
 
   const gs = goals(s)
   const mood = s.done === 'win' ? 'done' : s.done === 'lose' || s.moves <= 3 ? 'busy' : cheer ? 'done' : 'basic'
-  return <div className="clean">
+  return <div className="clean" style={{ '--room-bg': `url(/game/room/${ROOMS[Math.floor(s.stage / 10) % ROOMS.length].bg}.jpg)` }}>
     <div className="clean-hud">
-      <div className="clean-panel"><small>목표</small><span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-label="먼지" /> : g.kind === 'box' ? <i className="box-icon" aria-label="상자" /> : g.kind === 'drop' ? <img src="/game/room/duck.png" alt="오리" /> : g.kind === 'ice' ? <i className="ice-icon" aria-label="얼음" /> : g.kind === 'foam' ? <i className="foam-icon" aria-label="거품" /> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span></div>
-      <div className="clean-hero"><Face player={player} mood={mood} size={64} /><b className={`clean-stage-no${STAGES[s.stage].hard ? ' hard' : ''}`}>{s.stage + 1}단계</b>{STAGES[s.stage].hard && <small className="clean-hard-tag">어려움</small>}</div>
+      <div className="clean-panel"><small>목표</small><span className="clean-goals" aria-label="목표">{gs.map((g) => <span key={g.kind} className={g.left ? '' : 'done'}>{g.kind === 'dust' ? <i className="dust-icon" aria-label="먼지" /> : g.kind === 'box' ? <i className="box-icon" aria-label="상자" /> : g.kind === 'drop' ? <img src="/game/room/duck.png" alt="오리" /> : g.kind === 'ice' ? <i className="ice-icon" aria-label="얼음" /> : g.kind === 'foam' ? <i className="foam-icon" aria-label="거품" /> : g.kind === 'stain' ? <i className="stain-icon" aria-label="얼룩" /> : <img src={IMG[g.kind]} alt="" />}<b>{g.left || '✓'}</b></span>)}</span></div>
+      <div className="clean-hero"><Face player={player} mood={mood} size={64} /><b className={`clean-stage-no${STAGES[s.stage].hard ? ' hard' : ''}`}>{s.stage + 1}단계</b>{s.stage >= FINITE && <small className="clean-hard-tag">무한</small>}{STAGES[s.stage].hard && <small className="clean-hard-tag">어려움</small>}</div>
       <div className="clean-panel"><small>이동 횟수</small><b className="clean-moves">{s.moves}</b></div>
     </div>
     <div className={`clean-board fx-host${hammer || broom || eraser ? ' aiming' : ''}`} ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>
-      {s.board.map((t, i) => t.fix === 'hole' ? <span key={i} className="clean-hole" /> : <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}${hint?.includes(i) ? ' hint' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} data-box={t.fix === 'box' ? t.hp : undefined} data-ice={t.ice || undefined} data-foam={s.foam?.[i] || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.fix === 'box' ? ' 상자' : ''}${t.drop ? ' 오리' : ''}${t.ice ? ' 얼음' : ''}${s.foam?.[i] ? ' 거품' : ''}${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ` 먼지 ${s.dust[i]}겹` : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
+      {s.board.map((t, i) => t.fix === 'hole' ? <span key={i} className="clean-hole" /> : <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}${hint?.includes(i) ? ' hint' : ''}`} data-dust={s.dust[i] || undefined} data-sp={t.sp || undefined} data-box={t.fix === 'box' ? t.hp : undefined} data-ice={t.ice || undefined} data-foam={s.foam?.[i] || undefined} data-stain={s.stain?.[i] || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.fix === 'box' ? ' 상자' : ''}${t.drop ? ' 오리' : ''}${t.ice ? ' 얼음' : ''}${s.foam?.[i] ? ' 거품' : ''}${s.stain?.[i] ? ' 얼룩' : ''}${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ` 먼지 ${s.dust[i]}겹` : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
         {t.k >= 0 ? <img src={IMG[t.k]} alt="" draggable="false" /> : t.drop ? <img className="clean-duck" src="/game/room/duck.png" alt="" draggable="false" /> : null}{s.dust[i] > 1 && <i className="dust-badge" aria-hidden="true">{s.dust[i]}</i>}
       </button>)}
     </div>
