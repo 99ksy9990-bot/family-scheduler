@@ -1,3 +1,4 @@
+import { setClip } from '../data/clip'
 import { useState } from 'react'
 import Sheet from './Sheet'
 import CharacterAvatar from './CharacterAvatar'
@@ -84,6 +85,7 @@ export default function EventForm({ date, profiles, onSave, onClose, onModeChang
         </div>
         <div className="form-group"><details className="form-disclosure"><summary>일정 분류<span>{scope === 'family' ? '가족' : `자녀 · ${kind}`} ›</span></summary><div className="ui-segments" role="group" aria-label="일정 분류"><button type="button" aria-pressed={scope === 'family'} onClick={() => setScope('family')}>가족</button><button type="button" aria-pressed={scope === 'children'} disabled={!active.some((profile) => profile.type === 'child')} onClick={() => setScope('children')}>자녀</button></div>{scope === 'children' && <div className="ui-segments" role="group" aria-label="자녀 일정 종류">{['학교', '학원'].map((value) => <button type="button" key={value} aria-pressed={kind === value} onClick={() => setKind(value)}>{value}</button>)}</div>}</details></div>
         {error && <p className="error" role="alert">{error}</p>}
+        {initialEvent && <button type="button" className="copy-event" onClick={() => { setClip(initialEvent); onClose() }}>이 일정 복사하기</button>}
       </div>
     </form>
   </Sheet>

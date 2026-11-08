@@ -1,3 +1,4 @@
+import { getClip } from '../../data/clip'
 import { useMemo, useRef } from 'react'
 import { addDays, iso } from '../../../lib/dates'
 import { holidaysForYear } from '../../../lib/holidays'
@@ -26,7 +27,8 @@ function ByPerson({ rows, profiles }) {
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
-export default function Calendar({ today, state, loading, error, onRetry, cursor, onMove, selectedDate, onSelectDate }) {
+export default function Calendar({ today, state, loading, error, onRetry, cursor, onMove, selectedDate, onSelectDate, onPaste }) {
+  const clip = onPaste ? getClip() : null
   const touch = useRef(null)
   const selected = selectedDate ? new Date(`${selectedDate}T00:00:00`) : today
   const days = useMemo(() => {
@@ -79,6 +81,6 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         })}
       </div></DataState>
     </section>
-    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span></h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} /></DataState></section>
+    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>‘{clip.title}’ 붙여넣기</button>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} /></DataState></section>
   </div>
 }

@@ -19,6 +19,7 @@ const watchHeading = (el) => {
 import Calendar from './features/calendar/Calendar'
 import Play, { SoundToggles } from './features/play/Play'
 import EventForm from './components/EventForm'
+import { getClip, pasteAt } from './data/clip'
 import TabIcon from './components/TabIcon'
 
 const FamilyScreen = lazy(() => import('./features/settings/Settings'))
@@ -68,7 +69,7 @@ function Workspace({ scheduler }) {
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
         {tab === 'today' ? <><Today {...props} rows={rows} onPerson={setPerson} /><Tasks state={state} updateState={updateState} canEdit={canEdit} today={today} /></>
-          : tab === 'calendar' ? <Calendar {...props} cursor={cursor} onMove={move} selectedDate={calendarDate} onSelectDate={setCalendarDate} />
+          : tab === 'calendar' ? <Calendar {...props} onPaste={canEdit ? (date) => { const clip = getClip(); if (clip) addEvent(pasteAt(clip, date)) } : null} cursor={cursor} onMove={move} selectedDate={calendarDate} onSelectDate={setCalendarDate} />
             : tab === 'play' ? <Play state={state} updateState={updateState} /> : <FamilyScreen state={state} updateState={updateState} canEdit={canEdit} sync={sync} selected={familyPanel} onSelect={setFamilyPanel} onPerson={setPerson} />}
       </Suspense>}
     </main>
