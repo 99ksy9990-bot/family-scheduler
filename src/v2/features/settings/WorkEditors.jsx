@@ -45,6 +45,19 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
     updateState((current) => ({ ...current, shifts: [...current.shifts.filter((s) => !(s.member === profile.id && s.date === key)), ...(next ? [{ id: crypto.randomUUID(), member: profile.id, date: key, shift: next }] : [])] }))
   }
   const code = (id) => id === 'off' ? 'OFF' : types.find((t) => t.id === id)?.code || ''
+  // 한 번에 넣기: "D D E N N OFF ..." 처럼 1일부터 차례로. 연·교육·공가 등 모르는 글자는 OFF로
+  const [bulk, setBulk] = useState('')
+  const applyBulk = () => {
+    const tokens = bulk.trim().split(/[\s,]+/).filter(Boolean)
+    const last = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
+    if (!tokens.length || !canEdit) return
+    if (!window.confirm(`${month.getMonth() + 1}월 1일부터 ${Math.min(tokens.length, last)}일까지 덮어쓸까요?`)) return
+    const idFor = (t) => types.find((x) => x.code?.toUpperCase() === t.toUpperCase())?.id || 'off'
+    const rows = tokens.slice(0, last).map((t, i) => ({ id: crypto.randomUUID(), member: profile.id, date: iso(new Date(month.getFullYear(), month.getMonth(), i + 1)), shift: idFor(t) }))
+    const keys = new Set(rows.map((r) => r.date))
+    updateState((current) => ({ ...current, shifts: [...current.shifts.filter((x) => !(x.member === profile.id && keys.has(x.date))), ...rows] }))
+    setBulk('')
+  }
   return <div className="work-editor">
     <div className="shift-brush" role="group" aria-label="근무 종류">{types.map((t) => <button type="button" key={t.id} data-shift={t.id} aria-pressed={brush === t.id} onClick={() => setBrush(t.id)}><b>{t.id === 'off' ? 'OFF' : t.code}</b><small>{t.id === 'off' ? '휴무' : t.start}</small></button>)}</div>
     <p className="quiet">근무 종류를 고르고 날짜를 누르세요. 같은 날을 다시 누르면 지워져요.</p>
@@ -53,6 +66,11 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
       {cells.map((d) => { const key = iso(d); const s = mine.get(key); return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={s || ''} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${s ? code(s) : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{s ? code(s) : ''}</b></button> })}
     </div>
+    {canEdit && <details className="form-disclosure bulk-shift"><summary>한 달 한 번에 넣기 ›</summary>
+      <p className="quiet">1일부터 차례로 코드를 띄어 쓰세요. 예: D D E N N OFF OFF … (연차·교육은 OFF)</p>
+      <textarea aria-label="한 달 근무 코드" rows={3} value={bulk} onChange={(e) => setBulk(e.target.value)} placeholder="D D E N N OFF OFF" />
+      <button type="button" className="primary-button" disabled={!bulk.trim()} onClick={applyBulk}>{month.getMonth() + 1}월에 넣기</button>
+    </details>}
   </div>
 }
 
