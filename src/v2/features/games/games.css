@@ -290,3 +290,10 @@
 /* 3매치 힌트: 대청소처럼 바꿀 두 칸이 흔들림 */
 .match-cell.hint { animation: clean-hint 0.9s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .match-cell.hint { animation: none; outline: 3px solid var(--tint); } }
+/* 종류마다 다른 바탕색: 그림 톤이 비슷해도 한눈에 구분 (방해물 칸은 각자 바탕 유지) */
+.clean-cell[data-k='0']:not([data-dust],[data-box],[data-foam],[data-stain],[data-cat]) { background: #ffd9d9; }
+.clean-cell[data-k='1']:not([data-dust],[data-box],[data-foam],[data-stain],[data-cat]) { background: #ffe6c2; }
+.clean-cell[data-k='2']:not([data-dust],[data-box],[data-foam],[data-stain],[data-cat]) { background: #fff6b8; }
+.clean-cell[data-k='3']:not([data-dust],[data-box],[data-foam],[data-stain],[data-cat]) { background: #d4f5d4; }
+.clean-cell[data-k='4']:not([data-dust],[data-box],[data-foam],[data-stain],[data-cat]) { background: #d3e6ff; }
+.clean-cell[data-k='5']:not([data-dust],[data-box],[data-foam],[data-stain],[data-cat]) { background: #eadcff; }
