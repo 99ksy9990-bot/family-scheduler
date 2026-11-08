@@ -14,7 +14,7 @@ export function RegularWorkEditor({ profile, canEdit, onSave, onCancel }) {
   const [w, setW] = useState(init)
   const toggle = (d) => setW((v) => ({ ...v, weekdays: v.weekdays.includes(d) ? v.weekdays.filter((x) => x !== d) : [...v.weekdays, d].sort() }))
   return <div className="work-editor">
-    <ul className="grouped-list">
+    <ul className="grouped-list form-like">
       <li className="grouped-row"><span className="grouped-body"><strong>요일</strong></span><span className="day-pick" role="group" aria-label="근무 요일">{DAYS.map((n, d) => <button type="button" key={d} aria-pressed={w.weekdays.includes(d)} onClick={() => toggle(d)}>{n}</button>)}</span></li>
       <li className="grouped-row"><span className="grouped-body"><strong>시작</strong></span><NativeChip label="시작" type="time" value={w.start} onChange={(v) => setW({ ...w, start: v })} /></li>
       <li className="grouped-row"><span className="grouped-body"><strong>끝</strong></span><NativeChip label="끝" type="time" value={w.end} onChange={(v) => setW({ ...w, end: v })} /></li>
