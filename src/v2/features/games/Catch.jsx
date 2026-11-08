@@ -8,6 +8,13 @@ import './games.css'
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
 const WHO = ['dad', 'mom', 'big', 'little']
 
+// 캐릭터 그림 실제 폭(커진 것 포함)의 반만큼 양끝에서 멈춤 (화면 밖으로 안 나가게)
+const clampIn = (el, v) => {
+  const b = el?.querySelector('.catch-basket')
+  const h = Math.min(0.5, b && el.clientWidth ? Math.max(BASKET.half, b.getBoundingClientRect().width / 2 / el.clientWidth) : BASKET.half)
+  return Math.min(1 - h, Math.max(h, v))
+}
+
 export default function Catch({ onFinish, player = 'little', shop }) {
   const [room] = useState(pickRoom) // 이 방 배경에서 그 방 물건이 떨어짐
   const live = useRef(null) // 지금 판 (아이템이 바꿈)
@@ -30,6 +37,8 @@ export default function Catch({ onFinish, player = 'little', shop }) {
       // 받는 폭 = 실제 바구니 그림 폭 (조금 여유)
       const b = el?.querySelector('.catch-basket')
       if (b?.offsetWidth && el.clientWidth) cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.04 } // 바구니 반폭 + 물건 반폭(8cqw의 절반): 살짝만 닿아도 받음
+      // 바구니가 커지거나 그림이 늦게 떠도 매 순간 화면 안으로 되돌림
+      const fit = clampIn(el, xRef.current); if (fit !== xRef.current) { xRef.current = fit; setX(fit) }
       cur = step(cur, dt, xRef.current, level)
       if (el && cur.score > before.score) {
         const x = xRef.current * el.clientWidth; const y = BASKET.y * el.clientHeight
@@ -51,8 +60,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
   if (!level) return <div className="game-levels">{Object.keys(RULES).map((lv) => <button key={lv} className="game-level" onClick={() => setLevel(lv)}>{LEVEL_NAMES[lv]}<small>{lv === 'easy' ? '비구름 없음 · 1분' : lv === 'hard' ? '빨라요' : '비구름 조심'}</small></button>)}</div>
 
   // 캐릭터 그림 실제 폭의 반만큼 양끝에서 멈춤 (화면 밖으로 안 나가게)
-  const edge = () => { const el = area.current; const b = el?.querySelector('.catch-basket'); return b ? Math.max(BASKET.half, b.getBoundingClientRect().width / 2 / el.clientWidth) : BASKET.half }
-  const clamp = (v) => { const h = Math.min(0.5, edge()); return Math.min(1 - h, Math.max(h, v)) }
+  const clamp = (v) => clampIn(area.current, v)
   const move = (e) => {
     const r = area.current.getBoundingClientRect()
     const v = clamp((e.clientX - r.left) / r.width)
@@ -69,7 +77,7 @@ export default function Catch({ onFinish, player = 'little', shop }) {
     <div className="game-stats"><span>{stageOf(s.score)}단계 · {s.score}점{RULES[level].time ? ` · ${Math.max(0, Math.ceil((RULES[level].time - s.t) / 1000))}초` : ''}</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={`${i}-${i < s.lives}`} className={i < s.lives ? '' : 'lost'} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
     <div className="catch-area room-bg" style={roomStyle(room)} ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); move(e) }} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
       {s.items.map((it) => <img key={it.id} className={`catch-item${it.kind === 'cloud' ? ' cloud' : ''}`} src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
-      <img className={`catch-basket${s.t < s.bigUntil ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(clamp(var(--pad), calc(${x * 100}cqw - 50%), calc(100cqw - 100% - var(--pad))))` }} />
+      <img className={`catch-basket${s.t < s.bigUntil ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
     </div>
     <ItemBar key={level} shop={shop} off={s.over} items={[
       { id: 'big', name: '큰 바구니', img: 'room/basket', price: 1, use: () => { live.current = { ...live.current, bigUntil: live.current.t + 10000 } } },
