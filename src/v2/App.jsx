@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { iso, formatLongDate } from '../lib/dates'
 import { useToday } from '../hooks/useToday'
@@ -50,6 +50,8 @@ function Workspace({ scheduler }) {
   }
   const addEvent = (event) => isDemo ? updateState((current) => ({ ...current, events: [...current.events, { ...event, id: `demo-added-${crypto.randomUUID()}` }] })) : scheduler.addEvent(event)
   const [tab, setTab] = useState('today')
+  const [scrolled, setScrolled] = useState(false) // 내리면 떠 있는 + 버튼을 동그랗게 줄임
+  useEffect(() => { const on = () => setScrolled(window.scrollY > 40); on(); addEventListener("scroll", on, { passive: true }); return () => removeEventListener("scroll", on) }, [])
   const [formDate, setFormDate] = useState(null)
   const [calendarDate, setCalendarDate] = useState(null)
   const [cursor, setCursor] = useState(today)
@@ -66,7 +68,6 @@ function Workspace({ scheduler }) {
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
     <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a><p className="app-date">{subtitle}</p>{tab === 'calendar' ? <div className="heading-line month-center"><button className="month-arrow" aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={22} /></button><h1>{title}</h1><button className="month-arrow" aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={22} /></button></div> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}</div>}
-      {canEdit && ['today', 'calendar'].includes(tab) && <button className="header-add" onClick={() => { setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} aria-label={tab === 'today' ? '추가' : '일정 추가'}><Plus size={26} /></button>}
     </header>
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
@@ -75,6 +76,7 @@ function Workspace({ scheduler }) {
             : tab === 'play' ? <Play state={state} updateState={updateState} /> : <FamilyScreen state={state} updateState={updateState} canEdit={canEdit} sync={sync} selected={familyPanel} onSelect={setFamilyPanel} onPerson={setPerson} />}
       </Suspense>}
     </main>
+    {canEdit && ['today', 'calendar'].includes(tab) && <button className="header-add" data-compact={scrolled || undefined} onClick={() => { setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} aria-label={tab === 'today' ? '추가' : '일정 추가'}><Plus size={24} /><span aria-hidden="true">{tab === 'today' ? '추가' : '일정'}</span></button>}
     <nav className="bottom-nav" aria-label="주 메뉴">{tabs.map(([id, name]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => { setTab(id); window.scrollTo(0, 0) }}><TabIcon name={id} /><span>{name}</span></button>)}</nav>
 
     {person && <Suspense fallback={<p role="status">하루를 불러오고 있어요…</p>}><PersonDay memberId={person} state={state} today={today} now={now} updateState={updateState} canEdit={canEdit} onClose={() => setPerson(null)} /></Suspense>}
