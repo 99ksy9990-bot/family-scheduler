@@ -1,5 +1,6 @@
+import { logChanges } from './activity'
 import { useCallback, useEffect, useState } from 'react'
-import { parseConnect, setMe } from './me'
+import { getMe, parseConnect, setMe } from './me'
 import { useFamilySync } from '../../hooks/useFamilySync'
 import { decodeConnect } from './connectLink'
 import { mergeAllProgress } from './cleanProgress'
@@ -65,13 +66,13 @@ export function useScheduler() {
   }, [loaded.state, sync.session])
   const updateState = (update) => {
     if (!canEdit || !loaded.state) return false
-    setLoaded((current) => ({ ...current, state: typeof update === 'function' ? update(current.state) : update }))
+    setLoaded((current) => ({ ...current, state: logChanges(current.state, typeof update === 'function' ? update(current.state) : update, getMe()) }))
     return true
   }
   const addEvent = (event) => {
     if (!canEdit || !loaded.state) return false
-    setLoaded((current) => ({ ...current, state: { ...current.state,
-      events: [...current.state.events, { ...event, id: `event-${crypto.randomUUID()}` }] } }))
+    setLoaded((current) => ({ ...current, state: logChanges(current.state, { ...current.state,
+      events: [...current.state.events, { ...event, id: `event-${crypto.randomUUID()}` }] }, getMe()) }))
     return true
   }
   return { state: loaded.state, error: loaded.error || saveError || sync.error, sync, canEdit, addEvent, updateState,

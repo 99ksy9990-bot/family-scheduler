@@ -8,6 +8,7 @@ import { scheduleForDate } from './data/schedule'
 import { createDemo } from './data/demo'
 import { todayPlays } from './data/gameScores'
 import Today from './features/today/Today'
+import HeaderTools from './features/header/HeaderTools'
 
 // 위에 붙는 제목 줄 높이를 CSS에 알려줌 (할 일 칩이 그 아래에 붙도록)
 // 시간대별 인사 (로고 옆)
@@ -64,10 +65,11 @@ function Workspace({ scheduler }) {
   const title = tab === 'calendar' ? `${cursor.getMonth() + 1}월` : tabs.find(([id]) => id === tab)[1]
   const subtitle = tab === 'today' ? formatLongDate(today) : tab === 'calendar' ? `${cursor.getFullYear()}년` : tab === 'play' ? `오늘 ${todayPlays(state?.gameScores, today)}판` : `${profiles.filter((profile) => profile.active !== false).length}명`
   const props = { today, now, state, loading: !isDemo && sync.syncStatus === 'connecting', error: isDemo ? '' : scheduler.error, onRetry: scheduler.retry }
-  return <div className="v2-app" data-view={tab}>
+  return <div className="v2-app" data-view={tab} data-scrolled={scrolled || undefined}>
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
-    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a><p className="app-date">{subtitle}</p>{tab === 'calendar' ? <div className="heading-line month-center"><button className="month-arrow" aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={22} /></button><h1>{title}</h1><button className="month-arrow" aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={22} /></button></div> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}</div>}
+    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{!['today', 'calendar'].includes(tab) && <p className="app-date">{subtitle}</p>}{tab === 'calendar' ? <div className="heading-line month-line"><h1>{title}</h1><p className="app-date">{subtitle}</p><span className="month-arrows-pill"><button className="month-arrow" aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={20} /></button><button className="month-arrow" aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={20} /></button></span></div> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}</div>}
+      {['today', 'calendar'].includes(tab) && state && <HeaderTools state={state} now={now} onGoDate={(date) => { setTab('calendar'); setCalendarDate(date); setCursor(new Date(`${date}T00:00:00`)) }} onGoTasks={() => { setTab('today'); requestAnimationFrame(() => document.querySelector('.task-chips')?.scrollIntoView({ block: 'start' })) }} />}
     </header>
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
