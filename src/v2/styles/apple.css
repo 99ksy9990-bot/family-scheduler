@@ -183,13 +183,9 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 @media (prefers-color-scheme: dark) { .v2-app[data-scrolled] .header-tool { background: linear-gradient(180deg, rgba(90,90,96,.45), rgba(60,60,64,.25)); border-color: rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 6px 18px rgba(0,0,0,.35); } }
 @media (prefers-reduced-transparency: reduce) { .v2-app[data-scrolled] .header-tool { background: var(--solid-card); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 /* 달력 근무 보기 끄고 켜기 (이 폰에만) */
-.work-toggles { display: flex; gap: 8px; overflow-x: auto; margin: 0 0 10px; }
-.work-toggles button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px 0 6px; border: 1px solid var(--sep); border-radius: 18px; background: none; color: var(--label-2); font-size: 14px; font-weight: 600; }
-.work-toggles button[aria-pressed='true'] { background: var(--label); border-color: var(--label); color: var(--bg); }
+.work-toggles { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 8px; }
+.work-toggles button { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px 0 4px; border: 1px solid var(--sep); border-radius: 14px; background: none; color: var(--label-2); font-size: 13px; font-weight: 600; }
+.work-toggles button[aria-pressed='true'] { background: var(--card); border-color: transparent; color: var(--label); }
+.work-toggles button[aria-pressed='false'] { text-decoration: line-through; }
 .work-toggles button[aria-pressed='false'] .character, .work-toggles button[aria-pressed='false'] img { opacity: .45; }
 .work-toggles button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
-/* 연차·반차: 날짜 숫자 밑 작은 점 */
-.leave-dots { display: flex; justify-content: center; gap: 3px; height: 6px; margin-top: 1px; }
-.leave-dots i { width: 6px; height: 6px; border-radius: 50%; background: #2f9e5b; }
-.leave-dots i[data-shift='leave-am'] { background: var(--shift-d-ink); }
-.leave-dots i[data-shift='leave-pm'] { background: var(--shift-n-ink); }

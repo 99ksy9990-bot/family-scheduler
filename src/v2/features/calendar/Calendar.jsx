@@ -65,7 +65,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
       if (profile.active === false || !LEAVES[kind]) continue
       map.set(date, [...(map.get(date) || []), { member: profile.id, id: `leave-${kind}`, text: LEAVES[kind].label }])
     }
-    // OFF는 숨기고(일하는 날만), 빈 줄은 두지 않음, 연차·반차는 숫자 밑 점으로
+    // OFF는 숨기고(일하는 날만), 빈 줄은 두지 않음
     return map
   }, [state.shifts, state.workSettings, state.profiles])
   const endSwipe = (event) => {
@@ -76,14 +76,14 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) onMove(dx < 0 ? 1 : -1)
   }
   return <div className="calendar-page">
-    {workers.length > 0 && <div className="work-toggles" role="group" aria-label="근무 보기">{workers.map((p) => <button key={p.id} aria-pressed={!hidden.includes(p.id)} onClick={() => toggleWork(p.id)}><CharacterAvatar profile={p} size={24} />{p.name} 근무</button>)}</div>}
+    {workers.length > 0 && <div className="work-toggles" role="group" aria-label="근무 보기">{workers.map((p) => <button key={p.id} aria-pressed={!hidden.includes(p.id)} onClick={() => toggleWork(p.id)}><CharacterAvatar profile={p} size={18} />{p.name} 근무</button>)}</div>}
     <section className="month-card" aria-label="달력" onTouchStart={(event) => { touch.current = { x: event.touches[0].clientX, y: event.touches[0].clientY } }} onTouchEnd={endSwipe} onTouchCancel={() => { touch.current = null }}>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="month-grid" role="group" aria-label="월간 달력">
         {weekdays.map((day, index) => <span className={`weekday${index === 0 ? ' sunday' : ''}`} key={day}>{day}</span>)}
         {days.map((date) => {
           const key = iso(date)
           const holiday = holidaysForYear(date.getFullYear()).get(key)
-          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{(() => { const ls = (shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)); const leaves = ls.filter((l) => l.id.startsWith('leave-')); return <>{leaves.length > 0 && <span className="leave-dots" aria-label={leaves.map((l) => l.text).join(' ')}>{leaves.map((l) => <i key={l.member} data-shift={l.id} />)}</span>}{ls.filter((l) => !l.id.startsWith('leave-')).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</> })()}</button>
+          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</button>
         })}
       </div></DataState>
     </section>
