@@ -57,21 +57,15 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     const map = new Map()
     for (const s of ws.enabled ? state.shifts : []) {
       const t = types.find((x) => x.id === s.shift)
-      if (!t || !workers.has(s.member)) continue
-      map.set(s.date, [...(map.get(s.date) || []).filter((x) => x.member !== s.member), { member: s.member, id: t.id, text: t.id === 'off' ? 'OFF' : t.code }])
+      if (!t || t.id === 'off' || !workers.has(s.member)) continue
+      map.set(s.date, [...(map.get(s.date) || []).filter((x) => x.member !== s.member), { member: s.member, id: t.id, text: t.code }])
     }
     // 고정 근무자(아빠)의 연차·반차도 같은 이름표로
     for (const profile of state.profiles) for (const [date, kind] of Object.entries(profile.regularWork?.leaves || {})) {
       if (profile.active === false || !LEAVES[kind]) continue
       map.set(date, [...(map.get(date) || []), { member: profile.id, id: `leave-${kind}`, text: LEAVES[kind].label }])
     }
-    // 교대 근무 이름표가 위, 상주 근무자(연차·반차)가 아래
-    // 교대 근무자가 있으면 그 줄을 비워 두어 상주 근무자 이름표는 늘 아래 줄에
-    const hasShiftWorkers = ws.enabled && workers.size > 0
-    for (const [date, labels] of map) {
-      const sorted = labels.toSorted((a, b) => a.id.startsWith('leave-') - b.id.startsWith('leave-'))
-      map.set(date, hasShiftWorkers && !sorted.some((l) => !l.id.startsWith('leave-')) ? [{ member: '_blank', id: 'blank', text: '' }, ...sorted] : sorted)
-    }
+    // OFF는 숨기고(일하는 날만), 빈 줄은 두지 않음, 연차·반차는 숫자 밑 점으로
     return map
   }, [state.shifts, state.workSettings, state.profiles])
   const endSwipe = (event) => {
@@ -89,7 +83,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         {days.map((date) => {
           const key = iso(date)
           const holiday = holidaysForYear(date.getFullYear()).get(key)
-          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</button>
+          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{(() => { const ls = (shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)); const leaves = ls.filter((l) => l.id.startsWith('leave-')); return <>{leaves.length > 0 && <span className="leave-dots" aria-label={leaves.map((l) => l.text).join(' ')}>{leaves.map((l) => <i key={l.member} data-shift={l.id} />)}</span>}{ls.filter((l) => !l.id.startsWith('leave-')).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</> })()}</button>
         })}
       </div></DataState>
     </section>

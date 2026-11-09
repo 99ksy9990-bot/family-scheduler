@@ -188,3 +188,8 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 .work-toggles button[aria-pressed='true'] { background: var(--label); border-color: var(--label); color: var(--bg); }
 .work-toggles button[aria-pressed='false'] .character, .work-toggles button[aria-pressed='false'] img { opacity: .45; }
 .work-toggles button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+/* 연차·반차: 날짜 숫자 밑 작은 점 */
+.leave-dots { display: flex; justify-content: center; gap: 3px; height: 6px; margin-top: 1px; }
+.leave-dots i { width: 6px; height: 6px; border-radius: 50%; background: #2f9e5b; }
+.leave-dots i[data-shift='leave-am'] { background: var(--shift-d-ink); }
+.leave-dots i[data-shift='leave-pm'] { background: var(--shift-n-ink); }
