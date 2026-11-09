@@ -11,7 +11,7 @@ import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
 import { membersFor } from '../../data/members'
 import { offRows } from '../../data/personDay'
-import { houseStatus, remainingSchedule } from '../../data/house'
+import { houseStatus, remainingSchedule, moodFor } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { addDays } from '../../../lib/dates'
 
@@ -26,13 +26,14 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i) // 가족 순서(아빠·엄마·아이들) 그대로
   // 생일·기념일: 열흘 안에 오면 D-day
   const soon = (state.anniversaries || []).map((a) => ({ a, at: nextAnniversaryOccurrence(a, new Date(today.getFullYear(), today.getMonth(), today.getDate())) })).filter((x) => x.at).map((x) => ({ ...x, d: Math.round((x.at - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000) })).filter((x) => x.d <= 10).toSorted((x, y) => x.d - y.d) // 홈은 D-10부터, 가까운 날 위로
+  const isBirthday = (profile) => soon.some(({ a, d }) => !d && a.kind === '생일' && (a.members?.includes(profile.id) || a.member === profile.id || a.name === profile.name))
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
         return <button className="house-tile" data-character={profile.characterId || 'unknown'} key={profile.id} onClick={() => onPerson(profile.id)} aria-label={`${profile.name}의 오늘 일정, ${status.label}`}>
-          {status.badgeKind && <img className="house-badge-pic" src={`/icons/kind/${status.badgeKind === '학원' ? 'academy' : 'school'}.png`} alt="" width={34} height={34} />}{status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={status.expression} size={66} glass />{soon.some(({ a, d }) => !d && a.kind === '생일' && (a.members?.includes(profile.id) || a.member === profile.id || a.name === profile.name)) && <img className="tile-cake" src="/icons/kind/birthday.png" alt="오늘 생일" width={30} height={30} />}<strong>{profile.name}</strong><small>{<ArrowText text={status.detail} />}</small>
+          {status.badgeKind && <img className="house-badge-pic" src={`/icons/kind/${status.badgeKind === '학원' ? 'academy' : 'school'}.png`} alt="" width={34} height={34} />}{status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows, tasks: state.tasks, now, birthday: isBirthday(profile) })} size={66} glass />{isBirthday(profile) && <img className="tile-cake" src="/icons/kind/birthday.png" alt="오늘 생일" width={30} height={30} />}<strong>{profile.name}</strong><small>{<ArrowText text={status.detail} />}</small>
         </button>
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>

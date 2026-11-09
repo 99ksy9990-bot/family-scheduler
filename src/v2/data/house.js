@@ -29,3 +29,17 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
 export function remainingSchedule(rows, today, now) {
   return rows.filter((row) => ['future', 'untimed'].includes(eventPhase(row, today, now)))
 }
+
+// 새 표정 고르기: 생일 > 수업 중(공부) > 근무 등 바쁨 > 병원 날(아픔) > 밤·밤근무 다음날(졸림) > 밀린 할 일(걱정) > 휴무(휴식) > 기본
+export function moodFor(profile, status, { rows = [], tasks = [], now = new Date(), birthday = false } = {}) {
+  if (birthday) return 'party'
+  if (status.expression === 'busy') return status.badgeKind ? 'study' : 'busy'
+  const own = rowsForMember(rows, profile.id)
+  if (own.some((row) => /병원|치과|검진|진료|한의원|예방접종/.test(row.title || ''))) return 'sick'
+  const h = now.getHours()
+  if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
+  if (status.detail === '오늘 휴무') return 'rest'
+  return status.expression
+}
