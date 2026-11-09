@@ -239,3 +239,7 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 .dday { font-weight: 700; color: var(--label); font-variant-numeric: tabular-nums; }
 .all-done { margin-left: 8px; font-size: 15px; font-weight: 500; color: var(--label-2); }
 .dday-value { display: inline-flex; align-items: center; gap: 6px; } .dday-value .dday { font-size: 15px; }
+/* 생일·기념일 당일: 따뜻한 바탕으로 강조 */
+.dday-today { background: linear-gradient(100deg, #fff4dc, #ffe6ec); }
+.dday-today .dday { color: #c2410c; }
+@media (prefers-color-scheme: dark) { .dday-today { background: linear-gradient(100deg, #3a2e1a, #3a2128); } .dday-today .dday { color: #ffb37a; } }
