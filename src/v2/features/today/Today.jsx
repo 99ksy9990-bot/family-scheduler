@@ -1,3 +1,4 @@
+import MemberAvatars from '../../components/MemberAvatars'
 import { nextAnniversaryOccurrence, anniversaryTitle } from '../../../lib/schedule'
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import DayIcon from '../../components/DayIcon'
@@ -35,7 +36,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
         </button>
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>
-    {soon.length > 0 && <section aria-labelledby="dday-heading"><h2 className="house-section-title" id="dday-heading">생일·기념일</h2><GroupedList label="생일·기념일">{soon.map(({ a, d }) => <GroupedRow key={a.id} className={d ? undefined : 'dday-today'} icon={<DayIcon kind={a.kind} />} title={d ? anniversaryTitle(a) : `오늘은 ${anniversaryTitle(a)}!`} subtitle={d ? undefined : a.kind === '생일' ? '축하 인사 잊지 마세요' : '함께 기억해요'} value={<b className="dday">{d ? `D-${d}` : 'D-DAY'}</b>} />)}</GroupedList></section>}
+    {soon.length > 0 && <section aria-labelledby="dday-heading"><h2 className="house-section-title" id="dday-heading">생일·기념일</h2><GroupedList label="생일·기념일">{soon.map(({ a, d }) => <GroupedRow key={a.id} className={d ? undefined : 'dday-today'} icon={<DayIcon kind={a.kind} />} title={d ? anniversaryTitle(a) : `오늘은 ${anniversaryTitle(a)}!`} subtitle={d ? undefined : a.kind === '생일' ? '축하 인사 잊지 마세요' : '함께 기억해요'} value={<span className="dday-value">{(a.members?.length || a.member) ? <MemberAvatars item={a} profiles={state.profiles} /> : null}<b className="dday">{d ? `D-${d}` : 'D-DAY'}</b></span>} />)}</GroupedList></section>}
     <section aria-labelledby="remaining-heading"><h2 id="remaining-heading" className="house-section-title">오늘 남은 일정{allDone && <small className="all-done">✓ 모두 끝</small>}<span className="visually-hidden" data-testid="today-count">{remaining.length}</span></h2>
       <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></div> : (allDone ? null : <div className="empty-state"><h3>오늘은 여유로운 날이에요</h3></div>)}</DataState>
       {onOpenToday && <button type="button" className="text-button past-link" onClick={onOpenToday}>오늘 지난 일정 보기 ›</button>}

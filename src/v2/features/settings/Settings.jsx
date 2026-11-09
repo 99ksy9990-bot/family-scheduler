@@ -1,3 +1,4 @@
+import MemberAvatars from './../../components/MemberAvatars'
 import { nextAnniversaryOccurrence } from '../../../lib/schedule'
 import { lazy, Suspense, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -55,7 +56,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
 
     </GroupedList>}
     <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2></div>
-    {<GroupedList label="생일·기념일">{days.length ? (fold.days ? days.slice(0, 2) : days).map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<span className="dday-value"><b className="dday">{dday(row)}</b><ChevronRight size={18} /></span>} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
+    {<GroupedList label="생일·기념일">{days.length ? (fold.days ? days.slice(0, 2) : days).map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<span className="dday-value">{(row.members?.length || row.member) ? <MemberAvatars item={row} profiles={state.profiles} /> : null}<b className="dday">{dday(row)}</b><ChevronRight size={18} /></span>} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
       return <GroupedRow key={id} className="settings-entry" icon={<span className="day-icon" data-tone={PIC[id]} style={{ width: 40, height: 40 }}><img src={`/icons/kind/${PIC[id]}.png`} alt="" width={26} height={26} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />
