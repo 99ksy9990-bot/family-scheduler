@@ -21,7 +21,8 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   if (!next && half) return { ...status, detail: `오늘 ${half.title.split(' · ')[1]}` }
   // 교대 근무 기록이 오늘 '휴무'면 '쉬는 중' 대신 휴무로
   const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  if (!next && shifts.findLast((s) => s.member === profile.id && s.date === key)?.shift === 'off') return { ...status, detail: '오늘 휴무' }
+  // 교대 근무자(엄마)는 OFF인 날 일정이 있어도 휴무 표시. 상주 근무자(아빠)는 주말·공휴일이 당연히 쉬어서 따로 안 씀
+  if (shifts.findLast((s) => s.member === profile.id && s.date === key)?.shift === 'off') return { ...status, detail: next ? `휴무 · 다음 ${next.displayStart}` : '오늘 휴무' }
   return { ...status, detail: next && status.label.length > 14 ? `다음 ${next.displayStart}` : status.label }
 }
 
