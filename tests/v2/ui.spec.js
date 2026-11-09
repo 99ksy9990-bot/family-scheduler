@@ -193,7 +193,7 @@ test('자녀 시간표·학기와 기념일 편집 저장', async ({ page }) => 
   await page.clock.runFor(500)
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-child-schedules-v1'))[0].weekdays)).toEqual([4])
   await page.locator('.crumbs button').first().click()
-  await page.locator('.family-section-heading').filter({ hasText: '생일·기념일' }).getByRole('button', { name: '추가' }).click()
+  await page.getByRole('button', { name: '기념일 추가' }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('textbox', { name: '이름', exact: true }).fill('가족 기념')
   await dialog.getByLabel('월', { exact: true }).fill('11')
