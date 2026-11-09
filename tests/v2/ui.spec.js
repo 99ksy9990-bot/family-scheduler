@@ -81,7 +81,7 @@ test('빈 상태·손상 데이터 오류·재시도', async ({ page }) => {
     for (const key of Object.keys(localStorage)) if (key.startsWith('family-scheduler-')) localStorage.removeItem(key)
   })
   await page.reload()
-  await expect(page.getByRole('heading', { name: '오늘 남은 일정이 없어요' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '오늘은 여유로운 날이에요' })).toBeVisible()
   await expect(page.locator('.header-add')).toHaveCount(1)
 
 })
