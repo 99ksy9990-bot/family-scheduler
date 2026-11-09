@@ -16,7 +16,7 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
     detail: `» ${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` }
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
   if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: next.title.length > 6 ? schoolKind(next) : next.title, badgeUpcoming: true, detail: `${next.displayStart} 시작` }
-  if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘 연차' }
+  if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘 휴무' } // 아빠 연차도 엄마 OFF처럼
   const half = own.find((row) => row.regular && row.title.includes('반차'))
   if (!next && half) return { ...status, detail: `오늘 ${half.title.split(' · ')[1]}` }
   // 교대 근무 기록이 오늘 '휴무'면 '쉬는 중' 대신 휴무로
