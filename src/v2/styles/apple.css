@@ -258,3 +258,7 @@ form.event-form input[name='baseYear'] { width: 84px !important; }
 form.event-form input[type='number'] { -webkit-appearance: none; appearance: textfield; width: 56px !important; padding: 0 !important; }
 form.event-form input[name='baseYear'] { width: 76px !important; }
 form.event-form input[type='number']::-webkit-inner-spin-button, form.event-form input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; display: none; }
+/* 숫자 칸: 칩과 같은 안쪽 여백(10px), 글자 오른쪽 끝을 칩 글자와 맞춤, 상자는 글자 폭만큼 */
+form.event-form input[type='number'] { padding: 0 10px !important; text-align: right !important; font-variant-numeric: tabular-nums; width: calc(2ch + 22px) !important; }
+form.event-form input[name='baseYear'] { width: calc(4ch + 22px) !important; }
+@supports (field-sizing: content) { form.event-form input[type='number'], form.event-form input[name='baseYear'] { field-sizing: content; width: auto !important; min-width: 0 !important; } }
