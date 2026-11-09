@@ -15,7 +15,7 @@ test('담당자 여러 명·모두·기존 단일 필드와 순서·중복 보�
   expect(membersFor({ member: 'unknown' }, profiles)).toEqual([])
 })
 
-test('한 사람의 오늘·내일: 근무 이월·공통 일정·시간표·반복 회차·지난 할 일', () => {
+test('한 사람의 오늘·내일: 전날 밤 근무 제외·공통 일정·시간표·반복 회차·지난 할 일', () => {
   const state = createDemo(today)
   state.events = [{ id: 'event', member: 'family', date: iso(today), time: '14:00', title: '공통 일정' }]
   state.shifts = [{ member: 'demo-dad', date: iso(addDays(today, -1)), shift: 'night' }]
@@ -29,9 +29,8 @@ test('한 사람의 오늘·내일: 근무 이월·공통 일정·시간표·반
     { id: 'next', title: '내일 할 일', dueDate: iso(addDays(today, 1)), assignee: 'demo-dad' },
   ]
   const rows = personDayRows(state, 'demo-dad', today, today)
-  expect(rows.map((row) => row.title)).toEqual(['기한 지난 일', '근무 N', '공통 일정', '오늘 할 일', '매일 할 일'])
+  expect(rows.map((row) => row.title)).toEqual(['기한 지난 일', '공통 일정', '오늘 할 일', '매일 할 일'])
   expect(rows.at(-1).done).toBe(true)
-  expect(editTarget(rows.find((row) => row.type === 'shift'), state).record).toBe(state.shifts[0])
   expect(editTarget(rows.find((row) => row.title === '공통 일정'), state).record).toBe(state.events[0])
   expect(editTarget(rows.find((row) => row.title === '매일 할 일'), state).record).toBe(state.tasks[3])
   const next = personDayRows(state, 'demo-dad', addDays(today, 1), today)
