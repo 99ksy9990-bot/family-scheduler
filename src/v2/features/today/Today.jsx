@@ -19,7 +19,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const tmr = addDays(today, 1)
   const tomorrowAll = [...offRows(state, tmr).map((row) => ({ ...row, title: '휴무', displayStart: ' ' })), ...scheduleForDate(state, tmr).filter((row) => !row.carryover).map((row) => row.type === 'leave' ? { ...row, title: '휴무', displayStart: ' ' } : row)]
   const mine = (row, id) => membersFor(row, state.profiles).some((m) => m.id === id)
-  const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i).toSorted((a, b) => (/^\d/.test(a.displayStart) ? a.displayStart : '99').localeCompare(/^\d/.test(b.displayStart) ? b.displayStart : '99'))
+  const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i) // 가족 순서(아빠·엄마·아이들) 그대로
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
