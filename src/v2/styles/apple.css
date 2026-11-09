@@ -266,3 +266,4 @@ form.event-form input[name='baseYear'] { width: calc(4ch + 22px) !important; }
 /* 홈 날씨 한 줄 (광양읍) */
 .weather-line { display: flex; align-items: center; gap: 6px; margin: 0 4px 12px; color: var(--label-2); font-size: 15px; word-break: keep-all; }
 .weather-line strong { color: var(--label); font-weight: 600; }
+.weather-pic { width: 28px; height: 28px; object-fit: contain; }

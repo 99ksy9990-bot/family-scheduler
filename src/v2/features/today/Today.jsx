@@ -14,9 +14,8 @@ import { offRows } from '../../data/personDay'
 import { houseStatus, remainingSchedule, moodFor, isBirthdayToday, isCelebrationToday, softDetail } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { addDays } from '../../../lib/dates'
-import { Sun, Cloud, CloudRain, Snowflake } from 'lucide-react'
 import { useWeather, weatherNote } from '../../data/weather'
-const SKY_ICON = { sun: <Sun size={18} aria-hidden="true" />, cloud: <Cloud size={18} aria-hidden="true" />, rain: <CloudRain size={18} aria-hidden="true" />, snow: <Snowflake size={18} aria-hidden="true" /> }
+const SKY_PIC = { sun: 'sun', cloud: 'cloud', rain: 'rain', snow: 'snow' }
 
 export default function Today({ today, now, state, rows, loading, error, onRetry, onPerson, updateState, canEdit, onOpenToday }) {
   const [editing, setEditing] = useState(null) // 남은 일정에서 바로 수정
@@ -33,7 +32,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const isBirthday = (profile) => isBirthdayToday(state.anniversaries, profile, today)
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
-    {weather && <p className="weather-line" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}`}>{SKY_ICON[weather.sky]}<strong>{weather.temp}°</strong><span>{weather.tip}</span></p>}
+    {weather && <p className="weather-line" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}`}><img className="weather-pic" src={`/icons/weather/${weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span></p>}
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
