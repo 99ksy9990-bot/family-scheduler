@@ -9,7 +9,7 @@ import { houseStatus, remainingSchedule } from '../../data/house'
 export default function Today({ today, now, state, rows, loading, error, onRetry, onPerson, updateState, canEdit }) {
   const [editing, setEditing] = useState(null) // 남은 일정에서 바로 수정
   const profiles = state.profiles.filter((profile) => profile.active !== false)
-  const remaining = remainingSchedule(rows, today, now).filter((row) => !row.carryover) // 전날 밤 근무는 빼고 그날 근무만
+  const remaining = remainingSchedule(rows, today, now).filter((row) => !row.carryover && row.type !== 'leave') // 전날 밤 근무·연차(쉬는 날)는 빼기
   const nextTimed = remaining.find((row) => row.displayStart)
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
