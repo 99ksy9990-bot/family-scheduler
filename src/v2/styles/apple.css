@@ -205,3 +205,6 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 /* 근무 버튼은 아래에 떠 있게 (달력 보며 연달아 넣기) */
 .shift-brush-dock { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 5; margin-top: 12px; padding: 8px; border-radius: 22px; background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
 .shift-hint { margin: 12px 4px 0; }
+/* 같은 날 근무 이름표는 한 줄에 나란히 */
+.calendar-day .shift-row { display: flex; justify-content: center; gap: 2px; flex-wrap: nowrap; }
+.calendar-day .shift-row .shift-label { margin: 2px 0 0; min-width: 0; padding: 0 3px; }
