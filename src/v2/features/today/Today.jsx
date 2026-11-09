@@ -14,7 +14,7 @@ import { offRows } from '../../data/personDay'
 import { houseStatus, remainingSchedule, moodFor, isBirthdayToday, isCelebrationToday, softDetail } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { addDays } from '../../../lib/dates'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, ChevronDown } from 'lucide-react'
 import { useWeather, weatherNote } from '../../data/weather'
 const SKY_PIC = { sun: 'sun', cloud: 'cloud', rain: 'rain', snow: 'snow' }
 
@@ -38,6 +38,12 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   // 생일·기념일: 열흘 안에 오면 D-day
   const soon = (state.anniversaries || []).map((a) => ({ a, at: nextAnniversaryOccurrence(a, new Date(today.getFullYear(), today.getMonth(), today.getDate())) })).filter((x) => x.at).map((x) => ({ ...x, d: Math.round((x.at - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000) })).filter((x) => x.d <= 10).toSorted((x, y) => x.d - y.d) // 홈은 D-10부터, 가까운 날 위로
   const isBirthday = (profile) => isBirthdayToday(state.anniversaries, profile, today)
+  // 오늘 근무(OFF·연차 제외)가 이미 끝났으면 퇴근
+  const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const offWork = (profile) => rows.some((row) => row.type === 'shift' && row.title !== 'OFF' && !row.carryover && !row.crossesMidnight && membersFor(row, state.profiles).some((m) => m.id === profile.id) && row.displayEnd && row.displayEnd <= hm)
+  // 내일 첫 일정: 오늘 남은 일정이 있으면 접고, 다 끝나면 펼침 (직접 누르면 그대로 따름)
+  const [tomorrowFold, setTomorrowFold] = useState(null)
+  const tomorrowOpen = tomorrowFold ?? !remaining.length
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
     {weather && <a className="weather-line" href="https://m.search.naver.com/search.naver?query=%EA%B4%91%EC%96%91%EC%9D%8D+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener noreferrer" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}. 네이버 날씨 열기`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span><ArrowUpRight className="weather-out" size={16} aria-hidden="true" /></a>}
@@ -45,7 +51,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
         return <button className="house-tile" data-character={profile.characterId || 'unknown'} key={profile.id} onClick={() => onPerson(profile.id)} aria-label={`${profile.name}의 오늘 일정, ${status.label}`}>
-          {(() => { const pic = status.badgeKind ? (status.badgeKind === '학원' ? 'academy' : 'school') : status.badge === '근무 중' ? { dad: 'bank', mom: 'hospital' }[profile.characterId] : null; return pic && <img className="house-badge-pic" src={`/icons/kind/${pic}.png`} alt="" width={34} height={34} /> })()}{status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, profile, today), weather })} size={66} glass />{isBirthday(profile) && <img className="tile-cake" src="/icons/kind/birthday.png" alt="오늘 생일" width={30} height={30} />}<strong>{profile.name}</strong><small>{isBirthday(profile) && status.expression !== 'busy' ? '오늘 생일' : <ArrowText text={softDetail(status.detail, profile, today)} />}</small>
+          {(() => { const off = !status.badge && offWork(profile); const pic = status.badgeKind ? (status.badgeKind === '학원' ? 'academy' : 'school') : status.badge === '근무 중' ? { dad: 'bank', mom: 'hospital' }[profile.characterId] : off ? (now.getHours() >= 20 ? 'night' : 'home') : null; const badge = status.badge || (off ? '퇴근' : ''); return <>{pic && <img className="house-badge-pic" src={`/icons/kind/${pic}.png`} alt="" width={34} height={34} />}{badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{badge}</span>}</> })()}<CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, profile, today), weather })} size={66} glass />{isBirthday(profile) && <img className="tile-cake" src="/icons/kind/birthday.png" alt="오늘 생일" width={30} height={30} />}<strong>{profile.name}</strong><small>{isBirthday(profile) && status.expression !== 'busy' ? '오늘 생일' : <ArrowText text={softDetail(status.detail, profile, today)} />}</small>
         </button>
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>
@@ -54,7 +60,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       {todayBring.length > 0 && <BringList rows={todayBring} profiles={state.profiles} label="오늘 챙길 것" />}
       <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} moods={Object.fromEntries(profiles.map((p) => [p.id, moodFor(p, houseStatus(p, rows, state.tasks, today, now, state.shifts), { rows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, p, today), weather })]))} onRow={canEdit ? setEditing : undefined} /></div> : (allDone ? null : <div className="empty-state"><h3>오늘은 여유로운 날이에요</h3></div>)}</DataState>
       {onOpenToday && <button type="button" className="text-button past-link" onClick={onOpenToday}>오늘 지난 일정 보기 ›</button>}
-      {(firstTomorrow.length > 0 || bring.length > 0) && <section className="tomorrow-section" aria-labelledby="tomorrow-heading"><h2 className="house-section-title" id="tomorrow-heading">내일 첫 일정</h2>{bring.length > 0 && <BringList rows={bring} profiles={state.profiles} label="내일 챙길 것" />}{firstTomorrow.length > 0 && <ScheduleList rows={firstTomorrow} profiles={state.profiles} label="내일 첫 일정" />}</section>}
+      {(firstTomorrow.length > 0 || bring.length > 0) && <section className="tomorrow-section" aria-labelledby="tomorrow-heading"><h2 className="house-section-title" id="tomorrow-heading"><button type="button" className="fold-toggle" aria-expanded={tomorrowOpen} aria-controls="tomorrow-body" onClick={() => setTomorrowFold(!tomorrowOpen)}>내일 첫 일정<ChevronDown size={18} aria-hidden="true" /></button>{!tomorrowOpen && <small className="fold-count">{firstTomorrow.length}</small>}</h2><div id="tomorrow-body" hidden={!tomorrowOpen}>{bring.length > 0 && <BringList rows={bring} profiles={state.profiles} label="내일 챙길 것" />}{firstTomorrow.length > 0 && <ScheduleList rows={firstTomorrow} profiles={state.profiles} label="내일 첫 일정" />}</div></section>}
     </section>
 
     {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}

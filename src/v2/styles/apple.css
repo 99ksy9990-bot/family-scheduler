@@ -298,3 +298,5 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .house-grid .house-tile[data-character='mom'] .house-badge.upcoming { background: var(--mom); }
 .house-grid .house-tile[data-character='big'] .house-badge.upcoming { background: var(--big); }
 .house-grid .house-tile[data-character='little'] .house-badge.upcoming { background: var(--little); }
+.fold-count { margin-left: 8px; color: var(--label-3); font-size: 17px; font-weight: 600; }
+.fold-toggle:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; border-radius: 6px; }
