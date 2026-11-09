@@ -12,7 +12,7 @@ const rows = [
 
 test('지금 타일 상태는 진행 중 태그와 종료 시각을 사용', () => {
   expect(houseStatus({ id: 'p' }, rows, [], date, now)).toMatchObject({ expression: 'busy', badge: '근무 중', detail: '11:00까지' })
-  expect(houseStatus({ id: 'r' }, [], [], date, now)).toMatchObject({ expression: 'basic', detail: '쉬는 중' })
+  expect(houseStatus({ id: 'r' }, [], [], date, now)).toMatchObject({ expression: 'basic', detail: '여유로운 하루' })
 })
 
 test('남은 목록은 미래·종일 일정, 개인 시트는 지난 일정도 보존', () => {

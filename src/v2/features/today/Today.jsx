@@ -11,7 +11,7 @@ import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
 import { membersFor } from '../../data/members'
 import { offRows } from '../../data/personDay'
-import { houseStatus, remainingSchedule, moodFor, isBirthdayToday, isCelebrationToday } from '../../data/house'
+import { houseStatus, remainingSchedule, moodFor, isBirthdayToday, isCelebrationToday, softDetail } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { addDays } from '../../../lib/dates'
 
@@ -33,7 +33,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
         return <button className="house-tile" data-character={profile.characterId || 'unknown'} key={profile.id} onClick={() => onPerson(profile.id)} aria-label={`${profile.name}의 오늘 일정, ${status.label}`}>
-          {status.badgeKind && <img className="house-badge-pic" src={`/icons/kind/${status.badgeKind === '학원' ? 'academy' : 'school'}.png`} alt="" width={34} height={34} />}{status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, profile, today) })} size={66} glass />{isBirthday(profile) && <img className="tile-cake" src="/icons/kind/birthday.png" alt="오늘 생일" width={30} height={30} />}<strong>{profile.name}</strong><small>{isBirthday(profile) && status.expression !== 'busy' ? '오늘 생일' : <ArrowText text={status.detail} />}</small>
+          {status.badgeKind && <img className="house-badge-pic" src={`/icons/kind/${status.badgeKind === '학원' ? 'academy' : 'school'}.png`} alt="" width={34} height={34} />}{status.badge && <span className={`house-badge${status.badgeUpcoming ? ' upcoming' : ''}`}>{status.badge}</span>}<CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, profile, today) })} size={66} glass />{isBirthday(profile) && <img className="tile-cake" src="/icons/kind/birthday.png" alt="오늘 생일" width={30} height={30} />}<strong>{profile.name}</strong><small>{isBirthday(profile) && status.expression !== 'busy' ? '오늘 생일' : <ArrowText text={softDetail(status.detail, profile, today)} />}</small>
         </button>
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>

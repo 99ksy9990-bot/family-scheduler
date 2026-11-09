@@ -17,13 +17,13 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
     detail: `» ${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` }
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
   if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: next.title.length > 6 ? schoolKind(next) : next.title, badgeUpcoming: true, detail: `${next.displayStart} 시작` }
-  if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘 휴무' } // 아빠 연차도 엄마 OFF처럼
+  if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘은 쉬는 날' } // 아빠 연차도 엄마 OFF처럼
   const half = own.find((row) => row.regular && row.title.includes('반차'))
   if (!next && half) return { ...status, detail: `오늘 ${half.title.split(' · ')[1]}` }
-  // 교대 근무 기록이 오늘 '휴무'면 '쉬는 중' 대신 휴무로
+  // 교대 근무 기록이 오늘 '휴무'면 '여유로운 하루' 대신 휴무로
   const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   // 교대 근무자(엄마)는 OFF인 날 일정이 있어도 휴무 표시. 상주 근무자(아빠)는 주말·공휴일이 당연히 쉬어서 따로 안 씀
-  if (shifts.findLast((s) => s.member === profile.id && s.date === key)?.shift === 'off') return { ...status, detail: next ? `휴무 · 다음 ${next.displayStart}` : '오늘 휴무' }
+  if (shifts.findLast((s) => s.member === profile.id && s.date === key)?.shift === 'off') return { ...status, detail: next ? `휴무 · 다음 ${next.displayStart}` : '오늘은 쉬는 날' }
   return { ...status, detail: next && status.label.length > 14 ? `다음 ${next.displayStart}` : status.label }
 }
 
@@ -41,7 +41,7 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
-  if (status.detail === '오늘 휴무') return 'rest'
+  if (status.detail === '오늘은 쉬는 날') return 'rest'
   return status.expression
 }
 
@@ -53,3 +53,17 @@ export function isBirthdayToday(anniversaries = [], profile, today, match = (a) 
 
 // 생일·기념일(제사·기일 제외)이면 축하 얼굴
 export const isCelebrationToday = (anniversaries, profile, today) => isBirthdayToday(anniversaries, profile, today, (a) => !/제사|기일/.test(a.kind || ''))
+
+// 같은 상태라도 날짜·사람마다 다른 말로 (하루 동안은 그대로)
+const SOFT = {
+  '오늘은 쉬는 날': ['오늘은 쉬는 날', '푹 쉬는 하루', '오늘은 충전하는 날', '느긋하게 쉬어요'],
+  '오늘도 수고했어요': ['오늘도 수고했어요', '오늘 할 일 끝!', '멋진 하루였어요', '이제 편히 쉬어요'],
+  '여유로운 하루': ['여유로운 하루', '느긋한 시간', '한숨 돌리는 중', '오늘은 여유 있어요'],
+  '할 일이 남았어요': ['할 일이 남았어요', '조금만 더 힘내요', '할 일 하나씩 해봐요'],
+}
+export function softDetail(detail, profile, today) {
+  const list = SOFT[detail]
+  if (!list) return detail
+  const seed = [...`${profile.id}${today.getFullYear()}${today.getMonth()}${today.getDate()}`].reduce((n, c) => n * 31 + c.charCodeAt(0) >>> 0, 7)
+  return list[seed % list.length]
+}

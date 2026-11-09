@@ -75,6 +75,6 @@ export function memberStatus(profile, rows, tasks, now) {
     && assignedMemberIds(task, 'assignees', 'assignee').some((id) => id === profile.id || id === 'family'))
   const allEnded = own.length > 0 && own.every((row) => endOf(row) && !row.crossesMidnight && endOf(row) <= time)
   const tasksDone = ownTasks.every((task) => hasRecurrence(task) ? task.completedDates?.includes(key) : task.done)
-  if ((allEnded || (!own.length && ownTasks.length)) && tasksDone) return { expression: 'done', label: '오늘 완료' }
-  return { expression: 'basic', label: ownTasks.some((task) => !task.done) ? '할 일 남음' : '쉬는 중' }
+  if ((allEnded || (!own.length && ownTasks.length)) && tasksDone) return { expression: 'done', label: '오늘도 수고했어요' }
+  return { expression: 'basic', label: ownTasks.some((task) => !task.done) ? '할 일이 남았어요' : '여유로운 하루' }
 }
