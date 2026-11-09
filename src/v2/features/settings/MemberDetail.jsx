@@ -13,7 +13,8 @@ import { RegularWorkEditor, ShiftMonthEditor, LeaveMonthEditor } from './WorkEdi
 
 const CHARACTERS = ['dad', 'mom', 'big', 'little']
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
-const icon = (Icon, tone) => <span className="settings-color-icon" data-tone={tone}><Icon size={19} /></span>
+const PIC = new Map([[Briefcase, 'work'], [CalendarDays, 'event'], [GraduationCap, 'school']]) // 손그림 아이콘
+const icon = (Icon, tone) => PIC.has(Icon) ? <span className="day-icon" data-tone={PIC.get(Icon)} style={{ width: 40, height: 40 }}><img src={`/icons/kind/${PIC.get(Icon)}.png`} alt="" width={26} height={26} /></span> : <span className="settings-color-icon" data-tone={tone}><Icon size={19} /></span>
 const md = (date) => `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일`
 const days = (row) => (row.weekdays || [row.weekday]).filter((d) => d !== undefined).map((d) => DAYS[d]).join('·')
 

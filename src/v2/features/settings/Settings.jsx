@@ -12,6 +12,7 @@ import { usePushNotifications } from '../../../hooks/usePushNotifications'
 const Connection = lazy(() => import('./Connection'))
 const Family = lazy(() => import('./Family'))
 const Backup = lazy(() => import('./Backup'))
+const PIC = { connection: 'sync', family: 'sync', notifications: 'bell', backup: 'backup', about: 'info' } // 손그림 아이콘
 const entries = [['connection', '가족 연결', Cloud], ['family', '가족 구성원', Info], ['notifications', '알림', Bell], ['backup', '백업·불러오기', Download], ['about', '버전', Info]]
 const pushLabels = { enabled: '알림 사용 중', enabling: '알림 연결 중', denied: '알림 권한이 차단되어 있어요', unsupported: '이 브라우저는 알림을 지원하지 않아요', idle: '알림 꺼짐', error: '알림 연결을 확인해 주세요' }
 
@@ -54,7 +55,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
     {<GroupedList label="생일·기념일">{days.length ? (fold.days ? days.slice(0, 2) : days).map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
-      return <GroupedRow key={id} className="settings-entry" icon={<span className="settings-color-icon" data-icon={id}><Icon size={20} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />
+      return <GroupedRow key={id} className="settings-entry" icon={<span className="day-icon" data-tone={PIC[id]} style={{ width: 40, height: 40 }}><img src={`/icons/kind/${PIC[id]}.png`} alt="" width={26} height={26} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />
     })}</GroupedList></section>)}
     <button type="button" className="version-foot" onClick={() => onSelect('about')}>우리집 {descriptions.about}</button>
     {adding && <AddMember state={state} updateState={updateState} onClose={(id) => { setAdding(false); if (id) setMemberId(id) }} />}

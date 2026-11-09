@@ -227,3 +227,9 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 .v2-app .settings-color-icon:is([data-icon='about'], [data-tone='add']) { background: var(--fill); color: var(--label-2); }
 @media (prefers-color-scheme: dark) { .v2-app .settings-color-icon { filter: brightness(.85) saturate(1.1); } }
 .v2-app .settings-color-icon.settings-color-icon[data-icon='backup'], .v2-app .settings-color-icon.settings-color-icon[data-tone='blue'] { background: #e8f0fe; color: #2f6fd6; }
+/* 설정용 손그림 아이콘 바탕 */
+.day-icon[data-tone='sync'] { --di-bg: #e3effd; background: #e3effd; }
+.day-icon[data-tone='bell'] { --di-bg: #fff4d6; background: #fff4d6; }
+.day-icon[data-tone='backup'] { --di-bg: #e3effd; background: #e3effd; }
+.day-icon[data-tone='info'] { --di-bg: var(--fill); background: var(--fill); }
+.day-icon[data-tone='work'] { --di-bg: #f6e9dc; background: #f6e9dc; }
