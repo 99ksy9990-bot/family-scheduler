@@ -1,3 +1,4 @@
+import { nextAnniversaryOccurrence } from '../../lib/schedule'
 import { assignedMemberIds } from '../../lib/legacyState'
 import { memberStatus } from './schedule'
 import { endOf, eventPhase } from './eventTime'
@@ -42,4 +43,10 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
   if (status.detail === '오늘 휴무') return 'rest'
   return status.expression
+}
+
+// 오늘이 이 사람 생일인지 (기념일 목록의 '생일')
+export function isBirthdayToday(anniversaries = [], profile, today) {
+  const day = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  return anniversaries.some((a) => a.kind === '생일' && (a.members?.includes(profile.id) || a.member === profile.id || a.name === profile.name) && nextAnniversaryOccurrence(a, day)?.getTime() === day.getTime())
 }
