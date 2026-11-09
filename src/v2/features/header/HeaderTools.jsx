@@ -9,7 +9,7 @@ const ago = (at, now) => { const m = Math.round((now - new Date(at)) / 60000); r
 const shortDate = (d) => d ? `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일` : '날짜 없음'
 
 // 위쪽 알림·검색 버튼 (내리면 동그란 유리 버튼으로)
-export default function HeaderTools({ state, now, onGoDate }) {
+export default function HeaderTools({ state, now, onGoDate, onToday, todayNumber }) {
   const [open, setOpen] = useState('')
   const [query, setQuery] = useState('')
   const [seen, setSeenAt] = useState(getSeen)
@@ -22,6 +22,7 @@ export default function HeaderTools({ state, now, onGoDate }) {
     ...(state?.events || []).map((row) => ({ id: row.id, title: row.title, date: row.date, type: '일정' })),
   ].filter((row) => (row.title || '').includes(q)).toSorted((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 50) : []
   return <div className="header-tools">
+    {onToday && <button className="header-tool today-tool" aria-label="오늘로" onClick={onToday}><span>{todayNumber}</span></button>}
     <button className="header-tool" aria-label="검색" onClick={() => setOpen('search')}><Search size={22} /></button>
     <button className="header-tool" aria-label={unread ? '알림, 새 소식 있음' : '알림'} onClick={openBell}><Bell size={22} />{unread && <i className="header-dot" />}</button>
     {open === 'bell' && createPortal(<Sheet title="알림" onClose={() => setOpen('')}>{activity.length ? <ul className="activity-list">{activity.map((item) => { const who = profiles.find((p) => p.id === item.by); return <li key={item.id}>{who ? <CharacterAvatar profile={who} size={36} /> : <span className="activity-anon" />}<div><p><b>{who?.name || '가족'}</b>님이 {item.kind === 'task' ? '할 일' : '일정'} ‘{item.title}’ {ACTION_TEXT[item.action]}</p><small>{item.date ? `${shortDate(item.date)} · ` : ''}{ago(item.at, now)}</small></div></li> })}</ul> : <div className="empty-state"><h3>아직 소식이 없어요</h3><p>가족이 일정이나 할 일을 바꾸면 여기에 모여요.</p></div>}</Sheet>, document.body)}

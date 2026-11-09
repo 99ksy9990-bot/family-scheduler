@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import Sheet from './components/Sheet'
 import { iso, formatLongDate } from '../lib/dates'
 import { useToday } from '../hooks/useToday'
 import { useCurrentTime } from '../hooks/useCurrentTime'
@@ -60,6 +62,7 @@ function Workspace({ scheduler }) {
   const [person, setPerson] = useState(null)
   const [familyPanel, setFamilyPanel] = useState(null)
   const rows = useMemo(() => state ? scheduleForDate(state, today) : [], [state, today])
+  const [pickYear, setPickYear] = useState(null) // 달 고르기 창
   const move = (direction) => setCursor((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1))
   const profiles = state?.profiles || []
   const title = tab === 'calendar' ? `${cursor.getMonth() + 1}월` : tabs.find(([id]) => id === tab)[1]
@@ -68,8 +71,8 @@ function Workspace({ scheduler }) {
   return <div className="v2-app" data-view={tab} data-scrolled={scrolled || undefined}>
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
-    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{!['today', 'calendar'].includes(tab) && <p className="app-date">{subtitle}</p>}{tab === 'calendar' ? <div className="heading-line month-line"><h1>{title}</h1><p className="app-date">{subtitle}</p><span className="month-arrows-pill"><button className="month-arrow" aria-label="이전 달" onClick={() => move(-1)}><ChevronLeft size={20} /></button><button className="month-arrow" aria-label="다음 달" onClick={() => move(1)}><ChevronRight size={20} /></button></span></div> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}</div>}
-      {['today', 'calendar'].includes(tab) && state && <HeaderTools state={state} now={now} onGoDate={(date) => { setTab('calendar'); setCalendarDate(date); setCursor(new Date(`${date}T00:00:00`)) }} />}
+    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{!['today', 'calendar'].includes(tab) && <p className="app-date">{subtitle}</p>}{tab === 'calendar' ? <button className="heading-line month-line" aria-label={`${cursor.getFullYear()}년 ${title}, 다른 달 고르기`} onClick={() => setPickYear(cursor.getFullYear())}><h1>{title}</h1><p className="app-date">{subtitle}</p><ChevronDown size={18} className="month-caret" /></button> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}</div>}
+      {['today', 'calendar'].includes(tab) && state && <HeaderTools state={state} now={now} onToday={tab === 'calendar' ? () => { setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setCalendarDate(iso(today)) } : undefined} todayNumber={today.getDate()} onGoDate={(date) => { setTab('calendar'); setCalendarDate(date); setCursor(new Date(`${date}T00:00:00`)) }} />}
     </header>
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
@@ -83,6 +86,7 @@ function Workspace({ scheduler }) {
 
     {person && <Suspense fallback={<p role="status">하루를 불러오고 있어요…</p>}><PersonDay memberId={person} state={state} today={today} now={now} updateState={updateState} canEdit={canEdit} onClose={() => setPerson(null)} /></Suspense>}
     {taskFormOpen && <Suspense fallback={<p role="status">입력창을 불러오고 있어요…</p>}><TaskForm state={state} updateState={updateState} today={today} onClose={() => setTaskFormOpen(false)} onModeChange={() => { setTaskFormOpen(false); setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} /></Suspense>}
+    {pickYear && createPortal(<Sheet title="달 고르기" onClose={() => setPickYear(null)}><div className="year-row"><button className="month-arrow" aria-label="이전 해" onClick={() => setPickYear(pickYear - 1)}><ChevronLeft size={22} /></button><b>{pickYear}년</b><button className="month-arrow" aria-label="다음 해" onClick={() => setPickYear(pickYear + 1)}><ChevronRight size={22} /></button></div><div className="month-pick">{Array.from({ length: 12 }, (_, m) => <button key={m} aria-pressed={pickYear === cursor.getFullYear() && m === cursor.getMonth()} data-now={pickYear === today.getFullYear() && m === today.getMonth()} onClick={() => { setCursor(new Date(pickYear, m, 1)); setPickYear(null) }}>{m + 1}월</button>)}</div></Sheet>, document.body)}
     {formDate && <EventForm key={formDate} date={formDate} profiles={profiles} onSave={addEvent} onClose={() => setFormDate(null)} onModeChange={() => { setFormDate(null); setTaskFormOpen(true) }} />}
   </div>
 }

@@ -158,3 +158,15 @@ main { padding-bottom: 150px; }
 .month-line .app-date { margin: 0; font-size: 15px; font-weight: 500; }
 .month-arrows-pill { align-self: center; display: flex; margin-left: 4px; border-radius: 18px; background: var(--fill); }
 .month-arrows-pill .month-arrow { width: 36px; min-height: 36px; color: var(--label); }
+/* 달력 머리: 월 이름 눌러 달 고르기, 오늘 아이콘 */
+button.heading-line.month-line { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); outline-offset: 4px; border-radius: 8px; }
+.month-caret { align-self: center; color: var(--secondary-label, #6e6e73); }
+.today-tool span { display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid currentColor; border-top-width: 5px; border-radius: 6px; font-size: 12px; font-weight: 700; line-height: 1; }
+.year-row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 12px; font-size: 18px; }
+.year-row .month-arrow { width: 44px; min-height: 44px; border-radius: 50%; background: var(--fill); color: var(--label); }
+.month-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-bottom: 8px; }
+.month-pick button { min-height: 52px; border: 0; border-radius: 14px; background: var(--fill); color: var(--label); font-size: 17px; font-weight: 600; }
+.month-pick button[data-now='true'] { color: var(--tint); }
+.month-pick button[aria-pressed='true'] { background: var(--tint); color: #fff; }
+.month-pick button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
