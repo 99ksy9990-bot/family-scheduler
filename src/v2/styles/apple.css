@@ -233,3 +233,5 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 .day-icon[data-tone='backup'] { --di-bg: #e3effd; background: #e3effd; }
 .day-icon[data-tone='info'] { --di-bg: var(--fill); background: var(--fill); }
 .day-icon[data-tone='work'] { --di-bg: #f6e9dc; background: #f6e9dc; }
+.house-badge:has(img) { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.house-badge img { flex: none; filter: drop-shadow(0 0 1px #fff); }
