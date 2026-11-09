@@ -238,3 +238,4 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 .house-badge-pic + .house-badge { top: 48px; }
 .dday { font-weight: 700; color: var(--label); font-variant-numeric: tabular-nums; }
 .all-done { margin-left: 8px; font-size: 15px; font-weight: 500; color: var(--label-2); }
+.dday-value { display: inline-flex; align-items: center; gap: 6px; } .dday-value .dday { font-size: 15px; }

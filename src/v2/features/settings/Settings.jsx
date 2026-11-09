@@ -1,3 +1,4 @@
+import { nextAnniversaryOccurrence } from '../../../lib/schedule'
 import { lazy, Suspense, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Bell, ChevronDown, Plus, ChevronRight, Cloud, Download, Info } from 'lucide-react'
@@ -41,7 +42,9 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
     const n = now.getFullYear() + (passed ? 1 : 0) - base
     return n > 0 ? `${row.kind === '생일' ? `만 ${n}세` : `${n}주년`} · ` : ''
   }
-  const t = new Date(); const untilNext = (r) => { const d = new Date(t.getFullYear(), r.month - 1, r.day); if (d < new Date(t.getFullYear(), t.getMonth(), t.getDate())) d.setFullYear(d.getFullYear() + 1); return d - t } // shortcut: 음력은 양력 날짜로 대충 정렬
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0)
+  const untilNext = (r) => (nextAnniversaryOccurrence(r, t0) || new Date(9e15)) - t0 // 음력도 실제 날짜로
+  const dday = (r) => { const d = Math.round(untilNext(r) / 86400000); return d ? `D-${d}` : 'D-DAY' }
   const days = [...state.anniversaries].sort((a, b) => untilNext(a) - untilNext(b))
   const groups = [['연결', ['connection']], ['앱', ['notifications', 'backup']]]
   return <section className="family-page" aria-label="가족 목록">
@@ -52,7 +55,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
 
     </GroupedList>}
     <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2></div>
-    {<GroupedList label="생일·기념일">{days.length ? (fold.days ? days.slice(0, 2) : days).map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
+    {<GroupedList label="생일·기념일">{days.length ? (fold.days ? days.slice(0, 2) : days).map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<span className="dday-value"><b className="dday">{dday(row)}</b><ChevronRight size={18} /></span>} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
       return <GroupedRow key={id} className="settings-entry" icon={<span className="day-icon" data-tone={PIC[id]} style={{ width: 40, height: 40 }}><img src={`/icons/kind/${PIC[id]}.png`} alt="" width={26} height={26} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />
