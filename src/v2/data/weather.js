@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 
 // 광양시 광양읍 날씨 (Open-Meteo, 가입 없이 무료). 한 시간마다 새로 받고 폰에 저장해 둠
 const URL = 'https://api.open-meteo.com/v1/forecast?latitude=34.976&longitude=127.587&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=Asia%2FSeoul&forecast_days=2'
-const KEY = 'family-scheduler-weather-v2' // 풍속 추가로 새 이름
+const KEY = 'family-scheduler-weather-v3' // 미세먼지 추가로 새 이름
+const AIR = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=34.976&longitude=127.587&hourly=pm10,pm2_5&timezone=Asia%2FSeoul&forecast_days=2'
 const HOUR = 3600000
 
 export function useWeather() {
@@ -11,11 +12,13 @@ export function useWeather() {
     let saved = null
     try { saved = JSON.parse(localStorage.getItem(KEY)) } catch { /* 없으면 새로 받기 */ }
     if (saved && Date.now() - saved.at < HOUR) return
-    fetch(URL).then((r) => r.ok ? r.json() : null).then((json) => {
-      if (!json?.hourly) return
-      setData(json.hourly)
-      try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), data: json.hourly })) } catch { /* 저장 못 해도 화면엔 보임 */ }
-    }).catch(() => {}) // 인터넷 없으면 날씨 줄만 안 보임
+    const get = (u) => fetch(u).then((r) => r.ok ? r.json() : null).catch(() => null)
+    Promise.all([get(URL), get(AIR)]).then(([json, air]) => {
+      if (!json?.hourly) return // 인터넷 없으면 날씨 줄만 안 보임
+      const hourly = { ...json.hourly, air: air?.hourly || null }
+      setData(hourly)
+      try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), data: hourly })) } catch { /* 저장 못 해도 화면엔 보임 */ }
+    })
   }, [])
   return data
 }
@@ -40,9 +43,19 @@ export function weatherNote(hourly, now = new Date()) {
   const low = Math.min(...temps), high = Math.max(...temps)
   const when = (h) => h === now.getHours() ? '지금' : `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}시쯤`
   const W = (h) => when(h)
+  const ai = hourly.air?.time?.indexOf(key) ?? -1
+  const dusty = ai >= 0 && ((hourly.air.pm10[ai] ?? 0) > 80 || (hourly.air.pm2_5[ai] ?? 0) > 35) // 나쁨 기준
+  // 저녁 6시 넘으면 내일 아침(7~9시) 날씨를 미리
+  const tmr = now.getHours() >= 18 && hourly.time.map((t, k) => ({ t, k })).filter(({ t }) => t > key && /T0[789]:/.test(t)).map(({ k }) => ({ p: hourly.precipitation_probability[k] ?? 0, c: hourly.weather_code[k], t: hourly.temperature_2m[k] }))
   const pick = (list) => list[(now.getDate() * 7 + now.getHours()) % list.length] // 시간마다 다른 말
   let tip
-  if (wet && isSnow(wet.c)) tip = pick([`${W(wet.h)} 눈 소식, 미끄럼 조심해요`, `${W(wet.h)} 눈 와요, 천천히 다녀요`, `${W(wet.h)} 눈 소식, 장갑 챙겨요`, `${W(wet.h)} 눈 예보, 길 조심해요`])
+  if (tmr?.length) {
+    const tl = Math.round(Math.min(...tmr.map((x) => x.t)))
+    const tw = tmr.find((x) => x.p >= 50 || isRain(x.c) || isSnow(x.c))
+    tip = tw ? (isSnow(tw.c) ? '내일 아침 눈 소식, 길 조심해요' : pick(['내일 아침 비 소식, 우산 챙겨요', '내일 아침 비 와요, 우산 준비해요'])) : tl <= 3 ? `내일 아침 ${tl}°, 많이 추워요` : tl <= 9 ? pick([`내일 아침 ${tl}°, 겉옷 챙겨요`, `내일 아침 ${tl}°, 쌀쌀해요`]) : pick([`내일 아침 ${tl}°, 포근해요`, `내일 아침 ${tl}°, 다니기 좋아요`])
+  }
+  else if (dusty) tip = pick(['미세먼지 나빠요, 마스크 챙겨요', '공기가 탁해요, 마스크 써요', '미세먼지 많아요, 창문 닫아요'])
+  else if (wet && isSnow(wet.c)) tip = pick([`${W(wet.h)} 눈 소식, 미끄럼 조심해요`, `${W(wet.h)} 눈 와요, 천천히 다녀요`, `${W(wet.h)} 눈 소식, 장갑 챙겨요`, `${W(wet.h)} 눈 예보, 길 조심해요`])
   else if (wet) tip = pick([`${W(wet.h)} 비 소식, 우산 챙겨요`, `${W(wet.h)} 비 와요, 우산 잊지 마요`, `${W(wet.h)} 비 예보, 우산 하나 챙겨요`, `${W(wet.h)} 비 올 것 같아요, 우산 챙겨요`])
   else if (low <= 0) tip = pick(['많이 추워요, 따뜻하게 입어요', '꽁꽁 추워요, 목도리 챙겨요', '영하예요, 두툼하게 입어요', '손 시려요, 장갑 챙겨요'])
   else if (low <= 8) tip = pick(['쌀쌀해요, 겉옷 챙겨요', '바람이 차요, 따뜻하게 입어요', '선선해요, 겉옷 하나 챙겨요', '조금 추워요, 감기 조심해요'])
@@ -53,6 +66,15 @@ export function weatherNote(hourly, now = new Date()) {
   const soon = ahead.slice(0, 3).find((x) => x.p >= 50 || isRain(x.c) || isSnow(x.c)) // 3시간 안 비·눈이면 얼굴도
   const wind = hourly.wind_speed_10m?.[i] ?? 0
   const day = now.getHours() >= 7 && now.getHours() < 18
-  const mood = soon ? (isSnow(soon.c) ? 'snow' : 'rain') : temp <= 3 ? 'cold' : temp >= 30 ? 'hot' : wind >= 30 ? 'windy' : !day ? null : code <= 1 ? 'sunny' : 'cloudy'
-  return { mood, temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip }
+  const mood = dusty ? 'dust' : soon ? (isSnow(soon.c) ? 'snow' : 'rain') : temp <= 3 ? 'cold' : temp >= 30 ? 'hot' : wind >= 30 ? 'windy' : !day ? null : code <= 1 ? 'sunny' : 'cloudy'
+  return { mood, dusty, temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip }
+}
+
+// 그 시각 비 올 확률 50% 이상인지 (일정 옆 우산 표시용, 저장된 예보 사용)
+export function rainAt(date, hhmm) {
+  let h
+  try { h = JSON.parse(localStorage.getItem(KEY))?.data } catch { return false }
+  if (!h?.time || !/^\d{2}:/.test(hhmm || '')) return false
+  const i = h.time.indexOf(`${date}T${hhmm.slice(0, 2)}:00`)
+  return i >= 0 && ((h.precipitation_probability[i] ?? 0) >= 50 || isRain(h.weather_code[i]) || isSnow(h.weather_code[i]))
 }

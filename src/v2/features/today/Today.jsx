@@ -25,6 +25,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   // 내일: 구성원마다 한 줄. 쉬는 날(엄마 OFF·아빠 연차)은 '휴무', 아니면 첫 시간 일정
   const tmr = addDays(today, 1)
   const tomorrowAll = [...offRows(state, tmr).map((row) => ({ ...row, title: '휴무', displayStart: ' ' })), ...scheduleForDate(state, tmr).filter((row) => !row.carryover).map((row) => row.type === 'leave' ? { ...row, title: '휴무', displayStart: ' ' } : row)]
+  const bring = scheduleForDate(state, tmr).filter((row) => row.bring && !row.carryover) // 내일 챙길 것
   const mine = (row, id) => membersFor(row, state.profiles).some((m) => m.id === id)
   const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i) // 가족 순서(아빠·엄마·아이들) 그대로
   // 생일·기념일: 열흘 안에 오면 D-day
@@ -32,7 +33,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const isBirthday = (profile) => isBirthdayToday(state.anniversaries, profile, today)
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
-    {weather && <p className="weather-line" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}`}><img className="weather-pic" src={`/icons/weather/${weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span></p>}
+    {weather && <p className="weather-line" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span></p>}
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
@@ -45,7 +46,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
     <section aria-labelledby="remaining-heading"><h2 id="remaining-heading" className="house-section-title">오늘 남은 일정{allDone && <small className="all-done">✓ 모두 끝</small>}<span className="visually-hidden" data-testid="today-count">{remaining.length}</span></h2>
       <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} moods={Object.fromEntries(profiles.map((p) => [p.id, moodFor(p, houseStatus(p, rows, state.tasks, today, now, state.shifts), { rows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, p, today), weather })]))} onRow={canEdit ? setEditing : undefined} /></div> : (allDone ? null : <div className="empty-state"><h3>오늘은 여유로운 날이에요</h3></div>)}</DataState>
       {onOpenToday && <button type="button" className="text-button past-link" onClick={onOpenToday}>오늘 지난 일정 보기 ›</button>}
-      {firstTomorrow.length > 0 && <section className="tomorrow-section" aria-labelledby="tomorrow-heading"><h2 className="house-section-title" id="tomorrow-heading">내일 첫 일정</h2><ScheduleList rows={firstTomorrow} profiles={state.profiles} label="내일 첫 일정" /></section>}
+      {(firstTomorrow.length > 0 || bring.length > 0) && <section className="tomorrow-section" aria-labelledby="tomorrow-heading"><h2 className="house-section-title" id="tomorrow-heading">내일 첫 일정</h2>{bring.length > 0 && <ul className="bring-list" aria-label="내일 챙길 것">{bring.map((row) => <li key={row.id}><MemberAvatars item={row} profiles={state.profiles} /><span><small>{row.title} 챙길 것</small><strong>{row.bring}</strong></span></li>)}</ul>}{firstTomorrow.length > 0 && <ScheduleList rows={firstTomorrow} profiles={state.profiles} label="내일 첫 일정" />}</section>}
     </section>
 
     {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}
