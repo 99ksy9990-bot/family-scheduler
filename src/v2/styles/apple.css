@@ -262,3 +262,7 @@ form.event-form input[type='number']::-webkit-inner-spin-button, form.event-form
 form.event-form input[type='number'] { padding: 0 10px !important; text-align: right !important; font-variant-numeric: tabular-nums; width: calc(2ch + 22px) !important; }
 form.event-form input[name='baseYear'] { width: calc(4ch + 22px) !important; }
 @supports (field-sizing: content) { form.event-form input[type='number'], form.event-form input[name='baseYear'] { field-sizing: content; width: auto !important; min-width: 0 !important; } }
+
+/* 홈 날씨 한 줄 (광양읍) */
+.weather-line { display: flex; align-items: center; gap: 6px; margin: 0 4px 12px; color: var(--label-2); font-size: 15px; word-break: keep-all; }
+.weather-line strong { color: var(--label); font-weight: 600; }
