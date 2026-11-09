@@ -123,10 +123,10 @@
 .month-center button { color: var(--label-2); } /* 11월 글자보다 조금 연한 회색 */
 .arrow-text { display: inline-flex; align-items: center; gap: 2px; } .inline-arrow { flex: none; }
 /* 떠 있는 추가 버튼(FAB): 맨 위에선 "+ 추가", 내리면 동그란 + (사용자 2026-11-09, 당근 앱 참고) */
-.v2-app > .header-add.header-add { position: fixed; z-index: var(--z-sticky-nav); top: auto; bottom: calc(max(8px, calc(env(safe-area-inset-bottom) - 26px)) + 78px); right: max(16px, calc((100vw - 480px) / 2 + 16px)); width: auto; height: 56px; min-width: 56px; padding: 0 20px 0 16px; gap: 6px; display: flex; align-items: center; justify-content: center; border-radius: 28px; background: var(--tint); color: #fff; font-size: 17px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.1); transition: padding .2s ease, transform .15s ease; }
-.v2-app > .header-add svg { width: 24px; height: 24px; stroke-width: 2.6; }
+.v2-app > .header-add.header-add { position: fixed; z-index: var(--z-sticky-nav); top: auto; bottom: calc(max(8px, calc(env(safe-area-inset-bottom) - 26px)) + 78px); right: max(16px, calc((100vw - 480px) / 2 + 16px)); width: auto; height: 46px; min-width: 46px; padding: 0 16px 0 12px; gap: 6px; display: flex; align-items: center; justify-content: center; border-radius: 23px; background: var(--tint); color: #fff; font-size: 16px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.1); transition: padding .2s ease, transform .15s ease; }
+.v2-app > .header-add svg { width: 20px; height: 20px; stroke-width: 2.6; }
 .v2-app > .header-add span { white-space: nowrap; }
-.v2-app > .header-add[data-compact] { padding: 0; width: 56px; }
+.v2-app > .header-add[data-compact] { padding: 0; width: 46px; }
 .v2-app > .header-add[data-compact] span { display: none; }
 .v2-app > .header-add:active { opacity: 1; transform: scale(.94); }
 @media (prefers-reduced-motion: reduce) { .header-add { transition: none; } }
