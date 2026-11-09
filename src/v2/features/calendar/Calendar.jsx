@@ -30,12 +30,17 @@ export function ByPerson({ rows, profiles, onRow, nextId }) {
 }
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
+const HIDE_KEY = 'family-scheduler-hidden-work' // 이 폰에서만 숨길 근무자
+const readHidden = () => { try { return JSON.parse(localStorage.getItem(HIDE_KEY) || '[]') } catch { return [] } }
 
 export default function Calendar({ today, state, loading, error, onRetry, cursor, onMove, selectedDate, onSelectDate, onPaste, updateState, canEdit }) {
   const [editing, setEditing] = useState(null) // 달력에서 바로 누른 일정
   const [, setClipTick] = useState(0) // 복사 취소 후 다시 그리기
   const clip = onPaste ? getClip() : null
   const touch = useRef(null)
+  const [hidden, setHidden] = useState(readHidden)
+  const toggleWork = (id) => setHidden((list) => { const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]; try { localStorage.setItem(HIDE_KEY, JSON.stringify(next)) } catch { /* 저장 못 하면 이번만 */ } return next })
+  const workers = state.profiles.filter((p) => p.active !== false && ((state.workSettings?.enabled && state.workSettings.workerIds?.includes(p.id)) || p.regularWork))
   const selected = selectedDate ? new Date(`${selectedDate}T00:00:00`) : today
   const days = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
@@ -43,7 +48,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     const count = Math.ceil((first.getDay() + new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()) / 7) * 7
     return Array.from({ length: count }, (_, index) => addDays(start, index))
   }, [cursor])
-  const rows = [...scheduleForDate(state, selected).filter((row) => !row.carryover), ...offRows(state, selected)] // 전날 밤 근무는 빼고 그날 근무(또는 OFF)만
+  const rows = [...scheduleForDate(state, selected).filter((row) => !row.carryover), ...offRows(state, selected)].filter((row) => !(['shift', 'leave'].includes(row.type) && hidden.includes(row.member))) // 전날 밤 근무는 빼고 그날 근무(또는 OFF)만
   // 교대 근무자(엄마 등)의 근무만 날짜 칸에 이름표로 (사용자 요청 2026-11-06, 달력 A 방식)
   const shiftLabels = useMemo(() => {
     const ws = state.workSettings || {}
@@ -77,13 +82,14 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) onMove(dx < 0 ? 1 : -1)
   }
   return <div className="calendar-page">
+    {workers.length > 0 && <div className="work-toggles" role="group" aria-label="근무 보기">{workers.map((p) => <button key={p.id} aria-pressed={!hidden.includes(p.id)} onClick={() => toggleWork(p.id)}><CharacterAvatar profile={p} size={24} />{p.name} 근무</button>)}</div>}
     <section className="month-card" aria-label="달력" onTouchStart={(event) => { touch.current = { x: event.touches[0].clientX, y: event.touches[0].clientY } }} onTouchEnd={endSwipe} onTouchCancel={() => { touch.current = null }}>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="month-grid" role="group" aria-label="월간 달력">
         {weekdays.map((day, index) => <span className={`weekday${index === 0 ? ' sunday' : ''}`} key={day}>{day}</span>)}
         {days.map((date) => {
           const key = iso(date)
           const holiday = holidaysForYear(date.getFullYear()).get(key)
-          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{(shiftLabels.get(key) || []).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</button>
+          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</button>
         })}
       </div></DataState>
     </section>

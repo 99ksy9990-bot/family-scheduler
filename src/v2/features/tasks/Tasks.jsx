@@ -25,8 +25,7 @@ export default function Tasks({ state, updateState, canEdit, today }) {
     if (ids.includes('family')) return state.profiles.filter((profile) => profile.active !== false).length ? state.profiles.filter((profile) => profile.active !== false) : [{ id: 'family', name: '가족' }]
     return [...new Set(ids)].map((id) => state.profiles.find((profile) => profile.id === id) || { id, name: '가족' })
   }
-  const [query, setQuery] = useState('')
-  const q = query.trim().toLowerCase()
+  const q = '' // 찾기는 위쪽 검색으로 (중복 삭제)
   const rows = taskRows(state.tasks, today, category, true).filter((row) => !q || [row.title, row.category].join(' ').toLowerCase().includes(q))
   useEffect(() => {
     if (!celebrating) return
@@ -51,7 +50,6 @@ export default function Tasks({ state, updateState, canEdit, today }) {
   return <section className="home-tasks" aria-label="할 일 목록">
     <div className="task-section-heading"><h2 className="house-section-title">할 일 <small data-testid="task-count">{rows.filter((row) => !row.done).length}개 남음</small></h2><button className="text-button" disabled={!canEdit} onClick={() => setEditCategories(true)}>분류 편집</button></div>
     <div className="task-chips"><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>전체</button>{categories.map((name) => <button key={name} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
-    <input className="task-search" type="search" placeholder="할 일 찾기" aria-label="할 일 찾기" value={query} onChange={(e) => setQuery(e.target.value)} />
     <p className="quiet task-hint">반복 할 일은 오늘부터 이달 말까지 보여요.</p>
     {groups.map(([title, items]) => <details className="task-group" key={title} open={(title === '할 일' && items.length > 0) || (q && items.length) ? true : undefined}><summary>{title}<span>{items.length}<ChevronRight size={16} /></span></summary>
       {items.length ? <GroupedList label={title}>{items.map((row) => <li className="todo-row" key={row.id}>

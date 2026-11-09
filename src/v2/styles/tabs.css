@@ -37,7 +37,7 @@ main { padding-top: 12px; }
 .text-button { border: 0; padding: 0 4px; font-size: 13px; background: none; color: var(--tint-label); }
 .task-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .task-chips button { border: 0; border-radius: 999px; background: var(--card); font-size: 15px; font-weight: 600; padding: 8px 14px; min-height: 40px; white-space: nowrap; }
-.task-chips button[aria-pressed='true'] { background: var(--control); color: var(--on-control); }
+.task-chips button[aria-pressed='true'] { background: var(--label); color: var(--bg); }
 .task-hint { font-size: 12px; margin: 6px 4px; }
 .task-group { margin-top: 8px; }
 .task-group summary { list-style: none; font-size: 17px; font-weight: 600; padding: 12px 16px; min-height: 48px; background: var(--card); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -169,7 +169,7 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .section-add { width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--tint); display: grid; place-items: center; } .section-add svg { stroke-width: 2.4; } /* 홈·달력 + 버튼과 같은 모양 */
 .heading-line .greeting { font-size: 15px; font-weight: 500; color: var(--label-2); letter-spacing: 0; align-self: flex-end; margin-bottom: 7px; white-space: nowrap; }
 .heading-line .greeting { margin-right: auto; align-self: flex-end; margin-bottom: 9px; }
-.grouped-row.next .time-start { color: var(--tint-label); font-weight: 600; } /* 다음 일정 강조 */
+.grouped-row.next .time-start { color: var(--label); font-weight: 700; } /* 다음 일정 강조 */
 .heading-line:has(.greeting) { align-items: baseline; } .heading-line .greeting { align-self: baseline; margin-bottom: 0; } /* 인사말 글자 밑선을 '우리집' 밑선에 맞춤 */
 #now-heading + * { margin-top: 12px; } /* 제목 줄 아래 바로 가족 칸 */
 .grouped-icon { width: 40px; height: 40px; } .family-page .grouped-icon { flex: 0 0 40px; } /* 목록 앞 아이콘 칸 40px 통일 */
