@@ -244,3 +244,5 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 .dday-today .dday { color: #c2410c; }
 @media (prefers-color-scheme: dark) { .dday-today { background: linear-gradient(100deg, #3a2e1a, #3a2128); } .dday-today .dday { color: #ffb37a; } }
 .tile-cake { position: absolute; left: 62px; top: 52px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.15)); }
+/* 연·월·일 칸 같은 너비 */
+form.event-form input[type='number'] { width: 104px !important; min-width: 104px; max-width: 104px; flex: none; text-align: right; }
