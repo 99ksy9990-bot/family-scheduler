@@ -194,3 +194,9 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 /* 가족 탭: 구성원 추가 줄 */
 .member-add-row h3, .member-add-row strong { color: var(--tint-label); }
 .member-add-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--fill); color: var(--tint-label); }
+/* 가족 탭: 한 줄 제목, 내리면 FAB 작게, 버전은 맨 아래 작은 글씨 */
+.v2-app[data-view='family'] .app-heading { top: 0; z-index: 51; padding-top: calc(env(safe-area-inset-top) + 8px); padding-bottom: 6px; }
+.v2-app[data-view='family'][data-scrolled] > .header-add { padding: 0; width: 46px; }
+.v2-app[data-view='family'][data-scrolled] > .header-add span { display: none; }
+.version-foot { display: block; margin: 20px auto 0; padding: 8px 12px; border: 0; background: none; color: var(--label-2); font-size: 13px; }
+.version-foot:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; border-radius: 8px; }

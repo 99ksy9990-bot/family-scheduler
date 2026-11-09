@@ -40,8 +40,9 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
     const n = now.getFullYear() + (passed ? 1 : 0) - base
     return n > 0 ? `${row.kind === '생일' ? `만 ${n}세` : `${n}주년`} · ` : ''
   }
-  const days = [...state.anniversaries].sort((a, b) => a.month - b.month || a.day - b.day)
-  const groups = [['연결', ['connection']], ['앱', ['notifications', 'backup']], ['정보', ['about']]]
+  const t = new Date(); const untilNext = (r) => { const d = new Date(t.getFullYear(), r.month - 1, r.day); if (d < new Date(t.getFullYear(), t.getMonth(), t.getDate())) d.setFullYear(d.getFullYear() + 1); return d - t } // shortcut: 음력은 양력 날짜로 대충 정렬
+  const days = [...state.anniversaries].sort((a, b) => untilNext(a) - untilNext(b))
+  const groups = [['연결', ['connection']], ['앱', ['notifications', 'backup']]]
   return <section className="family-page" aria-label="가족 목록">
     {canEdit && document.querySelector('.v2-app') && createPortal(<button className="header-add" onClick={() => setDay({})} aria-label="기념일 추가"><Plus size={24} /><span aria-hidden="true">기념일</span></button>, document.querySelector('.v2-app'))}
     <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.members} onClick={() => setFold((f) => ({ ...f, members: !f.members }))}>구성원<ChevronDown size={16} aria-hidden="true" /></button></h2></div>{!fold.members && <GroupedList label="구성원">{state.profiles.filter((profile) => profile.active !== false).map((profile) => <GroupedRow key={profile.id} icon={<CharacterAvatar profile={profile} size={40} />} title={profile.name} subtitle={summary(profile)} value={<ChevronRight size={18} />} onClick={() => setMemberId(profile.id)} />)}
@@ -50,11 +51,12 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
 
     </GroupedList>}
     <div className="family-section-heading"><h2 className="house-section-title"><button type="button" className="fold-toggle" aria-expanded={!fold.days} onClick={() => setFold((f) => ({ ...f, days: !f.days }))}>생일·기념일<ChevronDown size={16} aria-hidden="true" /></button></h2></div>
-    {!fold.days && <GroupedList label="생일·기념일">{days.length ? days.map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
+    {<GroupedList label="생일·기념일">{days.length ? (fold.days ? days.slice(0, 2) : days).map((row) => <GroupedRow key={row.id} icon={<DayIcon kind={row.kind} />} title={row.name} subtitle={`${milestone(row)}${row.calendarType === 'lunar' ? '음력 ' : ''}${row.month}월 ${row.day}일 · 매년`} value={<ChevronRight size={18} />} onClick={() => canEdit && setDay(row)} />) : <GroupedRow title="아직 없어요" subtitle="생일·기념일을 추가해 보세요" />}</GroupedList>}
     {groups.map(([heading, ids]) => <section key={heading}><h2 className="house-section-title">{heading}</h2><GroupedList label={heading}>{ids.map((key) => {
       const [id, title, Icon] = entries.find(([id]) => id === key)
       return <GroupedRow key={id} className="settings-entry" icon={<span className="settings-color-icon" data-icon={id}><Icon size={20} /></span>} title={title} subtitle={descriptions[id]} value={<ChevronRight size={18} />} onClick={() => onSelect(id)} />
     })}</GroupedList></section>)}
+    <button type="button" className="version-foot" onClick={() => onSelect('about')}>우리집 {descriptions.about}</button>
     {adding && <AddMember state={state} updateState={updateState} onClose={(id) => { setAdding(false); if (id) setMemberId(id) }} />}
     {day && <Sheet title={day.id ? day.name : '생일·기념일 추가'} onClose={() => setDay(null)}><Suspense fallback={null}><Family state={state} updateState={updateState} canEdit={canEdit} editorOnly initialSection="anniversaries" initialRecord={day} onSaved={() => setDay(null)} onCancel={() => setDay(null)} /></Suspense></Sheet>}
     {selected && <Sheet title={entries.find(([id]) => id === panel)[1]} onClose={() => onSelect(null)}><Suspense fallback={<p role="status">설정을 불러오고 있어요…</p>}>

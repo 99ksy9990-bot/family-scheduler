@@ -23,7 +23,7 @@ test.describe('공개 예시', () => {
     await page.keyboard.press('Escape')
     await page.locator('.demo-banner').click()
     await expect(page.locator('.app-heading h1')).toHaveText('가족')
-    await expect(page.locator('.app-date')).toHaveText('4명')
+    await expect(page.locator('.app-date')).toHaveCount(0) // 가족 탭은 한 줄 제목
     await expect(page.getByRole('dialog').getByRole('heading', { name: '가족 연결', exact: true })).toBeVisible()
   })
 
