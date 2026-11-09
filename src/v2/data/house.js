@@ -32,7 +32,7 @@ export function remainingSchedule(rows, today, now) {
 }
 
 // 새 표정 고르기: 생일 > 수업 중(공부) > 근무 등 바쁨 > 병원 날(아픔) > 밤·밤근무 다음날(졸림) > 밀린 할 일(걱정) > 휴무(휴식) > 기본
-export function moodFor(profile, status, { rows = [], tasks = [], now = new Date(), birthday = false } = {}) {
+export function moodFor(profile, status, { rows = [], tasks = [], now = new Date(), birthday = false, weather = null } = {}) {
   if (birthday) return 'party'
   if (status.expression === 'busy') return status.badgeKind ? 'study' : 'busy'
   const own = rowsForMember(rows, profile.id)
@@ -41,6 +41,7 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
+  if (weather?.mood) return weather.mood // 일정 없을 땐 날씨 얼굴 (우산·목도리·부채·털모자)
   if (status.detail === '오늘은 쉬는 날') return 'rest'
   return status.expression
 }

@@ -39,13 +39,17 @@ export function weatherNote(hourly, now = new Date()) {
   const temps = ahead.map((x) => x.t)
   const low = Math.min(...temps), high = Math.max(...temps)
   const when = (h) => h === now.getHours() ? '지금' : `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}시쯤`
+  const W = (h) => when(h)
+  const pick = (list) => list[(now.getDate() * 7 + now.getHours()) % list.length] // 시간마다 다른 말
   let tip
-  if (wet && (isSnow(wet.c))) tip = `${when(wet.h)} 눈 소식, 미끄럼 조심해요`
-  else if (wet) tip = `${when(wet.h)} 비 소식, 우산 챙겨요`
-  else if (low <= 0) tip = '많이 추워요, 따뜻하게 입어요'
-  else if (low <= 8) tip = '쌀쌀해요, 겉옷 챙겨요'
-  else if (high >= 31) tip = '무더워요, 물 자주 마셔요'
-  else if (high - low >= 10) tip = '일교차가 커요, 겉옷 챙겨요'
-  else tip = `오늘은 ${SKY_TEXT[sky(code)]}`
-  return { temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip }
+  if (wet && isSnow(wet.c)) tip = pick([`${W(wet.h)} 눈 소식, 미끄럼 조심해요`, `${W(wet.h)} 눈 와요, 천천히 다녀요`, `${W(wet.h)} 눈 소식, 장갑 챙겨요`, `${W(wet.h)} 눈 예보, 길 조심해요`])
+  else if (wet) tip = pick([`${W(wet.h)} 비 소식, 우산 챙겨요`, `${W(wet.h)} 비 와요, 우산 잊지 마요`, `${W(wet.h)} 비 예보, 우산 하나 챙겨요`, `${W(wet.h)} 비 올 것 같아요, 우산 챙겨요`])
+  else if (low <= 0) tip = pick(['많이 추워요, 따뜻하게 입어요', '꽁꽁 추워요, 목도리 챙겨요', '영하예요, 두툼하게 입어요', '손 시려요, 장갑 챙겨요'])
+  else if (low <= 8) tip = pick(['쌀쌀해요, 겉옷 챙겨요', '바람이 차요, 따뜻하게 입어요', '선선해요, 겉옷 하나 챙겨요', '조금 추워요, 감기 조심해요'])
+  else if (high >= 31) tip = pick(['무더워요, 물 자주 마셔요', '푹푹 쪄요, 시원하게 지내요', '더워요, 그늘로 다녀요', '많이 더워요, 물 챙겨요'])
+  else if (high - low >= 10) tip = pick(['일교차가 커요, 겉옷 챙겨요', '아침저녁 쌀쌀해요, 겉옷 챙겨요', '낮엔 따뜻, 밤엔 쌀쌀해요'])
+  else tip = pick({ sun: ['오늘은 맑아요', '햇살 좋은 날이에요', '나들이하기 좋은 날', '하늘이 맑아요'], cloud: ['오늘은 흐려요', '구름 많은 날이에요', '하늘이 조금 흐려요', '포근하고 흐린 날'], rain: ['비 와요, 우산 챙겨요'], snow: ['눈 와요, 길 조심해요'] }[sky(code)])
+  const soon = ahead.slice(0, 3).find((x) => x.p >= 50 || isRain(x.c) || isSnow(x.c)) // 3시간 안 비·눈이면 얼굴도
+  const mood = soon ? (isSnow(soon.c) ? 'snow' : 'rain') : temp <= 3 ? 'cold' : temp >= 30 ? 'hot' : null
+  return { mood, temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip }
 }
