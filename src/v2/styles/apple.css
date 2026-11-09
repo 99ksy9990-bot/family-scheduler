@@ -200,3 +200,8 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 .v2-app[data-view='family'][data-scrolled] > .header-add span { display: none; }
 .version-foot { display: block; margin: 20px auto 0; padding: 8px 12px; border: 0; background: none; color: var(--label-2); font-size: 13px; }
 .version-foot:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; border-radius: 8px; }
+/* 교대 근무표: 지금 넣을 날 */
+.shift-cell[aria-current='date'] { box-shadow: inset 0 0 0 2px var(--tint); border-radius: 12px; }
+/* 근무 버튼은 아래에 떠 있게 (달력 보며 연달아 넣기) */
+.shift-brush-dock { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 5; margin-top: 12px; padding: 8px; border-radius: 22px; background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+.shift-hint { margin: 12px 4px 0; }
