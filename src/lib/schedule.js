@@ -26,7 +26,9 @@ export const nextAnniversaryOccurrence = (anniversary, from = startOfToday()) =>
   return null
 }
 
-export const anniversaryTitle = (anniversary) => anniversary.kind === '기념일' ? anniversary.name : `${anniversary.name} ${anniversary.kind}`
+// 어른(할머니·할아버지·부모님 등) 생일은 '생신'
+const ELDER = /할머니|할아버지|할매|할배|어머님|아버님|시어머니|시아버지|장모|장인|외할/
+export const anniversaryTitle = (anniversary) => anniversary.kind === '기념일' ? anniversary.name : `${anniversary.name} ${anniversary.kind === '생일' && ELDER.test(anniversary.name) ? '생신' : anniversary.kind}`
 
 export const anniversaryMilestoneLabel = (anniversary, occurrence) => {
   const baseYear = Number(anniversary.baseYear)
