@@ -46,7 +46,10 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
 }
 
 // 오늘이 이 사람 생일인지 (기념일 목록의 '생일')
-export function isBirthdayToday(anniversaries = [], profile, today) {
+export function isBirthdayToday(anniversaries = [], profile, today, match = (a) => a.kind === '생일') {
   const day = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  return anniversaries.some((a) => a.kind === '생일' && (a.members?.includes(profile.id) || a.member === profile.id || a.name === profile.name) && nextAnniversaryOccurrence(a, day)?.getTime() === day.getTime())
+  return anniversaries.some((a) => match(a) && (a.members?.includes(profile.id) || a.member === profile.id || a.name === profile.name) && nextAnniversaryOccurrence(a, day)?.getTime() === day.getTime())
 }
+
+// 생일·기념일(제사·기일 제외)이면 축하 얼굴
+export const isCelebrationToday = (anniversaries, profile, today) => isBirthdayToday(anniversaries, profile, today, (a) => !/제사|기일/.test(a.kind || ''))
