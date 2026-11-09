@@ -17,7 +17,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const remaining = remainingSchedule(rows, today, now).filter((row) => !row.carryover && row.type !== 'leave') // 전날 밤 근무·연차(쉬는 날)는 빼기
   // 내일: 구성원마다 한 줄. 쉬는 날(엄마 OFF·아빠 연차)은 '휴무', 아니면 첫 시간 일정
   const tmr = addDays(today, 1)
-  const tomorrowAll = [...offRows(state, tmr).map((row) => ({ ...row, title: '휴무' })), ...scheduleForDate(state, tmr).filter((row) => !row.carryover).map((row) => row.type === 'leave' ? { ...row, title: '휴무', displayStart: '하루 종일' } : row)]
+  const tomorrowAll = [...offRows(state, tmr).map((row) => ({ ...row, title: '휴무', displayStart: ' ' })), ...scheduleForDate(state, tmr).filter((row) => !row.carryover).map((row) => row.type === 'leave' ? { ...row, title: '휴무', displayStart: ' ' } : row)]
   const mine = (row, id) => membersFor(row, state.profiles).some((m) => m.id === id)
   const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i).toSorted((a, b) => (/^\d/.test(a.displayStart) ? a.displayStart : '99').localeCompare(/^\d/.test(b.displayStart) ? b.displayStart : '99'))
   return <div className="house-page">
