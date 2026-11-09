@@ -63,7 +63,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     // 고정 근무자(아빠)의 연차·반차도 같은 이름표로
     for (const profile of state.profiles) for (const [date, kind] of Object.entries(profile.regularWork?.leaves || {})) {
       if (profile.active === false || !LEAVES[kind]) continue
-      map.set(date, [...(map.get(date) || []), { member: profile.id, id: `leave-${kind}`, text: LEAVES[kind].label }])
+      map.set(date, [...(map.get(date) || []), { member: profile.id, id: `leave-${kind}`, text: LEAVES[kind].label.replace(' 반차', '') }])
     }
     // OFF는 숨기고(일하는 날만), 빈 줄은 두지 않음
     return map
