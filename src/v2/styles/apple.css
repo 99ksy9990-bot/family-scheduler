@@ -189,3 +189,5 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 .work-toggles button[aria-pressed='false'] { text-decoration: line-through; }
 .work-toggles button[aria-pressed='false'] .character, .work-toggles button[aria-pressed='false'] img { opacity: .45; }
 .work-toggles button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
+/* 근무 이름표는 글자 크기에 맞게 */
+.calendar-day .shift-label { width: fit-content; min-width: 20px; margin: 2px auto 0; padding: 0 5px; text-align: center; }
