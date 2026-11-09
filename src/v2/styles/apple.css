@@ -237,3 +237,4 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 .house-badge-pic { position: absolute; top: 12px; right: 16px; }
 .house-badge-pic + .house-badge { top: 48px; }
 .dday { font-weight: 700; color: var(--label); font-variant-numeric: tabular-nums; }
+.all-done { margin-left: 8px; font-size: 15px; font-weight: 600; color: var(--green, #23894f); }
