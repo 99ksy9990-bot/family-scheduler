@@ -14,7 +14,7 @@ import { offRows } from '../../data/personDay'
 import { personColor } from '../../data/kinds'
 
 // 그날 일정을 사람별로 묶음: 가족 전체(공휴일·기념일) → 함께 하는 일정 → 한 사람씩
-export function ByPerson({ rows, profiles, onRow, nextId }) {
+export function ByPerson({ rows, profiles, onRow }) {
   if (!rows.length) return <ScheduleList rows={rows} profiles={profiles} />
   const groups = new Map()
   for (const row of rows) {
@@ -25,7 +25,7 @@ export function ByPerson({ rows, profiles, onRow, nextId }) {
   const order = [['all', '가족'], ['together', '함께'], ...profiles.filter((p) => p.active !== false).map((p) => [p.id, p.name, p])]
   return order.filter(([key]) => groups.has(key)).map(([key, name, profile]) => <div className={`person-group${profile ? " solo" : ""}`} key={key} style={profile ? { '--pc': personColor(profile) } : undefined}>
     <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} size={40} /> : null}{name}<small>{groups.get(key).length}</small></h3>
-    <ScheduleList rows={groups.get(key)} profiles={profiles} onRow={onRow} nextId={nextId} label={`${name} 일정`} solo={Boolean(profile)} />
+    <ScheduleList rows={groups.get(key)} profiles={profiles} onRow={onRow} nextId="auto" label={`${name} 일정`} solo={Boolean(profile)} />
   </div>)
 }
 

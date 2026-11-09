@@ -10,7 +10,6 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const [editing, setEditing] = useState(null) // 남은 일정에서 바로 수정
   const profiles = state.profiles.filter((profile) => profile.active !== false)
   const remaining = remainingSchedule(rows, today, now).filter((row) => !row.carryover && row.type !== 'leave') // 전날 밤 근무·연차(쉬는 날)는 빼기
-  const nextTimed = remaining.find((row) => row.displayStart)
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
@@ -21,7 +20,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       })}</div>{!profiles.length && <p className="data-message">가족 탭에서 구성원을 등록해 주세요.</p>}</DataState>
     </section>
     <section aria-labelledby="remaining-heading"><h2 id="remaining-heading" className="house-section-title">오늘 남은 일정<span className="visually-hidden" data-testid="today-count">{remaining.length}</span></h2>
-      <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} nextId={nextTimed?.id} onRow={canEdit ? setEditing : undefined} /></div> : <div className="empty-state"><h3>오늘 남은 일정이 없어요</h3><p>가족 타일을 누르면 지난 일정도 볼 수 있어요.</p></div>}</DataState>
+      <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></div> : <div className="empty-state"><h3>오늘 남은 일정이 없어요</h3><p>가족 타일을 누르면 지난 일정도 볼 수 있어요.</p></div>}</DataState>
     </section>
 
     {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}
