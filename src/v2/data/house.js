@@ -41,8 +41,10 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
-  if (weather?.mood) return weather.mood // 일정 없을 땐 날씨 얼굴 (우산·목도리·부채·털모자)
+  const mild = weather?.mood === 'sunny' || weather?.mood === 'cloudy'
+  if (weather?.mood && !mild) return weather.mood // 일정 없을 땐 날씨 얼굴 (우산·목도리·부채·털모자·바람)
   if (status.detail === '오늘은 쉬는 날') return 'rest'
+  if (mild && status.expression === 'basic') return weather.mood // 맑음·흐림은 다른 표정이 없을 때만
   return status.expression
 }
 

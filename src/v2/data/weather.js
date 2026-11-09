@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
 // 광양시 광양읍 날씨 (Open-Meteo, 가입 없이 무료). 한 시간마다 새로 받고 폰에 저장해 둠
-const URL = 'https://api.open-meteo.com/v1/forecast?latitude=34.976&longitude=127.587&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Asia%2FSeoul&forecast_days=2'
-const KEY = 'family-scheduler-weather'
+const URL = 'https://api.open-meteo.com/v1/forecast?latitude=34.976&longitude=127.587&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=Asia%2FSeoul&forecast_days=2'
+const KEY = 'family-scheduler-weather-v2' // 풍속 추가로 새 이름
 const HOUR = 3600000
 
 export function useWeather() {
@@ -47,9 +47,12 @@ export function weatherNote(hourly, now = new Date()) {
   else if (low <= 0) tip = pick(['많이 추워요, 따뜻하게 입어요', '꽁꽁 추워요, 목도리 챙겨요', '영하예요, 두툼하게 입어요', '손 시려요, 장갑 챙겨요'])
   else if (low <= 8) tip = pick(['쌀쌀해요, 겉옷 챙겨요', '바람이 차요, 따뜻하게 입어요', '선선해요, 겉옷 하나 챙겨요', '조금 추워요, 감기 조심해요'])
   else if (high >= 31) tip = pick(['무더워요, 물 자주 마셔요', '푹푹 쪄요, 시원하게 지내요', '더워요, 그늘로 다녀요', '많이 더워요, 물 챙겨요'])
+  else if ((hourly.wind_speed_10m?.[i] ?? 0) >= 30) tip = pick(['바람이 세요, 모자 조심해요', '바람 많이 불어요', '바람 쌩쌩, 단단히 입어요'])
   else if (high - low >= 10) tip = pick(['일교차가 커요, 겉옷 챙겨요', '아침저녁 쌀쌀해요, 겉옷 챙겨요', '낮엔 따뜻, 밤엔 쌀쌀해요'])
   else tip = pick({ sun: ['오늘은 맑아요', '햇살 좋은 날이에요', '나들이하기 좋은 날', '하늘이 맑아요'], cloud: ['오늘은 흐려요', '구름 많은 날이에요', '하늘이 조금 흐려요', '포근하고 흐린 날'], rain: ['비 와요, 우산 챙겨요'], snow: ['눈 와요, 길 조심해요'] }[sky(code)])
   const soon = ahead.slice(0, 3).find((x) => x.p >= 50 || isRain(x.c) || isSnow(x.c)) // 3시간 안 비·눈이면 얼굴도
-  const mood = soon ? (isSnow(soon.c) ? 'snow' : 'rain') : temp <= 3 ? 'cold' : temp >= 30 ? 'hot' : null
+  const wind = hourly.wind_speed_10m?.[i] ?? 0
+  const day = now.getHours() >= 7 && now.getHours() < 18
+  const mood = soon ? (isSnow(soon.c) ? 'snow' : 'rain') : temp <= 3 ? 'cold' : temp >= 30 ? 'hot' : wind >= 30 ? 'windy' : !day ? null : code <= 1 ? 'sunny' : 'cloudy'
   return { mood, temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip }
 }
