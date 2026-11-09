@@ -276,3 +276,7 @@ form.event-form input[name='baseYear'] { width: calc(4ch + 22px) !important; }
 .bring-list small { color: var(--label-2); font-size: 13px; }
 .grouped-body h3.row-title-wx { display: flex; align-items: center; }
 .row-title-wx .row-umbrella { flex: none; }
+.leave-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 8px 0 16px; }
+.leave-pick button { min-height: 52px; border-radius: 14px; border: 0; background: var(--fill); color: var(--label); font-size: 17px; font-weight: 600; }
+.leave-pick button[aria-pressed="true"] { background: var(--label); color: var(--solid-card); }
+.leave-pick button:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
