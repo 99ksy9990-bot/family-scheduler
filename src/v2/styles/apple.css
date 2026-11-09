@@ -292,3 +292,9 @@ a.weather-line { text-decoration: none; }
 a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; border-radius: 8px; }
 .schedule-field:has(.map-out) { display: flex; align-items: center; gap: 8px; }
 .map-out { flex: none; display: inline-flex; align-items: center; gap: 2px; padding: 4px 10px; border-radius: 999px; background: var(--fill); color: var(--tint); font-size: 14px; font-weight: 600; text-decoration: none; }
+/* 오늘 칩: 예정(수업 전)도 '근무 중'처럼 사람 색으로 채움 */
+.house-grid .house-tile .house-badge.upcoming { border: 0; color: var(--on-tint); box-shadow: inset 0 1px 1px rgba(255,255,255,.6),0 3px 8px rgba(0,0,0,.15); }
+.house-grid .house-tile[data-character='dad'] .house-badge.upcoming { background: var(--dad); }
+.house-grid .house-tile[data-character='mom'] .house-badge.upcoming { background: var(--mom); }
+.house-grid .house-tile[data-character='big'] .house-badge.upcoming { background: var(--big); }
+.house-grid .house-tile[data-character='little'] .house-badge.upcoming { background: var(--little); }
