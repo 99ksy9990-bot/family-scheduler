@@ -12,10 +12,10 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const active = own.find((row) => eventPhase(row, today, now) === 'active')
   const schoolKind = (row) => ['학교', '학원'].includes(row?.kind) ? row.kind : row?.type === 'school' ? '학교' : null
   const status = memberStatus(profile, rows, tasks, now)
-  if (active) return { ...status, expression: 'busy', badge: active.type === 'shift' ? '근무 중' : schoolKind(active) || (active.title.length > 6 ? '일정 중' : active.title),
+  if (active) return { ...status, expression: 'busy', badge: active.type === 'shift' ? '근무 중' : active.title.length > 6 ? schoolKind(active) || '일정 중' : active.title, // 학원·학교도 수업명(수학·4교시)
     detail: `» ${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` }
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
-  if (schoolKind(next)) return { ...status, badge: schoolKind(next), badgeUpcoming: true, detail: `${next.displayStart} 시작` }
+  if (schoolKind(next)) return { ...status, badge: next.title.length > 6 ? schoolKind(next) : next.title, badgeUpcoming: true, detail: `${next.displayStart} 시작` }
   if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘 연차' }
   const half = own.find((row) => row.regular && row.title.includes('반차'))
   if (!next && half) return { ...status, detail: `오늘 ${half.title.split(' · ')[1]}` }
