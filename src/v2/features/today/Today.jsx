@@ -6,6 +6,7 @@ import CharacterAvatar from '../../components/CharacterAvatar'
 import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
 import { membersFor } from '../../data/members'
+import { offRows } from '../../data/personDay'
 import { houseStatus, remainingSchedule } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { addDays } from '../../../lib/dates'
@@ -14,9 +15,11 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const [editing, setEditing] = useState(null) // 남은 일정에서 바로 수정
   const profiles = state.profiles.filter((profile) => profile.active !== false)
   const remaining = remainingSchedule(rows, today, now).filter((row) => !row.carryover && row.type !== 'leave') // 전날 밤 근무·연차(쉬는 날)는 빼기
-  // 내일: 구성원마다 첫 시간 일정 하나 (연차·OFF 제외)
-  const tomorrowRows = scheduleForDate(state, addDays(today, 1)).filter((row) => !row.carryover && row.type !== 'leave' && /^\d/.test(row.displayStart || ''))
-  const firstTomorrow = profiles.map((p) => tomorrowRows.find((row) => membersFor(row, state.profiles).some((m) => m.id === p.id))).filter((row, i, all) => row && all.indexOf(row) === i).toSorted((a, b) => a.displayStart.localeCompare(b.displayStart))
+  // 내일: 구성원마다 한 줄. 쉬는 날(엄마 OFF·아빠 연차)은 '휴무', 아니면 첫 시간 일정
+  const tmr = addDays(today, 1)
+  const tomorrowAll = [...offRows(state, tmr).map((row) => ({ ...row, title: '휴무' })), ...scheduleForDate(state, tmr).filter((row) => !row.carryover).map((row) => row.type === 'leave' ? { ...row, title: '휴무', displayStart: '하루 종일' } : row)]
+  const mine = (row, id) => membersFor(row, state.profiles).some((m) => m.id === id)
+  const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i).toSorted((a, b) => (/^\d/.test(a.displayStart) ? a.displayStart : '99').localeCompare(/^\d/.test(b.displayStart) ? b.displayStart : '99'))
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
