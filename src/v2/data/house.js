@@ -14,7 +14,7 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const schoolKind = (row) => ['학교', '학원'].includes(row?.kind) ? row.kind : row?.type === 'school' ? '학교' : null
   const status = memberStatus(profile, rows, tasks, now)
   if (active) return { ...status, expression: 'busy', badgeKind: active.type === 'shift' ? null : schoolKind(active), badge: active.type === 'shift' ? '근무 중' : active.title.length > 6 ? schoolKind(active) || '일정 중' : active.title, // 학원·학교도 수업명(수학·4교시)
-    detail: `» ${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` }
+    detail: `@${active.type === 'shift' ? 'work' : schoolKind(active) ? 'study' : 'event'}:${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` } // 화면에서 softDetail이 문장으로
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
   if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: next.title.length > 6 ? schoolKind(next) : next.title, badgeUpcoming: true, detail: `${next.displayStart} 시작` }
   if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘은 쉬는 날' } // 아빠 연차도 엄마 OFF처럼
@@ -56,13 +56,19 @@ export const isCelebrationToday = (anniversaries, profile, today) => isBirthdayT
 
 // 같은 상태라도 날짜·사람마다 다른 말로 (하루 동안은 그대로)
 const SOFT = {
-  '오늘은 쉬는 날': ['오늘은 쉬는 날', '푹 쉬는 하루', '오늘은 충전하는 날', '느긋하게 쉬어요'],
-  '오늘도 수고했어요': ['오늘도 수고했어요', '오늘 할 일 끝!', '멋진 하루였어요', '이제 편히 쉬어요'],
-  '여유로운 하루': ['여유로운 하루', '느긋한 시간', '한숨 돌리는 중', '오늘은 여유 있어요'],
-  '할 일이 남았어요': ['할 일이 남았어요', '조금만 더 힘내요', '할 일 하나씩 해봐요'],
+  '오늘은 쉬는 날': ['오늘은 쉬는 날', '푹 쉬는 하루', '오늘은 충전하는 날', '느긋하게 쉬어요', '쉬엄쉬엄 하는 날', '오늘은 쉬어 가요', '집에서 뒹굴뒹굴', '마음껏 쉬는 날'],
+  '오늘도 수고했어요': ['오늘도 수고했어요', '오늘 할 일 끝!', '멋진 하루였어요', '이제 편히 쉬어요', '오늘도 잘 해냈어요', '고생 많았어요', '오늘 하루 끝!', '이제 쉬어도 돼요'],
+  '여유로운 하루': ['여유로운 하루', '느긋한 시간', '한숨 돌리는 중', '오늘은 여유 있어요', '잠깐 쉬는 중', '편안한 시간', '마음 편한 하루', '숨 고르는 중'],
+  '할 일이 남았어요': ['할 일이 남았어요', '조금만 더 힘내요', '할 일 하나씩 해봐요', '거의 다 왔어요', '천천히 해봐요', '하나만 더 해볼까요'],
+}
+const BUSY = {
+  work: (t) => [`${t}까지 일하는 중`, `${t}까지 열일 중`, `${t}에 퇴근해요`, `${t}까지 힘내는 중`, `${t}까지 바쁘게 일해요`, `${t}이면 일 끝`, `${t}까지 근무 중`, `${t}에 만나요`],
+  study: (t) => [`${t}까지 공부 중`, `${t}까지 열공 중`, `${t}에 끝나요`, `${t}까지 배우는 중`, `${t}까지 집중 중`, `${t}이면 수업 끝`, `${t}까지 열심히`, `${t}에 만나요`],
+  event: (t) => [`${t}에 끝나요`, `${t}까지 바빠요`, `${t}까지 일정 중`, `${t}쯤 끝나요`, `${t}이면 끝나요`, `${t}까지 조금 바빠요`],
 }
 export function softDetail(detail, profile, today) {
-  const list = SOFT[detail]
+  const m = /^@(\w+):(.*)$/.exec(detail || '')
+  const list = m ? BUSY[m[1]](m[2]) : SOFT[detail]
   if (!list) return detail
   const seed = [...`${profile.id}${today.getFullYear()}${today.getMonth()}${today.getDate()}`].reduce((n, c) => n * 31 + c.charCodeAt(0) >>> 0, 7)
   return list[seed % list.length]
