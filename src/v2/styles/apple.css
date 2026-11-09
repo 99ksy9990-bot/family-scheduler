@@ -245,4 +245,16 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 @media (prefers-color-scheme: dark) { .dday-today { background: linear-gradient(100deg, #3a2e1a, #3a2128); } .dday-today .dday { color: #ffb37a; } }
 .tile-cake { position: absolute; left: 62px; top: 52px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.15)); }
 /* 연·월·일 칸 같은 너비 */
-form.event-form input[type='number'] { width: 104px !important; min-width: 104px; max-width: 104px; flex: none; text-align: right; }
+/* 기록 입력: 상자 안 좌우 여백 같게, 오른쪽 끝 맞춤 */
+form.event-form input[type='number'] { width: 64px !important; min-width: 0; flex: none; padding: 0 12px !important; text-align: center !important; }
+form.event-form input[name='baseYear'] { width: 84px !important; }
+.settings-content .event-form > label > input[name='name'] { text-align: right; padding-right: 12px; }
+/* 누구: 얼굴로 고르기 */
+.face-pick { display: flex; gap: 8px; }
+.face-pick label { position: relative; display: grid; place-items: center; opacity: .35; filter: grayscale(1); cursor: pointer; }
+.face-pick label:has(input:checked) { opacity: 1; filter: none; }
+.face-pick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.face-pick label:has(input:focus-visible) { outline: 3px solid var(--tint); outline-offset: 2px; border-radius: 50%; }
+form.event-form input[type='number'] { -webkit-appearance: none; appearance: textfield; width: 56px !important; padding: 0 !important; }
+form.event-form input[name='baseYear'] { width: 76px !important; }
+form.event-form input[type='number']::-webkit-inner-spin-button, form.event-form input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; display: none; }

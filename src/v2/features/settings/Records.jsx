@@ -1,3 +1,4 @@
+import CharacterAvatar from '../../components/CharacterAvatar'
 import { seasonOf } from '../../../lib/schedule'
 import { FieldChip } from '../../components/EventForm'
 import { useState } from 'react'
@@ -46,7 +47,7 @@ export default function Records({ title, collection, fields, state, updateState,
     {undo && <div role="status" className="undo-toast">삭제했어요.<button onClick={() => { updateState((current) => ({ ...current, [collection]: [...current[collection].filter((row) => keyOf(row) !== keyOf(undo)), undo] })); setUndo(null) }}>되돌리기</button></div>}
     {editing && <form className="event-form settings-card" key={editing[identity] || 'new'} onSubmit={submit}>
       {fields.map((field) => {
-        if (field.type === 'multi') return <div className="field-group" role="group" aria-labelledby={`fg-${field.key}`} key={field.key}><span className="field-group-label" id={`fg-${field.key}`}>{field.label}</span>{field.options.map(([value, name]) => <label className="check-label" key={value}><input type="checkbox" name={field.key} value={value} defaultChecked={(editing[field.key] || (editing.member ? [editing.member] : [])).includes(value)} />{name}</label>)}</div>
+        if (field.type === 'multi') return <div className="field-group" role="group" aria-labelledby={`fg-${field.key}`} key={field.key}><span className="field-group-label" id={`fg-${field.key}`}>{field.label}</span><span className="face-pick">{field.options.map(([value, name]) => { const p = state.profiles.find((x) => x.id === value); return <label key={value} title={name}><input type="checkbox" name={field.key} value={value} aria-label={name} defaultChecked={(editing[field.key] || (editing.member ? [editing.member] : [])).includes(value)} />{p ? <CharacterAvatar profile={p} size={40} /> : name}</label> })}</span></div>
         if (field.type === 'weekdays') return <div className="field-group" role="group" aria-labelledby={`fg-${field.key}`} key={field.key}><span className="field-group-label" id={`fg-${field.key}`}>{field.label}</span>{['일', '월', '화', '수', '목', '금', '토'].map((name, day) => <label className="check-label" key={day}><input type="checkbox" name="weekdays" value={day} defaultChecked={(editing.weekdays || [editing.weekday]).includes(day)} />{name}</label>)}</div>
         const raw = editing[field.key] ?? field.defaultValue ?? ''
         const value = field.key === 'season' ? seasonOf(raw) : raw
