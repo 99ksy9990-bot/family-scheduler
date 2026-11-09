@@ -1,3 +1,4 @@
+import { ArrowUpRight } from 'lucide-react'
 import { setClip } from '../data/clip'
 import { useState } from 'react'
 import Sheet from './Sheet'
@@ -71,7 +72,7 @@ export default function EventForm({ date, profiles, onSave, onClose, onModeChang
     {!initialEvent && <div className="add-mode"><button type="button" aria-pressed="true">일정</button><button type="button" onClick={() => onModeChange?.('task')}>할 일</button></div>}
     <form id="new-event-form" className="schedule-form" onSubmit={submit}>
       <div className="schedule-fields">
-        <div className="form-group"><input className="schedule-title" name="title" aria-label="무슨 일정인가요?" placeholder="제목" defaultValue={initialEvent?.title || ''} required maxLength={200} data-autofocus /><label className="schedule-field"><input name="location" aria-label="장소" placeholder="장소" defaultValue={initialEvent?.location || ''} /></label><label className="schedule-field"><input name="bring" aria-label="준비물" placeholder="준비물 (예: 체육복)" defaultValue={initialEvent?.bring || ''} maxLength={100} /></label></div>
+        <div className="form-group"><input className="schedule-title" name="title" aria-label="무슨 일정인가요?" placeholder="제목" defaultValue={initialEvent?.title || ''} required maxLength={200} data-autofocus /><label className="schedule-field"><input name="location" aria-label="장소" placeholder="장소" defaultValue={initialEvent?.location || ''} />{initialEvent?.location && <a className="map-out" href={`https://map.naver.com/p/search/${encodeURIComponent(initialEvent.location)}`} target="_blank" rel="noopener noreferrer" aria-label={`${initialEvent.location} 지도에서 보기`}>지도<ArrowUpRight size={14} aria-hidden="true" /></a>}</label><label className="schedule-field"><input name="bring" aria-label="준비물" placeholder="준비물 (예: 체육복)" defaultValue={initialEvent?.bring || ''} maxLength={100} /></label></div>
         <div className="form-group">
           <div className="schedule-field"><span>시간 없음</span><button type="button" className="switch-control" role="switch" aria-label="시간 없음" aria-checked={allDay} onClick={() => setAllDay(!allDay)}><span aria-hidden="true" /></button></div>
           <div className="schedule-field"><span>{allDay && !multipleDays ? '날짜' : '시작'}</span><NativeChip name="date" label="날짜" type="date" value={eventDate} onChange={updateDate} />{!allDay && <NativeChip name="time" label="시작 시간" type="time" value={time} onChange={updateTime} />}</div>

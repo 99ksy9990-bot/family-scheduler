@@ -14,6 +14,7 @@ import { offRows } from '../../data/personDay'
 import { houseStatus, remainingSchedule, moodFor, isBirthdayToday, isCelebrationToday, softDetail } from '../../data/house'
 import { scheduleForDate } from '../../data/schedule'
 import { addDays } from '../../../lib/dates'
+import { ArrowUpRight } from 'lucide-react'
 import { useWeather, weatherNote } from '../../data/weather'
 const SKY_PIC = { sun: 'sun', cloud: 'cloud', rain: 'rain', snow: 'snow' }
 
@@ -39,7 +40,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const isBirthday = (profile) => isBirthdayToday(state.anniversaries, profile, today)
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
-    {weather && <p className="weather-line" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span></p>}
+    {weather && <a className="weather-line" href="https://m.search.naver.com/search.naver?query=%EA%B4%91%EC%96%91%EC%9D%8D+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener noreferrer" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}. 네이버 날씨 열기`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span><ArrowUpRight className="weather-out" size={16} aria-hidden="true" /></a>}
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
