@@ -1,10 +1,10 @@
 import { NativeChip } from '../../components/EventForm'
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { addDays, iso } from '../../../lib/dates'
 import { holidaysForYear } from '../../../lib/holidays'
 import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
 import { LEAVES } from '../../data/schedule'
+import MonthHead from '../../components/MonthHead'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -33,6 +33,9 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
   const types = state.workSettings.shiftTypes?.length ? state.workSettings.shiftTypes : DEFAULT_SHIFT_TYPES
   const [cursor, setCursor] = useState(() => iso(new Date())) // 지금 넣을 날: 근무를 누르면 이 날에 넣고 다음 날로
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
+  const touch = useRef(null) // 좌우로 밀어 달 넘기기
+  const swipeStart = (e) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
+  const swipeEnd = (e) => { if (!touch.current) return; const dx = e.changedTouches[0].clientX - touch.current.x; const dy = e.changedTouches[0].clientY - touch.current.y; touch.current = null; if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) setMonth(new Date(month.getFullYear(), month.getMonth() + (dx < 0 ? 1 : -1), 1)) }
   const mine = new Map(state.shifts.filter((s) => s.member === profile.id).map((s) => [s.date, s.shift]))
   const start = addDays(month, -month.getDay())
   const weeks = Math.ceil((month.getDay() + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7)
@@ -53,8 +56,8 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
   }
   const code = (id) => id === 'off' ? 'OFF' : types.find((t) => t.id === id)?.code || ''
   return <div className="work-editor">
-    <div className="shift-month-head month-arrows"><button aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={18} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><button aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={18} /></button></div>
-    <div className="shift-grid">
+    <MonthHead month={month} onChange={setMonth} />
+    <div className="shift-grid" onTouchStart={swipeStart} onTouchEnd={swipeEnd}>
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
       {cells.map((d) => { const key = iso(d); const s = mine.get(key); return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={s || ''} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${s ? code(s) : '비어 있음'}`} aria-current={key === cursor ? 'date' : undefined} onClick={() => setCursor(key)}><span>{d.getDate()}</span><b>{s ? code(s) : ''}</b></button> })}
     </div>
@@ -67,6 +70,9 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
 export function LeaveMonthEditor({ profile, canEdit, onSave }) {
   const [brush, setBrush] = useState('full')
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
+  const touch = useRef(null) // 좌우로 밀어 달 넘기기
+  const swipeStart = (e) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
+  const swipeEnd = (e) => { if (!touch.current) return; const dx = e.changedTouches[0].clientX - touch.current.x; const dy = e.changedTouches[0].clientY - touch.current.y; touch.current = null; if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) setMonth(new Date(month.getFullYear(), month.getMonth() + (dx < 0 ? 1 : -1), 1)) }
   const leaves = profile.regularWork?.leaves || {}
   const start = addDays(month, -month.getDay())
   const weeks = Math.ceil((month.getDay() + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7)
@@ -82,8 +88,8 @@ export function LeaveMonthEditor({ profile, canEdit, onSave }) {
   return <div className="work-editor">
     <div className="shift-brush" role="group" aria-label="휴가 종류">{Object.entries(LEAVES).map(([id, t]) => <button type="button" key={id} data-shift="off" aria-pressed={brush === id} onClick={() => setBrush(id)}><b>{t.code}</b><small>{t.off}</small></button>)}</div>
     <p className="quiet">종류를 고르고 날짜를 누르세요. 같은 날을 다시 누르면 지워져요.</p>
-    <div className="shift-month-head month-arrows"><button aria-label="이전 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft size={18} /></button><b>{month.getFullYear()}년 {month.getMonth() + 1}월</b><button aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight size={18} /></button></div>
-    <div className="shift-grid">
+    <MonthHead month={month} onChange={setMonth} />
+    <div className="shift-grid" onTouchStart={swipeStart} onTouchEnd={swipeEnd}>
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
       {cells.map((d) => { const key = iso(d); const l = LEAVES[leaves[key]]; return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={l ? 'off' : ''} data-leave={leaves[key] || undefined} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${l ? l.label : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{l ? l.code : ''}</b></button> })}
     </div>

@@ -208,3 +208,12 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 /* 같은 날 근무 이름표는 한 줄에 나란히 */
 .calendar-day .shift-row { display: flex; justify-content: center; gap: 2px; flex-wrap: nowrap; }
 .calendar-day .shift-row .shift-label { margin: 2px 0 0; min-width: 0; padding: 0 3px; }
+.month-head { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 12px; }
+.month-head b { font-size: 28px; font-weight: 700; color: var(--label); }
+.month-head .app-date { margin: 0; font-size: 15px; font-weight: 500; color: var(--label-2); }
+.month-head { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.month-head .month-caret { align-self: center; color: var(--label-2); }
+.month-head:focus-visible { outline: 3px solid var(--tint); outline-offset: 4px; border-radius: 8px; }
+/* 경로 줄: 위 여백을 안쪽으로 넣어 아래 내용(월 머리)을 가리지 않게 */
+nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); }
+.past-link { display: block; margin: 10px 4px 0; }

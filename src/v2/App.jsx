@@ -62,6 +62,7 @@ function Workspace({ scheduler }) {
   const [person, setPerson] = useState(null)
   const [familyPanel, setFamilyPanel] = useState(null)
   const rows = useMemo(() => state ? scheduleForDate(state, today) : [], [state, today])
+  const [reset, setReset] = useState(0) // 같은 탭 다시 누르면 처음 화면으로
   const [pickYear, setPickYear] = useState(null) // 달 고르기 창
   const move = (direction) => setCursor((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1))
   const profiles = state?.profiles || []
@@ -76,13 +77,13 @@ function Workspace({ scheduler }) {
     </header>
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
-        {tab === 'today' ? <><Today {...props} rows={rows} onPerson={setPerson} updateState={updateState} canEdit={canEdit} /><Tasks state={state} updateState={updateState} canEdit={canEdit} today={today} /></>
+        {tab === 'today' ? <><Today {...props} onOpenToday={() => { setTab('calendar'); setCalendarDate(iso(today)); setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setTimeout(() => document.getElementById('selected-heading')?.scrollIntoView({ block: 'start' }), 300) }} rows={rows} onPerson={setPerson} updateState={updateState} canEdit={canEdit} /><Tasks state={state} updateState={updateState} canEdit={canEdit} today={today} /></>
           : tab === 'calendar' ? <Calendar {...props} updateState={updateState} canEdit={canEdit} onPaste={canEdit ? (date) => { const clip = getClip(); if (clip) addEvent(pasteAt(clip, date)) } : null} cursor={cursor} onMove={move} selectedDate={calendarDate} onSelectDate={setCalendarDate} />
-            : tab === 'play' ? <Play state={state} updateState={updateState} /> : <FamilyScreen state={state} updateState={updateState} canEdit={canEdit} sync={sync} selected={familyPanel} onSelect={setFamilyPanel} onPerson={setPerson} />}
+            : tab === 'play' ? <Play state={state} updateState={updateState} /> : <FamilyScreen key={reset} state={state} updateState={updateState} canEdit={canEdit} sync={sync} selected={familyPanel} onSelect={setFamilyPanel} onPerson={setPerson} />}
       </Suspense>}
     </main>
     {canEdit && ['today', 'calendar'].includes(tab) && <button className="header-add" data-compact={scrolled || undefined} onClick={() => { setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} aria-label={tab === 'today' ? '추가' : '일정 추가'}><Plus size={24} /><span aria-hidden="true">{tab === 'today' ? '추가' : '일정'}</span></button>}
-    <nav className="bottom-nav" aria-label="주 메뉴">{tabs.map(([id, name]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => { setTab(id); window.scrollTo(0, 0) }}><TabIcon name={id} /><span>{name}</span></button>)}</nav>
+    <nav className="bottom-nav" aria-label="주 메뉴">{tabs.map(([id, name]) => <button key={id} aria-current={tab === id ? 'page' : undefined} onClick={() => { if (tab === id) setReset((n) => n + 1); setTab(id); window.scrollTo(0, 0) }}><TabIcon name={id} /><span>{name}</span></button>)}</nav>
 
     {person && <Suspense fallback={<p role="status">하루를 불러오고 있어요…</p>}><PersonDay memberId={person} state={state} today={today} now={now} updateState={updateState} canEdit={canEdit} onClose={() => setPerson(null)} /></Suspense>}
     {taskFormOpen && <Suspense fallback={<p role="status">입력창을 불러오고 있어요…</p>}><TaskForm state={state} updateState={updateState} today={today} onClose={() => setTaskFormOpen(false)} onModeChange={() => { setTaskFormOpen(false); setFormDate(tab === 'calendar' ? calendarDate || iso(today) : iso(today)) }} /></Suspense>}
