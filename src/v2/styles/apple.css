@@ -236,3 +236,4 @@ nav.crumbs.crumbs { top: 0; padding-top: calc(env(safe-area-inset-top) + 32px); 
 /* 수업: 아이콘(배경 없이) 위, 수업명 칩 아래 */
 .house-badge-pic { position: absolute; top: 12px; right: 16px; }
 .house-badge-pic + .house-badge { top: 48px; }
+.dday { font-weight: 700; color: var(--label); font-variant-numeric: tabular-nums; }

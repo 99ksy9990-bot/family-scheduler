@@ -1,3 +1,6 @@
+import { nextAnniversaryOccurrence, anniversaryTitle } from '../../../lib/schedule'
+import { GroupedList, GroupedRow } from '../../components/GroupedList'
+import DayIcon from '../../components/DayIcon'
 import ArrowText from '../../components/ArrowText'
 import { useState } from 'react'
 import RowEditor from '../../components/RowEditor'
@@ -20,6 +23,8 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const tomorrowAll = [...offRows(state, tmr).map((row) => ({ ...row, title: '휴무', displayStart: ' ' })), ...scheduleForDate(state, tmr).filter((row) => !row.carryover).map((row) => row.type === 'leave' ? { ...row, title: '휴무', displayStart: ' ' } : row)]
   const mine = (row, id) => membersFor(row, state.profiles).some((m) => m.id === id)
   const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i) // 가족 순서(아빠·엄마·아이들) 그대로
+  // 생일·기념일: 한 달 안에 오면 D-day
+  const soon = (state.anniversaries || []).map((a) => ({ a, at: nextAnniversaryOccurrence(a, new Date(today.getFullYear(), today.getMonth(), today.getDate())) })).filter((x) => x.at).map((x) => ({ ...x, d: Math.round((x.at - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000) })).filter((x) => x.d <= 30).toSorted((x, y) => x.d - y.d)
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
@@ -33,6 +38,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       <DataState loading={loading} error={error} onRetry={onRetry}>{remaining.length ? <div className="today-remaining" aria-label="오늘 남은 일정"><ByPerson rows={remaining} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></div> : <div className="empty-state"><h3>{rows.some((row) => row.type !== 'shift' && row.type !== 'leave') ? '오늘 일정 모두 끝! 수고했어요' : '오늘은 여유로운 날이에요'}</h3><p>가족 타일을 누르면 사람별로 볼 수 있어요.</p></div>}</DataState>
       {onOpenToday && <button type="button" className="text-button past-link" onClick={onOpenToday}>오늘 지난 일정 보기 ›</button>}
       {firstTomorrow.length > 0 && <section className="tomorrow-section" aria-labelledby="tomorrow-heading"><h2 className="house-section-title" id="tomorrow-heading">내일 첫 일정</h2><ScheduleList rows={firstTomorrow} profiles={state.profiles} label="내일 첫 일정" /></section>}
+      {soon.length > 0 && <section aria-labelledby="dday-heading"><h2 className="house-section-title" id="dday-heading">다가오는 날</h2><GroupedList label="다가오는 날">{soon.map(({ a, d }) => <GroupedRow key={a.id} icon={<DayIcon kind={a.kind} />} title={anniversaryTitle(a)} value={<b className="dday">{d ? `D-${d}` : 'D-DAY'}</b>} />)}</GroupedList></section>}
     </section>
 
     {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}
