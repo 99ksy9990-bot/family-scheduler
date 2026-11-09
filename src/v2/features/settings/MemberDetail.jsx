@@ -1,3 +1,4 @@
+import DayIcon from '../../components/DayIcon'
 import { periodName, periodParts } from '../../data/periods'
 import { iso } from '../../../lib/dates'
 import { scheduleInPeriod, seasonOf } from '../../../lib/schedule'
@@ -91,7 +92,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
     </GroupedList></section>
     {[...periods.filter((p) => showPast || !(p.end < todayKey)).map((p) => ({ key: p.id, title: `${periodName(p, school)}${p.start <= todayKey && todayKey <= p.end ? ' (지금)' : ''}`, list: lessons.filter((l) => scheduleInPeriod(l, p)), add: { season: p.season, periodId: p.id } })),
       ...(periods.length ? [] : [{ key: 'none', title: '시간표', list: lessons, add: { season: '학기' } }])].map((g) => <section key={g.key}><h3 className="house-section-title">{g.title}</h3><GroupedList label={g.title}>
-      {g.list.map((l) => row(`${g.key}-${l.id}`, <span className={`kind-chip${l.kind === '학원' ? ' academy' : ''}`}>{l.kind || '학원'}</span>, l.title, `${days(l)} ${clock(l.time)}${l.end ? `–${clock(l.end)}` : ''}${l.periodId ? '' : ` · ${seasonOf(l.season) || '학기'} 전체`}`, () => open('schedules', l.title, l)))}
+      {g.list.map((l) => row(`${g.key}-${l.id}`, <DayIcon kind={l.kind || '학원'} />, l.title, `${days(l)} ${clock(l.time)}${l.end ? `–${clock(l.end)}` : ''}${l.periodId ? '' : ` · ${seasonOf(l.season) || '학기'} 전체`}`, () => open('schedules', l.title, l)))}
       {addRow(`add-${g.key}`, '수업·학원 추가', () => open('schedules', '수업·학원 추가', g.add))}
     </GroupedList></section>)}</>}
 
