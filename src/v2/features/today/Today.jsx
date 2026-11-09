@@ -24,7 +24,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const mine = (row, id) => membersFor(row, state.profiles).some((m) => m.id === id)
   const firstTomorrow = profiles.map((p) => { const off = tomorrowAll.find((row) => mine(row, p.id) && row.title === '휴무'); const first = tomorrowAll.find((row) => mine(row, p.id) && row.title !== '휴무' && /^\d/.test(row.displayStart || '')); return off && first ? { ...first, id: `${first.id}-off`, title: `휴무 · ${first.title}` } : off || first }).filter((row, i, all) => row && all.indexOf(row) === i) // 가족 순서(아빠·엄마·아이들) 그대로
   // 생일·기념일: 열흘 안에 오면 D-day
-  const soon = (state.anniversaries || []).map((a) => ({ a, at: nextAnniversaryOccurrence(a, new Date(today.getFullYear(), today.getMonth(), today.getDate())) })).filter((x) => x.at).map((x) => ({ ...x, d: Math.round((x.at - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000) })).filter((x) => x.d <= 10) // 홈은 D-10부터.toSorted((x, y) => x.d - y.d)
+  const soon = (state.anniversaries || []).map((a) => ({ a, at: nextAnniversaryOccurrence(a, new Date(today.getFullYear(), today.getMonth(), today.getDate())) })).filter((x) => x.at).map((x) => ({ ...x, d: Math.round((x.at - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000) })).filter((x) => x.d <= 10).toSorted((x, y) => x.d - y.d) // 홈은 D-10부터, 가까운 날 위로
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
