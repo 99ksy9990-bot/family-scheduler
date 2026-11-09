@@ -280,3 +280,6 @@ form.event-form input[name='baseYear'] { width: calc(4ch + 22px) !important; }
 .leave-pick button { min-height: 52px; border-radius: 14px; border: 0; background: var(--fill); color: var(--label); font-size: 17px; font-weight: 600; }
 .leave-pick button[aria-pressed="true"] { background: var(--label); color: var(--solid-card); }
 .leave-pick button:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
+/* 사람 묶음: 얼굴(44) > 일정 아이콘(30) 위계 */
+.person-group.solo .grouped-icon { width: 30px; height: 30px; flex: 0 0 30px; }
+.person-group-head { font-size: 19px; }

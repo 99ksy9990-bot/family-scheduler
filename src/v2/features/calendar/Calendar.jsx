@@ -24,7 +24,7 @@ export function ByPerson({ rows, profiles, onRow, moods = {} }) {
   }
   const order = [['all', '가족'], ...profiles.filter((p) => p.active !== false).map((p) => [p.id, p.name, p])]
   return order.filter(([key]) => groups.has(key)).map(([key, name, profile]) => <div className={`person-group${profile ? " solo" : ""}`} key={key} style={profile ? { '--pc': personColor(profile) } : undefined}>
-    <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} expression={moods[profile.id]} size={40} /> : null}{name}<small>{groups.get(key).length}</small></h3>
+    <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} expression={moods[profile.id]} size={44} /> : null}{name}<small>{groups.get(key).length}</small></h3>
     <ScheduleList rows={groups.get(key)} profiles={profiles} onRow={onRow} nextId="auto" label={`${name} 일정`} solo={Boolean(profile)} />
   </div>)
 }
