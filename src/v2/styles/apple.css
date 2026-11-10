@@ -333,3 +333,6 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .skipped-list { margin-top: 16px; }
 .skipped-row { display: flex; align-items: center; justify-content: space-between; background: var(--card); border-radius: 14px; padding: 12px 16px; margin-top: 6px; color: var(--label-2); }
 .skipped-row .text-button { color: var(--label); font-weight: 600; font-size: 15px; }
+.skipped-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.skipped-who b { color: var(--label); font-weight: 600; }
+.skipped-who small { color: var(--label-3); }
