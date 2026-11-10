@@ -136,9 +136,8 @@ test('백업 오류·미리보기 전 데이터 유지·적용 및 내보내기'
 })
 
 test('할 일 추가·완료·캐릭터 반응·삭제 되돌리기·개수 일치', async ({ page }) => {
-  await page.getByRole('heading', { name: /^할 일/ }).scrollIntoViewIfNeeded()
-  await page.getByRole('button', { name: '추가', exact: true }).click()
-  await page.getByRole('button', { name: '할 일', exact: true }).click()
+  await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('button', { name: '할 일' }).click()
+  await page.getByRole('button', { name: '할 일 추가', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('할 일', { exact: true }).fill('방 정리')
   const faces = dialog.locator('.schedule-owners button')
