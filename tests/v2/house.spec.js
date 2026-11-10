@@ -38,3 +38,9 @@ test('오늘 안 끝낸 병원 할 일이 있으면 아픈 얼굴', () => {
   expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [{ ...task, done: true }], now })).toBe('basic')
   expect(moodFor({ id: 'q' }, { expression: 'basic' }, { tasks: [task], now })).toBe('basic')
 })
+
+test('병원 할 일이 있으면 여유로운 하루 대신 병원 문구', () => {
+  const day = new Date(2026, 10, 10); const now = new Date(2026, 10, 10, 15)
+  const task = { title: '병원 가기', assignees: ['p'], dueDate: '2026-11-10', done: false }
+  expect(houseStatus({ id: 'p' }, [], [task], day, now).detail).toBe('병원 가는 날')
+})

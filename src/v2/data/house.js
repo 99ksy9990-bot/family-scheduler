@@ -8,6 +8,10 @@ export const rowsForMember = (rows, id) => rows.filter((row) => {
   return ids.includes(id) || ids.includes('family')
 })
 
+const SICK_WORD = /병원|치과|검진|진료|한의원|예방접종/
+// 오늘 병원 일정이 있거나, 오늘(또는 날짜 없는) 안 끝낸 병원 할 일이 있는지
+const hospitalToday = (profile, own, tasks, key) => own.some((row) => SICK_WORD.test(row.title || '')) || tasks.some((t) => !t.done && (t.assignees || [t.assignee]).some((id) => id === profile.id || id === 'family') && (!t.dueDate || t.dueDate === key) && SICK_WORD.test(t.title || ''))
+
 export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const own = rowsForMember(rows, profile.id)
   const active = own.find((row) => eventPhase(row, today, now) === 'active')
@@ -24,6 +28,7 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   // 교대 근무자(엄마)는 OFF인 날 일정이 있어도 휴무 표시. 상주 근무자(아빠)는 주말·공휴일이 당연히 쉬어서 따로 안 씀
   if (shifts.findLast((s) => s.member === profile.id && s.date === key)?.shift === 'off') return { ...status, detail: next ? `휴무 · 다음 ${next.displayStart}` : '오늘은 쉬는 날' }
+  if (!next && hospitalToday(profile, own, tasks, key)) return { ...status, detail: '병원 가는 날' } // 일정 없다고 '여유로운 하루'라 하지 않게
   return { ...status, detail: next && status.label.length > 14 ? `다음 ${next.displayStart}` : status.label }
 }
 
@@ -37,10 +42,7 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   if (status.expression === 'busy') return status.badgeKind ? 'study' : 'busy'
   const own = rowsForMember(rows, profile.id)
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const sickWord = /병원|치과|검진|진료|한의원|예방접종/
-  const mine = (t) => (t.assignees || [t.assignee]).some((id) => id === profile.id || id === 'family')
-  // 일정뿐 아니라 오늘(또는 날짜 없는) 안 끝낸 병원 할 일도 아픈 얼굴
-  if (own.some((row) => sickWord.test(row.title || '')) || tasks.some((t) => !t.done && mine(t) && (!t.dueDate || t.dueDate === today) && sickWord.test(t.title || ''))) return 'sick'
+  if (hospitalToday(profile, own, tasks, today)) return 'sick' // 할 일의 병원도 포함
   const h = now.getHours()
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
@@ -65,6 +67,7 @@ const SOFT = {
   '오늘은 쉬는 날': ['오늘은 쉬는 날', '푹 쉬는 하루', '오늘은 충전하는 날', '느긋하게 쉬어요', '쉬엄쉬엄 하는 날', '오늘은 쉬어 가요', '집에서 뒹굴뒹굴', '마음껏 쉬는 날'],
   '오늘도 수고했어요': ['오늘도 수고했어요', '오늘 할 일 끝!', '멋진 하루였어요', '이제 편히 쉬어요', '오늘도 잘 해냈어요', '고생 많았어요', '오늘 하루 끝!', '이제 쉬어도 돼요'],
   '여유로운 하루': ['여유로운 하루', '느긋한 시간', '한숨 돌리는 중', '오늘은 여유 있어요', '잠깐 쉬는 중', '편안한 시간', '마음 편한 하루', '숨 고르는 중'],
+  '병원 가는 날': ['병원 가는 날', '몸 챙기는 날', '병원 다녀와요', '오늘은 몸 돌보기', '건강 챙기는 날', '푹 쉬고 나아요'],
   '할 일이 남았어요': ['할 일이 남았어요', '조금만 더 힘내요', '할 일 하나씩 해봐요', '거의 다 왔어요', '천천히 해봐요', '하나만 더 해볼까요'],
 }
 const BUSY = {
