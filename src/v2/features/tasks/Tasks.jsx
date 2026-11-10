@@ -57,7 +57,7 @@ export default function Tasks({ editCategories, setEditCategories, state, update
   const active = state.profiles.filter((profile) => profile.active !== false)
   const people = active.map((profile) => [profile, groups[0][1].filter((row) => profilesFor(row).some((p) => p.id === profile.id))]).filter(([, items]) => items.length)
   const renderRow = (row) => <li className="todo-row" key={row.id}>
-        <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={38} height={38} />
+        <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={30} height={30} />
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
         <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? `끝냄${row.completedDate && row.completedDate !== iso(today) ? ` · ${row.completedDate.slice(5).replace('-', '/')}` : ''}` : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
         {(view === 1 || profilesFor(row).length > 1) && <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={view === 1 ? 40 : 28} expression={row.done ? 'done' : 'basic'} />)}</span>}

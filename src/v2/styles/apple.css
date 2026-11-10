@@ -327,5 +327,5 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-progress-bar { height: 8px; border-radius: 999px; background: var(--fill); margin-top: 12px; overflow: hidden; }
 .task-progress-bar i { display: block; height: 100%; border-radius: inherit; background: var(--label); transition: width .4s ease; }
 .task-person + .task-person { margin-top: 16px; }
-.todo-cat { flex: none; order: 3; margin-left: auto; }
+.todo-cat { flex: none; order: 3; margin-left: auto; width: 30px; height: 30px; padding: 5px; box-sizing: border-box; border-radius: 50%; background: var(--fill); } /* 홈 일정 줄 그림과 같은 크기 */
 .home-tasks > .task-chips { margin-bottom: 12px; }
