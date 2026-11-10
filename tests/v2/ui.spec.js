@@ -239,6 +239,7 @@ test('반복 일정 이 날만 빼기 → 달력에서 되살리기, 일반 일�
   await page.getByRole('button', { name: /반복 수업/ }).first().click()
   await page.getByRole('button', { name: '이 날만 빼기' }).click()
   {
+    await page.locator('.skipped-list summary').click()
     await expect(page.locator('.skipped-row')).toContainText('반복 수업')
     await page.locator('.skipped-row').getByRole('button', { name: '되살리기' }).click()
     await expect(page.locator('.skipped-row')).toHaveCount(0)

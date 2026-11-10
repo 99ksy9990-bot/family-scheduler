@@ -336,3 +336,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .skipped-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .skipped-who b { color: var(--label); font-weight: 600; }
 .skipped-who small { color: var(--label-3); }
+.skipped-list summary { cursor: pointer; padding: 4px 0; }
