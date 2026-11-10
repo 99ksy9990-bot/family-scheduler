@@ -53,6 +53,7 @@ function Workspace({ scheduler }) {
   }
   const addEvent = (event) => isDemo ? updateState((current) => ({ ...current, events: [...current.events, { ...event, id: `demo-added-${crypto.randomUUID()}` }] })) : scheduler.addEvent(event)
   const [tab, setTab] = useState('today')
+  const [editCats, setEditCats] = useState(false)
   const [scrolled, setScrolled] = useState(false) // 내리면 떠 있는 + 버튼을 동그랗게 줄임
   useEffect(() => { const on = () => setScrolled(window.scrollY > 40); on(); addEventListener("scroll", on, { passive: true }); return () => removeEventListener("scroll", on) }, [])
   const [formDate, setFormDate] = useState(null)
@@ -73,14 +74,14 @@ function Workspace({ scheduler }) {
   return <div className="v2-app" data-view={tab} data-scrolled={scrolled || undefined}>
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
-    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{!['today', 'calendar', 'family'].includes(tab) && <p className="app-date">{subtitle}</p>}{tab === 'calendar' ? <button className="heading-line month-line" aria-label={`${cursor.getFullYear()}년 ${title}, 다른 달 고르기`} onClick={() => setPickYear(cursor.getFullYear())}><h1>{title}</h1><p className="app-date">{subtitle}</p><ChevronDown size={18} className="month-caret" /></button> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}</div>}
+    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{!['today', 'calendar', 'family'].includes(tab) && <p className="app-date">{subtitle}</p>}{tab === 'calendar' ? <button className="heading-line month-line" aria-label={`${cursor.getFullYear()}년 ${title}, 다른 달 고르기`} onClick={() => setPickYear(cursor.getFullYear())}><h1>{title}</h1><p className="app-date">{subtitle}</p><ChevronDown size={18} className="month-caret" /></button> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && <small className="greeting">{greeting(now)}</small>}{tab === 'play' && <SoundToggles />}{tab === 'tasks' && <button className="text-button heading-side" disabled={!canEdit} onClick={() => setEditCats(true)}>분류 편집</button>}</div>}
       {['today', 'calendar', 'family'].includes(tab) && state && <HeaderTools state={state} now={now} onToday={tab === 'calendar' ? () => { setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setCalendarDate(iso(today)) } : undefined} todayNumber={today.getDate()} onGoTasks={() => { setTab('tasks'); window.scrollTo(0, 0) }} onGoDate={(date) => { setTab('calendar'); setCalendarDate(date); setCursor(new Date(`${date}T00:00:00`)) }} />}
     </header>
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
         {tab === 'today' ? <><Today {...props} onOpenToday={() => { setTab('calendar'); setCalendarDate(iso(today)); setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setTimeout(() => document.getElementById('selected-heading')?.scrollIntoView({ block: 'start' }), 300) }} rows={rows} onPerson={setPerson} updateState={updateState} canEdit={canEdit} />{openTasks > 0 && <button type="button" className="task-summary" onClick={() => { setTab('tasks'); window.scrollTo(0, 0) }}><strong>할 일</strong><span>{openTasks}개 남음</span><ChevronRight size={18} aria-hidden="true" /></button>}</>
           : tab === 'calendar' ? <Calendar {...props} updateState={updateState} canEdit={canEdit} onPaste={canEdit ? (date) => { const clip = getClip(); if (clip) addEvent(pasteAt(clip, date)) } : null} cursor={cursor} onMove={move} selectedDate={calendarDate} onSelectDate={setCalendarDate} />
-            : tab === 'tasks' ? <Tasks key={reset} state={state} updateState={updateState} canEdit={canEdit} today={today} />
+            : tab === 'tasks' ? <Tasks key={reset} editCategories={editCats} setEditCategories={setEditCats} state={state} updateState={updateState} canEdit={canEdit} today={today} />
             : tab === 'play' ? <Play state={state} updateState={updateState} /> : <FamilyScreen key={reset} state={state} updateState={updateState} canEdit={canEdit} sync={sync} selected={familyPanel} onSelect={setFamilyPanel} onPerson={setPerson} />}
       </Suspense>}
     </main>

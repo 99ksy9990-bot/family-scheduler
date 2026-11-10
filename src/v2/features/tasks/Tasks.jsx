@@ -11,14 +11,13 @@ import TaskForm from './TaskForm'
 // 2026-11-05 → 11/5(목)
 const shortDate = (d) => { if (!d) return ''; const t = new Date(`${d}T00:00:00`); return `${t.getMonth() + 1}/${t.getDate()}(${'일월화수목금토'[t.getDay()]})` }
 
-export default function Tasks({ state, updateState, canEdit, today }) {
+export default function Tasks({ editCategories, setEditCategories, state, updateState, canEdit, today }) {
   const [category, setCategory] = useState('all')
   const [view, setView] = useState(0) // 0 할 일, 1 끝낸 일
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(null)
   const [undo, setUndo] = useState(null)
   const [celebrating, setCelebrating] = useState(null)
-  const [editCategories, setEditCategories] = useState(false)
   const [message, setMessage] = useState('')
   const categories = [...new Set([...state.taskCategories, ...state.tasks.map((task) => task.category).filter(Boolean)])]
   const profilesFor = (task) => {
@@ -49,7 +48,7 @@ export default function Tasks({ state, updateState, canEdit, today }) {
     ['끝낸 일', rows.filter((row) => row.done && (q || doneOn(row) >= weekAgo)).sort((x, y) => doneOn(y).localeCompare(doneOn(x)))],
   ]
   return <section className="home-tasks" aria-label="할 일 목록">
-    <div className="task-section-heading"><h2 className="house-section-title visually-hidden">할 일 <small data-testid="task-count">{rows.filter((row) => !row.done).length ? `${rows.filter((row) => !row.done).length}개 남음` : '다 끝냈어요'}</small></h2><button className="text-button" disabled={!canEdit} onClick={() => setEditCategories(true)}>분류 편집</button></div>
+    <div className="task-section-heading"><h2 className="house-section-title visually-hidden">할 일 <small data-testid="task-count">{rows.filter((row) => !row.done).length ? `${rows.filter((row) => !row.done).length}개 남음` : '다 끝냈어요'}</small></h2></div>
     <div className="task-chips"><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>전체</button>{categories.map((name) => <button key={name} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
     <p className="quiet task-hint">반복 할 일은 오늘부터 이달 말까지 보여요.</p>
     <div className="ui-segments task-view" role="group" aria-label="보기">{groups.map(([title, items], i) => <button key={title} type="button" aria-pressed={view === i} onClick={() => setView(i)}>{title} {items.length}</button>)}</div>
