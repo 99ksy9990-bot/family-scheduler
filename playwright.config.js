@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore: ['app.spec.js'], // v1 옛 앱 테스트: index.html이 v2를 띄워서 더는 맞출 대상 없음. v1 다시 쓰면 이 줄 삭제
   fullyParallel: false,
   workers: 2,
   forbidOnly: Boolean(process.env.CI),

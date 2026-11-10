@@ -37,7 +37,7 @@ test('개인 타일 시트·남은 목록·다음 시각만 강조', async ({ pa
     localStorage.setItem('family-scheduler-events', JSON.stringify(events))
   })
   await page.reload()
-  await expect(page.locator('.house-badge')).toHaveText('근무 중')
+  await expect(page.locator('.house-badge')).toHaveText('근무')
   await expect(page.locator('.today-remaining .grouped-row')).toHaveCount(2)
   await expect(page.locator('.today-remaining .grouped-row.next .time-start')).toHaveText('14:00')
   expect(await page.locator('.today-remaining .grouped-row.next .time-start').evaluate((element) => getComputedStyle(element).fontWeight)).not.toBe(await page.locator('.today-remaining .grouped-row:not(.next) .time-start').evaluate((element) => getComputedStyle(element).fontWeight))

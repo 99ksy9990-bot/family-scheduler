@@ -1,11 +1,11 @@
 import { test, expect } from './ui-fixture.js'
 
-test('첫 화면 일정·캐릭터·24시간 표기·4개 탭·가로 넘침 없음', async ({ page }) => {
+test('첫 화면 일정·캐릭터·24시간 표기·5개 탭·가로 넘침 없음', async ({ page }) => {
   await expect(page.locator('.app-heading h1')).toHaveText('우리집')
   await expect(page.getByRole('heading', { name: '오후 일정', exact: true })).toBeInViewport()
   await expect(page.locator('.today-remaining .grouped-row .time-start')).toHaveText('14:00')
   await expect(page.locator('.house-tile .character img')).toHaveAttribute('src', '/characters/dad_basic.png')
-  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4)
+  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(5)
   await expect(page.locator('.header-add')).toHaveCount(1)
   expect(await page.locator('.house-tile .character').evaluate((avatar) => avatar.getBoundingClientRect().width)).toBe(66)
   expect(await page.locator('.today-remaining .person-group-head .character img').evaluate((img) => img.getBoundingClientRect().width)).toBe(44)
@@ -157,7 +157,8 @@ test('할 일 추가·완료·캐릭터 반응·삭제 되돌리기·개수 일�
 })
 
 test('분류 추가·이름 변경·재불러오기 유지', async ({ page }) => {
-  await page.getByRole('heading', { name: /^할 일/ }).scrollIntoViewIfNeeded()
+  const tasksTab = page.getByRole('navigation', { name: '주 메뉴' }).getByRole('button', { name: '할 일' })
+  await tasksTab.click()
   await page.getByRole('button', { name: '분류 편집' }).click()
   await page.getByRole('textbox', { name: '새 분류', exact: true }).fill('학교')
   await page.getByRole('button', { name: '분류 추가', exact: true }).click()
@@ -165,7 +166,7 @@ test('분류 추가·이름 변경·재불러오기 유지', async ({ page }) =>
   await page.getByRole('textbox', { name: '학교 분류 이름', exact: true }).locator('..').getByRole('button', { name: '이름 저장' }).click()
   await page.clock.runFor(500)
   await page.reload()
-  await page.getByRole('heading', { name: /^할 일/ }).scrollIntoViewIfNeeded()
+  await tasksTab.click()
   await expect(page.getByRole('button', { name: '학습', exact: true })).toBeVisible()
 })
 

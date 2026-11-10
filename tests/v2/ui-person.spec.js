@@ -42,7 +42,7 @@ test('개인 오늘·내일·96px 현재 표정·즉시 완료·반복 내일 �
   expect((await dialog.locator('.person-hero .character').boundingBox()).width).toBe(96)
   expect(await dialog.locator('.person-hero img').evaluate((img) => img.getBoundingClientRect().width)).toBe(84)
   await expect(dialog.locator('.person-hero img')).toHaveAttribute('src', '/characters/dad_busy.png')
-  await expect(dialog.locator('.person-hero p')).toContainText('근무 중')
+  await expect(dialog.locator('.person-hero p')).toContainText('근무')
   const today = dialog.getByRole('list', { name: '오늘의 일정과 할 일', exact: true })
   await expect(today.locator('.person-row-body strong')).toHaveText(['근무 D', '개인 할 일', '공통 일정', '두 명 일정', '매일 연습'])
   await expect(dialog.getByRole('list', { name: '내일의 일정과 할 일', exact: true })).toContainText('내일 준비')

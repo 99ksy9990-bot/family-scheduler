@@ -309,7 +309,9 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 
 
 /* 카드앱 '11월|12월'처럼 둥근 알약 토글 */
-.task-view { display: inline-flex; flex-wrap: nowrap; border-radius: 999px; padding: 3px; margin: 4px 0 12px; }
+.task-view { display: flex; flex-wrap: nowrap; border-radius: 999px; padding: 3px; margin: 0 0 12px; }
+.task-view button { flex: 1; }
+.home-tasks > .task-hint { margin-top: 16px; text-align: center; }
 .task-view button { border-radius: 999px; min-height: 36px; padding: 6px 16px; font-size: 15px; color: var(--label-2); }
 .task-view button[aria-pressed='true'] { font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
 .v2-app[data-view='tasks'] .app-heading { padding-right: 20px; }
@@ -326,3 +328,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-progress-bar i { display: block; height: 100%; border-radius: inherit; background: var(--label); transition: width .4s ease; }
 .task-person + .task-person { margin-top: 16px; }
 .todo-cat { flex: none; order: 3; margin-left: auto; }
+.home-tasks > .task-chips { margin-bottom: 12px; }

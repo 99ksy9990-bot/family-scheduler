@@ -3,12 +3,13 @@ import { GAMES } from '../../src/v2/features/games/index.js'
 
 test.describe('공개 예시', () => {
   test.use({ connected: false })
-  test('네 탭·예시 배너·게임 준비 중·흰 빈 카드', async ({ page }) => {
+  test('다섯 탭·예시 배너·게임 준비 중·흰 빈 카드', async ({ page }) => {
     await expect(page.locator('.demo-banner')).toHaveText('예시 화면이에요 · 가족 연결하면 우리 일정이 보여요')
-    await expect(page.getByRole('navigation').getByRole('button')).toHaveText(['우리집', '달력', '놀이', '가족'])
+    await expect(page.getByRole('navigation').getByRole('button')).toHaveText(['우리집', '달력', '할 일', '놀이', '가족'])
     await expect(page.locator('.house-tile strong')).toHaveText(['아빠', '엄마', '초롱', '연두'])
-    await expect(page.locator('.task-group')).toHaveCount(2)
-    expect(await page.locator('.task-group').evaluateAll((groups) => groups.map((group) => group.open))).toEqual([true, false])
+    await page.getByRole('navigation').getByRole('button', { name: '할 일', exact: true }).click()
+    await expect(page.locator('.task-view button')).toHaveText([/^할 일/, /^끝낸 일/])
+    await page.getByRole('navigation').getByRole('button', { name: '우리집', exact: true }).click()
     await page.getByRole('navigation').getByRole('button', { name: '달력', exact: true }).click()
     await expect(page.locator('.app-date')).toHaveText('2026년')
     await expect(page.locator('.app-heading h1')).toHaveText('11월')

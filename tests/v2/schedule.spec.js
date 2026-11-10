@@ -50,5 +50,5 @@ test('연속 N은 전날 마침과 오늘 시작으로 구분하고 근무 중 �
   expect(rows[0]).toMatchObject({ carryover: true, displayEnd: '07:00', sourceDate: '2026-11-04' })
   expect(rows[1]).toMatchObject({ crossesMidnight: true, displayStart: '22:00' })
   expect(groupShiftRows(rows)).toHaveLength(1)
-  expect(houseStatus(consecutive.profiles[0], rows, [], day, new Date(2026, 10, 5, 6))).toMatchObject({ badge: '근무 중', detail: '@work:07:00' })
+  expect(houseStatus(consecutive.profiles[0], rows, [], day, new Date(2026, 10, 5, 6))).toMatchObject({ badge: '근무', detail: '@work:07:00' })
 })
