@@ -315,3 +315,13 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .v2-app[data-view='tasks'] .app-heading { padding-right: 20px; }
 .v2-app[data-view='tasks'] .app-heading .heading-line { align-items: flex-end; }
 .app-heading .heading-line .heading-side { margin-left: auto; padding: 0 0 5px; color: var(--label-2); font-size: 15px; font-weight: 600; } /* 오른쪽 끝, 제목 '할 일' 아래선에 맞춤 */
+
+/* 할 일: 오늘 진행 카드 + 사람별 묶음 */
+.task-progress { background: var(--card); border-radius: 20px; padding: 16px 18px; margin: 4px 0 16px; }
+.task-progress-text { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-progress-text strong { font-size: 20px; font-weight: 700; }
+.task-progress-faces { display: flex; }
+.task-progress-faces > * + * { margin-left: -8px; }
+.task-progress-bar { height: 8px; border-radius: 999px; background: var(--fill); margin-top: 12px; overflow: hidden; }
+.task-progress-bar i { display: block; height: 100%; border-radius: inherit; background: var(--label); transition: width .4s ease; }
+.task-person + .task-person { margin-top: 16px; }
