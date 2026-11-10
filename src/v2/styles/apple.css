@@ -307,10 +307,6 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-summary svg { color: var(--label-3); flex: none; }
 .task-summary:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
 
-/* 카드앱 '픽하고 할인'처럼: 그림 아래에 칩을 살짝 겹쳐 가운데 정렬 */
-.house-badge-stack { position: absolute; top: 12px; right: 14px; display: flex; flex-direction: column; align-items: center; }
-.house-badge-stack .house-badge-pic { position: static; width: 44px; height: 44px; }
-.house-badge-stack .house-badge { position: static; margin-top: -8px; max-width: none; white-space: nowrap; }
 
 /* 카드앱 '11월|12월'처럼 둥근 알약 토글 */
 .task-view { display: inline-flex; flex-wrap: nowrap; border-radius: 999px; padding: 3px; margin: 4px 0 12px; }
