@@ -8,6 +8,8 @@ import { assignedMemberIds } from '../../../lib/legacyState'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import TaskForm from './TaskForm'
 
+// 분류 그림: 이름에 들어간 낱말로 고름, 모르는 분류는 기본 그림
+const catIcon = (name = '') => /장|쇼핑|마트|구매/.test(name) ? 'cart' : /집|청소|빨래|설거지/.test(name) ? 'home' : /긴급|급|중요/.test(name) ? 'bell' : /학교|숙제|공부|학원/.test(name) ? 'school' : /병원|약/.test(name) ? 'hospital' : 'event'
 // 2026-11-05 → 11/5(목)
 const shortDate = (d) => { if (!d) return ''; const t = new Date(`${d}T00:00:00`); return `${t.getMonth() + 1}/${t.getDate()}(${'일월화수목금토'[t.getDay()]})` }
 
@@ -55,6 +57,7 @@ export default function Tasks({ editCategories, setEditCategories, state, update
   const active = state.profiles.filter((profile) => profile.active !== false)
   const people = active.map((profile) => [profile, groups[0][1].filter((row) => profilesFor(row).some((p) => p.id === profile.id))]).filter(([, items]) => items.length)
   const renderRow = (row) => <li className="todo-row" key={row.id}>
+        <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={38} height={38} />
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
         <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? `끝냄${row.completedDate && row.completedDate !== iso(today) ? ` · ${row.completedDate.slice(5).replace('-', '/')}` : ''}` : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
         {(view === 1 || profilesFor(row).length > 1) && <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={view === 1 ? 40 : 28} expression={row.done ? 'done' : 'basic'} />)}</span>}
