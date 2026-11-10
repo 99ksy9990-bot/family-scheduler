@@ -316,3 +316,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-view { display: inline-flex; flex-wrap: nowrap; border-radius: 999px; padding: 3px; margin: 4px 0 12px; }
 .task-view button { border-radius: 999px; min-height: 36px; padding: 6px 16px; font-size: 15px; color: var(--label-2); }
 .task-view button[aria-pressed='true'] { font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.task-section-heading .text-button { color: var(--label-2); font-weight: 600; }
