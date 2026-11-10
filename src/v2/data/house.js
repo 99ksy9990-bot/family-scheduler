@@ -36,10 +36,13 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   if (birthday) return 'party'
   if (status.expression === 'busy') return status.badgeKind ? 'study' : 'busy'
   const own = rowsForMember(rows, profile.id)
-  if (own.some((row) => /병원|치과|검진|진료|한의원|예방접종/.test(row.title || ''))) return 'sick'
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const sickWord = /병원|치과|검진|진료|한의원|예방접종/
+  const mine = (t) => (t.assignees || [t.assignee]).some((id) => id === profile.id || id === 'family')
+  // 일정뿐 아니라 오늘(또는 날짜 없는) 안 끝낸 병원 할 일도 아픈 얼굴
+  if (own.some((row) => sickWord.test(row.title || '')) || tasks.some((t) => !t.done && mine(t) && (!t.dueDate || t.dueDate === today) && sickWord.test(t.title || ''))) return 'sick'
   const h = now.getHours()
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
   const mild = weather?.mood === 'sunny' || weather?.mood === 'cloudy'
   if (weather?.mood && !mild) return weather.mood // 일정 없을 땐 날씨 얼굴 (우산·목도리·부채·털모자·바람)

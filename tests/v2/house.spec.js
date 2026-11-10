@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { houseStatus, remainingSchedule, rowsForMember } from '../../src/v2/data/house.js'
+import { houseStatus, remainingSchedule, rowsForMember, moodFor } from '../../src/v2/data/house.js'
 
 const date = new Date('2026-11-05T00:00:00')
 const now = new Date('2026-11-05T10:00:00')
@@ -29,4 +29,12 @@ test('학교·학원 현재와 다음 일정 칩을 같은 kind 기준으로 구
   expect(houseStatus(profile, [row], [], day, new Date(2026, 10, 5, 15))).toMatchObject({ badge: '피아노', badgeUpcoming: true, detail: '16:00 시작' })
   expect(houseStatus(profile, [row], [], day, new Date(2026, 10, 5, 16, 30))).toMatchObject({ badge: '피아노', expression: 'busy', detail: '@study:17:00' })
   expect(houseStatus(profile, [{ ...row, kind: '학교' }], [], day, new Date(2026, 10, 5, 16, 30))).toMatchObject({ badge: '피아노', badgeKind: '학교' })
+})
+
+test('오늘 안 끝낸 병원 할 일이 있으면 아픈 얼굴', () => {
+  const now = new Date(2026, 10, 10, 12)
+  const task = { title: '병원 가기', assignees: ['p'], dueDate: '2026-11-10', done: false }
+  expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [task], now })).toBe('sick')
+  expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [{ ...task, done: true }], now })).toBe('basic')
+  expect(moodFor({ id: 'q' }, { expression: 'basic' }, { tasks: [task], now })).toBe('basic')
 })
