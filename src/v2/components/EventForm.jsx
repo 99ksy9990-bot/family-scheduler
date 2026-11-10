@@ -32,7 +32,7 @@ export default function EventForm({ date, profiles, onSave, onClose, onModeChang
   const [end, setEnd] = useState(clock(initialEvent?.end) || '') // 새 일정은 종료 시각 없음(사용자 2026-11-06), 필요할 때만 추가
   const [scope, setScope] = useState(initialEvent?.calendarScope || 'family')
   const [kind, setKind] = useState(initialEvent?.kind || '학원')
-  const [members, setMembers] = useState(initialEvent ? assignedMemberIds(initialEvent).includes('family') && active.length ? active.map((profile) => profile.id) : assignedMemberIds(initialEvent) : [active[0]?.id || 'family'])
+  const [members, setMembers] = useState(initialEvent ? assignedMemberIds(initialEvent).includes('family') && active.length ? active.map((profile) => profile.id) : assignedMemberIds(initialEvent) : [(active.find((p) => p.characterId === 'dad') || active[0])?.id || 'family']) // 새 일정은 아빠 기본(가장 많이 씀)
   const [frequency, setFrequency] = useState(initialEvent?.recurrence?.frequency || 'none')
   const [reminders, setReminders] = useState((initialEvent?.reminders || [initialEvent?.reminder]).filter((value) => value && value !== 'none'))
   const [error, setError] = useState('')

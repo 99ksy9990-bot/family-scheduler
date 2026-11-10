@@ -16,7 +16,8 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
   const [end, setEnd] = useState(clock(task?.end))
   const [allDay, setAllDay] = useState(!clock(task?.time))
   const active = state.profiles.filter((profile) => profile.active !== false)
-  const initial = task?.assignees || [task?.assignee || 'family']
+  const dad = active.find((profile) => profile.characterId === 'dad')
+  const initial = task ? task.assignees || [task.assignee || 'family'] : [dad?.id || 'family'] // 새 할 일은 아빠 기본
   // 일정 추가의 '누구'와 같은 방식. 모두 고르거나 아무도 안 고르면 '가족'으로 저장
   const [members, setMembers] = useState(initial.includes('family') ? active.map((profile) => profile.id) : initial)
   const toggleMember = (id) => setMembers((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
