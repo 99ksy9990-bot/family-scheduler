@@ -13,7 +13,7 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const active = own.find((row) => eventPhase(row, today, now) === 'active')
   const schoolKind = (row) => ['학교', '학원'].includes(row?.kind) ? row.kind : row?.type === 'school' ? '학교' : null
   const status = memberStatus(profile, rows, tasks, now)
-  if (active) return { ...status, expression: 'busy', badgeKind: active.type === 'shift' ? null : schoolKind(active), badge: active.type === 'shift' ? '근무 중' : active.title.length > 6 ? schoolKind(active) || '일정 중' : active.title, // 학원·학교도 수업명(수학·4교시)
+  if (active) return { ...status, expression: 'busy', badgeKind: active.type === 'shift' ? null : schoolKind(active), badge: active.type === 'shift' ? '근무' : active.title.length > 6 ? schoolKind(active) || '일정 중' : active.title, // 학원·학교도 수업명(수학·4교시)
     detail: `@${active.type === 'shift' ? 'work' : schoolKind(active) ? 'study' : 'event'}:${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` } // 화면에서 softDetail이 문장으로
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
   if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: next.title.length > 6 ? schoolKind(next) : next.title, badgeUpcoming: true, detail: `${next.displayStart} 시작` }
@@ -65,9 +65,9 @@ const SOFT = {
   '할 일이 남았어요': ['할 일이 남았어요', '조금만 더 힘내요', '할 일 하나씩 해봐요', '거의 다 왔어요', '천천히 해봐요', '하나만 더 해볼까요'],
 }
 const BUSY = {
-  work: (t) => [`${t}까지 일하는 중`, `${t}까지 열일 중`, `${t}에 퇴근해요`, `${t}까지 힘내는 중`, `${t}까지 바쁘게 일해요`, `${t}이면 일 끝`, `${t}까지 근무 중`, `${t}에 만나요`],
-  study: (t) => [`${t}까지 공부 중`, `${t}까지 열공 중`, `${t}에 끝나요`, `${t}까지 배우는 중`, `${t}까지 집중 중`, `${t}이면 수업 끝`, `${t}까지 열심히`, `${t}에 만나요`],
-  event: (t) => [`${t}에 끝나요`, `${t}까지 바빠요`, `${t}까지 일정 중`, `${t}쯤 끝나요`, `${t}이면 끝나요`, `${t}까지 조금 바빠요`],
+  work: (t) => [`${t}까지 일하는 중`, `${t}까지 열일 중`, `${t}에 퇴근해요`, `${t}까지 힘내는 중`, `${t}까지 바쁘게 일해요`, `${t}에 일 끝나요`, `${t}까지 근무 중`, `${t}에 만나요`],
+  study: (t) => [`${t}까지 공부 중`, `${t}까지 열공 중`, `${t}에 끝나요`, `${t}까지 배우는 중`, `${t}까지 집중 중`, `${t}에 수업 끝나요`, `${t}까지 열심히 하는 중`, `${t}에 만나요`],
+  event: (t) => [`${t}에 끝나요`, `${t}까지 바빠요`, `${t}까지 일정 중`, `${t}쯤 끝나요`, `${t}쯤 마쳐요`, `${t}까지 조금 바빠요`],
 }
 export function softDetail(detail, profile, today) {
   const m = /^@(\w+):(.*)$/.exec(detail || '')
