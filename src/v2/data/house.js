@@ -39,10 +39,10 @@ export function remainingSchedule(rows, today, now) {
 // 새 표정 고르기: 생일 > 수업 중(공부) > 근무 등 바쁨 > 병원 날(아픔) > 밤·밤근무 다음날(졸림) > 밀린 할 일(걱정) > 휴무(휴식) > 기본
 export function moodFor(profile, status, { rows = [], tasks = [], now = new Date(), birthday = false, weather = null } = {}) {
   if (birthday) return 'party'
-  if (status.expression === 'busy') return status.badgeKind ? 'study' : 'busy'
   const own = rowsForMember(rows, profile.id)
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  if (hospitalToday(profile, own, tasks, today)) return 'sick' // 할 일의 병원도 포함
+  if (hospitalToday(profile, own, tasks, today)) return 'sick' // 병원 날은 수업·근무 중이어도 아픈 얼굴 먼저
+  if (status.expression === 'busy') return status.badgeKind ? 'study' : 'busy'
   const h = now.getHours()
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'
