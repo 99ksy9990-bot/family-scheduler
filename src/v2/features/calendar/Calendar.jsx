@@ -42,6 +42,8 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
   const toggleWork = (id) => setHidden((list) => { const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]; try { localStorage.setItem(HIDE_KEY, JSON.stringify(next)) } catch { /* 저장 못 하면 이번만 */ } return next })
   const workers = state.profiles.filter((p) => p.active !== false && ((state.workSettings?.enabled && state.workSettings.workerIds?.includes(p.id)) || p.regularWork))
   const selected = selectedDate ? new Date(`${selectedDate}T00:00:00`) : today
+  // '이 날만 빼기'한 일정: 되살릴 수 있게 그날 아래에 보여줌
+  const skippedHere = (state.scheduleExceptions || []).filter((x) => x.type === 'skip' && x.date === iso(selected)).map((x) => ({ ...x, title: [...(state.childSchedules || []), ...(state.events || [])].find((s) => s.id === x.scheduleId)?.title || '반복 일정' }))
   const days = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
     const start = addDays(first, -first.getDay())
@@ -87,7 +89,8 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         })}
       </div></DataState>
     </section>
-    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <span className="paste-bar">{!rows.some((row) => row.title === clip.title && (row.displayStart || '') === (clip.time || '')) && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>‘{clip.title}’ 붙여넣기</button>}<button type="button" className="paste-done" aria-label="붙여넣기 끝내기" onClick={() => { clearClip(); setClipTick((n) => n + 1) }}><X size={16} /></button></span>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></DataState></section>
+    <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <span className="paste-bar">{!rows.some((row) => row.title === clip.title && (row.displayStart || '') === (clip.time || '')) && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>‘{clip.title}’ 붙여넣기</button>}<button type="button" className="paste-done" aria-label="붙여넣기 끝내기" onClick={() => { clearClip(); setClipTick((n) => n + 1) }}><X size={16} /></button></span>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></DataState>
+      {skippedHere.length > 0 && <div className="skipped-list"><p className="quiet">이 날 뺀 반복 일정</p>{skippedHere.map((x) => <div key={x.id} className="skipped-row"><span>{x.title}</span><button type="button" className="text-button" disabled={!canEdit} onClick={() => updateState((current) => ({ ...current, scheduleExceptions: (current.scheduleExceptions || []).filter((e) => e.id !== x.id) }))}>되살리기</button></div>)}</div>}</section>
     {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}
   </div>
 }

@@ -51,3 +51,8 @@ test('수업 중이어도 병원 할 일이 있으면 아픈 얼굴', () => {
   expect(moodFor({ id: 'p' }, { expression: 'busy', badgeKind: '학교' }, { tasks: [task], now })).toBe('sick')
   expect(moodFor({ id: 'p' }, { expression: 'busy', badgeKind: '학교' }, { tasks: [], now })).toBe('study')
 })
+
+test('한 번만 넣은 학교 일정도 반복 시간표와 같은 학교 그림', async () => {
+  const { kindOf } = await import('../../src/v2/data/kinds.js')
+  expect(kindOf({ kind: '학교', title: '수업' })).toBe(kindOf({ recurrenceType: 'child', kind: '학교' }))
+})

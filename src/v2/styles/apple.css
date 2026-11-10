@@ -329,3 +329,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-person + .task-person { margin-top: 16px; }
 .todo-cat { flex: none; order: 3; margin-left: auto; width: 30px; height: 30px; padding: 5px; box-sizing: border-box; border-radius: 50%; background: var(--fill); } /* 홈 일정 줄 그림과 같은 크기 */
 .home-tasks > .task-chips { margin-bottom: 12px; }
+
+.skipped-list { margin-top: 16px; }
+.skipped-row { display: flex; align-items: center; justify-content: space-between; background: var(--card); border-radius: 14px; padding: 12px 16px; margin-top: 6px; color: var(--label-2); }
+.skipped-row .text-button { color: var(--label); font-weight: 600; font-size: 15px; }

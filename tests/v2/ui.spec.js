@@ -224,3 +224,27 @@ test('설정 순서·가족 연결 로그인/회원가입 화면·실제 전송 
 })
 
 })
+
+test('반복 일정 이 날만 빼기 → 달력에서 되살리기, 일반 일정 삭제', async ({ page }) => {
+  page.on('dialog', (d) => d.accept())
+  // 매주 반복 일정 하나 추가
+  await page.getByRole('button', { name: '추가', exact: true }).click()
+  await page.getByRole('button', { name: '일정', exact: true }).click()
+  let dialog = page.getByRole('dialog')
+  await dialog.getByLabel('무슨 일정인가요?').fill('반복 수업')
+  await dialog.locator('summary', { hasText: '반복' }).click()
+  await dialog.getByRole('group', { name: '반복' }).getByRole('button', { name: '매주' }).click()
+  await dialog.getByRole('button', { name: '추가', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: '달력', exact: true }).click()
+  await page.getByRole('button', { name: /반복 수업/ }).first().click()
+  await page.getByRole('button', { name: '이 날만 빼기' }).click()
+  {
+    await expect(page.locator('.skipped-row')).toContainText('반복 수업')
+    await page.locator('.skipped-row').getByRole('button', { name: '되살리기' }).click()
+    await expect(page.locator('.skipped-row')).toHaveCount(0)
+    await page.getByRole('button', { name: /반복 수업/ }).first().click()
+    await page.getByRole('button', { name: '반복 전체 수정' }).click()
+  }
+  await page.getByRole('button', { name: '일정 삭제' }).click()
+  await expect(page.getByRole('button', { name: /반복 수업/ })).toHaveCount(0)
+})
