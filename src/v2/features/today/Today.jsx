@@ -3,7 +3,7 @@ import { nextAnniversaryOccurrence, anniversaryTitle } from '../../../lib/schedu
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import DayIcon from '../../components/DayIcon'
 import ArrowText from '../../components/ArrowText'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import RowEditor from '../../components/RowEditor'
 import { ByPerson } from '../calendar/Calendar'
 import CharacterAvatar from '../../components/CharacterAvatar'
@@ -25,6 +25,8 @@ function BringList({ rows, profiles, label }) {
 
 export default function Today({ today, now, state, rows, loading, error, onRetry, onPerson, updateState, canEdit, onOpenToday }) {
   const [editing, setEditing] = useState(null) // 남은 일정에서 바로 수정
+  const [skipped, setSkipped] = useState(null) // 이 날만 뺀 일정: 바로 되돌리기
+  useEffect(() => { if (!skipped) return; const t = setTimeout(() => setSkipped(null), 6000); return () => clearTimeout(t) }, [skipped])
   const weather = weatherNote(useWeather(), now)
   const profiles = state.profiles.filter((profile) => profile.active !== false)
   const remaining = remainingSchedule(rows, today, now).filter((row) => !row.carryover && row.type !== 'leave') // 전날 밤 근무·연차(쉬는 날)는 빼기
@@ -63,6 +65,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
       {(firstTomorrow.length > 0 || bring.length > 0) && <section className="tomorrow-section" aria-labelledby="tomorrow-heading"><h2 className="house-section-title" id="tomorrow-heading"><button type="button" className="fold-toggle" aria-expanded={tomorrowOpen} aria-controls="tomorrow-body" onClick={() => setTomorrowFold(!tomorrowOpen)}>내일 첫 일정<ChevronDown size={18} aria-hidden="true" /></button>{!tomorrowOpen && <small className="fold-count">{firstTomorrow.length}</small>}</h2><div id="tomorrow-body" hidden={!tomorrowOpen}>{bring.length > 0 && <BringList rows={bring} profiles={state.profiles} label="내일 챙길 것" />}{firstTomorrow.length > 0 && <ScheduleList rows={firstTomorrow} profiles={state.profiles} label="내일 첫 일정" />}</div></section>}
     </section>
 
-    {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} />}
+    {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} onSkip={(exception, title) => setSkipped({ exception, title })} />}
+    {skipped && <div role="status" className="undo-toast">{skipped.title}을(를) 이 날만 뺐어요.<button onClick={() => { updateState((current) => ({ ...current, scheduleExceptions: (current.scheduleExceptions || []).filter((item) => item.id !== skipped.exception.id) })); setSkipped(null) }}>되돌리기</button></div>}
   </div>
 }
