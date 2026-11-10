@@ -5,7 +5,7 @@ const PRECACHE_URLS = PRECACHE_ENTRIES.map((entry) => typeof entry === 'string' 
 const PRECACHE_ABSOLUTE_URLS = new Set(PRECACHE_URLS.map((url) => new URL(url, self.location.origin).href))
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)))
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())) // 새 버전 바로 적용
 })
 
 self.addEventListener('message', (event) => {
