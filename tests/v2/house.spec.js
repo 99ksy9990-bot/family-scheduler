@@ -56,3 +56,8 @@ test('한 번만 넣은 학교 일정도 반복 시간표와 같은 학교 그�
   const { kindOf } = await import('../../src/v2/data/kinds.js')
   expect(kindOf({ kind: '학교', title: '수업' })).toBe(kindOf({ recurrenceType: 'child', kind: '학교' }))
 })
+
+test('날씨는 얼굴을 바꾸지 않음', () => {
+  const now = new Date(2026, 10, 12, 9)
+  for (const mood of ['sunny', 'cloudy', 'rain', 'cold']) expect(moodFor({ id: 'p' }, { expression: 'basic' }, { now, weather: { mood } })).toBe('basic')
+})
