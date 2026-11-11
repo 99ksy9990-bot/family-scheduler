@@ -337,3 +337,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .skipped-who b { color: var(--label); font-weight: 600; }
 .skipped-who small { color: var(--label-3); }
 .skipped-list summary { cursor: pointer; padding: 4px 0; }
+.today-date { margin: 2px 0 6px; font-size: 17px; font-weight: 600; color: var(--label); }
