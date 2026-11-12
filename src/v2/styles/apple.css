@@ -347,3 +347,15 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .today-date .weather-out { margin-left: 0; }
 .weather-tip { margin: -4px 4px 12px; color: var(--label-2); font-size: 15px; word-break: keep-all; }
 .v2-app[data-view='calendar'] .header-tools { bottom: 9px; } /* 달력 제목 줄이 3px 높아서 아이콘을 홈과 같은 높이로 */
+/* 할 일·놀이: 큰 제목은 다른 탭과 같은 높이, 작은 글과 버튼은 그 아래 한 줄 (사용자 2026-11-12) */
+.heading-sub { display: flex; align-items: center; gap: 8px; min-height: 28px; margin-top: 2px; }
+.heading-sub .app-date { margin: 0; font-size: 15px; font-weight: 500; color: var(--label-2); }
+.heading-sub .heading-side, .heading-sub > :last-child:not(.app-date) { margin-left: auto; }
+.v2-app[data-view='tasks'] .app-heading, .v2-app[data-view='play'] .app-heading { padding-right: 20px; }
+.v2-app[data-view='tasks'] .heading-line, .v2-app[data-view='play'] .heading-line { padding-right: 92px; }
+.v2-app[data-view='tasks'] .app-heading, .v2-app[data-view='play'] .app-heading { padding-top: calc(env(safe-area-inset-top) + 8px); }
+.v2-app[data-view='tasks'] .header-tools, .v2-app[data-view='play'] .header-tools { top: calc(env(safe-area-inset-top) + 5px); bottom: auto; }
+.heading-sub .heading-side { padding: 0; line-height: 1; color: var(--label-2); font-size: 15px; font-weight: 600; }
+.app-heading .heading-sub .sound-toggles { margin-right: 0; }
+.heading-sub .sound-toggle { width: 32px; height: 32px; min-height: 32px; }
+.heading-sub .sound-toggle svg { width: 18px; height: 18px; }
