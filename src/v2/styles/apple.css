@@ -385,3 +385,12 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .v2-app[data-view='play'] .app-heading .heading-line .sound-toggles { margin-right: -52px; }
 .task-celebration { position: fixed; z-index: var(--z-toast); left: max(16px, calc((100vw - 480px) / 2 + 16px)); right: max(16px, calc((100vw - 480px) / 2 + 16px)); bottom: calc(max(8px, calc(env(safe-area-inset-bottom) - 26px)) + 140px); margin: 0; padding: 8px 12px; border-radius: 16px; font-size: 14px; }
 .v2-app[data-view='play'] .app-heading .heading-line .sound-toggles { margin-right: 0; }
+/* 우리집 꾸미기 카드 단순하게 (사용자 2026-11-12) */
+.home-stats { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-style: normal; font-size: 13px; font-weight: 600; color: var(--label-2); }
+.home-faces { display: flex; }
+.home-faces > * + * { margin-left: -6px; }
+.home-tile { position: relative; padding-right: 36px; }
+.home-tile::after { content: '›'; position: absolute; right: 16px; top: 50%; transform: translateY(-55%); font-size: 26px; color: var(--label-3); }
+.home-tile .home-stats, .home-tile .home-faces { flex-direction: row; flex-wrap: nowrap; align-items: center; }
+.home-tile .home-faces { gap: 0; }
+.home-tile span.home-faces { display: flex; }
