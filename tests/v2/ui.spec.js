@@ -152,7 +152,7 @@ test('할 일 추가·완료·캐릭터 반응·삭제 되돌리기·개수 일�
   await page.getByRole('button', { name: '할 일 삭제', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByTestId('task-count')).toHaveText('다 끝냈어요')
-  await page.getByRole('button', { name: '되돌리기', exact: true }).click()
+  await page.locator('.undo-toast').getByRole('button', { name: '되돌리기', exact: true }).click()
   await expect(page.getByRole('button', { name: /^방 정리/ })).toBeVisible()
 })
 
@@ -193,7 +193,7 @@ test('자녀 시간표·학기와 기념일 편집 저장', async ({ page }) => 
   await page.clock.runFor(500)
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-child-schedules-v1'))[0].weekdays)).toEqual([4])
   await page.locator('.crumbs button').first().click()
-  await page.getByRole('button', { name: '기념일 추가' }).click()
+  await page.getByRole('button', { name: '기념일 추가', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('textbox', { name: '이름', exact: true }).fill('가족 기념')
   await dialog.getByLabel('월', { exact: true }).fill('11')
