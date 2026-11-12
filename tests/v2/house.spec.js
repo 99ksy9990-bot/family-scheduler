@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { houseStatus, remainingSchedule, rowsForMember, moodFor } from '../../src/v2/data/house.js'
+import { houseStatus, remainingSchedule, rowsForMember, moodFor, softDetail } from '../../src/v2/data/house.js'
 
 const date = new Date('2026-11-05T00:00:00')
 const now = new Date('2026-11-05T10:00:00')
@@ -60,4 +60,8 @@ test('한 번만 넣은 학교 일정도 반복 시간표와 같은 학교 그�
 test('날씨는 얼굴을 바꾸지 않음', () => {
   const now = new Date(2026, 10, 12, 9)
   for (const mood of ['sunny', 'cloudy', 'rain', 'cold']) expect(moodFor({ id: 'p' }, { expression: 'basic' }, { now, weather: { mood } })).toBe('basic')
+})
+
+test('홈 작은 글씨에 일정 이름', () => {
+  expect(softDetail('@study:17:00', { id: 'k' }, new Date(2026, 10, 5), '피아노')).toBe('피아노 17:00까지')
 })

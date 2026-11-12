@@ -18,7 +18,7 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const schoolKind = (row) => ['학교', '학원'].includes(row?.kind) ? row.kind : row?.type === 'school' ? '학교' : null
   const status = memberStatus(profile, rows, tasks, now)
   if (active) return { ...status, expression: 'busy', badgeKind: active.type === 'shift' ? null : schoolKind(active), badge: active.type === 'shift' ? '근무' : schoolKind(active) || '일정', // 칩은 두 글자로 통일 (사용자 2026-11-12)
-    detail: `@${active.type === 'shift' ? 'work' : schoolKind(active) ? 'study' : 'event'}:${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` } // 화면에서 softDetail이 문장으로
+    what: active.type === 'shift' ? '' : active.title, detail: `@${active.type === 'shift' ? 'work' : schoolKind(active) ? 'study' : 'event'}:${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` } // 화면에서 softDetail이 문장으로
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
   if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: schoolKind(next), badgeUpcoming: true, detail: `${next.displayStart} 시작` }
   if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘은 쉬는 날' } // 아빠 연차도 엄마 OFF처럼
@@ -73,8 +73,9 @@ const BUSY = {
   study: (t) => [`${t}까지 공부 중`, `${t}까지 열공 중`, `${t}에 끝나요`, `${t}까지 배우는 중`, `${t}까지 집중 중`, `${t}에 수업 끝나요`, `${t}까지 열심히 하는 중`, `${t}에 만나요`],
   event: (t) => [`${t}에 끝나요`, `${t}까지 바빠요`, `${t}까지 일정 중`, `${t}쯤 끝나요`, `${t}쯤 마쳐요`, `${t}까지 조금 바빠요`],
 }
-export function softDetail(detail, profile, today) {
+export function softDetail(detail, profile, today, what) {
   const m = /^@(\w+):(.*)$/.exec(detail || '')
+  if (m && what && what.length <= 8) return `${what} ${m[2]}까지` // 일정 이름 보이게 (사용자 2026-11-12)
   const list = m ? BUSY[m[1]](m[2]) : SOFT[detail]
   if (!list) return detail
   const seed = [...`${profile.id}${today.getFullYear()}${today.getMonth()}${today.getDate()}`].reduce((n, c) => n * 31 + c.charCodeAt(0) >>> 0, 7)
