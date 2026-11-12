@@ -23,7 +23,7 @@ export default function ScheduleList({ rows, profiles, label = '시간순 일정
   const now = useCurrentTime()
   // 'auto': 이 목록에서 아직 안 지난 첫 시간 일정 (사람별 묶음마다 하나씩)
   const next = nextId !== 'auto' ? nextId : rows.find((row) => !row.carryover && !isPast(row, now) && /^\d/.test(row.displayStart || row.time || ''))?.id
-  if (!rows.length) return <div className="empty-state"><h3>아직 일정이 없어요</h3><p>오른쪽 + 버튼으로 가족 일정을 남겨 보세요.</p></div>
+  if (!rows.length) return <div className="empty-state"><img className="friends-pic" src="/friends/sleep.webp" alt="" width={120} height={120} /><h3>아직 일정이 없어요</h3><p>오른쪽 + 버튼으로 가족 일정을 남겨 보세요.</p></div>
   const item = (group) => {
     const row = group[0]
     const members = membersFor(row, profiles)

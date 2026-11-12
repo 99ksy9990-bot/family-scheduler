@@ -23,7 +23,8 @@ export const pickObjects = (n, rand = Math.random) => {
   const all = [...new Map(ROOMS.flatMap((r) => r.tasks).map((t) => [t.img, t])).values()]
   for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [all[i], all[j]] = [all[j], all[i]] }
   all.sort((a, b) => homeDone.includes(b.id) - homeDone.includes(a.id)) // 꾸민 물건 먼저
-  return all.slice(0, n).map((t) => ({ img: t.img, name: t.name }))
+  const friends = [['bear', '아기곰'], ['cat', '아기 고양이'], ['bunny', '노란 토끼']].map(([k, name]) => ({ img: `/friends/${k}.webp`, name }))
+  return [...friends.slice(0, Math.floor(n / 3)), ...all].slice(0, n).map((t) => ({ img: t.img, name: t.name })) // 친구 캐릭터 몇 장 섞음
 }
 // 꾸민 물건을 배경 위에 겹쳐 그림 (대청소 방 자리와 대략 같은 곳)
 const thing = (t) => { const w = t.at[2] / 100; return `url(${t.img}) ${Math.min(100, t.at[0] / Math.max(0.01, 1 - w))}% ${t.at[1]}% / ${t.at[2]}% auto no-repeat, ` }

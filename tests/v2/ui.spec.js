@@ -146,7 +146,7 @@ test('할 일 추가·완료·캐릭터 반응·삭제 되돌리기·개수 일�
   await expect(page.getByTestId('task-count')).toHaveText('1개 남음')
   await page.getByRole('checkbox', { name: '방 정리 완료', exact: true }).click()
   await expect(page.getByTestId('task-count')).toHaveText('다 끝냈어요')
-  await expect(page.locator('[role="status"] img')).toHaveAttribute('src', '/characters/dad_done.png')
+  await expect(page.locator('[role="status"] img').first()).toHaveAttribute('src', '/characters/dad_done.png')
   await page.getByRole('button', { name: /^끝낸 일/ }).click()
   await page.getByRole('button', { name: /^방 정리/ }).click()
   await page.getByRole('button', { name: '할 일 삭제', exact: true }).click()
