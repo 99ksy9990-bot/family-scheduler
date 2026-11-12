@@ -338,3 +338,11 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .skipped-who small { color: var(--label-3); }
 .skipped-list summary { cursor: pointer; padding: 4px 0; }
 .today-date { margin: 2px 0 6px; font-size: 17px; font-weight: 600; color: var(--label); }
+
+/* 날짜·날씨 한 줄 (사용자 2026-11-12) */
+.today-date { display: flex; align-items: center; gap: 10px; margin: 2px 4px 10px; }
+.today-date .weather-line { margin: 0; gap: 4px; font-size: 15px; }
+.today-date .weather-line strong { color: var(--label-2); font-weight: 500; }
+.today-date .weather-pic { width: 24px; height: 24px; }
+.today-date .weather-out { margin-left: 0; }
+.weather-tip { margin: -4px 4px 12px; color: var(--label-2); font-size: 15px; word-break: keep-all; }

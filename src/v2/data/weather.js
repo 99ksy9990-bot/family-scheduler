@@ -48,7 +48,7 @@ export function weatherNote(hourly, now = new Date()) {
   // 저녁 6시 넘으면 내일 아침(7~9시) 날씨를 미리
   const tmr = now.getHours() >= 18 && hourly.time.map((t, k) => ({ t, k })).filter(({ t }) => t > key && /T0[789]:/.test(t)).map(({ k }) => ({ p: hourly.precipitation_probability[k] ?? 0, c: hourly.weather_code[k], t: hourly.temperature_2m[k] }))
   const pick = (list) => list[(now.getDate() * 7 + now.getHours()) % list.length] // 시간마다 다른 말
-  let tip
+  let tip, plain = false
   if (tmr?.length) {
     const tl = Math.round(Math.min(...tmr.map((x) => x.t)))
     const tw = tmr.find((x) => x.p >= 50 || isRain(x.c) || isSnow(x.c))
@@ -62,12 +62,12 @@ export function weatherNote(hourly, now = new Date()) {
   else if (high >= 31) tip = pick(['무더워요, 물 자주 마셔요', '푹푹 쪄요, 시원하게 지내요', '더워요, 그늘로 다녀요', '많이 더워요, 물 챙겨요'])
   else if ((hourly.wind_speed_10m?.[i] ?? 0) >= 30) tip = pick(['바람이 세요, 모자 조심해요', '바람 많이 불어요', '바람 쌩쌩, 단단히 입어요'])
   else if (high - low >= 10) tip = pick(['일교차가 커요, 겉옷 챙겨요', '아침저녁 쌀쌀해요, 겉옷 챙겨요', '낮엔 따뜻, 밤엔 쌀쌀해요'])
-  else tip = pick({ sun: ['오늘은 맑아요', '햇살 좋은 날이에요', '나들이하기 좋은 날', '하늘이 맑아요'], cloud: ['오늘은 흐려요', '구름 많은 날이에요', '하늘이 조금 흐려요', '포근하고 흐린 날'], rain: ['비 와요, 우산 챙겨요'], snow: ['눈 와요, 길 조심해요'] }[sky(code)])
+  else { plain = sky(code) === 'sun' || sky(code) === 'cloud'; tip = pick({ sun: ['오늘은 맑아요', '햇살 좋은 날이에요', '나들이하기 좋은 날', '하늘이 맑아요'], cloud: ['오늘은 흐려요', '구름 많은 날이에요', '하늘이 조금 흐려요', '포근하고 흐린 날'], rain: ['비 와요, 우산 챙겨요'], snow: ['눈 와요, 길 조심해요'] }[sky(code)]) }
   const soon = ahead.slice(0, 3).find((x) => x.p >= 50 || isRain(x.c) || isSnow(x.c)) // 3시간 안 비·눈이면 얼굴도
   const wind = hourly.wind_speed_10m?.[i] ?? 0
   const day = now.getHours() >= 7 && now.getHours() < 18
   const mood = dusty ? 'dust' : soon ? (isSnow(soon.c) ? 'snow' : 'rain') : temp <= 3 ? 'cold' : temp >= 30 ? 'hot' : wind >= 30 ? 'windy' : !day ? null : code <= 1 ? 'sunny' : 'cloudy'
-  return { mood, dusty, temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip }
+  return { mood, dusty, temp, sky: wet && wet.h === now.getHours() ? sky(wet.c) : sky(code), tip, plain }
 }
 
 // 그 시각 비 올 확률 50% 이상인지 (일정 옆 우산 표시용, 저장된 예보 사용)

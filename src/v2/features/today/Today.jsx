@@ -48,8 +48,8 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const tomorrowOpen = tomorrowFold ?? !remaining.length
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
-    <p className="today-date">{`${today.getMonth() + 1}월 ${today.getDate()}일 ${'일월화수목금토'[today.getDay()]}요일`}</p>
-    {weather && <a className="weather-line" href="https://m.search.naver.com/search.naver?query=%EA%B4%91%EC%96%91%EC%9D%8D+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener noreferrer" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}. 네이버 날씨 열기`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={28} height={28} /><strong>{weather.temp}°</strong><span>{weather.tip}</span><ArrowUpRight className="weather-out" size={16} aria-hidden="true" /></a>}
+    <p className="today-date">{`${today.getMonth() + 1}월 ${today.getDate()}일 ${'일월화수목금토'[today.getDay()]}요일`}{weather && <a className="weather-line" href="https://m.search.naver.com/search.naver?query=%EA%B4%91%EC%96%91%EC%9D%8D+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener noreferrer" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}. 네이버 날씨 열기`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={24} height={24} /><strong>{weather.temp}°</strong><ArrowUpRight className="weather-out" size={15} aria-hidden="true" /></a>}</p>
+    {weather && !weather.plain && <p className="weather-tip">{weather.tip}</p>}
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
         const status = houseStatus(profile, rows, state.tasks, today, now, state.shifts)
