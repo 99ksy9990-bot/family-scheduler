@@ -346,3 +346,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .today-date .weather-pic { width: 24px; height: 24px; }
 .today-date .weather-out { margin-left: 0; }
 .weather-tip { margin: -4px 4px 12px; color: var(--label-2); font-size: 15px; word-break: keep-all; }
+.v2-app[data-view='calendar'] .header-tools { bottom: 9px; } /* 달력 제목 줄이 3px 높아서 아이콘을 홈과 같은 높이로 */
