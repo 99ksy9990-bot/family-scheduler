@@ -26,9 +26,9 @@ test('학교·학원 현재와 다음 일정 칩을 같은 kind 기준으로 구
   const day = new Date(2026, 10, 5)
   const profile = { id: 'kid' }
   const row = { id: 'class', title: '피아노', member: 'kid', kind: '학원', displayStart: '16:00', displayEnd: '17:00' }
-  expect(houseStatus(profile, [row], [], day, new Date(2026, 10, 5, 15))).toMatchObject({ badge: '피아노', badgeUpcoming: true, detail: '16:00 시작' })
-  expect(houseStatus(profile, [row], [], day, new Date(2026, 10, 5, 16, 30))).toMatchObject({ badge: '피아노', expression: 'busy', detail: '@study:17:00' })
-  expect(houseStatus(profile, [{ ...row, kind: '학교' }], [], day, new Date(2026, 10, 5, 16, 30))).toMatchObject({ badge: '피아노', badgeKind: '학교' })
+  expect(houseStatus(profile, [row], [], day, new Date(2026, 10, 5, 15))).toMatchObject({ badge: '학원', badgeUpcoming: true, detail: '16:00 시작' })
+  expect(houseStatus(profile, [row], [], day, new Date(2026, 10, 5, 16, 30))).toMatchObject({ badge: '학원', expression: 'busy', detail: '@study:17:00' })
+  expect(houseStatus(profile, [{ ...row, kind: '학교' }], [], day, new Date(2026, 10, 5, 16, 30))).toMatchObject({ badge: '학교', badgeKind: '학교' })
 })
 
 test('오늘 안 끝낸 병원 할 일이 있으면 아픈 얼굴', () => {

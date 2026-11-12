@@ -17,10 +17,10 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const active = own.find((row) => eventPhase(row, today, now) === 'active')
   const schoolKind = (row) => ['학교', '학원'].includes(row?.kind) ? row.kind : row?.type === 'school' ? '학교' : null
   const status = memberStatus(profile, rows, tasks, now)
-  if (active) return { ...status, expression: 'busy', badgeKind: active.type === 'shift' ? null : schoolKind(active), badge: active.type === 'shift' ? '근무' : active.title.length > 6 ? schoolKind(active) || '일정 중' : active.title, // 학원·학교도 수업명(수학·4교시)
+  if (active) return { ...status, expression: 'busy', badgeKind: active.type === 'shift' ? null : schoolKind(active), badge: active.type === 'shift' ? '근무' : schoolKind(active) || '일정', // 칩은 두 글자로 통일 (사용자 2026-11-12)
     detail: `@${active.type === 'shift' ? 'work' : schoolKind(active) ? 'study' : 'event'}:${active.crossesMidnight ? "내일 " : ""}${endOf(active) || active.displayStart}` } // 화면에서 softDetail이 문장으로
   const next = own.find((row) => eventPhase(row, today, now) === 'future')
-  if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: next.title.length > 6 ? schoolKind(next) : next.title, badgeUpcoming: true, detail: `${next.displayStart} 시작` }
+  if (schoolKind(next)) return { ...status, badgeKind: schoolKind(next), badge: schoolKind(next), badgeUpcoming: true, detail: `${next.displayStart} 시작` }
   if (!next && own.some((row) => row.type === 'leave')) return { ...status, detail: '오늘은 쉬는 날' } // 아빠 연차도 엄마 OFF처럼
   const half = own.find((row) => row.regular && row.title.includes('반차'))
   if (!next && half) return { ...status, detail: `오늘 ${half.title.split(' · ')[1]}` }
