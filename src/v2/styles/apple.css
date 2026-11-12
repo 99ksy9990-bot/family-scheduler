@@ -359,3 +359,9 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .app-heading .heading-sub .sound-toggles { margin-right: 0; }
 .heading-sub .sound-toggle { width: 32px; height: 32px; min-height: 32px; }
 .heading-sub .sound-toggle svg { width: 18px; height: 18px; }
+/* 할 일 탭 여백을 가족 탭과 맞춤 (사용자 2026-11-12) */
+.heading-sub { min-height: 24px; margin-top: 0; }
+.v2-app[data-view='tasks'] main { padding-top: 4px; }
+.v2-app[data-view='tasks'] .task-progress { margin-top: 0; }
+.home-tasks .person-group-head { gap: 8px; margin: 0 4px 6px; font-size: 17px; }
+.task-person + .task-person { margin-top: 20px; }
