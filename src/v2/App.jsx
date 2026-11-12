@@ -15,7 +15,6 @@ import HeaderTools from './features/header/HeaderTools'
 
 // 위에 붙는 제목 줄 높이를 CSS에 알려줌 (할 일 칩이 그 아래에 붙도록)
 // 시간대별 인사 (로고 옆)
-const greeting = (d) => { const h = d.getHours(); return h < 5 ? '좋은 밤 되세요' : h < 11 ? '좋은 아침이에요' : h < 14 ? '맛있는 점심 드세요' : h < 18 ? '오후도 힘내요' : h < 22 ? '편안한 저녁 보내요' : '좋은 밤 되세요' }
 const watchHeading = (el) => {
   if (!el || typeof ResizeObserver === 'undefined') return
   const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--head-h', `${el.offsetHeight}px`))
@@ -76,7 +75,7 @@ function Workspace({ scheduler }) {
   return <div className="v2-app" data-view={tab} data-scrolled={scrolled || undefined}>
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
-    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{tab === 'calendar' ? <button className="heading-line month-line" aria-label={`${cursor.getFullYear()}년 ${title}, 다른 달 고르기`} onClick={() => setPickYear(cursor.getFullYear())}><h1>{title}</h1><p className="app-date">{subtitle}</p><ChevronDown size={18} className="month-caret" /></button> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && (scrolled && wx ? <small className="greeting mini-wx">{`${today.getMonth() + 1}/${today.getDate()} · ${wx.temp}°`}</small> : <small className="greeting">{greeting(now)}</small>)}</div>}{['tasks', 'play'].includes(tab) && <div className="heading-sub"><p className="app-date">{subtitle}</p>{tab === 'play' && <SoundToggles />}{tab === 'tasks' && <button className="text-button heading-side" disabled={!canEdit} onClick={() => setEditCats(true)}>분류 편집</button>}</div>}
+    <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{tab === 'calendar' ? <button className="heading-line month-line" aria-label={`${cursor.getFullYear()}년 ${title}, 다른 달 고르기`} onClick={() => setPickYear(cursor.getFullYear())}><h1>{title}</h1><p className="app-date">{subtitle}</p><ChevronDown size={18} className="month-caret" /></button> : <div className="heading-line"><h1>{title}</h1>{tab === 'today' && scrolled && wx && <small className="greeting mini-wx">{`${today.getMonth() + 1}/${today.getDate()} · ${wx.temp}°`}</small>}</div>}{['tasks', 'play'].includes(tab) && <div className="heading-sub"><p className="app-date">{subtitle}</p>{tab === 'play' && <SoundToggles />}{tab === 'tasks' && <button className="text-button heading-side" disabled={!canEdit} onClick={() => setEditCats(true)}>분류 편집</button>}</div>}
       {state && <HeaderTools state={state} now={now} onToday={tab === 'calendar' ? () => { setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setCalendarDate(iso(today)) } : undefined} todayNumber={today.getDate()} onGoTasks={() => { setTab('tasks'); window.scrollTo(0, 0) }} onGoDate={(date) => { setTab('calendar'); setCalendarDate(date); setCursor(new Date(`${date}T00:00:00`)) }} />}
     </header>
     <main id="main" tabIndex={-1}>
