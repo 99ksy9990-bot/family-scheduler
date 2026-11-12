@@ -406,3 +406,5 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .friends-cake { width: 44px; height: 44px; object-fit: contain; }
 .task-celebration .friends-pop { width: 48px; height: 48px; object-fit: contain; flex: none; }
 .room-friends { position: absolute; right: 4%; bottom: 4%; width: 28%; pointer-events: none; z-index: 2; }
+.play-head { display: flex; align-items: center; justify-content: space-between; }
+.play-sing { width: 56px; height: 56px; object-fit: contain; margin-right: 8px; }

@@ -195,7 +195,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
         {canGo(-1) && <button className="clean-room-arrow prev" aria-label="이전 방" onClick={() => go(-1)}>‹</button>}
         {canGo(1) && <button className="clean-room-arrow next" aria-label="다음 방" onClick={() => go(1)}>›</button>}
         <span className="clean-room-name">{room.name}</span>
-        {home && finished(room) && <img className="room-friends" src="/friends/cheer.webp" alt="친구들이 놀러 왔어요" />}
+        {home && finished(room) && <img className="room-friends" src={`/friends/${room.bg === 'bath' ? 'swim' : room.bg === 'yard' ? 'dance' : room.bg === 'entry' ? 'guard' : 'cheer'}.webp`} alt="친구들이 놀러 왔어요" />}
         <span className="clean-wallet">★ {wallet}</span>
         {room.tasks.map((t) => <img key={t.id} className={`clean-room-thing${done.includes(t.id) ? ' on' : ''}`} src={t.img} alt="" style={{ left: `${t.at[0]}%`, top: `${t.at[1]}%`, width: `${t.at[2]}%` }} />)}
       </section>
