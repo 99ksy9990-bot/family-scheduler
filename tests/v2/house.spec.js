@@ -65,3 +65,8 @@ test('날씨는 얼굴을 바꾸지 않음', () => {
 test('홈 작은 글씨에 일정 이름', () => {
   expect(softDetail('@study:17:00', { id: 'k' }, new Date(2026, 10, 5), '피아노')).toBe('피아노 17:00까지')
 })
+
+test('엄마 근무 중에는 마스크 얼굴', () => {
+  expect(moodFor({ id: 'm', characterId: 'mom' }, { expression: 'busy', badge: '근무' }, { now: new Date(2026, 10, 5, 10) })).toBe('mask')
+  expect(moodFor({ id: 'd', characterId: 'dad' }, { expression: 'busy', badge: '근무' }, { now: new Date(2026, 10, 5, 10) })).toBe('busy')
+})
