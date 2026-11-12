@@ -394,3 +394,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .home-tile .home-stats, .home-tile .home-faces { flex-direction: row; flex-wrap: nowrap; align-items: center; }
 .home-tile .home-faces { gap: 0; }
 .home-tile span.home-faces { display: flex; }
+.v2-app[data-view='tasks'] .app-heading, .v2-app[data-view='play'] .app-heading { top: 0; z-index: 51; } /* 내려도 큰 제목이 잘리지 않게 (홈·달력과 같게) */
+.member-add-row strong, .member-add-row .grouped-body strong { color: var(--label); }
+.member-add-icon { color: var(--label-2); }
+.member-add-row h3 { color: var(--label); }
