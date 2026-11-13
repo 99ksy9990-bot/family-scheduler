@@ -184,7 +184,7 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 @media (prefers-reduced-transparency: reduce) { .v2-app[data-scrolled] .header-tool { background: var(--solid-card); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 /* 달력 근무 보기 끄고 켜기 (이 폰에만) */
 .work-toggles { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 8px; }
-.work-toggles button { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px 0 4px; border: 1px solid var(--sep); border-radius: 14px; background: none; color: var(--label-2); font-size: 13px; font-weight: 600; }
+.work-toggles button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px 0 4px; border: 1px solid var(--sep); border-radius: 19px; background: none; color: var(--label-2); font-size: 15px; font-weight: 600; }
 .work-toggles button[aria-pressed='true'] { background: var(--card); border-color: transparent; color: var(--label); }
 .work-toggles button[aria-pressed='false'] { text-decoration: line-through; }
 .work-toggles button[aria-pressed='false'] .character, .work-toggles button[aria-pressed='false'] img { opacity: .45; }

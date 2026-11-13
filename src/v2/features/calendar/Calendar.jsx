@@ -78,7 +78,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) onMove(dx < 0 ? 1 : -1)
   }
   return <div className="calendar-page">
-    {workers.length > 0 && <div className="work-toggles" role="group" aria-label="근무 보기">{workers.map((p) => <button key={p.id} aria-pressed={!hidden.includes(p.id)} onClick={() => toggleWork(p.id)}><CharacterAvatar profile={p} size={22} />{p.name} 근무</button>)}</div>}
+    {workers.length > 0 && <div className="work-toggles" role="group" aria-label="근무 보기">{workers.map((p) => <button key={p.id} aria-pressed={!hidden.includes(p.id)} onClick={() => toggleWork(p.id)}><CharacterAvatar profile={p} size={30} />{p.name} 근무</button>)}</div>}
     <section className="month-card" aria-label="달력" onTouchStart={(event) => { touch.current = { x: event.touches[0].clientX, y: event.touches[0].clientY } }} onTouchEnd={endSwipe} onTouchCancel={() => { touch.current = null }}>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="month-grid" role="group" aria-label="월간 달력">
         {weekdays.map((day, index) => <span className={`weekday${index === 0 ? ' sunday' : ''}`} key={day}>{day}</span>)}
