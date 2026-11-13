@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { MEMBER_COLORS } from '../../../lib/colors'
-import CharacterAvatar from '../../components/CharacterAvatar'
+import CharacterAvatar, { CHARACTERS, MINI, READY } from '../../components/CharacterAvatar'
 import Sheet from '../../components/Sheet'
 
-const CHARACTERS = ['dad', 'mom', 'big', 'little']
 
 // 구성원 추가: 이름·캐릭터·대표색만. 저장하면 그 사람 화면으로.
 export default function AddMember({ state, updateState, onClose }) {
@@ -24,7 +23,7 @@ export default function AddMember({ state, updateState, onClose }) {
     <form id="add-member" className="member-add-form" onSubmit={submit}>
       <ul className="grouped-list"><li className="grouped-row"><input className="member-name wide" placeholder="이름" value={name} onChange={(e) => setName(e.target.value)} required aria-label="이름" /></li></ul>
       <h3 className="house-section-title">캐릭터</h3>
-      <div className="member-pick big" role="group" aria-label="캐릭터">{CHARACTERS.map((id) => <button type="button" key={id} aria-pressed={characterId === id} aria-label={id} onClick={() => setCharacterId(id)}><CharacterAvatar profile={{ characterId: id }} size={56} /></button>)}</div>
+      <div className="member-pick big" role="group" aria-label="캐릭터">{CHARACTERS.filter((id) => READY.includes(id) || !MINI.includes(id)).map((id) => <button type="button" key={id} aria-pressed={characterId === id} aria-label={id} onClick={() => setCharacterId(id)}><CharacterAvatar profile={{ characterId: id }} size={56} /></button>)}</div>
       <h3 className="house-section-title">대표 색</h3>
       <div className="member-pick" role="group" aria-label="대표 색">{MEMBER_COLORS.slice(0, 6).map((c) => <button type="button" key={c.id} className="member-color" style={{ '--swatch': c.color }} aria-pressed={color === c.id} aria-label={`대표색 ${c.id}`} disabled={used.includes(c.color)} onClick={() => setColor(c.id)} />)}</div>
     </form>
