@@ -8,7 +8,7 @@ import './games.css'
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
 const HINT = { easy: '제한 없음', normal: '30번 이동', hard: '60초' }
 
-export default function Match({ onFinish, shop }) {
+export default function Match({ onFinish, shop, player }) {
   const [level, setLevel] = useState(null)
   const [pics, setPics] = useState(() => pickObjects(6))
   const [room] = useState(pickRoom) // 조각 6종: 방 물건
@@ -70,7 +70,7 @@ export default function Match({ onFinish, shop }) {
         <img src={pics[v].img} alt="" draggable="false" />
       </button>)}
     </div>
-    {cheer > 0 && <img key={cheer} className="match-cheer" src={face('little', 'done')} alt="" />}
+    {cheer > 0 && <img key={cheer} className="match-cheer" src={face(player || 'little', 'done')} alt="" />}
     <ItemBar key={level} shop={shop} off={over} items={[
       { id: 'mix', name: '섞기', img: 'room/shuffle', price: 1, use: () => { setBoard(fresh()); setPick(-1) } },
       ...(mode.moves || mode.seconds ? [{ id: 'more', name: mode.moves ? '이동 +5' : '시간 +10초', img: 'room/clock', price: 1, use: () => (mode.moves ? setMoves((m) => m - 5) : setLeft((t) => t + 10)) }] : []),

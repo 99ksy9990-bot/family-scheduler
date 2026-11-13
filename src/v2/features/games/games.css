@@ -57,7 +57,7 @@
 .stack-area { position: relative; height: min(520px, 60vh); border-radius: 22px; overflow: hidden; background: linear-gradient(#bfe0ff, #eef6ff 70%, #dff3e4); touch-action: manipulation; cursor: pointer; user-select: none; }
 .stack-area:focus-visible { outline: 3px solid var(--tint); }
 .stack-floor { position: absolute; height: 32px; border-radius: 6px; box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 0 rgba(0,0,0,.12); display: grid; place-items: center; overflow: hidden; }
-.stack-floor img { width: 28px; height: 28px; }
+.stack-floor img { width: 32px; height: 32px; object-fit: contain; transform: scale(1.4) translateY(8%); } /* 층 안에서 얼굴이 크게 보이게 */
 .stack-floor.base { background: #8e8e93 !important; }
 .stack-floor.moving { box-shadow: 0 6px 14px rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.35); }
 .stack-cut { position: absolute; height: 32px; border-radius: 6px; z-index: 3; pointer-events: none; }
