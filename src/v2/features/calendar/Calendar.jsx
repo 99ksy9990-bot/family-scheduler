@@ -12,7 +12,6 @@ import CharacterAvatar from '../../components/CharacterAvatar'
 import { membersFor } from '../../data/members'
 import { offRows } from '../../data/personDay'
 import { personColor } from '../../data/kinds'
-import { anniversarySolarOccurrences } from '../../../lib/schedule'
 
 // 그날 일정을 사람별로 묶음: 가족 전체(공휴일·기념일) → 함께 하는 일정 → 한 사람씩
 export function ByPerson({ rows, profiles, onRow, moods = {} }) {
@@ -41,8 +40,6 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
   const touch = useRef(null)
   const [hidden, setHidden] = useState(readHidden)
   const toggleWork = (id) => setHidden((list) => { const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]; try { localStorage.setItem(HIDE_KEY, JSON.stringify(next)) } catch { /* 저장 못 하면 이번만 */ } return next })
-  // 생일 날짜 칸에 그 사람의 생일 표정 그림
-  const birthdays = useMemo(() => { const m = new Map(); for (const a of state.anniversaries || []) { if (a.kind !== '생일') continue; const who = state.profiles.find((p) => p.active !== false && (a.members?.includes(p.id) || a.member === p.id || a.name === p.name)); if (!who) continue; for (const y of [cursor.getFullYear() - 1, cursor.getFullYear(), cursor.getFullYear() + 1]) for (const d of anniversarySolarOccurrences(a, y)) m.set(iso(d), who) } return m }, [state.anniversaries, state.profiles, cursor])
   const workers = state.profiles.filter((p) => p.active !== false && ((state.workSettings?.enabled && state.workSettings.workerIds?.includes(p.id)) || p.regularWork))
   const selected = selectedDate ? new Date(`${selectedDate}T00:00:00`) : today
   // '이 날만 빼기'한 일정: 되살릴 수 있게 그날 아래에 보여줌
@@ -88,7 +85,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         {days.map((date) => {
           const key = iso(date)
           const holiday = holidaysForYear(date.getFullYear()).get(key)
-          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span>{birthdays.get(key) && <span className="day-birthday" aria-label={`${birthdays.get(key).name} 생일`}><CharacterAvatar profile={birthdays.get(key)} expression="party" size={18} /></span>}<span className="shift-row">{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</span></button>
+          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span><span className="shift-row">{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>)}</span></button>
         })}
       </div></DataState>
     </section>
