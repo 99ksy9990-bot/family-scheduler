@@ -428,3 +428,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .day-icon[data-tone='bank'] { --di-bg: #e4e3fb; }
 .day-icon[data-tone='hospital'] { --di-bg: #ffe5df; }
 .task-person .todo-cat { background: color-mix(in srgb, var(--pc) 16%, var(--card)); }
+/* 근무 그림과 칩을 한 묶음으로 가운데 정렬 */
+.house-badge-stack { position: absolute; top: 12px; right: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.house-badge-stack .house-badge, .house-badge-stack .house-badge-pic { position: static; max-width: none; }
+.house-badge-stack .house-badge-pic + .house-badge { top: auto; }
