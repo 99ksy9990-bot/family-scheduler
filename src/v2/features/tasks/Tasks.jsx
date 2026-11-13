@@ -70,7 +70,7 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     <div className="task-chips"><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>전체</button>{categories.map((name) => <button key={name} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
     {[groups[view]].map(([title, items]) => <div className="task-group" key={title}>
       {!items.length ? <div className="empty-state">{view === 1 ? '아직 끝낸 일이 없어요.' : '할 일이 없어요.'}{view === 0 && onAdd && <button className="empty-add" onClick={onAdd}>할 일 추가</button>}</div>
-        : view === 0 && people.length ? people.map(([profile, list]) => <div key={profile.id} className="task-person" style={{ '--pc': personColor(profile) }}><h3 className="person-group-head"><CharacterAvatar profile={profile} size={30} expression="basic" />{profile.name}<small>{list.length}</small></h3><GroupedList label={`${profile.name} 할 일`}>{list.map(renderRow)}</GroupedList></div>)
+        : view === 0 && people.length ? people.map(([profile, list]) => <div key={profile.id} className="task-person" style={{ '--pc': personColor(profile) }}><h3 className="person-group-head"><CharacterAvatar profile={profile} size={44} expression="basic" />{profile.name}<small>{list.length}</small></h3><GroupedList label={`${profile.name} 할 일`}>{list.map(renderRow)}</GroupedList></div>)
         : <GroupedList label={title}>{items.map(renderRow)}</GroupedList>}
     </div>)}
 <p className="quiet task-hint">반복 할 일은 오늘부터 이달 말까지 보여요.</p>

@@ -363,7 +363,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .heading-sub { min-height: 24px; margin-top: 0; }
 .v2-app[data-view='tasks'] main { padding-top: 4px; }
 .v2-app[data-view='tasks'] .task-progress { margin-top: 0; }
-.home-tasks .person-group-head { gap: 8px; margin: 0 4px 6px; font-size: 17px; }
+.home-tasks .person-group-head { gap: 10px; margin: 0 4px 6px; font-size: 19px; }
 .task-person + .task-person { margin-top: 20px; }
 /* 색 기준: 채운 버튼만 파랑, 글자·작은 아이콘 버튼은 회색 (사용자 2026-11-12) */
 .member-add .grouped-body strong { color: var(--label); }
@@ -433,3 +433,9 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .house-badge-stack .house-badge, .house-badge-stack .house-badge-pic { position: static; max-width: none; }
 .house-badge-stack .house-badge-pic + .house-badge { top: auto; }
 .house-badge-stack .house-badge:only-child { margin-top: 40px; } /* 그림 없는 칩도 같은 높이 */
+/* 붙여넣기 칩·X 버튼은 제목 줄 오른쪽 끝에 */
+#selected-heading { display: flex; align-items: center; gap: 8px; }
+#selected-heading .paste-bar { flex: 1; justify-content: flex-end; margin-left: auto; }
+#selected-heading .paste-bar .paste-event { max-width: none; flex: 0 1 auto; min-width: 0; }
+#selected-heading { white-space: nowrap; }
+.task-person .person-group-head { gap: 10px; font-size: 19px; }
