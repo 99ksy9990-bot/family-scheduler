@@ -1,4 +1,4 @@
-import { FRIEND } from './theme'
+import { face } from './theme'
 import { useEffect, useRef, useState } from 'react'
 import { bounce, burst, buzz, center, pop, shake } from './fx'
 import { PADS, SPEED, press, stage, start } from './sequenceLogic'
@@ -53,7 +53,7 @@ export default function Sequence({ onFinish, shop }) {
     <div className="game-stats"><span>{stage(game)}단계</span><span>{showing ? '잘 보세요' : game.over ? '' : '따라 누르세요'}</span></div>
     <div className="seq-grid room-bg" style={roomStyle(room)} ref={grid}>
       {PADS.map((c, i) => <button key={c} className={`seq-pad glass-icon${lit === i ? ' lit' : ''}`} data-character={c} aria-label={c} disabled={showing || game.over} onClick={() => tap(i)}>
-        <img src={`/characters/${FRIEND[c] || c}_${lit === i ? 'done' : 'basic'}.webp`} alt="" />
+        <img src={face(c, lit === i ? 'done' : 'basic')} alt="" />
       </button>)}
     </div>
     <p className="seq-msg" aria-live="polite">{msg}</p>

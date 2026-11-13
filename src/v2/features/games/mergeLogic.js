@@ -1,3 +1,4 @@
+import { face } from './theme'
 // 우리집 합치기: 같은 단계 둘이 닿으면 다음 단계 하나로. 좌표는 가로 1 기준, 세로 h, y는 아래로.
 export const STAGES = [
   { img: '/game/tiles/seed.png', r: 0.05, color: '#ffdcb0', name: '씨앗' },
@@ -5,10 +6,10 @@ export const STAGES = [
   { img: '/game/tiles/flower.png', r: 0.082, color: '#ffd0da', name: '꽃' },
   { img: '/game/tiles/tree.png', r: 0.1, color: '#cfe6ff', name: '나무' },
   { img: '/game/tiles/house.png', r: 0.12, color: '#bfe0ff', name: '집' },
-  { img: '/characters/little_done.png', r: 0.14, color: '#c8f0d8', name: '연두' },
-  { img: '/characters/big_done.png', r: 0.162, color: '#e6d4ff', name: '초롱' },
-  { img: '/characters/mom_done.png', r: 0.188, color: '#ffd6cc', name: '엄마' },
-  { img: '/characters/dad_done.png', r: 0.215, color: '#cfd8ff', name: '아빠' },
+  { get img() { return face('little', 'done') }, r: 0.14, color: '#c8f0d8', name: '연두' },
+  { get img() { return face('big', 'done') }, r: 0.162, color: '#e6d4ff', name: '초롱' },
+  { get img() { return face('mom', 'done') }, r: 0.188, color: '#ffd6cc', name: '엄마' },
+  { get img() { return face('dad', 'done') }, r: 0.215, color: '#cfd8ff', name: '아빠' },
 ]
 export const LINE = 0.16 // 이 선 위로 쌓이면 끝 (세로 비율)
 const G = 2.2; const SUB = 4

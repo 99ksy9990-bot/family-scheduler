@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LEVELS, begin, drop, height, move, stageOf } from './stackLogic'
 import { bounce, burst, buzz, confetti, pop, shake } from './fx'
 import ItemBar from './ItemBar'
-import { pickRoom, roomStyle, perkLevel } from './theme'
+import { pickRoom, roomStyle, perkLevel, face } from './theme'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -67,8 +67,8 @@ export default function Stack({ onFinish, shop }) {
   return <div className="stack">
     <div className="game-stats"><span>{stageOf(s)}단계 · {height(s)}층</span><span>{s.combo >= 2 ? `딱 ${s.combo}번 연속` : '눌러서 쌓기'}</span></div>
     <div className="stack-area fx-host room-bg" style={roomStyle(room)} ref={area} role="button" tabIndex={0} aria-label="눌러서 층 쌓기" onPointerDown={tap} onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && (e.preventDefault(), tap())}>
-      {s.floors.map((f, i) => <div key={i} className={`stack-floor${i === 0 ? ' base' : ''}`} style={floorStyle(f, i)}>{i > 0 && <img src={`/characters/${FACES[i % 4]}_${s.last?.perfect && i === s.floors.length - 1 ? 'done' : 'basic'}.png`} alt="" />}</div>)}
-      {!s.over && <div className="stack-floor moving" style={floorStyle(s.moving, s.floors.length)}><img src={`/characters/${FACES[s.floors.length % 4]}_busy.png`} alt="" /></div>}
+      {s.floors.map((f, i) => <div key={i} className={`stack-floor${i === 0 ? ' base' : ''}`} style={floorStyle(f, i)}>{i > 0 && <img src={face(FACES[i % 4], s.last?.perfect && i === s.floors.length - 1 ? 'done' : 'basic')} alt="" />}</div>)}
+      {!s.over && <div className="stack-floor moving" style={floorStyle(s.moving, s.floors.length)}><img src={face(FACES[s.floors.length % 4], 'busy')} alt="" /></div>}
       {s.over && <div className="stack-roof" style={{ bottom: `${s.floors.length * FLOOR - shift}px` }} />}
     </div>
     <ItemBar key={level} shop={shop} off={s.over} items={[

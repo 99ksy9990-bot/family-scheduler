@@ -1,10 +1,12 @@
-import { roleOf } from '../../components/CharacterAvatar.jsx'
+import { roleOf, MINI, miniMood } from '../../components/CharacterAvatar.jsx'
 // 게임마다 대청소 방 하나를 골라 배경·물건 그림으로 씀
 import { ROOMS, roomGame } from './cleanRooms.js'
 export { roomGame }
 
 // 게임 속 가족 자리 그림: 가족 탭에서 고른 그림을 따름 (원래 그림 또는 치이카와 친구들)
 export const FRIEND = { dad: 'dad', mom: 'mom', big: 'big', little: 'little' }
+// 가족 자리 그림 주소 (치이카와면 가까운 표정)
+export const face = (role, mood = 'basic') => { const id = FRIEND[role] || role; return MINI.includes(id) ? `/characters/${id}_${miniMood(id, mood)}.webp` : `/characters/${id}_${mood}.png` }
 export const setFaces = (profiles = []) => profiles.forEach((p) => { const r = roleOf(p); if (r in FRIEND && p.characterId) FRIEND[r] = p.characterId })
 let homeDone = []
 // 놀이 시작할 때 그 사람이 꾸민 물건 목록을 알려 줌

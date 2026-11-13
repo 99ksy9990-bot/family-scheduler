@@ -4,7 +4,7 @@ import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
 import { ROOMS } from './cleanRooms'
 import { HUES } from './pieceHues'
 import { mondayKey } from '../../data/gameScores'
-import { GAME_NAMES, PERK_TEXT, roomGame } from './theme'
+import { GAME_NAMES, PERK_TEXT, roomGame, face } from './theme'
 import { COMP, GIFT, GIFT_EVERY, arcadeOf } from './wallet'
 import './games.css'
 
@@ -103,7 +103,7 @@ function specialFx(host, e) {
     n.animate([{ transform: 'translate(-50%,-50%) scale(.6) rotate(0)' }, { transform: `translate(calc(-50% + ${(t.cx - o.cx) / 2}px), calc(-50% + ${(t.cy - o.cy) / 2 - 40}px)) scale(1.3) rotate(360deg)`, offset: .5 }, { transform: `translate(calc(-50% + ${t.cx - o.cx}px), calc(-50% + ${t.cy - o.cy}px)) scale(.8) rotate(720deg)`, opacity: 1 }], { duration: 650, easing: 'ease-in-out' }).onfinish = () => n.remove()
   }
 }
-const Face = ({ player, mood = 'basic', size = 56 }) => <img className="clean-face" src={`/characters/${player}_${mood}.png`} alt="" width={size} height={size} />
+const Face = ({ player, mood = 'basic', size = 56 }) => <img className="clean-face" src={face(player, mood)} alt="" width={size} height={size} />
 
 export default function Clean({ player, onFinish, progress, onProgress, autoStart, home }) {
   // 가족 데이터에 저장(폰이 바뀌어도 유지), 예전 폰 저장값은 처음 한 번 가져옴

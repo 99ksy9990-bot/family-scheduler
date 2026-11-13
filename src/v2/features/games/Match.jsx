@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MODES, N, adjacent, findMove, fresh, swap } from './matchLogic'
 import { burst, buzz, center, pop, shake } from './fx'
 import ItemBar from './ItemBar'
-import { pickObjects, pickRoom, roomStyle, perkLevel } from './theme'
+import { pickObjects, pickRoom, roomStyle, perkLevel, face } from './theme'
 import './games.css'
 
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
@@ -70,7 +70,7 @@ export default function Match({ onFinish, shop }) {
         <img src={pics[v].img} alt="" draggable="false" />
       </button>)}
     </div>
-    {cheer > 0 && <img key={cheer} className="match-cheer" src="/characters/little_done.png" alt="" />}
+    {cheer > 0 && <img key={cheer} className="match-cheer" src={face('little', 'done')} alt="" />}
     <ItemBar key={level} shop={shop} off={over} items={[
       { id: 'mix', name: '섞기', img: 'room/shuffle', price: 1, use: () => { setBoard(fresh()); setPick(-1) } },
       ...(mode.moves || mode.seconds ? [{ id: 'more', name: mode.moves ? '이동 +5' : '시간 +10초', img: 'room/clock', price: 1, use: () => (mode.moves ? setMoves((m) => m - 5) : setLeft((t) => t + 10)) }] : []),
