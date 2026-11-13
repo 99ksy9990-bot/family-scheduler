@@ -281,7 +281,7 @@ form.event-form input[name='baseYear'] { width: calc(4ch + 22px) !important; }
 .leave-pick button[aria-pressed="true"] { background: var(--label); color: var(--solid-card); }
 .leave-pick button:focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
 /* 사람 묶음: 얼굴(44) > 일정 아이콘(30) 위계 */
-.person-group.solo .grouped-icon { width: 30px; height: 30px; flex: 0 0 30px; }
+.person-group.solo .grouped-icon { width: 40px; height: 40px; flex: 0 0 40px; } /* 목록 앞 아이콘 40px 통일 */
 .person-group-head { font-size: 19px; }
 /* 스크롤하면 제목 띠를 유리처럼: 아래 내용이 흐리게 비쳐 지나감 + 얇은 경계선 */
 .v2-app[data-scrolled] .app-heading { background: var(--glass-bg); -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8); box-shadow: 0 .5px 0 rgba(60,60,67,.18); }

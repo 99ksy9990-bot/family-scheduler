@@ -18,5 +18,5 @@ export default function MemberAvatars({ item, profiles }) {
   const members = membersFor(item, profiles).slice(0, 4)
   if (!members.length) return <DayIcon kind={item.holiday ? 'holiday' : item.anniversaryKind} />
   if (members.length === 1) return <CharacterAvatar profile={members[0]} expression={moodOf(item)} size={40} />
-  return <span className="member-stack" role="img" aria-label={members.map((profile) => profile.name).join(' · ')} data-count={members.length}>{members.map((profile, index) => <span key={profile.id} style={{ left: members.length === 3 && index === 2 ? 6 : index % 2 * 12, top: members.length === 2 ? 6 : Math.floor(index / 2) * 12 }}><CharacterAvatar profile={profile} expression={moodOf(item)} size={20} /></span>)}</span>
+  return <span className="member-stack" role="img" aria-label={members.map((profile) => profile.name).join(' · ')} data-count={members.length}>{members.map((profile, index) => <span key={profile.id} style={members.length === 2 ? { left: index * 8, top: index * 8 } : { left: members.length === 3 && index === 2 ? 6 : index % 2 * 12, top: Math.floor(index / 2) * 12 }}><CharacterAvatar profile={profile} expression={moodOf(item)} size={members.length === 2 ? 24 : 20} /></span>)}</span>
 }
