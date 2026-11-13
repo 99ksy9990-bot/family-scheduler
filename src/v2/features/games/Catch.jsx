@@ -77,7 +77,8 @@ export default function Catch({ onFinish, player = 'little', shop }) {
     <div className="game-stats"><span>{stageOf(s.score)}단계 · {s.score}점{RULES[level].time ? ` · ${Math.max(0, Math.ceil((RULES[level].time - s.t) / 1000))}초` : ''}</span><span className="catch-lives">{[0, 1, 2].map((i) => <img key={`${i}-${i < s.lives}`} className={i < s.lives ? '' : 'lost'} src={`/game/life_${i < s.lives ? 'full' : 'empty'}.png`} alt="" />)}</span></div>
     <div className="catch-area room-bg" style={roomStyle(room)} ref={area} tabIndex={0} aria-label="바구니를 좌우로 움직여요" onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); move(e) }} onPointerMove={(e) => e.buttons && move(e)} onKeyDown={keys}>
       {s.items.map((it) => <img key={it.id} className={`catch-item${it.kind === 'cloud' ? ' cloud' : ''}`} src={it.kind === 'cloud' ? '/game/cloud.png' : room.imgs[['star', 'heart', 'sun'].indexOf(it.kind)]} alt="" style={{ transform: `translate(calc(${it.x * 100}cqw - 50%), ${it.y * 100}cqh)` }} />)}
-      <img className={`catch-basket${s.t < s.bigUntil ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
+      {WHO.includes(player) ? <img className={`catch-basket${s.t < s.bigUntil ? ' big' : ''}`} src={`/game/${who}_basket.png`} alt="" style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }} />
+        : <div className={`catch-basket mini-basket${s.t < s.bigUntil ? ' big' : ''}`} style={{ transform: `translateX(calc(${x * 100}cqw - 50%))` }}><img src={`/characters/${player}_done.webp`} alt="" /><img src="/game/room/basket.png" alt="" /></div>}
     </div>
     <ItemBar key={level} shop={shop} off={s.over} items={[
       { id: 'big', name: '큰 바구니', img: 'room/basket', price: 1, use: () => { live.current = { ...live.current, bigUntil: live.current.t + 10000 } } },

@@ -317,3 +317,6 @@
 .sp-rainbow { background: conic-gradient(#ff5e7e, #ffcc00, #30d158, #0a84ff, #bf5af2, #ff5e7e); box-shadow: none; }
 /* 목표 칸 그림: 비율 유지 (세로로 긴 마이크 등이 눌리지 않게) */
 .clean-goals img { object-fit: contain; }
+.mini-basket { aspect-ratio: 1; display: grid; }
+.mini-basket img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; }
+.mini-basket img:first-child { width: 78%; height: 78%; justify-self: center; transform: translateY(-22%); }

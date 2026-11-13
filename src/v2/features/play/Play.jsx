@@ -4,7 +4,7 @@ import CharacterAvatar from '../../components/CharacterAvatar'
 import { GAMES, HOME } from '../games'
 import { mergeProgress } from '../../data/cleanProgress'
 import { getMe } from '../../data/me'
-import { finishedRooms, pickRoom, roomStyle, setHome } from '../games/theme'
+import { finishedRooms, pickRoom, roomStyle, setHome, setFaces } from '../games/theme'
 import { earnStar, firstPlayBonus, homeBonus, spendStars, walletOf, DAILY, dailyGame } from '../games/wallet'
 import PerkNote from '../games/PerkNote'
 import { isMusicOn, isSoundOn, playMusic, setMusic, setSfx, setSound, stopMusic } from '../games/fx'
@@ -37,6 +37,7 @@ export default function Play({ state, updateState }) {
     setSfx(game); setHome(state.cleanProgress?.[id]?.done); if (!['clean', 'home'].includes(game)) playMusic(game)
   }
   const [message, setMessage] = useState('')
+  setFaces(state.profiles) // 게임 속 가족 그림
   const [result, setResult] = useState(null) // 끝난 판: 결과 화면으로 바로 전환
   const [round, setRound] = useState(0)
   useEffect(() => stopMusic, []) // 놀이 탭을 떠나면 음악 끔

@@ -1,9 +1,11 @@
+import { roleOf } from '../../components/CharacterAvatar.jsx'
 // 게임마다 대청소 방 하나를 골라 배경·물건 그림으로 씀
 import { ROOMS, roomGame } from './cleanRooms.js'
 export { roomGame }
 
-// 게임 속 가족 자리는 치이카와 친구들 (아빠 검사·엄마 세이렌·초롱 우사기·연두 치이카와)
-export const FRIEND = { dad: 'knight', mom: 'siren', big: 'usagi', little: 'chiikawa' }
+// 게임 속 가족 자리 그림: 가족 탭에서 고른 그림을 따름 (원래 그림 또는 치이카와 친구들)
+export const FRIEND = { dad: 'dad', mom: 'mom', big: 'big', little: 'little' }
+export const setFaces = (profiles = []) => profiles.forEach((p) => { const r = roleOf(p); if (r in FRIEND && p.characterId) FRIEND[r] = p.characterId })
 let homeDone = []
 // 놀이 시작할 때 그 사람이 꾸민 물건 목록을 알려 줌
 export const setHome = (done) => { homeDone = done || [] }

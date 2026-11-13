@@ -1,3 +1,4 @@
+import { getMe } from '../../data/me'
 import MemberAvatars from '../../components/MemberAvatars'
 import { anniversaryMilestoneLabel, nextAnniversaryOccurrence, anniversaryTitle } from '../../../lib/schedule'
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
@@ -6,7 +7,7 @@ import ArrowText from '../../components/ArrowText'
 import { useEffect, useState } from 'react'
 import RowEditor from '../../components/RowEditor'
 import { ByPerson } from '../calendar/Calendar'
-import CharacterAvatar, { roleOf } from '../../components/CharacterAvatar'
+import CharacterAvatar, { roleOf, MINI } from '../../components/CharacterAvatar'
 import ScheduleList from '../../components/ScheduleList'
 import { DataState } from '../../components/DataState'
 import { membersFor } from '../../data/members'
@@ -25,6 +26,8 @@ function BringList({ rows, profiles, label }) {
 
 // 날씨에 맞춰 치이카와가 우산·부채·목도리
 const WX_BUDDY = { rain: 'rain', snow: 'cold', cold: 'cold', windy: 'cold', hot: 'hot', dust: 'worried', sunny: 'sunny', cloudy: 'basic' }
+// 이 폰 주인('나')의 캐릭터, 없으면 치이카와
+const wxBuddy = (profiles = [], mood) => { const id = profiles.find((p) => p.id === getMe())?.characterId || 'chiikawa'; return MINI.includes(id) ? `/characters/${id}_${WX_BUDDY[mood]}.webp` : `/characters/${id}_${mood}.webp` }
 
 export default function Today({ today, now, state, rows, loading, error, onRetry, onPerson, updateState, canEdit, onOpenToday }) {
   const [editing, setEditing] = useState(null) // 남은 일정에서 바로 수정
@@ -51,7 +54,7 @@ export default function Today({ today, now, state, rows, loading, error, onRetry
   const tomorrowOpen = tomorrowFold ?? !remaining.length
   const allDone = !remaining.length && rows.some((row) => row.type !== 'shift' && row.type !== 'leave') // 오늘 일정 다 끝남: 제목 옆 한 줄만
   return <div className="house-page">
-    <p className="today-date">{`${today.getMonth() + 1}월 ${today.getDate()}일 ${'일월화수목금토'[today.getDay()]}요일`}{weather && <a className="weather-line" href="https://m.search.naver.com/search.naver?query=%EA%B4%91%EC%96%91%EC%9D%8D+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener noreferrer" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}. 네이버 날씨 열기`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={24} height={24} /><strong>{weather.temp}°</strong>{WX_BUDDY[weather.mood] && <img className="weather-buddy" src={`/characters/chiikawa_${WX_BUDDY[weather.mood]}.webp`} alt="" width={26} height={26} />}<ArrowUpRight className="weather-out" size={15} aria-hidden="true" /></a>}</p>
+    <p className="today-date">{`${today.getMonth() + 1}월 ${today.getDate()}일 ${'일월화수목금토'[today.getDay()]}요일`}{weather && <a className="weather-line" href="https://m.search.naver.com/search.naver?query=%EA%B4%91%EC%96%91%EC%9D%8D+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener noreferrer" aria-label={`광양읍 ${weather.temp}도, ${weather.tip}. 네이버 날씨 열기`}><img className="weather-pic" src={`/icons/weather/${weather.dusty ? 'dust' : weather.mood === 'windy' ? 'wind' : SKY_PIC[weather.sky]}.png`} alt="" width={24} height={24} /><strong>{weather.temp}°</strong>{WX_BUDDY[weather.mood] && <img className="weather-buddy" src={wxBuddy(state.profiles, weather.mood)} alt="" width={26} height={26} />}<ArrowUpRight className="weather-out" size={15} aria-hidden="true" /></a>}</p>
     {weather && !weather.plain && <p className="weather-tip">{weather.tip}</p>}
     <section aria-labelledby="now-heading"><h2 id="now-heading" className="visually-hidden">지금</h2>
       <DataState loading={loading} error={error} onRetry={onRetry}><div className="house-grid">{profiles.map((profile) => {
