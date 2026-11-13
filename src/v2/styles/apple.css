@@ -375,7 +375,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-person + .task-person { margin-top: 0; border-top: .5px solid var(--sep); }
 .task-person .person-group-head { margin: 0; padding: 12px 16px 2px; }
 /* 작은 그림 크기 단계: 줄 그림 30 */
-.house-badge-pic { width: 30px; height: 30px; }
+.house-badge-pic { width: 36px; height: 36px; }
 .house-badge-pic + .house-badge { top: 48px; }
 /* 빈 화면 바로 추가 · 할 일 되돌리기 */
 .empty-add { display: block; margin: 12px auto 0; padding: 8px 18px; border: 0; border-radius: 999px; background: var(--tint); color: var(--on-tint); font-size: 15px; font-weight: 600; }
@@ -429,7 +429,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .day-icon[data-tone='hospital'] { --di-bg: #ffe5df; }
 .task-person .todo-cat { background: color-mix(in srgb, var(--pc) 16%, var(--card)); }
 /* 근무 그림과 칩을 한 묶음으로 가운데 정렬 */
-.house-badge-stack { position: absolute; top: 12px; right: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.house-badge-stack { position: absolute; top: 10px; right: 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .house-badge-stack .house-badge, .house-badge-stack .house-badge-pic { position: static; max-width: none; }
 .house-badge-stack .house-badge-pic + .house-badge { top: auto; }
-.house-badge-stack .house-badge:only-child { margin-top: 36px; } /* 그림 없는 칩도 같은 높이 */
+.house-badge-stack .house-badge:only-child { margin-top: 40px; } /* 그림 없는 칩도 같은 높이 */

@@ -14,7 +14,15 @@
     <title>우리집</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot" role="status" aria-label="우리집을 여는 중"><img src="/app-icon-192.png" alt="" width="112" height="112" /><p>우리집</p></div></div>
+    <style>
+      /* 앱이 뜨기 전 잠깐 보이는 첫 화면 (React가 그리면 사라짐) */
+      .boot { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; background: #f2f2f7; font: 600 20px -apple-system, system-ui, sans-serif; color: #1c1c1e; }
+      .boot img { border-radius: 26px; box-shadow: 0 8px 24px rgba(0,0,0,.12); animation: boot 1.2s ease-in-out infinite alternate; }
+      .boot p { margin: 0; }
+      @keyframes boot { to { transform: translateY(-6px); } }
+      @media (prefers-color-scheme: dark) { .boot { background: #000; color: #f2f2f7; } }
+    </style>
     <script type="module" src="/src/v2/main.jsx"></script>
   </body>
 </html>
