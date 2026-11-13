@@ -36,12 +36,15 @@ export default function Catch({ onFinish, player = 'little', shop }) {
       const el = area.current
       // 받는 폭 = 실제 바구니 그림 폭 (조금 여유)
       const b = el?.querySelector('.catch-basket')
-      if (b?.offsetWidth && el.clientWidth) cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.04 } // 바구니 반폭 + 물건 반폭(8cqw의 절반): 살짝만 닿아도 받음
+      if (b?.offsetWidth && el.clientWidth) {
+        const ar = el.getBoundingClientRect(); const br = b.getBoundingClientRect()
+        cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.03, top: (br.top - ar.top) / ar.height + 0.02, ih: 0.08 * ar.width / ar.height }
+      } // 바구니 반폭 + 물건 반폭(8cqw의 절반): 살짝만 닿아도 받음
       // 바구니가 커지거나 그림이 늦게 떠도 매 순간 화면 안으로 되돌림
       const fit = clampIn(el, xRef.current); if (fit !== xRef.current) { xRef.current = fit; setX(fit) }
       cur = step(cur, dt, xRef.current, level)
       if (el && cur.score > before.score) {
-        const x = xRef.current * el.clientWidth; const y = BASKET.y * el.clientHeight
+        const x = xRef.current * el.clientWidth; const y = (cur.top ?? BASKET.y) * el.clientHeight
         const gain = cur.score - before.score
         burst(el, x, y, gain > 1 ? 12 : 6); pop(el, x, y - 10, `+${gain}`, gain > 1 ? 'gold' : 'good'); buzz(15)
       }

@@ -20,7 +20,9 @@ export function step(s, dt, x, level, rand = Math.random) {
   const items = []
   for (const it of s.items) {
     const y = it.y + speed * dt / 1000
-    if (y >= BASKET.y && it.y < BASKET.y && Math.abs(it.x - x) <= half) {
+    // 물건 아래끝이 바구니(캐릭터) 위끝에 닿고, 아직 몸통 위쪽 안에 있으면 받음
+    const top = s.top ?? BASKET.y; const ih = s.ih ?? 0.05
+    if (y + ih >= top && y <= top + 0.12 && Math.abs(it.x - x) <= half) {
       if (it.kind === 'cloud') lives -= 1; else score += (it.kind === 'sun' ? 3 : 1) * (s.mul || 1)
       continue
     }
