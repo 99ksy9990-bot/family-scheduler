@@ -22,6 +22,8 @@ export function walletOf(p) {
 
 // 게임 한 판 끝 → 오늘 그 게임 한도 안이면 별 1개. { progress, got }
 export const homeBonus = (p) => Math.min(5, ROOMS.filter((r) => r.tasks.every((t) => (p?.done || []).includes(t.id))).length)
+// 오늘 별 받은 판 수 (오늘 1등 정할 때)
+export const todayStars = (p, d = new Date()) => { const a = arcadeOf(p); return a.day.id === dayId(d) ? Object.values(a.day.by || {}).reduce((s, n) => s + n, 0) : 0 }
 export function earnStar(p, game, d = new Date()) {
   const a = arcadeOf(p); const id = dayId(d)
   const by = a.day.id === id ? a.day.by : {}

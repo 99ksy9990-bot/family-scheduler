@@ -419,3 +419,8 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-progress-bar { position: relative; overflow: visible; }
 .progress-buddy { position: absolute; top: 50%; width: 30px; height: 30px; transform: translate(-50%, -62%); pointer-events: none; transition: left .4s; }
 .task-progress { padding-top: 6px; }
+.calendar-day { position: relative; }
+.day-birthday { position: absolute; top: 4px; right: -2px; line-height: 0; width: 18px; }
+.play-king { display: flex; align-items: center; gap: 8px; position: relative; margin-right: 6px; }
+.play-king small { font-size: 13px; color: var(--label-2); }
+.play-king .king-crown { position: absolute; left: 10px; top: -16px; width: 24px; height: 24px; z-index: 3; transform: rotate(-12deg); }
