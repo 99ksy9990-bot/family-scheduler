@@ -37,8 +37,8 @@ export default function Catch({ onFinish, player = 'little', shop }) {
       // 받는 폭 = 실제 바구니 그림 폭 (조금 여유)
       const b = el?.querySelector('.catch-basket')
       if (b?.offsetWidth && el.clientWidth) {
-        const ar = el.getBoundingClientRect(); const br = b.getBoundingClientRect()
-        cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.03, top: (br.top - ar.top) / ar.height + 0.02, ih: 0.08 * ar.width / ar.height }
+        const ar = el.getBoundingClientRect(); const br = (b.querySelector('img') || b).getBoundingClientRect() // 상자 위 빈칸 말고 실제 캐릭터 그림 위끝
+        cur = { ...cur, half: b.offsetWidth / 2 / el.clientWidth + 0.03, top: (br.top - ar.top) / ar.height + 0.03, ih: 0.08 * ar.width / ar.height }
       } // 바구니 반폭 + 물건 반폭(8cqw의 절반): 살짝만 닿아도 받음
       // 바구니가 커지거나 그림이 늦게 떠도 매 순간 화면 안으로 되돌림
       const fit = clampIn(el, xRef.current); if (fit !== xRef.current) { xRef.current = fit; setX(fit) }
