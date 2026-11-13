@@ -1,3 +1,4 @@
+import { FRIEND } from './theme'
 import { useEffect, useRef, useState } from 'react'
 import { DURATION, RULES, empty, hit, spawn } from './tapLogic'
 import { burst, buzz, center, pop, shake } from './fx'
@@ -55,7 +56,7 @@ export default function Tap({ onFinish, shop }) {
     <div className="tap-grid room-bg" style={roomStyle(room)} ref={grid}>
       {holes.map((h, i) => <button key={i} className={`tap-hole${h.kind ? ' up' : ''}`} aria-label={h.kind || '빈 구멍'} onPointerDown={() => tapHole(i)}>
         <img className="tap-bg" src="/game/hole.png" alt="" />
-        {h.kind && <img className="tap-face" src={h.kind === 'cloud' ? '/game/cloud.png' : `/characters/${h.kind}_basic.png`} alt="" />}
+        {h.kind && <img className="tap-face" src={h.kind === 'cloud' ? '/game/cloud.png' : `/characters/${FRIEND[h.kind] || h.kind}_basic.webp`} alt="" />}
       </button>)}
     </div>
     <ItemBar key={level} shop={shop} off={!running} items={[

@@ -415,3 +415,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 /* 상반신 그림 아래가 일자로 끊기지 않게 살짝 흐리게 */
 .character.mini img { -webkit-mask-image: linear-gradient(#000 80%, transparent 97%); mask-image: linear-gradient(#000 80%, transparent 97%); }
 .character.mini img, .house-tile .glass-icon.mini img { width: var(--avatar-size, 72px); height: var(--avatar-size, 72px); }
+.weather-buddy { width: 26px; height: 26px; object-fit: contain; margin-left: 2px; }
+.task-progress-bar { position: relative; overflow: visible; }
+.progress-buddy { position: absolute; top: 50%; width: 30px; height: 30px; transform: translate(-50%, -62%); pointer-events: none; transition: left .4s; }
+.task-progress { padding-top: 6px; }

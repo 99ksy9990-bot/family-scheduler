@@ -2,6 +2,8 @@
 import { ROOMS, roomGame } from './cleanRooms.js'
 export { roomGame }
 
+// 게임 속 가족 자리는 치이카와 친구들 (아빠 검사·엄마 세이렌·초롱 우사기·연두 치이카와)
+export const FRIEND = { dad: 'knight', mom: 'siren', big: 'usagi', little: 'chiikawa' }
 let homeDone = []
 // 놀이 시작할 때 그 사람이 꾸민 물건 목록을 알려 줌
 export const setHome = (done) => { homeDone = done || [] }
@@ -23,7 +25,8 @@ export const pickObjects = (n, rand = Math.random) => {
   const all = [...new Map(ROOMS.flatMap((r) => r.tasks).map((t) => [t.img, t])).values()]
   for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [all[i], all[j]] = [all[j], all[i]] }
   all.sort((a, b) => homeDone.includes(b.id) - homeDone.includes(a.id)) // 꾸민 물건 먼저
-  const friends = [['bear', '아기곰'], ['cat', '아기 고양이'], ['bunny', '노란 토끼'], ['sing', '아기 인어'], ['knight', '아기 검사']].map(([k, name]) => ({ img: `/friends/${k}.webp`, name }))
+  const NAMES = { chiikawa: '치이카와', usagi: '우사기', siren: '세이렌', knight: '검사' }, MOODS = ['basic', 'done', 'party', 'rain', 'hot', 'study', 'cold', 'sleepy']
+  const friends = Object.keys(NAMES).flatMap((c) => MOODS.map((m) => ({ img: `/characters/${c}_${m}.webp`, name: NAMES[c] }))).filter((f) => !/knight_sunny/.test(f.img))
   return [...friends.sort(() => rand() - 0.5).slice(0, Math.floor(n / 3)), ...all].slice(0, n).map((t) => ({ img: t.img, name: t.name })) // 친구 캐릭터 몇 장 섞음
 }
 // 꾸민 물건을 배경 위에 겹쳐 그림 (대청소 방 자리와 대략 같은 곳)
