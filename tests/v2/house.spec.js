@@ -70,3 +70,9 @@ test('엄마 근무 중에는 마스크 얼굴', () => {
   expect(moodFor({ id: 'm', characterId: 'mom' }, { expression: 'busy', badge: '근무' }, { now: new Date(2026, 10, 5, 10) })).toBe('mask')
   expect(moodFor({ id: 'd', characterId: 'dad' }, { expression: 'busy', badge: '근무' }, { now: new Date(2026, 10, 5, 10) })).toBe('busy')
 })
+
+test('가족 전체 병원 할 일은 모두를 아픈 얼굴로 만들지 않음', () => {
+  const now = new Date(2026, 10, 10, 10), day = new Date(2026, 10, 10)
+  const task = { title: '병원 예약', assignees: ['family'], done: false }
+  expect(moodFor({ id: 'p' }, houseStatus({ id: 'p' }, [], [task], day, now), { tasks: [task], now })).not.toBe('sick')
+})

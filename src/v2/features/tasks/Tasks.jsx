@@ -10,7 +10,7 @@ import CharacterAvatar from '../../components/CharacterAvatar'
 import TaskForm from './TaskForm'
 
 // 분류 그림: 이름에 들어간 낱말로 고름, 모르는 분류는 기본 그림
-const catIcon = (name = '') => /장|쇼핑|마트|구매/.test(name) ? 'cart' : /집|청소|빨래|설거지/.test(name) ? 'home' : /긴급|급|중요/.test(name) ? 'bell' : /학교|숙제|공부|학원/.test(name) ? 'school' : /병원|약/.test(name) ? 'hospital' : 'event'
+const catIcon = (name = '') => /장|쇼핑|마트|구매/.test(name) ? 'cart' : /집|청소|빨래|설거지/.test(name) ? 'home' : /긴급|급|중요/.test(name) ? 'bell' : /학교|숙제|공부|학원/.test(name) ? 'school' : /병원|약국|^약$|치과/.test(name) ? 'hospital' : 'event'
 // 2026-11-05 → 11/5(목)
 const shortDate = (d) => { if (!d) return ''; const t = new Date(`${d}T00:00:00`); return `${t.getMonth() + 1}/${t.getDate()}(${'일월화수목금토'[t.getDay()]})` }
 

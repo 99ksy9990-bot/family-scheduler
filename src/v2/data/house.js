@@ -11,7 +11,7 @@ export const rowsForMember = (rows, id) => rows.filter((row) => {
 
 const SICK_WORD = /병원|치과|검진|진료|한의원|예방접종/
 // 오늘 병원 일정이 있거나, 오늘(또는 날짜 없는) 안 끝낸 병원 할 일이 있는지
-const hospitalToday = (profile, own, tasks, key) => own.some((row) => SICK_WORD.test(row.title || '')) || tasks.some((t) => !t.done && (t.assignees || [t.assignee]).some((id) => id === profile.id || id === 'family') && (!t.dueDate || t.dueDate === key) && SICK_WORD.test(t.title || ''))
+const hospitalToday = (profile, own, tasks, key) => own.some((row) => SICK_WORD.test(row.title || '')) || tasks.some((t) => !t.done && (t.assignees || [t.assignee]).some((id) => id === profile.id) /* 가족 전체 할 일은 모두를 아프게 하지 않음 */ && (!t.dueDate || t.dueDate === key) && SICK_WORD.test(t.title || ''))
 
 export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   const own = rowsForMember(rows, profile.id)
