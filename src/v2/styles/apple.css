@@ -412,3 +412,5 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .character.mini img { padding: 13%; box-sizing: border-box; object-fit: contain; position: relative; z-index: 1; }
 .character.mini { position: relative; }
 .character.mini::before { content: ''; position: absolute; inset: 0; margin: auto; width: var(--avatar-size, 72px); height: var(--avatar-size, 72px); border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 var(--ring-w, 1px) var(--ring, #ddd); }
+/* 상반신 그림 아래가 일자로 끊기지 않게 살짝 흐리게 */
+.character.mini img { -webkit-mask-image: linear-gradient(#000 74%, transparent 92%); mask-image: linear-gradient(#000 74%, transparent 92%); }
