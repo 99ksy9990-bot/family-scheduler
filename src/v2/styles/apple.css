@@ -427,3 +427,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 @media (prefers-color-scheme: dark) { .house-tile.birthday-tile { background: linear-gradient(160deg, #3a2730 0%, #33302a 100%); } }
 .day-icon[data-tone='bank'] { --di-bg: #e4e3fb; }
 .day-icon[data-tone='hospital'] { --di-bg: #ffe5df; }
+.task-person .todo-cat { background: color-mix(in srgb, var(--pc) 16%, var(--card)); }
