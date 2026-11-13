@@ -8,7 +8,7 @@ import './games.css'
 const LEVEL_NAMES = { easy: '쉬움', normal: '보통', hard: '어려움' }
 const FACES = ['dad', 'mom', 'big', 'little']
 const COLORS = ['#5e5ce6', '#ff7a59', '#bf5af2', '#30b07a']
-const FLOOR = 34 // 층 높이(px)
+const FLOOR = 42 // 층 높이(px) — 얼굴이 안 잘리게
 
 export default function Stack({ onFinish, shop }) {
   const [room] = useState(pickRoom) // 판 뒤 배경 그림
