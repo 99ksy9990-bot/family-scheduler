@@ -43,7 +43,7 @@ export function moodFor(profile, status, { rows = [], tasks = [], now = new Date
   const own = rowsForMember(rows, profile.id)
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   if (hospitalToday(profile, own, tasks, today)) return 'sick' // 병원 날은 수업·근무 중이어도 아픈 얼굴 먼저
-  if (status.expression === 'busy') return status.badgeKind ? 'study' : status.badge === '근무' && profile.characterId === 'mom' ? 'mask' : 'busy' // 간호사 엄마는 근무 중 마스크
+  if (status.expression === 'busy') return status.badgeKind ? 'study' : status.badge === '근무' && (profile.characterId === 'mom' || profile.baseCharacter === 'mom') && profile.characterId !== 'siren' ? 'mask' : 'busy' // 간호사 엄마는 근무 중 마스크
   const h = now.getHours()
   if (h >= 23 || h < 6 || (h < 13 && own.some((row) => row.carryover))) return 'sleepy'
   if (status.expression !== 'done' && tasks.filter((t) => !t.done && t.assignee === profile.id && t.dueDate && t.dueDate < today).length >= 2) return 'worried'

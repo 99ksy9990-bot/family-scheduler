@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Briefcase, CalendarDays, ChevronRight, GraduationCap, Plus } from 'lucide-react'
 import { MEMBER_COLORS } from '../../../lib/colors'
 import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
-import CharacterAvatar, { CHARACTERS, MINI, READY } from '../../components/CharacterAvatar'
+import CharacterAvatar, { CHARACTERS, MINI, READY, roleOf } from '../../components/CharacterAvatar'
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import { clock } from '../../data/schedule'
 import Family from './Family'
@@ -101,7 +101,7 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
 
     <section><h3 className="house-section-title">모습</h3><GroupedList label="모습">
       <GroupedRow title="캐릭터" value={<span className="member-pick" role="group" aria-label="캐릭터">{CHARACTERS.slice(0, 4).map((id) => <button key={id} aria-pressed={profile.characterId === id} aria-label={id} disabled={!canEdit} onClick={() => set({ characterId: id })}><CharacterAvatar profile={{ characterId: id }} size={36} /></button>)}</span>} />
-      <GroupedRow title="치이카와" value={<span className="member-pick" role="group" aria-label="치이카와 캐릭터">{MINI.filter((id) => READY.includes(id)).map((id) => <button key={id} aria-pressed={profile.characterId === id} aria-label={id} disabled={!canEdit} onClick={() => set({ characterId: id })}><CharacterAvatar profile={{ characterId: id }} size={36} /></button>)}</span>} />
+      <GroupedRow title="치이카와" value={<span className="member-pick" role="group" aria-label="치이카와 캐릭터">{MINI.filter((id) => READY.includes(id)).map((id) => <button key={id} aria-pressed={profile.characterId === id} aria-label={id} disabled={!canEdit} onClick={() => set({ characterId: id, baseCharacter: roleOf(profile) })}><CharacterAvatar profile={{ characterId: id }} size={36} /></button>)}</span>} />
       <GroupedRow title="대표 색" value={<span className="member-pick" role="group" aria-label="대표 색">{MEMBER_COLORS.slice(0, 6).map((c) => <button key={c.id} className="member-color" style={{ '--swatch': c.color }} aria-pressed={profile.color === c.color} aria-label={`대표색 ${c.id}`} disabled={!canEdit || usedColors.includes(c.color)} onClick={() => set({ color: c.color, tone: c.tone, colorCustomized: true })} />)}</span>} />
       <GroupedRow title="이름" value={<input className="member-name" defaultValue={profile.name} disabled={!canEdit} aria-label="이름" onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== profile.name && set({ name: e.target.value.trim(), initials: e.target.value.trim().slice(0, 1) })} />} />
     </GroupedList></section>

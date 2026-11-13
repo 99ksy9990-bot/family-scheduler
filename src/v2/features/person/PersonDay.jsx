@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { BriefcaseBusiness, CalendarDays, GraduationCap, Check } from 'lucide-react'
 import { addDays } from '../../../lib/dates'
 import Sheet from '../../components/Sheet'
-import CharacterAvatar from '../../components/CharacterAvatar'
+import CharacterAvatar, { roleOf } from '../../components/CharacterAvatar'
 import RowEditor from '../../components/RowEditor'
 import TimeCell from '../../components/TimeCell'
 import { useWeather, weatherNote } from '../../data/weather'
@@ -33,7 +33,7 @@ export default function PersonDay({ memberId, state, today, now, updateState, ca
     </div>
   }
   return <Sheet title={`${profile.name}의 하루`} onClose={onClose} className="person-sheet" closeText>
-    <div className="person-hero" data-character={profile.characterId || 'unknown'}><CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows: dayRows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, profile, today), weather })} size={96} glass /><h2>{profile.name}</h2><p>{status.badge && `${status.badge} · `}{birthday && status.expression !== 'busy' ? '오늘 생일' : <ArrowText text={softDetail(status.detail, profile, today)} />}</p></div>
+    <div className="person-hero" data-character={roleOf(profile) || 'unknown'}><CharacterAvatar profile={profile} expression={moodFor(profile, status, { rows: dayRows, tasks: state.tasks, now, birthday: isCelebrationToday(state.anniversaries, profile, today), weather })} size={96} glass /><h2>{profile.name}</h2><p>{status.badge && `${status.badge} · `}{birthday && status.expression !== 'busy' ? '오늘 생일' : <ArrowText text={softDetail(status.detail, profile, today)} />}</p></div>
     {[['오늘', today], ['내일', addDays(today, 1)]].map(([label, date]) => {
       const rows = personDayRows(state, memberId, date, today)
       return <section className="person-section" key={label} style={{ '--pc': personColor(profile) }}><h3 className="house-section-title">{label}</h3>{rows.length ? <ul className="grouped-list" aria-label={`${label}의 일정과 할 일`}>{rows.map((row) => [row]).map((group) => <li className={group.length > 1 ? 'person-shift-group' : 'person-item'} key={group[0].id}>{group.length > 1 ? <><DayIcon kind="shift" /><div>{group.map((row) => renderRow(row, label, date, true))}</div></> : renderRow(group[0], label, date)}</li>)}</ul> : <div className="empty-state">{label} 일정과 할 일이 없어요.</div>}</section>
