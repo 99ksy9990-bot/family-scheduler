@@ -21,7 +21,7 @@ const isPast = (row, now) => {
 }
 
 // 아빠·엄마 근무는 은행·병원 그림
-const workIcon = (row, members) => { if (row.type !== 'shift') return null; const k = { dad: 'bank', mom: 'hospital' }[roleOf(members[0] || {})]; return k ? <DayIcon kind={k} size={30} /> : null }
+const workIcon = (row, members) => { if (row.type !== 'shift' || row.title === 'OFF') return null; /* 쉬는 날(OFF)은 그대로 */ const k = { dad: 'bank', mom: 'hospital' }[roleOf(members[0] || {})]; return k ? <DayIcon kind={k} size={30} /> : null }
 export default function ScheduleList({ rows, profiles, label = '시간순 일정', solo = false, onRow, nextId }) { // solo: 한 사람 묶음 안이라 얼굴·이름 생략
   const now = useCurrentTime()
   // 'auto': 이 목록에서 아직 안 지난 첫 시간 일정 (사람별 묶음마다 하나씩)
