@@ -3,6 +3,8 @@ const KEEP = 60
 const SEEN = 'family-scheduler-activity-seen'
 const pick = (row) => JSON.stringify([row.title, row.date || row.dueDate, row.time, row.end, row.member, row.members, row.assignee, row.location, row.recurrence])
 
+// 완료 한마디: 반복 할 일은 날짜별, 아니면 하나 (가장 최근에 바뀐 것)
+const noteOf = (row) => JSON.stringify([row.doneNote || '', row.doneNotes || {}]) === '["",{}]' ? '' : (Object.entries(row.doneNotes || {}).sort().at(-1)?.[1] || row.doneNote || '')
 function diff(kind, before = [], after = []) {
   const old = new Map(before.map((row) => [row.id, row]))
   const out = []
@@ -12,6 +14,7 @@ function diff(kind, before = [], after = []) {
     if (!prev) out.push({ kind, action: 'add', row })
     else if (kind === 'task' && !prev.done && row.done) out.push({ kind, action: 'done', row })
     else if (kind === 'task' && (row.completedDates?.length || 0) > (prev.completedDates?.length || 0)) out.push({ kind, action: 'done', row })
+    else if (kind === 'task' && noteOf(row) && noteOf(row) !== noteOf(prev)) out.push({ kind, action: 'note', row, note: noteOf(row) })
     else if (pick(prev) !== pick(row)) out.push({ kind, action: 'edit', row })
   }
   for (const row of old.values()) out.push({ kind, action: 'remove', row })
@@ -22,10 +25,10 @@ export function logChanges(prev, next, by, at = new Date().toISOString()) {
   if (!prev || !next || prev === next) return next
   const changes = [...(prev.events !== next.events ? diff('event', prev.events, next.events) : []), ...(prev.tasks !== next.tasks ? diff('task', prev.tasks, next.tasks) : [])]
   if (!changes.length) return next
-  const items = changes.map(({ kind, action, row }) => ({ id: `${at}-${row.id}-${action}`, at, by: by || '', kind, action, title: row.title || '', date: row.date || row.dueDate || '' }))
+  const items = changes.map(({ kind, action, row, note }) => ({ ...(note && { note }), id: `${at}-${row.id}-${action}`, at, by: by || '', kind, action, title: row.title || '', date: row.date || row.dueDate || '' }))
   return { ...next, activity: [...items.reverse(), ...(next.activity || [])].slice(0, KEEP) }
 }
 
-export const ACTION_TEXT = { add: '추가', edit: '수정', remove: '삭제', done: '완료' }
+export const ACTION_TEXT = { add: '추가', edit: '수정', remove: '삭제', done: '완료', note: '완료 한마디' }
 export const getSeen = () => { try { return localStorage.getItem(SEEN) || '' } catch { return '' } }
 export const setSeen = (at) => { try { localStorage.setItem(SEEN, at) } catch { /* 못 저장하면 점이 남을 뿐 */ } }
