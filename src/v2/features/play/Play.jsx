@@ -1,3 +1,4 @@
+import { markWhere } from '../../data/crashlog'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import CharacterAvatar from '../../components/CharacterAvatar'
@@ -28,6 +29,7 @@ function CrownBoard({ state }) {
 
 export default function Play({ state, updateState }) {
   const [selected, setSelected] = useState(null)
+  useEffect(() => markWhere(selected ? `놀이 · ${selected}` : 'play'), [selected])
   const [player, setPlayer] = useState(null)
   const me = getMe()
   const mine = state.profiles.some((p) => p.id === me && p.active !== false) ? me : null // 이 폰 주인이 정해져 있으면 고르기 없이 그 사람

@@ -1,3 +1,4 @@
+import { markWhere } from './data/crashlog'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Plus, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
@@ -53,6 +54,7 @@ function Workspace({ scheduler }) {
   }
   const addEvent = (event) => isDemo ? updateState((current) => ({ ...current, events: [...current.events, { ...event, id: `demo-added-${crypto.randomUUID()}` }] })) : scheduler.addEvent(event)
   const [tab, setTab] = useState('today')
+  useEffect(() => markWhere(tab), [tab])
   const [editCats, setEditCats] = useState(false)
   const wx = weatherNote(useWeather(), now)
   const [scrolled, setScrolled] = useState(false) // 내리면 떠 있는 + 버튼을 동그랗게 줄임

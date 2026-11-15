@@ -46,6 +46,7 @@ export default function Connection({ sync, state, updateState, canEdit }) {
   return <div className="settings-content">
     <p className="connection-state" role="status">{statusLabels[sync.syncStatus] || '연결 상태 확인 중'}{sync.family ? ` · ${sync.family.household.name}` : ''}</p>
     <p>같은 가족 계정으로 로그인하면 저장된 가족 일정을 불러와요. 가족 폰은 관리자 폰에서 보낸 '연결 링크'를 누르면 바로 들어와요.</p>
+    {!owner_ && <div className="data-message me-pick"><p>이 폰은 누구 폰인가요? 고르면 할 일 완료·게임이 그 사람으로 기록돼요.</p><div className="me-pick-row">{whoList.map((p) => <button key={p.id} type="button" onClick={() => { setMe(p.id); setMine(p.id) }}><CharacterAvatar profile={p} size={36} />{p.name}</button>)}</div></div>}
     {owner_ && <div className="data-message"><p>이 폰은 <strong>{owner_.name}</strong>의 폰이에요. 게임은 {owner_.name}(으)로만 해요.</p><button onClick={() => { setMe(''); setMine('') }}>해제</button></div>}
     {sync.error && <p className="error" role="alert">{sync.error}</p>}
     {!sync.session ? <><section className="link-login"><h3>연결 링크로 들어가기</h3><p className="quiet">홈 화면에 추가한 앱은 Safari와 로그인이 따로예요. 카톡에서 받은 연결 링크를 길게 눌러 복사한 뒤 아래 버튼을 누르세요.</p>

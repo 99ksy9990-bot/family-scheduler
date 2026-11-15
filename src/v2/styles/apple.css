@@ -459,3 +459,5 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-detail .note-card { padding: 0; background: none; } /* 시트 안에선 카드 테두리 없이 */
 .task-detail .grouped-list { margin: 0; background: var(--fill); border-radius: 12px; overflow: hidden; } .task-detail .grouped-action { min-height: 48px; justify-content: center; } .task-detail .grouped-body { align-items: center; }
 .task-detail .grouped-row + .grouped-row::before { left: 16px; }
+.crash-log { margin: 0 0 8px; padding-left: 18px; font-size: 14px; color: var(--label-2); line-height: 1.6; }
+.me-pick-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; } .me-pick-row button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px 0 4px; border: 0; border-radius: 22px; background: var(--fill); color: var(--label); font-size: 16px; font-weight: 600; }

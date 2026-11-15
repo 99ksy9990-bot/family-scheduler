@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import ErrorBoundary from '../components/ErrorBoundary'
 import App from './App'
+import { startCrashLog } from './data/crashlog'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/app.css'
@@ -19,6 +20,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   if (navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; location.reload() } })
 }
 
+startCrashLog()
 createRoot(document.getElementById('root')).render(<StrictMode><ErrorBoundary appName="우리집"><App /></ErrorBoundary></StrictMode>)
 
 import './styles/tabs.css'

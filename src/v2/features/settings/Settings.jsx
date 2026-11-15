@@ -1,3 +1,5 @@
+import { readLog, clearLog } from '../../data/crashlog'
+const WHERE_NAME = { today: '우리집', calendar: '달력', tasks: '할 일', play: '놀이', family: '가족' }
 import MemberAvatars from './../../components/MemberAvatars'
 import { nextAnniversaryOccurrence } from '../../../lib/schedule'
 import { lazy, Suspense, useState } from 'react'
@@ -69,7 +71,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
       {panel === 'family' && <Family initialProfile={selected?.startsWith('profile:') ? selected.slice(8) : null} state={state} updateState={updateState} canEdit={canEdit} />}
       {panel === 'backup' && <Backup state={state} updateState={updateState} canEdit={canEdit} sync={sync} />}
       {panel === 'notifications' && <div className="settings-content"><p>{pushLabels[push.status]}</p>{!sync.family && <p>먼저 가족 연결을 완료해 주세요.</p>}{push.status === 'denied' && <p>기기 설정의 알림에서 우리집의 알림 권한을 허용한 뒤 다시 열어 주세요.</p>}<button onClick={push.enable} disabled={['enabling', 'enabled', 'unsupported', 'denied'].includes(push.status)}>이 기기 알림 켜기</button>{push.error && <p role="alert" className="error">{push.error}</p>}</div>}
-      {panel === 'about' && <div className="settings-content"><h3>우리집</h3><p>버전 {import.meta.env.VITE_APP_VERSION || 'local'}</p><p>우리 가족의 하루를 함께 기록해요.</p></div>}
+      {panel === 'about' && <div className="settings-content"><h3>우리집</h3><p>버전 {import.meta.env.VITE_APP_VERSION || 'local'}</p><p>우리 가족의 하루를 함께 기록해요.</p><h3>튕김 기록 (이 폰)</h3>{readLog().length ? <><ul className="crash-log">{readLog().map((r) => <li key={r.at}>{new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · {r.kind} · {WHERE_NAME[r.where] || r.where || '?'}{r.detail ? ` · ${r.detail}` : ''}</li>)}</ul><button onClick={() => { clearLog(); onSelect(null) }}>기록 지우기</button></> : <p>없어요.</p>}</div>}
     </Suspense></Sheet>}
   </section>
 }
