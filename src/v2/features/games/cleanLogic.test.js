@@ -147,3 +147,11 @@ test('얼음: 못 움직이고 맞추면 깨짐 / 거품: 못 닦으면 번짐 /
   assert.ok(c.events.filter((e) => e.type === 'smash').length === 1 && c.state.collected.reduce((a, b) => a + b) >= N)
   assert.ok(STAGES[9].hard && !STAGES[8].hard)
 })
+
+test('힌트는 5줄을 3줄보다 먼저', async () => {
+  const { findMove, N } = await import('./cleanLogic.js')
+  const b = Array.from({ length: N * N }, (_, i) => ({ k: 2 + ((Math.floor(i / N) + 2 * (i % N)) % 4), sp: null }))
+  ;[0, 1, 3, 4].forEach((c) => { b[c] = { k: 0, sp: null } }); b[N + 2] = { k: 0, sp: null }; b[2] = { k: 1, sp: null } // 2를 아래와 바꾸면 5줄
+  b[5 * N + 0] = { k: 1, sp: null }; b[5 * N + 1] = { k: 1, sp: null }; b[6 * N + 2] = { k: 1, sp: null } // 3줄 수
+  const m = findMove(b); assert.deepEqual(m, [2, N + 2])
+})

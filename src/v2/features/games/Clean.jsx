@@ -15,13 +15,16 @@ const perkCompOf = (p) => (!p || p.perkComp ? 0 : ROOMS.filter((r, k) => roomGam
 const IMG0 = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 // 블록 그림: 1~10단계는 기본, 그 뒤 10단계마다 그 방과 다음 방의 꾸미기 물건 6개로 바꿈
 const hueGap = (a, b) => (a < 0 || b < 0 ? (a === b ? 0 : 60) : Math.min(Math.abs(a - b), 360 - Math.abs(a - b)))
-// 그 방부터 열두 방의 물건 중 (그 방 물건이 먼저), 색이 서로 가장 멀리 떨어지게 6개를 고름 (톤이 비슷하면 눈이 아파서)
+// 그 방부터 열두 방의 물건 중 (그 방 물건이 먼저) 색이 서로 확실히 다른 것만 고르고, 모자라면 기본 블록으로 채움 (분홍 가구끼리 같이 나오면 헷갈려서)
+const BASE_HUE = [51, 355, 38, 208, 282, 87] // IMG0 순서
 const piecesFor = (stage) => {
   const c = Math.floor(stage / 10); if (!c) return IMG0
-  const pool = [...new Map(Array.from({ length: 12 }, (_, d) => d).flatMap((d) => ROOMS[(c + d) % ROOMS.length].tasks).map((t) => [t.img, HUES[t.img.slice(11, -4)] ?? -1])).entries()]
-  if (pool.length < 6) return IMG0
-  const pick = [pool[0]]
-  while (pick.length < 6) { let best = null, gap = -1; for (const x of pool) { if (pick.includes(x)) continue; const g = Math.min(...pick.map((p) => hueGap(p[1], x[1]))); if (g > gap) { gap = g; best = x } } pick.push(best) }
+  const pool = [...new Map(Array.from({ length: 12 }, (_, d) => d).flatMap((d) => ROOMS[(c + d) % ROOMS.length].tasks).map((t) => [t.img, HUES[t.img.slice(11, -4)] ?? -1])).entries()].filter(([img, h]) => h >= 0 && !IMG0.some((b) => b.split('/').pop() === img.split('/').pop())) // 기본 블록과 같은 물건은 빼고
+  const pick = []
+  const far = (h) => pick.every(([, p]) => hueGap(p, h) >= 60)
+  for (const x of pool) if (pick.length < 2 && far(x[1])) pick.push(x) // 방 물건은 2개만 (파스텔 가구끼리 헷갈려서)
+  IMG0.forEach((img, k) => { if (pick.length < 6 && far(BASE_HUE[k])) pick.push([img, BASE_HUE[k]]) })
+  IMG0.forEach((img, k) => { if (pick.length < 6 && !pick.some(([p]) => p === img)) pick.push([img, BASE_HUE[k]]) })
   return pick.map(([img]) => img)
 }
 const SP_LABEL = { row: '가로 로켓', col: '세로 로켓', bomb: '폭탄', rainbow: '무지개', prop: '프로펠러' }

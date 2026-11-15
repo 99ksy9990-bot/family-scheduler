@@ -175,12 +175,22 @@ function groups(b, prefer = []) {
 export const adjacent = (i, j) => (Math.abs(i - j) === 1 && Math.floor(i / N) === Math.floor(j / N)) || Math.abs(i - j) === N
 const swapped = (b, i, j) => { const n = [...b]; [n[i], n[j]] = [n[j], n[i]]; return n }
 
-// 바꿀 수 있는 두 칸 [i, j] (힌트용), 없으면 null
+// 바꿀 수 있는 두 칸 [i, j] (힌트용), 없으면 null. 5줄 > ㄱ·T > 4줄 > 특수 블록 > 3줄 순으로 좋은 수를 먼저
+const moveScore = (b, i, j) => {
+  if (b[i]?.sp && b[j]?.sp) return 6
+  const rs = runs(swapped(b, i, j)); if (!rs.length) return b[i]?.sp || b[j]?.sp ? 3.5 : 0
+  const cross = rs.some((a) => a.dir === 'h' && rs.some((v) => v.dir === 'v' && v.k === a.k && v.cells.some((c) => a.cells.includes(c))))
+  return Math.max(cross ? 4.5 : 0, ...rs.map((r) => Math.min(5, r.cells.length)))
+}
 export function findMove(b) {
+  let best = null, top = 0
   for (let i = 0; i < N * N; i++) {
-    for (const j of [i + 1, i + N]) if (j < N * N && adjacent(i, j) && !isLocked(b[i]) && !isLocked(b[j]) && (b[i]?.sp || b[j]?.sp || runs(swapped(b, i, j)).length)) return [i, j]
+    for (const j of [i + 1, i + N]) {
+      if (j >= N * N || !adjacent(i, j) || isLocked(b[i]) || isLocked(b[j])) continue
+      const sc = moveScore(b, i, j); if (sc > top) { top = sc; best = [i, j] }
+    }
   }
-  return null
+  return best
 }
 export const hasMove = (b) => !!findMove(b)
 // 맨 아래(뚫린 칸 제외)에 닿은 오리를 꺼냄
