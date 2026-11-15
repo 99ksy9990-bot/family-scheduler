@@ -142,12 +142,12 @@ function startTrack(src, fadeIn) {
 export function playMusic(game) {
   if (bgm && bgmGame === game) return // 같은 게임 안에서는 곡을 끊지 않음
   const old = bgm; bgm = null
-  if (old) fade(old, 0, 800, () => old.pause())
+  if (old) fade(old, 0, 800, () => { old.pause(); old.removeAttribute('src'); old.load() }) // 끝난 곡은 메모리에서 비움
   bgmGame = game
   if (!isMusicOn() || typeof Audio === 'undefined') return
   startTrack(`/game/music/${pickTrack(bgmSrc)}.m4a`, !!old)
 }
-export function stopMusic() { if (bgm) { bgm.pause(); bgm = null; bgmSrc = ''; bgmGame = '' } }
+export function stopMusic() { if (bgm) { bgm.pause(); bgm.removeAttribute('src'); bgm.load(); bgm = null; bgmSrc = ''; bgmGame = '' } }
 // 방 완성 '짜잔'
 export function fanfare() { const keep = sfx; sfx = { type: 'triangle' }; tone([523, 659, 784, 1047], 0.16); sfx = keep }
 export const setMusic = (on, game) => { try { localStorage.setItem(MUSIC_KEY, on ? 'on' : 'off') } catch { /* 이번만 */ } if (on && game) playMusic(game); else stopMusic() }

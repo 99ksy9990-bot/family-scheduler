@@ -320,3 +320,4 @@
 .mini-basket { aspect-ratio: 0.34; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; } /* 원래 바구니와 같은 폭 (피하기 쉽게) */
 .mini-basket img { width: 100%; height: auto; object-fit: contain; }
 .mini-basket img:first-child { margin-bottom: -18%; position: relative; z-index: 1; }
+.game-sheet, .game-sheet * { overscroll-behavior: contain; } /* 게임 중 끌어내림이 화면 새로고침으로 번지지 않게 */
