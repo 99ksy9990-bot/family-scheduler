@@ -451,7 +451,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-detail-edit .grouped-action strong { color: var(--tint); font-weight: 600; }
 .task-detail-delete .grouped-action strong { color: var(--red); font-weight: 600; }
 /* 끝낸 직후 한마디 카드: 축하 알림·추가 버튼 위에 */
-.note-bar { display: grid !important; z-index: 60; bottom: calc(228px + env(safe-area-inset-bottom)); padding: 14px 16px; }
+.note-bar { position: fixed; left: max(16px, calc((100vw - 480px) / 2 + 16px)); right: max(16px, calc((100vw - 480px) / 2 + 16px)); box-shadow: 0 8px 28px rgba(0,0,0,.14); display: grid !important; z-index: 60; bottom: calc(228px + env(safe-area-inset-bottom)); padding: 14px 16px; }
 .note-bar textarea { min-height: 64px; }
 .note-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .note-actions button { min-height: 44px; border-radius: 12px; border: 0; font-weight: 600; font-size: 16px; }
