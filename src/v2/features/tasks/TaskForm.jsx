@@ -1,4 +1,4 @@
-import CharacterAvatar from '../../components/CharacterAvatar'
+import CharacterAvatar, { roleOf } from '../../components/CharacterAvatar'
 import { useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { NativeChip } from '../../components/EventForm'
@@ -16,7 +16,7 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
   const [end, setEnd] = useState(clock(task?.end))
   const [allDay, setAllDay] = useState(!clock(task?.time))
   const active = state.profiles.filter((profile) => profile.active !== false)
-  const dad = active.find((profile) => profile.characterId === 'dad')
+  const dad = active.find((profile) => roleOf(profile) === 'dad') // 치이카와 캐릭터를 골라도 아빠로
   const initial = task ? task.assignees || [task.assignee || 'family'] : [dad?.id || 'family'] // 새 할 일은 아빠 기본
   // 일정 추가의 '누구'와 같은 방식. 모두 고르거나 아무도 안 고르면 '가족'으로 저장
   const [members, setMembers] = useState(initial.includes('family') ? active.map((profile) => profile.id) : initial)

@@ -17,14 +17,16 @@ export function taskRows(tasks, today, category = 'all', showCompleted = false) 
   }).sort((a, b) => Number(a.done) - Number(b.done) || (a.dueDate || '9999').localeCompare(b.dueDate || '9999') || a.title.localeCompare(b.title, 'ko'))
 }
 
-export function toggleTask(tasks, row, today) {
+export function toggleTask(tasks, row, today, by = '') {
   return tasks.map((task) => {
     if (task.id !== row.sourceTaskId) return task
-    if (!row.occurrenceDate) return { ...task, done: !task.done, completedDate: task.done ? '' : iso(today) }
+    if (!row.occurrenceDate) { const { completedBy: _cb, ...rest } = task; return task.done ? { ...rest, done: false, completedDate: '' } : { ...rest, done: true, completedDate: iso(today), ...(by && { completedBy: by }) } }
     const dates = new Set(task.completedDates || [])
     if (dates.has(row.occurrenceDate)) dates.delete(row.occurrenceDate)
     else dates.add(row.occurrenceDate)
-    return { ...task, completedDates: [...dates].sort() }
+    const doneBy = { ...(task.doneBy || {}) }; if (dates.has(row.occurrenceDate)) { if (by) doneBy[row.occurrenceDate] = by } else delete doneBy[row.occurrenceDate] // 반복 할 일은 날짜별로 누가 했는지
+    const { doneBy: _old, ...rest } = task
+    return { ...rest, completedDates: [...dates].sort(), ...(Object.keys(doneBy).length && { doneBy }) }
   })
 }
 

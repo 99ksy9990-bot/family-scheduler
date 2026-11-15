@@ -8,6 +8,7 @@ import { taskRows, toggleTask, renameCategory } from '../../data/tasks'
 import { assignedMemberIds } from '../../../lib/legacyState'
 import CharacterAvatar from '../../components/CharacterAvatar'
 import TaskForm from './TaskForm'
+import { getMe } from '../../data/me'
 
 // 분류 그림: 이름에 들어간 낱말로 고름, 모르는 분류는 기본 그림
 const catIcon = (name = '') => /장|쇼핑|마트|구매/.test(name) ? 'cart' : /집|청소|빨래|설거지/.test(name) ? 'home' : /긴급|급|중요/.test(name) ? 'bell' : /학교|숙제|공부|학원/.test(name) ? 'school' : /병원|약국|^약$|치과/.test(name) ? 'hospital' : 'event'
@@ -38,6 +39,8 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     return () => window.clearTimeout(timer)
   }, [celebrating])
   const noteOf = (row) => { const t = state.tasks.find((x) => x.id === row.sourceTaskId); return (row.occurrenceDate ? t?.doneNotes?.[row.occurrenceDate] : t?.doneNote) || '' }
+  // 완료한 사람: 체크한 사람이 기록돼 있으면 그 사람, 없으면 맡은 사람
+  const doerOf = (row) => { const t = state.tasks.find((x) => x.id === row.sourceTaskId); const id = row.occurrenceDate ? t?.doneBy?.[row.occurrenceDate] : t?.completedBy; return state.profiles.find((p) => p.id === id) || profilesFor(row)[0] }
   const openNote = (row) => { setNoteRow(row); setNoteText(noteOf(row)) }
   const saveNote = (target = noteRow) => {
     const text = noteText.trim(); const noteRow_ = target
@@ -45,7 +48,7 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     setNoteRow(null)
   }
   const toggle = (row) => {
-    if (updateState((current) => ({ ...current, tasks: toggleTask(current.tasks, row, today) })) && !row.done) { setCelebrating(row); openNote(row) }
+    if (updateState((current) => ({ ...current, tasks: toggleTask(current.tasks, row, today, getMe()) })) && !row.done) { setCelebrating(row); openNote(row) }
   }
   const remove = (row) => {
     const source = state.tasks.find((task) => task.id === row.sourceTaskId)
@@ -67,9 +70,9 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
   const active = state.profiles.filter((profile) => profile.active !== false)
   const people = active.map((profile) => [profile, groups[0][1].filter((row) => profilesFor(row).some((p) => p.id === profile.id))]).filter(([, items]) => items.length)
   const renderRow = (row) => <li className="todo-row" key={row.id}>
-        {row.done && profilesFor(row)[0]?.id !== 'family' ? <span className="todo-cat todo-who"><CharacterAvatar profile={profilesFor(row)[0]} size={36} expression="done" /></span> : <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={30} height={30} />}
+        {row.done && doerOf(row) && doerOf(row).id !== 'family' ? <span className="todo-cat todo-who"><CharacterAvatar profile={doerOf(row)} size={36} expression="done" /></span> : <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={30} height={30} />}
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
-        <button className="todo-body" onClick={() => { setSelected(row); setNoteText(noteOf(row)); setCelebrating(null); setNoteRow(null) }}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? [row.category, profilesFor(row).map((p) => p.name).join('·'), row.completedDate && row.completedDate !== iso(today) ? row.completedDate.slice(5).replace('-', '/') : '', noteOf(row) && `“${noteOf(row)}”`].filter(Boolean).join(' · ') : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
+        <button className="todo-body" onClick={() => { setSelected(row); setNoteText(noteOf(row)); setCelebrating(null); setNoteRow(null) }}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? [row.category, row.completedDate && row.completedDate !== iso(today) ? row.completedDate.slice(5).replace('-', '/') : '', noteOf(row) && `“${noteOf(row)}”`].filter(Boolean).join(' · ') : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
         {!row.done && profilesFor(row).length > 1 && <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={view === 1 ? 40 : 28} expression={row.done ? 'done' : 'basic'} />)}</span>}
       </li>
   return <section className="home-tasks" aria-label="할 일 목록">
@@ -85,7 +88,7 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
 <p className="quiet task-hint">반복 할 일은 오늘부터 이달 말까지 보여요.</p>
 {editCategories && <Sheet title="분류 편집" onClose={() => setEditCategories(false)}><div className="settings-content">{categories.map((name) => <form key={name} className="category-form" onSubmit={(event) => { event.preventDefault(); const next = String(new FormData(event.currentTarget).get('name')).trim(); if (!next || (next !== name && categories.includes(next))) { setMessage('다른 분류 이름을 입력해 주세요.'); return }; updateState((current) => renameCategory({ ...current, taskCategories: categories }, name, next)); if (category === name) setCategory(next) }}><input name="name" aria-label={`${name} 분류 이름`} defaultValue={name} required /><button disabled={!canEdit}>이름 저장</button><button type="button" disabled={!canEdit || categories.length < 2} onClick={() => { const rest = categories.filter((value) => value !== name); const used = state.tasks.filter((task) => task.category === name).length; if (used && !window.confirm(`'${name}' 할 일 ${used}개는 '${rest[0]}'(으)로 옮겨요. 삭제할까요?`)) return; updateState((current) => ({ ...current, taskCategories: rest, tasks: current.tasks.map((task) => task.category === name ? { ...task, category: rest[0] } : task) })); if (category === name) setCategory('all') }}>삭제</button></form>)}<form className="category-form" onSubmit={(event) => { event.preventDefault(); const value = String(new FormData(event.currentTarget).get('name')).trim(); if (!value || categories.includes(value)) { setMessage('새 분류 이름을 입력해 주세요.'); return }; updateState((current) => ({ ...current, taskCategories: [...categories, value] })); event.currentTarget.reset() }}><input name="name" aria-label="새 분류" required /><button disabled={!canEdit}>분류 추가</button></form></div></Sheet>}
     {selected && <Sheet title={selected.title} onClose={() => setSelected(null)}><div className="settings-content task-detail">
-      <p className="task-detail-meta">{[selected.category, selected.done ? '' : selected.dueDate ? shortDate(selected.dueDate) : '날짜 없음', profilesFor(selected).map((p) => p.name).join('·')].filter(Boolean).join(' · ')}</p>
+      <p className="task-detail-meta">{[selected.category, selected.done ? `${doerOf(selected)?.name || ''} 완료` : selected.dueDate ? shortDate(selected.dueDate) : '날짜 없음', selected.done ? '' : profilesFor(selected).map((p) => p.name).join('·')].filter(Boolean).join(' · ')}</p>
       {selected.done && <form className="note-card" onSubmit={(e) => { e.preventDefault(); saveNote(selected); setSelected(null) }}><label htmlFor="note-detail">한마디</label><textarea id="note-detail" rows={3} maxLength={100} placeholder="예: 다음 달에 다시 갱신" value={noteText} disabled={!canEdit} onChange={(e) => setNoteText(e.target.value)} /><button type="submit" className="primary-button" disabled={!canEdit}>저장</button></form>}
       <GroupedList label="할 일 관리"><GroupedRow title="할 일 수정" className="task-detail-edit" onClick={canEdit ? () => { setEditing(state.tasks.find((task) => task.id === selected.sourceTaskId)); setSelected(null) } : undefined} /><GroupedRow title={`할 일 삭제${selected.occurrenceDate ? ' (반복 전체)' : ''}`} className="task-detail-delete" onClick={canEdit ? () => { remove(selected); setSelected(null) } : undefined} /></GroupedList>
     </div></Sheet>}
