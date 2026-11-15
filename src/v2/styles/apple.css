@@ -439,7 +439,23 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 #selected-heading .paste-bar .paste-event { max-width: none; flex: 0 1 auto; min-width: 0; }
 #selected-heading { white-space: nowrap; }
 .task-person .person-group-head { gap: 10px; font-size: 19px; }
-.note-bar input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--sep); border-radius: 12px; font: inherit; font-size: 16px; background: var(--card); color: var(--label); }
-.note-bar button { height: 40px; padding: 0 12px; border: 0; border-radius: 12px; font-weight: 600; background: none; color: var(--tint); }
-.note-bar { flex-wrap: nowrap; z-index: 60; bottom: calc(228px + env(safe-area-inset-bottom)); } /* 축하 알림·추가 버튼 위에 */
 .todo-who { background: none !important; display: grid; place-items: center; }
+/* 할 일 자세히: 정보 한 줄 + 한마디 카드 + 관리 목록 */
+.task-detail { display: grid; gap: 16px; }
+.task-detail-meta { margin: 0; color: var(--label-2); font-size: 15px; }
+.note-card { display: grid; gap: 8px; padding: 14px 16px; border-radius: 16px; background: var(--card); }
+.note-card label { font-size: 13px; font-weight: 600; color: var(--label-2); }
+.note-card textarea { width: 100%; box-sizing: border-box; min-height: 88px; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--label); font: inherit; font-size: 17px; line-height: 1.4; resize: none; }
+.note-card textarea:focus { outline: 2px solid var(--tint); }
+.note-card .primary-button { min-height: 48px; border-radius: 12px; }
+.task-detail-edit .grouped-action strong { color: var(--tint); font-weight: 600; }
+.task-detail-delete .grouped-action strong { color: var(--red); font-weight: 600; }
+/* 끝낸 직후 한마디 카드: 축하 알림·추가 버튼 위에 */
+.note-bar { display: grid !important; z-index: 60; bottom: calc(228px + env(safe-area-inset-bottom)); padding: 14px 16px; }
+.note-bar textarea { min-height: 64px; }
+.note-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.note-actions button { min-height: 44px; border-radius: 12px; border: 0; font-weight: 600; font-size: 16px; }
+.note-actions button:not(.primary-button) { background: var(--fill); color: var(--label); }
+.task-detail .note-card { padding: 0; background: none; } /* 시트 안에선 카드 테두리 없이 */
+.task-detail .grouped-list { margin: 0; background: var(--fill); border-radius: 12px; overflow: hidden; } .task-detail .grouped-action { min-height: 48px; justify-content: center; } .task-detail .grouped-body { align-items: center; }
+.task-detail .grouped-row + .grouped-row::before { left: 16px; }
