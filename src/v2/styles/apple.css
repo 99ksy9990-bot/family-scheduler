@@ -439,3 +439,6 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 #selected-heading .paste-bar .paste-event { max-width: none; flex: 0 1 auto; min-width: 0; }
 #selected-heading { white-space: nowrap; }
 .task-person .person-group-head { gap: 10px; font-size: 19px; }
+.note-bar input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--sep); border-radius: 12px; font: inherit; font-size: 16px; background: var(--card); color: var(--label); }
+.note-bar button { height: 40px; padding: 0 12px; border: 0; border-radius: 12px; font-weight: 600; background: none; color: var(--tint); }
+.note-bar { flex-wrap: nowrap; z-index: 60; bottom: calc(228px + env(safe-area-inset-bottom)); } /* 축하 알림·추가 버튼 위에 */

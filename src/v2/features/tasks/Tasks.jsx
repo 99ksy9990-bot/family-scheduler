@@ -22,6 +22,8 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
   const [undo, setUndo] = useState(null)
   const [celebrating, setCelebrating] = useState(null)
   const [message, setMessage] = useState('')
+  const [noteRow, setNoteRow] = useState(null) // 끝낸 일에 한마디 남기기
+  const [noteText, setNoteText] = useState('')
   const categories = [...new Set([...state.taskCategories, ...state.tasks.map((task) => task.category).filter(Boolean)])]
   const profilesFor = (task) => {
     const ids = assignedMemberIds(task, 'assignees', 'assignee')
@@ -35,8 +37,15 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     const timer = window.setTimeout(() => setCelebrating(null), 5000)
     return () => window.clearTimeout(timer)
   }, [celebrating])
+  const noteOf = (row) => { const t = state.tasks.find((x) => x.id === row.sourceTaskId); return (row.occurrenceDate ? t?.doneNotes?.[row.occurrenceDate] : t?.doneNote) || '' }
+  const openNote = (row) => { setNoteRow(row); setNoteText(noteOf(row)) }
+  const saveNote = () => {
+    const text = noteText.trim()
+    updateState((current) => ({ ...current, tasks: current.tasks.map((t) => t.id !== noteRow.sourceTaskId ? t : noteRow.occurrenceDate ? { ...t, doneNotes: { ...(t.doneNotes || {}), [noteRow.occurrenceDate]: text } } : { ...t, doneNote: text }) }))
+    setNoteRow(null)
+  }
   const toggle = (row) => {
-    if (updateState((current) => ({ ...current, tasks: toggleTask(current.tasks, row, today) })) && !row.done) setCelebrating(row)
+    if (updateState((current) => ({ ...current, tasks: toggleTask(current.tasks, row, today) })) && !row.done) { setCelebrating(row); openNote(row) }
   }
   const remove = (row) => {
     const source = state.tasks.find((task) => task.id === row.sourceTaskId)
@@ -60,8 +69,8 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
   const renderRow = (row) => <li className="todo-row" key={row.id}>
         <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={30} height={30} />
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
-        <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? `끝냄${row.completedDate && row.completedDate !== iso(today) ? ` · ${row.completedDate.slice(5).replace('-', '/')}` : ''}` : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
-        {(view === 1 || profilesFor(row).length > 1) && <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={view === 1 ? 40 : 28} expression={row.done ? 'done' : 'basic'} />)}</span>}
+        <button className="todo-body" onClick={() => setSelected(row)}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? [profilesFor(row).map((p) => p.name).join('·'), row.completedDate && row.completedDate !== iso(today) ? row.completedDate.slice(5).replace('-', '/') : '', noteOf(row) && `“${noteOf(row)}”`].filter(Boolean).join(' · ') : [row.time || shortDate(row.dueDate), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
+        {!row.done && profilesFor(row).length > 1 && <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={view === 1 ? 40 : 28} expression={row.done ? 'done' : 'basic'} />)}</span>}
       </li>
   return <section className="home-tasks" aria-label="할 일 목록">
     {total > 0 && <div className="task-progress"><div className="task-progress-text"><strong>{openCount ? `${total}개 중 ${doneToday}개 끝` : '오늘 할 일 다 끝!'}</strong><span className="task-progress-faces">{active.map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={30} expression={openCount ? 'basic' : 'done'} />)}</span></div><div className="task-progress-bar" aria-hidden="true"><i style={{ width: `${Math.round((doneToday / total) * 100)}%` }} /><img className="progress-buddy" src={`/characters/chiikawa_${openCount ? 'busy' : 'sunny'}.webp`} alt="" style={{ left: `${Math.min(96, Math.max(4, Math.round((doneToday / total) * 100)))}%` }} /></div></div>}
@@ -75,9 +84,10 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     </div>)}
 <p className="quiet task-hint">반복 할 일은 오늘부터 이달 말까지 보여요.</p>
 {editCategories && <Sheet title="분류 편집" onClose={() => setEditCategories(false)}><div className="settings-content">{categories.map((name) => <form key={name} className="category-form" onSubmit={(event) => { event.preventDefault(); const next = String(new FormData(event.currentTarget).get('name')).trim(); if (!next || (next !== name && categories.includes(next))) { setMessage('다른 분류 이름을 입력해 주세요.'); return }; updateState((current) => renameCategory({ ...current, taskCategories: categories }, name, next)); if (category === name) setCategory(next) }}><input name="name" aria-label={`${name} 분류 이름`} defaultValue={name} required /><button disabled={!canEdit}>이름 저장</button><button type="button" disabled={!canEdit || categories.length < 2} onClick={() => { const rest = categories.filter((value) => value !== name); const used = state.tasks.filter((task) => task.category === name).length; if (used && !window.confirm(`'${name}' 할 일 ${used}개는 '${rest[0]}'(으)로 옮겨요. 삭제할까요?`)) return; updateState((current) => ({ ...current, taskCategories: rest, tasks: current.tasks.map((task) => task.category === name ? { ...task, category: rest[0] } : task) })); if (category === name) setCategory('all') }}>삭제</button></form>)}<form className="category-form" onSubmit={(event) => { event.preventDefault(); const value = String(new FormData(event.currentTarget).get('name')).trim(); if (!value || categories.includes(value)) { setMessage('새 분류 이름을 입력해 주세요.'); return }; updateState((current) => ({ ...current, taskCategories: [...categories, value] })); event.currentTarget.reset() }}><input name="name" aria-label="새 분류" required /><button disabled={!canEdit}>분류 추가</button></form></div></Sheet>}
-    {selected && <Sheet title={selected.title} onClose={() => setSelected(null)}><div className="settings-content"><p>{selected.category} · {selected.dueDate || '날짜 없음'}</p><button disabled={!canEdit} onClick={() => { setEditing(state.tasks.find((task) => task.id === selected.sourceTaskId)); setSelected(null) }}>할 일 수정</button><button disabled={!canEdit} onClick={() => { remove(selected); setSelected(null) }}>할 일 삭제{selected.occurrenceDate ? ' (반복 전체)' : ''}</button></div></Sheet>}
+    {selected && <Sheet title={selected.title} onClose={() => setSelected(null)}><div className="settings-content"><p>{selected.category} · {selected.dueDate || '날짜 없음'}</p>{selected.done && <><p>{noteOf(selected) ? `한마디: ${noteOf(selected)}` : ''}</p><button disabled={!canEdit} onClick={() => { openNote(selected); setSelected(null) }}>{noteOf(selected) ? '한마디 고치기' : '한마디 남기기'}</button></>}<button disabled={!canEdit} onClick={() => { setEditing(state.tasks.find((task) => task.id === selected.sourceTaskId)); setSelected(null) }}>할 일 수정</button><button disabled={!canEdit} onClick={() => { remove(selected); setSelected(null) }}>할 일 삭제{selected.occurrenceDate ? ' (반복 전체)' : ''}</button></div></Sheet>}
     {celebrating && <div role="status" className="task-celebration">{profilesFor(celebrating).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={40} expression="done" />)}<img className="friends-pop" src={['/friends/cheer.webp', '/friends/dance.webp', '/friends/stars.webp', '/friends/sing.webp', '/characters/chiikawa_done.webp', '/characters/usagi_sunny.webp', '/characters/siren_sunny.webp', '/characters/knight_done.webp'][Date.now() % 8]} alt="" width={48} height={48} />잘했어요! 할 일을 마쳤어요.<button className="celebrate-undo" onClick={() => { updateState((current) => ({ ...current, tasks: toggleTask(current.tasks, celebrating, today) })); setCelebrating(null) }}>되돌리기</button></div>}
     {undo && <div className="undo-toast" role="status">할 일을 삭제했어요.<button onClick={() => { updateState((current) => ({ ...current, tasks: [...current.tasks.filter((task) => task.id !== undo.id), undo] })); setUndo(null) }}>되돌리기</button><button aria-label="삭제 알림 닫기" onClick={() => setUndo(null)}>닫기</button></div>}
+    {noteRow && <form className="undo-toast note-bar" onSubmit={(e) => { e.preventDefault(); saveNote() }}><input aria-label="한마디" placeholder="한마디 남기기 (예: 다음 달 갱신)" maxLength={60} value={noteText} onChange={(e) => setNoteText(e.target.value)} /><button type="submit">저장</button><button type="button" onClick={() => setNoteRow(null)}>닫기</button></form>}
     {message && <p role="status">{message}</p>}
     {editing && <TaskForm task={editing} state={state} updateState={updateState} today={today} onClose={() => { setEditing(null) }} />}
   </section>
