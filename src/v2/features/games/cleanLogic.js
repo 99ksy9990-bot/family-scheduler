@@ -60,11 +60,11 @@ const has = (i, kind) => {
   return p % 2 === 1 && (p === 9 || f.length < 3 ? f.includes(kind) : f[((p - 1) / 2) % f.length] === kind)
 }
 // 얼룩: 4번 움직일 때마다 저절로 옆 칸으로 번짐 (거품은 못 닦을 때만 번짐)
-const binFor = (i) => (has(i, 'bin') ? { cells: i % 2 ? [21, 27] : [3, 45], hp: i >= 100 ? 5 : 3 } : null)
-const webFor = (i) => (has(i, 'web') ? (i % 2 ? [8, 9, 11, 12] : [36, 37, 39, 40]) : [])
+const binFor = (i) => (has(i, 'bin') ? { cells: mvAll(i, i % 2 ? [21, 27] : [3, 45]), hp: i >= 100 ? 5 : 3 } : null)
+const webFor = (i) => (has(i, 'web') ? mvAll(i, i % 2 ? [8, 9, 11, 12] : [36, 37, 39, 40]) : [])
 const catsFor = (i) => (has(i, 'cat') ? (i >= 100 ? 3 : 2) : 0)
-const stainFor = (i) => (has(i, 'stain') ? (i % 2 ? [10, 12, 36, 38] : [16, 18, 30, 32]) : [])
-const boxesFor = (i) => (i >= 20 ? (has(i, 'box') ? { cells: [22, 23, 25, 26, 15, 16, 17, 18, 19], hp: i >= 50 ? 2 : 1 } : null) : i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 && i < 200 ? 2 : 1 } : null)
+const stainFor = (i) => (has(i, 'stain') ? mvAll(i, i % 2 ? [10, 12, 36, 38] : [16, 18, 30, 32]) : [])
+const boxesFor = (i) => (i >= 20 ? (has(i, 'box') ? { cells: mvAll(i, [22, 23, 25, 26, 15, 16, 17, 18, 19]), hp: i >= 50 ? 2 : 1 } : null) : i >= 2 && i % 3 === 2 ? { cells: [22, 23, 25, 26].concat(i >= 14 ? [15, 16, 17, 18, 19] : []), hp: i >= 24 && i < 200 ? 2 : 1 } : null)
 // 오리 구출: 오리(k=-2)를 맨 아래 줄까지 내리면 모임
 const dropsFor = (i) => (i >= 20 ? (has(i, 'drop') ? 3 : 0) : i >= 3 && i % 4 === 3 ? 2 : 0)
 // 49~60단계: 후반 12단계를 한 번 더, 먼지 2겹 + 모을 개수 +3
@@ -75,8 +75,8 @@ const LATE = [...HARD, ...HARD.slice(0, 16)].map((st) => ({ ...st, moves: st.mov
 const ULTRA = [...HARD, ...HARD, ...HARD, ...HARD, ...HARD.slice(0, 4)].map((st) => ({ ...st, moves: st.moves - 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([k, n]) => [k, n + 10]) }) }))
 // 얼음(그 칸에서 맞추면 깨짐, 깨지기 전엔 못 움직임)·거품(안 닦으면 옆으로 번짐)
 // 얼음·거품: 200단계 뒤엔 더 자주, 놓이는 줄도 바꿈
-const iceFor = (i) => (has(i, 'ice') ? (i % 2 ? [29, 30, 31, 32, 33] : [36, 37, 38, 39, 40]) : [])
-const foamFor = (i) => (has(i, 'foam') ? (i % 2 ? [0, 6, 42, 48, 3, 45] : [21, 27, 24, 3]) : [])
+const iceFor = (i) => (has(i, 'ice') ? mvAll(i, i % 2 ? [29, 30, 31, 32, 33] : [36, 37, 38, 39, 40]) : [])
+const foamFor = (i) => (has(i, 'foam') ? mvAll(i, i % 2 ? [0, 6, 42, 48, 3, 45] : [21, 27, 24, 3]) : [])
 export const isHard = (i) => i % 10 === 9 // 10단계마다 '어려움': 별 2배
 // 201~300단계: 101~200과 비슷한 수준 (아이들도 할 수 있게 이동 +3)
 const MEGA = [...HARD, ...HARD, ...HARD, ...HARD, ...HARD.slice(0, 4)].map((st, k) => ({ ...st, moves: st.moves - 3 + 3, ...(st.dust && { dust: { ...st.dust, hp: 2 } }), ...(st.collect && { collect: st.collect.map(([kd, n]) => [(kd + k) % 6, n + 10]) }) }))
@@ -85,8 +85,12 @@ const MORE = MEGA.map((st, k) => ({ ...st, ...(st.collect && { collect: st.colle
 export const FINITE = 400
 const ENDLESS = Array.from({ length: 9999 - FINITE }, (_, k) => [...MEGA, ...MORE][k % 200])
 const RAW = [...BASE, ...HARD, ...EXTRA, ...LATE, ...ULTRA, ...MEGA, ...MORE, ...ENDLESS]
+// 같은 틀이 반복돼 보이지 않게 21단계부터 단계마다 판을 돌리거나 뒤집음 (0: 그대로, 1: 좌우, 2: 90도, 3: 상하)
+const turn = (i) => (i < 20 ? 0 : (i * 5 + Math.floor(i / 10)) % 4)
+const mv = (i, x) => { const r = Math.floor(x / N), c = x % N; const t = turn(i); return t === 1 ? r * N + (N - 1 - c) : t === 2 ? c * N + (N - 1 - r) : t === 3 ? (N - 1 - r) * N + c : x }
+const mvAll = (i, a) => a.map((x) => mv(i, x))
 export const STAGES = RAW.map((st, i) => {
-  const holes = shapeFor(i)
+  const holes = mvAll(i, shapeFor(i))
   const free = (x) => !holes.includes(x) && !boxesFor(i)?.cells.includes(x) && !binFor(i)?.cells.includes(x)
   const ice = iceFor(i).filter(free); let foam = foamFor(i).filter(free).slice(0, 2); const stain = stainFor(i).filter(free); const web = webFor(i).filter(free).filter((x) => !ice.includes(x))
   if (foamFor(i).length && !foam.length) foam = [24]
@@ -351,6 +355,7 @@ function settle(s, events, prefer, rand) {
       if (made) { s.board[keep] = made; events.push({ type: 'make', i: keep, sp: g.sp }); s.collected[g.k]++; if (s.dust[keep]) { s.dust[keep]--; events.push({ type: 'dust', i: keep }) } } // 특수 블록이 생긴 칸의 먼지도 닦임
     }
     if (chain) events.push({ type: 'chain', n: chain + 1 })
+    if (chain === 3 && Number.isFinite(s.moves)) { s.moves += 1; events.push({ type: 'luck' }) } // 4연쇄: 행운 이동 +1
     prefer = []
   }
   fall(s, rand)

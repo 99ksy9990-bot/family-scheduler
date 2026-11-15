@@ -19,7 +19,7 @@ const hueGap = (a, b) => (a < 0 || b < 0 ? (a === b ? 0 : 60) : Math.min(Math.ab
 const BASE_HUE = [51, 355, 38, 208, 282, 87] // IMG0 순서
 const piecesFor = (stage) => {
   const c = Math.floor(stage / 10); if (!c) return IMG0
-  const pool = [...new Map(Array.from({ length: 12 }, (_, d) => d).flatMap((d) => ROOMS[(c + d) % ROOMS.length].tasks).map((t) => [t.img, HUES[t.img.slice(11, -4)] ?? -1])).entries()].filter(([img, h]) => h >= 0 && !IMG0.some((b) => b.split('/').pop() === img.split('/').pop())) // 기본 블록과 같은 물건은 빼고
+  const pool = [...new Map(Array.from({ length: 12 }, (_, d) => d).flatMap((d) => ROOMS[(c + d) % ROOMS.length].tasks).map((t) => [t.img, HUES[t.img.slice(11, -4)] ?? -1])).entries()].filter(([img, h]) => h >= 0 && !/\/duck\./.test(img) && !IMG0.some((b) => b.split('/').pop() === img.split('/').pop())) // 기본 블록과 같은 물건은 빼고
   const pick = []
   const far = (h) => pick.every(([, p]) => hueGap(p, h) >= 60)
   for (const x of pool) if (pick.length < 2 && far(x[1])) pick.push(x) // 방 물건은 2개만 (파스텔 가구끼리 헷갈려서)
@@ -232,6 +232,9 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     const chain = r.events.filter((e) => e.type === 'chain').at(-1)
     if (chain && el) pop(el, el.clientWidth / 2, el.clientWidth / 2, `연쇄 ×${chain.n}`, 'gold')
     if (chain?.n >= 3) setCheer('우와, 연쇄다!')
+    if (r.events.some((e) => e.type === 'luck') && el) { pop(el, el.clientWidth / 2, el.clientWidth * 0.65, '행운! 이동 +1', 'gold', 2200); setCheer('4연쇄! 이동 한 번 더 줄게') }
+    if (r.events.some((e) => e.type === 'make' && e.sp === 'rainbow')) setCheer('무지개 블록이다! 아무 블록이랑 바꿔 봐')
+    if (r.events.some((e) => e.type === 'drop')) setCheer('오리가 탈출했어! 고마워')
     buzz(r.events.length > 6 ? [20, 30, 20] : 12)
     dustNow.current += r.events.filter((e) => e.type === mission.type).length
     if (r.state.done === 'win') {
@@ -350,6 +353,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
       <li><i className="dust-icon" /><span><b>먼지</b> 그 칸에서 맞추기 (숫자 2는 두 번)</span></li>
       <li><i className="box-icon" /><span><b>상자</b> 옆에서 맞추기</span></li>
       <li><img src="/game/room/duck.png" alt="" /><span><b>오리</b> 맨 아래 줄까지 내리면 구출</span></li>
+      <li><img src="/game/pieces/star.png" alt="" /><span><b>행운</b> 한 번에 4번 연쇄하면 이동 +1</span></li>
       <li><i className="ice-icon" /><span><b>얼음</b> 그 칸에서 맞추면 깨짐 (그 전엔 못 움직임)</span></li>
       <li><i className="foam-icon" /><span><b>거품</b> 그 칸에서 맞추기, 안 닦으면 번짐</span></li>
       <li><img src="/game/pieces/stain.png" alt="" /><span><b>얼룩</b> 그 칸에서 맞추기, 4번 움직일 때마다 저절로 번짐</span></li>
