@@ -33,8 +33,9 @@ export function houseStatus(profile, rows, tasks, today, now, shifts = []) {
   return { ...status, detail: next && status.label.length > 14 ? `다음 ${next.displayStart}` : status.label }
 }
 
+// 끝나는 시각이 지나야 빠짐 (진행 중인 일정은 남김, 사용자 2026-11-16)
 export function remainingSchedule(rows, today, now) {
-  return rows.filter((row) => ['future', 'untimed'].includes(eventPhase(row, today, now)))
+  return rows.filter((row) => ['active', 'future', 'untimed'].includes(eventPhase(row, today, now)))
 }
 
 // 얼굴은 사람 상태만 (날씨는 맨 위 날씨 줄에만, 사용자 2026-11-12)

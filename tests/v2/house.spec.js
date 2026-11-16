@@ -15,8 +15,8 @@ test('지금 타일 상태는 진행 중 태그와 종료 시각을 사용', () 
   expect(houseStatus({ id: 'r' }, [], [], date, now)).toMatchObject({ expression: 'basic', detail: '여유로운 하루' })
 })
 
-test('남은 목록은 미래·종일 일정, 개인 시트는 지난 일정도 보존', () => {
-  expect(remainingSchedule(rows, date, now).map((row) => row.id)).toEqual(['next', 'all'])
+test('남은 목록은 진행 중·미래·종일 일정, 개인 시트는 지난 일정도 보존', () => {
+  expect(remainingSchedule(rows, date, now).map((row) => row.id)).toEqual(['work', 'next', 'all'])
   expect(rowsForMember(rows, 'p')).toHaveLength(4)
   expect(rowsForMember(rows, 'q').map((row) => row.id)).toEqual(['work', 'all'])
   expect(rows).toHaveLength(4)
