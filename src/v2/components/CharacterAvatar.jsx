@@ -8,7 +8,7 @@ const MINI_MOOD = { basic: 'basic', busy: 'busy', mask: 'busy', study: 'study', 
 const BY_NAME = { 아빠: 'dad', 엄마: 'mom', 초롱: 'big', 연두: 'little' }
 export const roleOf = (profile = {}) => !MINI.includes(profile.characterId) ? profile.characterId : profile.baseCharacter || BY_NAME[profile.name] || String(profile.id || '').replace(/^demo-/, '')
 // 치이카와 그림은 표정이 적어서 가까운 표정으로
-export const miniMood = (id, mood) => id === 'siren' && mood === 'mask' ? 'mask' : id === 'siren' && mood === 'study' ? 'busy' : id === 'knight' && mood === 'sunny' ? 'basic' : MINI_MOOD[mood] || 'basic'
+export const miniMood = (id, mood) => id === 'siren' && mood === 'mask' ? 'mask' : id === 'siren' && mood === 'study' ? 'busy' : MINI_MOOD[mood] || 'basic'
 export const CHARACTERS = ['dad', 'mom', 'big', 'little', ...MINI]
 
 export default function CharacterAvatar({ profile, expression = 'basic', small = false, size: requestedSize, glass = false }) {
