@@ -11,6 +11,7 @@ const test = base.extend({
   await page.addInitScript(() => {
     if (localStorage.getItem('v2-test-seeded')) return
     localStorage.setItem('v2-test-seeded', '1')
+    localStorage.setItem('family-scheduler-me-asked', '1')
     const data = {
       'profiles-v1': [{ id: 'p', name: '가족', type: 'adult', characterId: 'dad' }],
       events: [{ id: 'e', title: '오후 일정', date: '2026-11-05', time: '오후 2:00', end: '오후 3:00', member: 'p' }],

@@ -1,3 +1,5 @@
+import CharacterAvatar from './components/CharacterAvatar'
+import { getMe, setMe } from './data/me'
 import { markWhere } from './data/crashlog'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Plus, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
@@ -73,8 +75,12 @@ function Workspace({ scheduler }) {
   const openTasks = (state?.tasks || []).filter((t) => !t.done && !t.recurrence && (!t.dueDate || t.dueDate <= iso(today))).length // 오늘까지 남은 할 일 (반복 제외)
   const title = tab === 'calendar' ? `${cursor.getMonth() + 1}월` : tabs.find(([id]) => id === tab)[1]
   const subtitle = tab === 'today' ? formatLongDate(today) : tab === 'calendar' ? `${cursor.getFullYear()}년` : tab === 'play' ? `오늘 ${todayPlays(state?.gameScores, today)}판` : tab === 'tasks' ? `남은 할 일 ${openTasks}개` : `${profiles.filter((profile) => profile.active !== false).length}명`
+  // 가족 폰 첫 실행: 이 폰이 누구 폰인지 한 번 물음 (연결된 폰만, '나중에'면 다시 안 물음)
+  const [askMe, setAskMe] = useState(() => { try { return !getMe() && !localStorage.getItem('family-scheduler-me-asked') } catch { return false } })
+  const doneAsk = (id) => { if (id) setMe(id); try { localStorage.setItem('family-scheduler-me-asked', '1') } catch { /* 다음에 또 물을 뿐 */ } setAskMe(false) }
   const props = { today, now, state, loading: !isDemo && sync.syncStatus === 'connecting', error: isDemo ? '' : scheduler.error, onRetry: scheduler.retry }
   return <div className="v2-app" data-view={tab} data-scrolled={scrolled || undefined}>
+    {askMe && !isDemo && state?.profiles?.length > 0 && <Sheet title="이 폰은 누구 폰인가요?" onClose={() => doneAsk('')}><div className="settings-content"><p>고르면 할 일 완료·놀이가 그 사람으로 기록돼요. 나중에 가족 › 연결에서 바꿀 수 있어요.</p><div className="me-pick-row">{state.profiles.filter((p) => p.active !== false).map((p) => <button key={p.id} type="button" onClick={() => doneAsk(p.id)}><CharacterAvatar profile={p} size={36} />{p.name}</button>)}</div><button type="button" onClick={() => doneAsk('')}>나중에</button></div></Sheet>}
     <div className="ios-edge-guard" aria-hidden="true" />
     {isDemo && <button className="demo-banner" onClick={() => { setTab('family'); setFamilyPanel('connection') }}>예시 화면이에요 · 가족 연결하면 우리 일정이 보여요</button>}
     <header className="app-heading" ref={watchHeading}><a href="#main" className="skip-link">본문으로 이동</a>{tab === 'calendar' ? <button className="heading-line month-line" aria-label={`${cursor.getFullYear()}년 ${title}, 다른 달 고르기`} onClick={() => setPickYear(cursor.getFullYear())}><h1>{title}</h1><p className="app-date">{subtitle}</p><ChevronDown size={18} className="month-caret" /></button> : <div className="heading-line"><h1>{title}</h1>{tab === 'play' && <SoundToggles />}{tab === 'today' && scrolled && wx && <small className="greeting mini-wx">{`${today.getMonth() + 1}/${today.getDate()} · ${wx.temp}°`}</small>}</div>}{['tasks', 'play'].includes(tab) && <div className="heading-sub"><p className="app-date">{subtitle}</p>{tab === 'tasks' && <button className="text-button heading-side" disabled={!canEdit} onClick={() => setEditCats(true)}>분류 편집</button>}</div>}

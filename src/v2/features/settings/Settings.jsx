@@ -66,7 +66,7 @@ export default function Settings({ state, updateState, canEdit, sync, selected, 
     <button type="button" className="version-foot" onClick={() => onSelect('about')}>우리집 {descriptions.about}</button>
     {adding && <AddMember state={state} updateState={updateState} onClose={(id) => { setAdding(false); if (id) setMemberId(id) }} />}
     {day && <Sheet title={day.id ? day.name : '생일·기념일 추가'} onClose={() => setDay(null)}><Suspense fallback={null}><Family state={state} updateState={updateState} canEdit={canEdit} editorOnly initialSection="anniversaries" initialRecord={day} onSaved={() => setDay(null)} onCancel={() => setDay(null)} /></Suspense></Sheet>}
-    {selected && <Sheet title={entries.find(([id]) => id === panel)[1]} onClose={() => onSelect(null)}><Suspense fallback={<p role="status">설정을 불러오고 있어요…</p>}>
+    {selected && <Sheet title={entries.find(([id]) => id === panel)[1]} className={panel === 'connection' ? 'conn-sheet' : ''} onClose={() => onSelect(null)}><Suspense fallback={<p role="status">설정을 불러오고 있어요…</p>}>
       {panel === 'connection' && <Connection sync={sync} state={state} updateState={updateState} canEdit={canEdit} />}
       {panel === 'family' && <Family initialProfile={selected?.startsWith('profile:') ? selected.slice(8) : null} state={state} updateState={updateState} canEdit={canEdit} />}
       {panel === 'backup' && <Backup state={state} updateState={updateState} canEdit={canEdit} sync={sync} />}

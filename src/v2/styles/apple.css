@@ -461,3 +461,25 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .task-detail .grouped-row + .grouped-row::before { left: 16px; }
 .crash-log { margin: 0 0 8px; padding-left: 18px; font-size: 14px; color: var(--label-2); line-height: 1.6; }
 .me-pick-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; } .me-pick-row button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px 0 4px; border: 0; border-radius: 22px; background: var(--fill); color: var(--label); font-size: 16px; font-weight: 600; }
+/* 가족 연결: 회색 바탕 + 제목 + 흰 카드 (가족 탭과 같은 짜임) */
+.conn-sheet.sheet { background: var(--bg); }
+.conn { display: grid; gap: 8px; }
+.conn-title { margin: 16px 4px 0; font-size: 20px; font-weight: 700; color: var(--label); }
+.conn-card { display: grid; gap: 12px; padding: 16px; border-radius: 16px; background: var(--card); border: 0; }
+.conn-card p { margin: 0; }
+.conn-card .event-form { margin: 0; }
+.conn-status { grid-template-columns: auto 1fr; align-items: center; }
+.conn-status strong { font-size: 17px; } .conn-status p { font-size: 14px; color: var(--label-2); }
+.conn-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--label-2); opacity: .4; } .conn-dot.on { background: #30b07a; opacity: 1; }
+.conn-row { grid-template-columns: auto 1fr auto; align-items: center; }
+.conn-row:not(:has(.character)) { grid-template-columns: 1fr auto; }
+.conn-row p { display: grid; gap: 2px; font-size: 17px; } .conn-row small { font-size: 13px; color: var(--label-2); }
+.conn-code { display: block; font-size: 22px; letter-spacing: 2px; }
+.conn-row > button, .conn-link-btn { min-height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: var(--fill); color: var(--tint); font-weight: 600; }
+.conn-signout { margin-top: 16px; min-height: 48px; color: var(--red); font-size: 17px; font-weight: 600; text-align: center; }
+.conn .link-login > .primary-button { margin: 0; }
+.conn-sheet .sheet-heading { background: var(--bg) !important; }
+.conn .ui-segments { display: flex; padding: 3px; border-radius: 10px; } .conn .ui-segments button { flex: 1; min-height: 34px; border: 0; border-radius: 8px; background: none; font-size: 15px; font-weight: 600; color: var(--label-2); }
+.conn .ui-segments button[aria-pressed='true'] { color: var(--label); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.conn .me-pick > p, .conn .link-login > p { font-size: 15px; color: var(--label-2); }
+.conn-status { align-items: start; } .conn-status .conn-dot { margin-top: 6px; }
