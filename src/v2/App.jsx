@@ -56,8 +56,6 @@ function Workspace({ scheduler }) {
   }
   const addEvent = (event) => isDemo ? updateState((current) => ({ ...current, events: [...current.events, { ...event, id: `demo-added-${crypto.randomUUID()}` }] })) : scheduler.addEvent(event)
   const [tab, setTab] = useState('today')
-  const [backHome, setBackHome] = useState(false) // 우리집 › 지난 일정에서 왔으면 돌아가기 버튼
-  useEffect(() => { if (tab !== 'calendar') setBackHome(false) }, [tab])
   useEffect(() => markWhere(tab), [tab])
   const [editCats, setEditCats] = useState(false)
   const wx = weatherNote(useWeather(), now)
@@ -90,8 +88,8 @@ function Workspace({ scheduler }) {
     </header>
     <main id="main" tabIndex={-1}>
       {!state ? <div className="empty-state" role="alert">가족 정보를 읽지 못했어요.<button onClick={scheduler.retry}>다시 시도</button></div> : <Suspense fallback={<p className="data-message" role="status">화면을 불러오고 있어요…</p>}>
-        {tab === 'today' ? <><Today {...props} onOpenToday={() => { setBackHome(true); setTab('calendar'); setCalendarDate(iso(today)); setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setTimeout(() => document.getElementById('selected-heading')?.scrollIntoView({ block: 'start' }), 300) }} rows={rows} onPerson={setPerson} updateState={updateState} canEdit={canEdit} />{openTasks > 0 && <button type="button" className="task-summary" onClick={() => { setTab('tasks'); window.scrollTo(0, 0) }}><strong>할 일</strong><span>{openTasks}개 남음</span><ChevronRight size={18} aria-hidden="true" /></button>}</>
-          : tab === 'calendar' ? <>{backHome && <button type="button" className="text-button back-home" onClick={() => { setTab('today'); window.scrollTo(0, 0) }}>‹ 우리집으로 돌아가기</button>}<Calendar {...props} updateState={updateState} canEdit={canEdit} onPaste={canEdit ? (date) => { const clip = getClip(); if (clip) addEvent(pasteAt(clip, date)) } : null} cursor={cursor} onMove={move} selectedDate={calendarDate} onSelectDate={setCalendarDate} /></>
+        {tab === 'today' ? <><Today {...props} onOpenToday={() => { setTab('calendar'); setCalendarDate(iso(today)); setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setTimeout(() => document.getElementById('selected-heading')?.scrollIntoView({ block: 'start' }), 300) }} rows={rows} onPerson={setPerson} updateState={updateState} canEdit={canEdit} />{openTasks > 0 && <button type="button" className="task-summary" onClick={() => { setTab('tasks'); window.scrollTo(0, 0) }}><strong>할 일</strong><span>{openTasks}개 남음</span><ChevronRight size={18} aria-hidden="true" /></button>}</>
+          : tab === 'calendar' ? <><Calendar {...props} updateState={updateState} canEdit={canEdit} onPaste={canEdit ? (date) => { const clip = getClip(); if (clip) addEvent(pasteAt(clip, date)) } : null} cursor={cursor} onMove={move} selectedDate={calendarDate} onSelectDate={setCalendarDate} /></>
             : tab === 'tasks' ? <Tasks key={reset} onAdd={canEdit ? () => setTaskFormOpen(true) : undefined} editCategories={editCats} setEditCategories={setEditCats} state={state} updateState={updateState} canEdit={canEdit} today={today} />
             : tab === 'play' ? <Play state={state} updateState={updateState} /> : <FamilyScreen key={reset} state={state} updateState={updateState} canEdit={canEdit} sync={sync} selected={familyPanel} onSelect={setFamilyPanel} onPerson={setPerson} />}
       </Suspense>}

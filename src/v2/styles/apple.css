@@ -486,7 +486,6 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .calendar-day .shift-pic { display: block; width: 18px; height: 18px; margin: 2px 0 0; }
 .shift-legend { display: flex; justify-content: flex-start; padding-left: 4px !important; gap: 16px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--secondary-label, #6e6e73); }
 .shift-legend li { display: flex; align-items: center; gap: 5px; }
-.back-home { display: block; margin: 0 0 8px; padding: 6px 0; font-size: 16px; font-weight: 600; color: var(--tint); }
 .fold-head { display: flex; align-items: center; gap: inherit; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .fold-chev { margin-left: 2px; font-size: 20px; color: var(--secondary-label, #8e8e93); transform: rotate(90deg); transition: transform .2s; }
 .fold-head[aria-expanded='false'] .fold-chev { transform: rotate(0deg); }
@@ -494,3 +493,14 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .heading-sub > .month-pick { margin-left: 0 !important; }
 .month-pick .app-date { margin-left: 6px; color: #6e6e73; font-weight: 500; }
 @media (prefers-color-scheme: dark) { .month-pick .app-date { color: #98989d; } }
+.task-month { display: block; margin: 10px 0 0; }
+.task-month select { width: 100%; min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--card, #fff); font: inherit; font-size: 16px; font-weight: 600; color: inherit; appearance: auto; }
+.shift-legend-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 12px 0 0; }
+.shift-legend-row .work-toggles { margin: 0; }
+.shift-legend-row .shift-legend { margin: 0; padding-left: 0 !important; gap: 12px; }
+.month-pick { margin-top: 8px; font-size: 17px; }
+.calendar-page > .month-card:first-child { margin-top: -6px; }
+.shift-legend-row { flex-wrap: nowrap; gap: 12px; }
+.shift-legend-row .work-toggles { flex-wrap: nowrap; gap: 6px; }
+.shift-legend-row .work-toggles button { min-height: 34px; padding: 0 10px 0 4px; font-size: 14px; }
+.shift-legend-row .shift-legend { gap: 10px; white-space: nowrap; }

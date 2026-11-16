@@ -18,6 +18,7 @@ const shortDate = (d) => { if (!d) return ''; const t = new Date(`${d}T00:00:00`
 export default function Tasks({ editCategories, setEditCategories, onAdd, state, updateState, canEdit, today }) {
   const [category, setCategory] = useState('all')
   const [view, setView] = useState(0) // 0 할 일, 1 끝낸 일
+  const [month, setMonth] = useState('') // 끝낸 일: '' 최근 7일, 'YYYY-MM' 그 달 전체
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(null)
   const [undo, setUndo] = useState(null)
@@ -58,9 +59,10 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
   const weekAgo = iso(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7))
   const doneOn = (row) => row.occurrenceDate || row.completedDate || ''
   // 두 묶음: 남은 일(날짜 있는 것 먼저, 없는 것 아래), 끝낸 일(7일 안, 오래된 건 검색으로)
+  const months = Array.from({ length: 12 }, (_, i) => iso(new Date(today.getFullYear(), today.getMonth() - i, 1)).slice(0, 7)) // 최근 12달
   const groups = [
     ['할 일', rows.filter((row) => !row.done).sort((x, y) => (x.dueDate || '9') .localeCompare(y.dueDate || '9'))],
-    ['끝낸 일', rows.filter((row) => row.done && (q || doneOn(row) >= weekAgo)).sort((x, y) => doneOn(y).localeCompare(doneOn(x)))],
+    ['끝낸 일', rows.filter((row) => row.done && (month ? doneOn(row).startsWith(month) : q || doneOn(row) >= weekAgo)).sort((x, y) => doneOn(y).localeCompare(doneOn(x)))],
   ]
   // 오늘 진행: 남은 일 + 오늘 끝낸 일
   const todayIso = iso(today)
@@ -79,6 +81,7 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     {total > 0 && <div className="task-progress"><div className="task-progress-text"><strong>{openCount ? `${total}개 중 ${doneToday}개 끝` : '오늘 할 일 다 끝!'}</strong><span className="task-progress-faces">{active.map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={30} expression={openCount ? 'basic' : 'done'} />)}</span></div><div className="task-progress-bar" aria-hidden="true"><i style={{ width: `${Math.round((doneToday / total) * 100)}%` }} /><img className="progress-buddy" src={`/characters/chiikawa_${openCount ? 'busy' : 'sunny'}.webp`} alt="" style={{ left: `${Math.min(96, Math.max(4, Math.round((doneToday / total) * 100)))}%` }} /></div></div>}
     <div className="task-section-heading"><h2 className="house-section-title visually-hidden">할 일 <small data-testid="task-count">{rows.filter((row) => !row.done).length ? `${rows.filter((row) => !row.done).length}개 남음` : '다 끝냈어요'}</small></h2></div>
     <div className="ui-segments task-view" role="group" aria-label="보기">{groups.map(([title, items], i) => <button key={title} type="button" aria-pressed={view === i} onClick={() => { setView(i); setNoteRow(null) }}>{title} {items.length}</button>)}</div>
+    {view === 1 && <label className="task-month"><span className="visually-hidden">끝낸 달 고르기</span><select value={month} onChange={(event) => setMonth(event.target.value)}><option value="">최근 7일</option>{months.map((m) => <option key={m} value={m}>{`${m.slice(0, 4)}년 ${Number(m.slice(5))}월`}</option>)}</select></label>}
     <div className="task-chips"><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>전체</button>{categories.map((name) => <button key={name} aria-pressed={category === name} onClick={() => setCategory(name)}>{name}</button>)}</div>
     {[groups[view]].map(([title, items]) => <div className="task-group" key={title}>
       {!items.length ? <div className="empty-state">{view === 1 ? '아직 끝낸 일이 없어요.' : '할 일이 없어요.'}{view === 0 && onAdd && <button className="empty-add" onClick={onAdd}>할 일 추가</button>}</div>
