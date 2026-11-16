@@ -326,3 +326,6 @@
 .game-ranks .rank-value { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
 .game-ranks .grouped-body small { color: var(--label-2); }
 @media (prefers-color-scheme: dark) { .game-ranks .rank-no { color: #f5f5f7; } }
+.clean-room-arrow { display: grid; place-items: center; width: 36px; height: 36px; margin-top: -18px; padding: 0; background: rgb(255 255 255 / .9); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.clean-room-arrow.prev { left: 10px; } .clean-room-arrow.next { right: 10px; }
+.clean-room .clean-room-arrow { min-width: 0; min-height: 0; width: 40px; height: 40px; margin-top: -20px; box-shadow: 0 2px 8px rgb(0 0 0 / .12); }

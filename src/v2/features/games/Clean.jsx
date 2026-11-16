@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { N, STAGES, FINITE, begin, findMove, goals, isFixed, isLocked, play, shuffle, smash, sweep, erase } from './cleanLogic'
 import { burst, buzz, confetti, fanfare, playMusic, pop, shake } from './fx'
@@ -195,8 +196,8 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     return <div key="map" className="clean-map">
       <div className="clean-room-tabs" ref={tabs} role="tablist" aria-label="방 고르기">{ROOMS.map((r, k) => <button key={r.name} role="tab" aria-selected={r === room} disabled={!open(r, k)} onClick={() => { setView(k); setCheer('') }}>{r.name}{finished(r) ? ' ✓' : ''}</button>)}</div>
       <section key={room.name} className={`clean-room${slide ? ` slide-${slide}` : ''}`} onTouchStart={(e) => { swipe.current = e.touches[0].clientX }} onTouchEnd={(e) => { const dx = e.changedTouches[0].clientX - (swipe.current ?? e.changedTouches[0].clientX); swipe.current = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1) }} style={{ backgroundImage: `url(/game/room/${room.bg}.jpg)` }} aria-label={`${room.name} 꾸미기`}>
-        {canGo(-1) && <button className="clean-room-arrow prev" aria-label="이전 방" onClick={() => go(-1)}>‹</button>}
-        {canGo(1) && <button className="clean-room-arrow next" aria-label="다음 방" onClick={() => go(1)}>›</button>}
+        {canGo(-1) && <button className="clean-room-arrow prev" aria-label="이전 방" onClick={() => go(-1)}><ChevronLeft size={24} strokeWidth={2.5} aria-hidden="true" /></button>}
+        {canGo(1) && <button className="clean-room-arrow next" aria-label="다음 방" onClick={() => go(1)}><ChevronRight size={24} strokeWidth={2.5} aria-hidden="true" /></button>}
         <span className="clean-room-name">{room.name}</span>
         {home && finished(room) && <img className="room-friends" src={`/friends/${room.bg === 'bath' ? 'swim' : room.bg === 'yard' ? 'dance' : room.bg === 'entry' ? 'guard' : 'cheer'}.webp`} alt="친구들이 놀러 왔어요" />}
         <span className="clean-wallet">★ {wallet}</span>
