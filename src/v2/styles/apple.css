@@ -346,7 +346,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .today-date .weather-pic { width: 24px; height: 24px; }
 .today-date .weather-out { margin-left: 0; }
 .weather-tip { margin: -4px 4px 12px; color: var(--label-2); font-size: 15px; word-break: keep-all; }
-.v2-app[data-view='calendar'] .header-tools { bottom: 9px; } /* 달력 제목 줄이 3px 높아서 아이콘을 홈과 같은 높이로 */
+.v2-app[data-view='calendar'] .header-tools { top: calc(env(safe-area-inset-top) + 5px); bottom: auto; }
 /* 할 일·놀이: 큰 제목은 다른 탭과 같은 높이, 작은 글과 버튼은 그 아래 한 줄 (사용자 2026-11-12) */
 .heading-sub { display: flex; align-items: center; gap: 8px; min-height: 28px; margin-top: 2px; }
 .heading-sub .app-date { margin: 0; font-size: 15px; font-weight: 500; color: var(--label-2); }
@@ -484,9 +484,13 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .conn .me-pick > p, .conn .link-login > p { font-size: 15px; color: var(--label-2); }
 .conn-status { align-items: start; } .conn-status .conn-dot { margin-top: 6px; }
 .calendar-day .shift-pic { display: block; width: 18px; height: 18px; margin: 2px 0 0; }
-.shift-legend { display: flex; justify-content: center; gap: 16px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--secondary-label, #6e6e73); }
+.shift-legend { display: flex; justify-content: flex-start; padding-left: 4px !important; gap: 16px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--secondary-label, #6e6e73); }
 .shift-legend li { display: flex; align-items: center; gap: 5px; }
 .back-home { display: block; margin: 0 0 8px; padding: 6px 0; font-size: 16px; font-weight: 600; color: var(--tint); }
 .fold-head { display: flex; align-items: center; gap: inherit; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .fold-chev { margin-left: auto; font-size: 22px; color: var(--secondary-label, #8e8e93); transform: rotate(90deg); transition: transform .2s; }
 .fold-head[aria-expanded='false'] .fold-chev { transform: rotate(0deg); }
+.month-pick { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 600; color: var(--label, #1c1c1e); cursor: pointer; }
+.heading-sub > .month-pick { margin-left: 0 !important; }
+.month-pick .app-date { margin-left: 6px; color: #6e6e73; font-weight: 500; }
+@media (prefers-color-scheme: dark) { .month-pick .app-date { color: #98989d; } }

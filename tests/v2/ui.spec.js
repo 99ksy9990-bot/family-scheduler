@@ -32,7 +32,7 @@ test('오늘·달력 개수 동일·월주 전환·오늘 복귀·선택일 아�
   await expect(page.locator('.selected-schedule').getByRole('heading', { name: '오후 일정' })).toBeVisible()
   await page.getByRole('button', { name: /다른 달 고르기/ }).click()
   await page.getByRole('dialog').getByRole('button', { name: '12월', exact: true }).click()
-  await expect(page.locator('.app-heading h1')).toHaveText('12월')
+  await expect(page.locator('.month-pick')).toContainText('12월')
   await page.getByRole('button', { name: '오늘로' }).click()
   await expect(today).toBeVisible()
 })
