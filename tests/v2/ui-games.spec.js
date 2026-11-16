@@ -62,7 +62,7 @@ test.describe('예시 게임', () => {
       await dialog.getByRole('button', { name: '연두', exact: true }).click()
       if (!['.merge-area', '.clean-room'].includes(selector)) await dialog.getByRole('button', { name: /^쉬움/ }).click()
       await expect(dialog.locator(selector)).toBeVisible()
-      if (index === 1) await expect(dialog.locator('.catch-basket')).toHaveAttribute('src', '/game/little_basket.png')
+      if (index === 1) await expect(dialog.locator('.catch-basket').locator('img').first()).toHaveAttribute('src', '/characters/chiikawa_done.webp')
       await page.keyboard.press('Escape')
       await expect(page.getByRole('dialog')).toHaveCount(0)
     }

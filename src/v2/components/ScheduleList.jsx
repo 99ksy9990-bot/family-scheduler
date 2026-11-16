@@ -20,6 +20,9 @@ const isPast = (row, now) => {
   return row.date === today && !row.crossesMidnight && /^\d\d:\d\d$/.test(end) && end <= `${pad(now.getHours())}:${pad(now.getMinutes())}`
 }
 
+// 지금 하는 중인가 (오늘 시작 시각이 지났고 아직 안 끝남)
+const isLive = (row, now) => { const t = row.displayStart || row.time || ''; return /^\d\d:\d\d$/.test(t) && row.date === `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` && !row.carryover && t <= `${pad(now.getHours())}:${pad(now.getMinutes())}` && !isPast(row, now) }
+
 // 아빠·엄마 근무는 은행·병원 그림
 const workIcon = (row, members) => { if (row.type !== 'shift' || row.title === 'OFF') return null; /* 쉬는 날(OFF)은 그대로 */ const k = { dad: 'bank', mom: 'hospital' }[roleOf(members[0] || {})]; return k ? <DayIcon kind={k} size={40} /> : null }
 export default function ScheduleList({ rows, profiles, label = '시간순 일정', solo = false, onRow, nextId }) { // solo: 한 사람 묶음 안이라 얼굴·이름 생략
@@ -32,7 +35,7 @@ export default function ScheduleList({ rows, profiles, label = '시간순 일정
     const members = membersFor(row, profiles)
     const primary = members[0] || { name: row.holiday ? '공휴일' : row.anniversary ? row.anniversaryKind || '기념일' : '가족' }
     if (row.type === 'shift' && row.sourceDate && !solo) return <li key={row.id} className="schedule-shift-group">{workIcon(row, members) || (solo ? <DayIcon kind="shift" size={40} /> : <MemberAvatars item={row} profiles={profiles} />)}<div>{group.map((shift) => <div onClick={onRow ? () => onRow(shift) : undefined} role={onRow ? 'button' : undefined} tabIndex={onRow ? 0 : undefined} className={`shift-line${shift.carryover ? ' is-carryover' : ''}${isPast(shift, now) ? ' is-past' : ''}`} key={shift.id}><span><h3>{shift.title}</h3>{!solo && <small>{members.map((profile) => profile.name).join(' · ')}</small>}</span><TimeCell row={shift} /></div>)}</div></li>
-    return <GroupedRow key={row.id} onClick={onRow && !row.holiday ? () => onRow(row) : undefined} className={`${isPast(row, now) ? 'is-past' : ''}${row.id === next ? ' next' : ''}${row.carryover ? ' is-carryover' : ''}`} icon={workIcon(row, members) || (solo ? <DayIcon kind={kindOf(row)} size={40} /> : <MemberAvatars item={row} profiles={profiles} />)} title={<h3 className="row-title-wx">{row.title}{row.type !== 'shift' && rainAt(row.date, row.displayStart) && <img className="row-umbrella" src="/icons/weather/rain.png" alt="비 예보" width={20} height={20} />}</h3>} subtitle={row.anniversary ? [(row.milestoneLabel || '').replace(/^다음 \S+에 /, ''), row.location].filter(Boolean).join(' · ') : [solo ? '' : members.map((profile) => profile.name).join(' · ') || primary.name, row.kind, row.location].filter(Boolean).join(' · ')} value={<TimeCell row={row} />} />
+    return <GroupedRow key={row.id} onClick={onRow && !row.holiday ? () => onRow(row) : undefined} className={`${isPast(row, now) ? 'is-past' : ''}${row.id === next ? ' next' : ''}${row.carryover ? ' is-carryover' : ''}`} icon={workIcon(row, members) || (solo ? <DayIcon kind={kindOf(row)} size={40} /> : <MemberAvatars item={row} profiles={profiles} />)} title={<h3 className="row-title-wx">{row.title}{isLive(row, now) && <span className="live-badge">지금</span>}{row.type !== 'shift' && rainAt(row.date, row.displayStart) && <img className="row-umbrella" src="/icons/weather/rain.png" alt="비 예보" width={20} height={20} />}</h3>} subtitle={row.anniversary ? [(row.milestoneLabel || '').replace(/^다음 \S+에 /, ''), row.location].filter(Boolean).join(' · ') : [solo ? '' : members.map((profile) => profile.name).join(' · ') || primary.name, row.kind, row.location].filter(Boolean).join(' · ')} value={<TimeCell row={row} />} />
   }
   return <GroupedList label={label}>{(solo ? rows.map((row) => [row]) : groupShiftRows(rows)).map(item)}</GroupedList>
 }

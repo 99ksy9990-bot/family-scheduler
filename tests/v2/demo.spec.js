@@ -5,7 +5,7 @@ import { iso } from '../../src/lib/dates.js'
 test('공개 예시는 기준일의 새 데이터만 만들고 호출 사이에 공유하지 않는다', () => {
   const today = new Date(2026, 10, 6)
   const state = createDemo(today)
-  expect(state.profiles.map((profile) => [profile.name, profile.characterId])).toEqual([['아빠', 'dad'], ['엄마', 'mom'], ['초롱', 'big'], ['연두', 'little']])
+  expect(state.profiles.map((profile) => [profile.name, profile.characterId])).toEqual([['아빠', 'knight'], ['엄마', 'siren'], ['초롱', 'usagi'], ['연두', 'chiikawa']])
   expect(state.events).toHaveLength(6)
   expect(state.tasks).toHaveLength(5)
   expect(state.events.every((event) => event.date === iso(today))).toBe(true)

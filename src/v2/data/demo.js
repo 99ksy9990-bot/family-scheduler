@@ -5,7 +5,7 @@ import { DEFAULT_SHIFT_TYPES } from '../../lib/legacyState'
 export function createDemo(today) {
   const date = iso(today)
   const profiles = [['dad', '아빠', 'adult'], ['mom', '엄마', 'adult'], ['big', '초롱', 'child'], ['little', '연두', 'child']]
-    .map(([id, name, type]) => ({ id: `demo-${id}`, name, type, characterId: id, active: true, ...(id === 'dad' ? { regularWork: { weekdays: [1, 2, 3, 4, 5], start: '08:00', end: '17:00', skipHolidays: true } } : {}) }))
+    .map(([id, name, type]) => ({ id: `demo-${id}`, name, type, characterId: { dad: 'knight', mom: 'siren', big: 'usagi', little: 'chiikawa' }[id], baseCharacter: id, active: true, ...(id === 'dad' ? { regularWork: { weekdays: [1, 2, 3, 4, 5], start: '08:00', end: '17:00', skipHolidays: true } } : {}) }))
   const events = [
     ['아침 산책', '07:30', '08:00', 'dad'], ['그림 그리기', '10:00', '11:00', 'little'],
     ['함께 점심', '12:00', '13:00', 'family'], ['도서관 나들이', '15:00', '16:00', 'big'],
