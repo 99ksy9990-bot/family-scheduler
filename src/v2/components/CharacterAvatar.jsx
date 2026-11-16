@@ -3,7 +3,7 @@ import { useState } from 'react'
 // 치이카와 그림은 표정 6가지만 있음 → 나머지 표정은 가까운 것으로
 export const MINI = ['chiikawa', 'usagi', 'siren', 'knight']
 export const READY = ['dad', 'mom', 'big', 'little', 'chiikawa', 'usagi', 'siren', 'knight'] // 그림 있는 것만 고르기에 보임
-const MINI_MOOD = { basic: 'basic', busy: 'busy', mask: 'busy', study: 'study', worried: 'worried', done: 'done', party: 'party', sleepy: 'sleepy', rest: 'sleepy', sick: 'sick', cold: 'cold', snow: 'cold', windy: 'cold', rain: 'rain', hot: 'hot', dust: 'worried', sunny: 'sunny', cloudy: 'basic' }
+const MINI_MOOD = { basic: 'basic', busy: 'busy', mask: 'busy', study: 'study', worried: 'worried', done: 'done', party: 'party', sleepy: 'sleepy', rest: 'sleepy', sick: 'sick', cold: 'cold', snow: 'snow', windy: 'windy', rain: 'rain', hot: 'hot', dust: 'dust', sunny: 'sunny', cloudy: 'cloudy' }
 // 치이카와 그림을 골라도 원래 역할(아빠·엄마…)은 유지: 색·근무 그림에 씀
 const BY_NAME = { 아빠: 'dad', 엄마: 'mom', 초롱: 'big', 연두: 'little' }
 export const roleOf = (profile = {}) => !MINI.includes(profile.characterId) ? profile.characterId : profile.baseCharacter || BY_NAME[profile.name] || String(profile.id || '').replace(/^demo-/, '')

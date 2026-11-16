@@ -14,7 +14,11 @@ import { offRows } from '../../data/personDay'
 import { personColor } from '../../data/kinds'
 
 // 그날 일정을 사람별로 묶음: 가족 전체(공휴일·기념일) → 함께 하는 일정 → 한 사람씩
-export function ByPerson({ rows, profiles, onRow, moods = {} }) {
+const FOLD_KEY = 'family-scheduler-folded' // 접은 사람(이 폰에 기억)
+const readFold = () => { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '[]') } catch { return [] } }
+export function ByPerson({ rows, profiles, onRow, moods = {}, foldable = false }) {
+  const [folded, setFolded] = useState(readFold)
+  const toggle = (key) => setFolded((f) => { const next = f.includes(key) ? f.filter((k) => k !== key) : [...f, key]; try { localStorage.setItem(FOLD_KEY, JSON.stringify(next)) } catch { /* 저장 못 해도 지금은 접힘 */ } return next })
   if (!rows.length) return <ScheduleList rows={rows} profiles={profiles} />
   const groups = new Map()
   for (const row of rows) {
@@ -24,8 +28,8 @@ export function ByPerson({ rows, profiles, onRow, moods = {} }) {
   }
   const order = [['all', '가족'], ...profiles.filter((p) => p.active !== false).map((p) => [p.id, p.name, p])]
   return order.filter(([key]) => groups.has(key)).map(([key, name, profile]) => <div className={`person-group${profile ? " solo" : ""}`} key={key} style={profile ? { '--pc': personColor(profile) } : undefined}>
-    <h3 className="person-group-head">{profile ? <CharacterAvatar profile={profile} expression={moods[profile.id]} size={44} /> : null}{name}<small>{groups.get(key).length}</small></h3>
-    <ScheduleList rows={groups.get(key)} profiles={profiles} onRow={onRow} nextId="auto" label={`${name} 일정`} solo={Boolean(profile)} />
+    <h3 className="person-group-head">{foldable ? <button type="button" className="fold-head" aria-expanded={!folded.includes(key)} onClick={() => toggle(key)}>{profile ? <CharacterAvatar profile={profile} expression={moods[profile.id]} size={44} /> : null}{name}<small>{groups.get(key).length}</small><span className="fold-chev" aria-hidden="true">›</span></button> : <>{profile ? <CharacterAvatar profile={profile} expression={moods[profile.id]} size={44} /> : null}{name}<small>{groups.get(key).length}</small></>}</h3>
+    {!(foldable && folded.includes(key)) && <ScheduleList rows={groups.get(key)} profiles={profiles} onRow={onRow} nextId="auto" label={`${name} 일정`} solo={Boolean(profile)} />}
   </div>)
 }
 
@@ -89,6 +93,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         })}
       </div></DataState>
     </section>
+    {[...shiftLabels.values()].flat().some((l) => ['day', 'evening', 'night'].includes(l.id) && !hidden.includes(l.member)) && <ul className="shift-legend" aria-label="근무 그림 뜻">{[['day', '새벽 근무'], ['evening', '낮 근무'], ['night', '밤 근무']].map(([id, name]) => <li key={id}><img src={`/icons/shift/${id}.png`} alt="" width={20} height={20} />{name}</li>)}</ul>}
     <section className="selected-schedule" aria-labelledby="selected-heading"><h2 className="house-section-title" id="selected-heading">{selected.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}<span className="visually-hidden" data-testid="selected-count">{rows.length}</span>{clip && <span className="paste-bar">{!rows.some((row) => row.title === clip.title && (row.displayStart || '') === (clip.time || '')) && <button type="button" className="paste-event" onClick={() => onPaste(iso(selected))}>복사 · {clip.title}</button>}<button type="button" className="paste-done" aria-label="붙여넣기 끝내기" onClick={() => { clearClip(); setClipTick((n) => n + 1) }}><X size={16} /></button></span>}</h2><DataState loading={loading} error={error} onRetry={onRetry}><ByPerson rows={rows} profiles={state.profiles} onRow={canEdit ? setEditing : undefined} /></DataState>
       {skippedHere.length > 0 && <details className="skipped-list"><summary className="quiet">이 날 뺀 반복 일정 {skippedHere.length}</summary>{skippedHere.map((x) => <div key={x.id} className="skipped-row"><span className="skipped-who">{x.who.slice(0, 2).map((p) => <CharacterAvatar key={p.id} profile={p} size={30} />)}<span><b>{x.who.map((p) => p.name).join('·') || '가족'}</b> {x.title}{x.time && <small> {x.time}</small>}</span></span><button type="button" className="text-button" disabled={!canEdit} onClick={() => updateState((current) => ({ ...current, scheduleExceptions: (current.scheduleExceptions || []).filter((e) => e.id !== x.id) }))}>되살리기</button></div>)}</details>}</section>
     {editing && <RowEditor row={editing} state={state} updateState={updateState} canEdit={canEdit} today={today} onChange={setEditing} onSkip={() => setTimeout(() => document.querySelector('.skipped-list')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100)} />}
