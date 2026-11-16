@@ -73,7 +73,7 @@
 .house-tile .glass-icon { background-color: var(--orb-t); border: 1px solid var(--icon-line); }
 .house-tile .glass-icon img { width: 56px; height: 56px; }
 .house-tile .glass-icon::after { opacity: .35; inset: 2px 18% 72%; }
-.house-tile[data-character='dad'] .glass-icon { --orb-t: rgba(94,92,230,.22); --orb-shadow: rgba(94,92,230,.35); }
+.house-tile[data-character='dad'] .glass-icon { --orb-t: rgba(47,128,237,.22); --orb-shadow: rgba(47,128,237,.35); }
 .house-tile[data-character='mom'] .glass-icon { --orb-t: rgba(255,122,89,.22); --orb-shadow: rgba(255,122,89,.35); }
 .house-tile[data-character='big'] .glass-icon { --orb-t: rgba(191,90,242,.22); --orb-shadow: rgba(191,90,242,.35); }
 .house-tile[data-character='little'] .glass-icon { --orb-t: rgba(48,176,122,.22); --orb-shadow: rgba(48,176,122,.35); }
@@ -425,7 +425,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 /* 생일 당일 칸: 은은한 축하 색 */
 .house-tile.birthday-tile { background: linear-gradient(160deg, #fff4f7 0%, #fffaf0 100%); box-shadow: inset 0 0 0 1px rgba(255, 140, 170, .25); }
 @media (prefers-color-scheme: dark) { .house-tile.birthday-tile { background: linear-gradient(160deg, #3a2730 0%, #33302a 100%); } }
-.day-icon[data-tone='bank'] { --di-bg: #e4e3fb; }
+.day-icon[data-tone='bank'] { --di-bg: #e0ebfc; }
 .day-icon[data-tone='hospital'] { --di-bg: #ffe5df; }
 .task-person .todo-cat { background: color-mix(in srgb, var(--pc) 16%, var(--card)); }
 /* 근무 그림과 칩을 한 묶음으로 가운데 정렬 */

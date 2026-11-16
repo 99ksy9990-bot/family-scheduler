@@ -9,7 +9,7 @@
 .person-hero .character { margin: 0 auto; border: 1px solid var(--icon-line); }
 .person-hero .character img { width: 84px; height: 84px; }
 .person-hero .glass-icon::after { opacity: .35; inset: 3px 18% 72%; }
-.person-hero[data-character='dad'] { --orb-t: rgba(94,92,230,.22); --orb-shadow: rgba(94,92,230,.35); }
+.person-hero[data-character='dad'] { --orb-t: rgba(47,128,237,.22); --orb-shadow: rgba(47,128,237,.35); }
 .person-hero[data-character='mom'] { --orb-t: rgba(255,122,89,.22); --orb-shadow: rgba(255,122,89,.35); }
 .person-hero[data-character='big'] { --orb-t: rgba(191,90,242,.22); --orb-shadow: rgba(191,90,242,.35); }
 .person-hero[data-character='little'] { --orb-t: rgba(48,176,122,.22); --orb-shadow: rgba(48,176,122,.35); }
