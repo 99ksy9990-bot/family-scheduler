@@ -6,7 +6,8 @@ export function taskRows(tasks, today, category = 'all', showCompleted = false) 
   return tasks.flatMap((task) => {
     if (category !== 'all' && task.category !== category) return []
     if (!hasRecurrence(task)) return showCompleted || !task.done ? [{ ...task, sourceTaskId: task.id }] : []
-    const rows = []
+    // 지난 날 끝낸 기록도 (끝낸 일 · 달별 보기)
+    const rows = showCompleted ? (task.completedDates || []).filter((key) => key < iso(today)).map((key) => ({ ...task, id: `${task.id}-${key}`, sourceTaskId: task.id, occurrenceDate: key, dueDate: key, done: true })) : []
     for (let date = today; date <= monthEnd; date = addDays(date, 1)) {
       const key = iso(date)
       if (!task.dueDate || !isRecurrenceStart({ ...task, date: task.dueDate }, date) || task.skippedDates?.includes(key)) continue
