@@ -488,7 +488,7 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .shift-legend li { display: flex; align-items: center; gap: 5px; }
 .back-home { display: block; margin: 0 0 8px; padding: 6px 0; font-size: 16px; font-weight: 600; color: var(--tint); }
 .fold-head { display: flex; align-items: center; gap: inherit; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.fold-chev { margin-left: auto; font-size: 22px; color: var(--secondary-label, #8e8e93); transform: rotate(90deg); transition: transform .2s; }
+.fold-chev { margin-left: 2px; font-size: 20px; color: var(--secondary-label, #8e8e93); transform: rotate(90deg); transition: transform .2s; }
 .fold-head[aria-expanded='false'] .fold-chev { transform: rotate(0deg); }
 .month-pick { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 600; color: var(--label, #1c1c1e); cursor: pointer; }
 .heading-sub > .month-pick { margin-left: 0 !important; }
