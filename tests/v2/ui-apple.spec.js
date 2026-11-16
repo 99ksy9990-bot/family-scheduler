@@ -40,7 +40,7 @@ test('개인 타일 시트·남은 목록·다음 시각만 강조', async ({ pa
   await expect(page.locator('.house-badge')).toHaveText('근무')
   await expect(page.locator('.today-remaining .grouped-row')).toHaveCount(3) // 진행 중인 근무도 끝날 때까지 남음
   await expect(page.locator('.today-remaining .grouped-row.next .time-start')).toHaveText('09:00') // 진행 중인 일정이 맨 앞에서 강조
-  expect(await page.locator('.today-remaining .grouped-row.next .time-start').evaluate((element) => getComputedStyle(element).fontWeight)).not.toBe(await page.locator('.today-remaining .grouped-row:not(.next) .time-start').evaluate((element) => getComputedStyle(element).fontWeight))
+  expect(await page.locator('.today-remaining .grouped-row.next .time-start').evaluate((element) => getComputedStyle(element).fontWeight)).not.toBe(await page.locator('.today-remaining .grouped-row:not(.next) .time-start').first().evaluate((element) => getComputedStyle(element).fontWeight))
   await page.locator('.house-tile').first().click()
   await expect(page.getByRole('dialog').getByRole('button', { name: /^오전 근무/ })).toBeVisible()
   await page.keyboard.press('Escape')
