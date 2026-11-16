@@ -504,3 +504,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .shift-legend-row .work-toggles { flex-wrap: nowrap; gap: 6px; }
 .shift-legend-row .work-toggles button { min-height: 34px; padding: 0 10px 0 4px; font-size: 14px; }
 .shift-legend-row .shift-legend { gap: 10px; white-space: nowrap; }
+.shift-legend-row { flex-wrap: wrap; gap: 10px 12px; }
