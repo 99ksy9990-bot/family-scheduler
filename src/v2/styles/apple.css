@@ -483,3 +483,4 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .conn .ui-segments button[aria-pressed='true'] { color: var(--label); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 .conn .me-pick > p, .conn .link-login > p { font-size: 15px; color: var(--label-2); }
 .conn-status { align-items: start; } .conn-status .conn-dot { margin-top: 6px; }
+.calendar-day .shift-pic { display: block; width: 18px; height: 18px; margin: 2px 0 0; }
