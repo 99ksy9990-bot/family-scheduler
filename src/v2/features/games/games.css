@@ -321,3 +321,8 @@
 .mini-basket img { width: 100%; height: auto; object-fit: contain; }
 .mini-basket img:first-child { margin-bottom: -18%; position: relative; z-index: 1; }
 .game-sheet, .game-sheet * { overscroll-behavior: contain; } /* 게임 중 끌어내림이 화면 새로고침으로 번지지 않게 */
+/* 주식앱처럼: 순위 번호 굵게, 기록은 오른쪽 크게 */
+.game-ranks .rank-no { width: 22px; font-size: 17px; font-weight: 700; color: var(--label, #1d1d1f); }
+.game-ranks .rank-value { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
+.game-ranks .grouped-body small { color: var(--label-2); }
+@media (prefers-color-scheme: dark) { .game-ranks .rank-no { color: #f5f5f7; } }
