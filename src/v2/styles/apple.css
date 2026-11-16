@@ -505,3 +505,8 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .shift-legend-row .work-toggles button { min-height: 34px; padding: 0 10px 0 4px; font-size: 14px; }
 .shift-legend-row .shift-legend { gap: 10px; white-space: nowrap; }
 .shift-legend-row { flex-wrap: wrap; gap: 10px 12px; }
+.shift-legend-row { flex-wrap: nowrap; gap: 10px; }
+.shift-legend-row .work-toggles button { gap: 4px; padding: 0 10px 0 4px; font-size: 14px; }
+.shift-legend-row .shift-legend { gap: 8px; font-size: 13px; }
+.shift-legend-row .shift-legend li { gap: 3px; }
+.shift-legend-row { flex-wrap: wrap; } /* 아주 작은 폰만 두 줄 */
