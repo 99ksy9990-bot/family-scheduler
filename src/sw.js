@@ -43,6 +43,20 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // 그림은 이름이 그대로라 저장본이 옛 그림일 수 있음 → 새로 받아 보고, 안 되면(오프라인) 저장본
+  if (request.destination === 'image') {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request, { cache: 'no-cache' })
+        if (response.ok) (await caches.open(CACHE_NAME)).put(request, response.clone())
+        return response
+      } catch {
+        return (await caches.match(request, { ignoreVary: true })) || Response.error()
+      }
+    })())
+    return
+  }
+
   event.respondWith((async () => {
     const cached = await caches.match(request, { ignoreVary: true })
     if (cached) return cached
