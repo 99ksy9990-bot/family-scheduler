@@ -46,7 +46,7 @@
 .fx-host{position:relative}
 .fx-pop{position:absolute;z-index:30;pointer-events:none;font-size:30px;font-weight:900;white-space:nowrap;-webkit-text-stroke:5px var(--on-tint);paint-order:stroke fill;filter:drop-shadow(0 3px 6px rgba(0,0,0,.25));font-variant-numeric:tabular-nums}
 .fx-good{color:var(--tint)}.fx-gold{color:#ff9500;font-size:38px}.fx-bad{color:var(--red)}
-.fx-spark{position:absolute;z-index:25;width:34px;height:34px;pointer-events:none;filter:drop-shadow(0 0 4px #ffcc00) saturate(1.8)}
+.fx-spark{position:absolute;z-index:25;width:34px;height:34px;pointer-events:none}
 .fx-dot{position:absolute;z-index:24;width:10px;height:10px;border-radius:50%;pointer-events:none}
 .fx-ring{position:absolute;z-index:24;width:20px;height:20px;border-radius:50%;border:4px solid var(--tint);pointer-events:none}
 .fx-confetti{position:absolute;top:0;z-index:6;width:8px;height:12px;border-radius:2px;pointer-events:none}

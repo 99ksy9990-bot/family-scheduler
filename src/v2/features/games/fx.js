@@ -27,8 +27,15 @@ export function pop(host, x, y, text, tone = 'good', duration = 1500) {
   a.onfinish = () => n.remove()
 }
 
+// 한꺼번에 떠 있는 반짝이 수 제한 (연쇄로 수백 개가 뜨면 폰이 버벅임)
+let live = 0
+const FX_MAX = 80
 export function burst(host, x, y, count = 10, src = '/game/sparkle.png') {
   if (!host || calm()) return
+  count = Math.min(count, Math.floor((FX_MAX - live) / 2))
+  if (count <= 0) return
+  live += count * 2
+  setTimeout(() => { live -= count * 2 }, 850)
   for (let i = 0; i < count; i += 1) {
     const n = document.createElement('img')
     n.src = src; n.alt = ''; n.className = 'fx-spark'
