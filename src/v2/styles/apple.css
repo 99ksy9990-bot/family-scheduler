@@ -530,3 +530,6 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .done-faces > * + * { margin-left: -10px; }
 /* 아빠 칩은 테두리처럼 파스텔 파랑 ('지금' 표시 파랑과 구분) */
 .house-grid .house-tile[data-character='dad'] .house-badge, .house-grid .house-tile[data-character='dad'] .house-badge.upcoming { background: #7ab0f4; color: #fff; }
+.house-grid .house-tile[data-character='mom'] .house-badge, .house-grid .house-tile[data-character='mom'] .house-badge.upcoming { background: #ffa58e; color: #fff; }
+.house-grid .house-tile[data-character='big'] .house-badge, .house-grid .house-tile[data-character='big'] .house-badge.upcoming { background: #d39af5; color: #fff; }
+.house-grid .house-tile[data-character='little'] .house-badge, .house-grid .house-tile[data-character='little'] .house-badge.upcoming { background: #6fcca1; color: #fff; }
