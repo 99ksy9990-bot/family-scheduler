@@ -528,3 +528,5 @@ a.weather-line:focus-visible, .map-out:focus-visible { outline: 2px solid var(--
 .live-badge { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 999px; background: var(--tint, #0a84ff); color: #fff; font-size: 12px; font-weight: 700; line-height: 1.4; vertical-align: 2px; }
 .done-faces { display: flex; flex: none; }
 .done-faces > * + * { margin-left: -10px; }
+/* 아빠 칩은 테두리처럼 파스텔 파랑 ('지금' 표시 파랑과 구분) */
+.house-grid .house-tile[data-character='dad'] .house-badge, .house-grid .house-tile[data-character='dad'] .house-badge.upcoming { background: #8fbdf7; color: var(--badge-dark); }
