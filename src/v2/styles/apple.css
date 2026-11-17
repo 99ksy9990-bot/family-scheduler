@@ -175,7 +175,8 @@ button.heading-line.month-line:focus-visible { outline: 3px solid var(--tint); o
 .activity-filter button { flex: none; min-height: 36px; padding: 0 16px; border: 1px solid var(--sep); border-radius: 18px; background: none; color: var(--label); font-size: 15px; font-weight: 600; }
 .activity-filter button[aria-pressed='true'] { background: var(--label); border-color: var(--label); color: var(--bg); }
 .activity-filter button:focus-visible { outline: 3px solid var(--tint); outline-offset: 2px; }
-.activity-list li > div { flex: 1; min-width: 0; }
+.activity-list li > div:not(.character) { flex: 1; min-width: 0; }
+.activity-list li > .character { flex: none; }
 .activity-list li[data-read='true'] { opacity: .55; }
 .activity-new { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--tint); }
 /* 유리 버튼: 흰 판이 아니라 비치는 유리 (하단 탭과 같은 결) */
