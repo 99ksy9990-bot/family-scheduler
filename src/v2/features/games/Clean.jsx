@@ -13,6 +13,9 @@ const PERK_COMP = 5
 // 방 효과를 담당 게임으로 나누면서 대청소 효과가 빠진 방: 방 하나마다 별 PERK_COMP개 (한 번만)
 const perkCompOf = (p) => (!p || p.perkComp ? 0 : ROOMS.filter((r, k) => roomGame(k) !== 'clean' && r.tasks.every((t) => (p.done || []).includes(t.id))).length * PERK_COMP)
 
+// 블록 그림을 미리 풀어 둠: 깨진 자리에 새 블록이 바로 보이게 (안 하면 그림 바뀔 때 잠깐 빈칸)
+const ready = new Set()
+const preload = (srcs) => { for (const src of Object.values(srcs)) { if (ready.has(src)) continue; ready.add(src); const im = new Image(); im.src = src; im.decode?.().catch(() => {}) } }
 const IMG0 = ['star', 'heart', 'sun', 'clock', 'pencil', 'plant'].map((n) => `/game/pieces/${n}.png`) // 배경 없는 물건 그림
 // 블록 그림: 1~10단계는 기본, 그 뒤 10단계마다 그 방과 다음 방의 꾸미기 물건 6개로 바꿈
 const hueGap = (a, b) => (a < 0 || b < 0 ? (a === b ? 0 : 60) : Math.min(Math.abs(a - b), 360 - Math.abs(a - b)))
@@ -324,6 +327,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
 
   const gs = goals(s)
   const IMG = piecesFor(s.stage)
+  preload(IMG)
   const mood = s.done === 'win' ? 'done' : s.done === 'lose' || s.moves <= 3 ? 'busy' : cheer ? 'done' : 'basic'
   return <div className="clean" style={{ '--room-bg': `url(/game/room/${ROOMS[Math.floor(s.stage / 10) % ROOMS.length].bg}.jpg)` }}>
     <div className="clean-hud">
@@ -333,7 +337,7 @@ export default function Clean({ player, onFinish, progress, onProgress, autoStar
     </div>
     <div className={`clean-board fx-host${hammer || broom || eraser ? ' aiming' : ''}`} ref={area} role="grid" aria-label="청소 판" onPointerUp={up} onPointerCancel={() => { start.current = null }}>
       {s.board.map((t, i) => t.fix === 'hole' ? <span key={i} className="clean-hole" /> : <button key={i} data-i={i} className={`clean-cell${sel === i ? ' sel' : ''}${flash.has(i) ? ' flash' : ''}${hint?.includes(i) ? ' hint' : ''}`} data-dust={s.dust[i] || undefined} data-k={t.k >= 0 ? t.k : undefined} data-sp={t.sp || undefined} data-box={t.fix === 'box' ? t.hp : undefined} data-ice={t.ice || undefined} data-foam={s.foam?.[i] || undefined} data-stain={s.stain?.[i] || undefined} data-bin={t.fix === 'bin' ? t.hp : undefined} data-web={t.web || undefined} data-cat={t.cat || undefined} aria-label={`${Math.floor(i / N) + 1}행 ${i % N + 1}열${t.fix === 'box' ? ' 상자' : ''}${t.drop ? ' 오리' : ''}${t.ice ? ' 얼음' : ''}${s.foam?.[i] ? ' 거품' : ''}${s.stain?.[i] ? ' 얼룩' : ''}${t.fix === 'bin' ? ` 쓰레기통 ${t.hp}` : ''}${t.web ? ' 거미줄' : ''}${t.cat ? ' 고양이' : ''}${t.sp ? ` ${SP_LABEL[t.sp]}` : ''}${s.dust[i] ? ` 먼지 ${s.dust[i]}겹` : ''}`} onPointerDown={(e) => down(e, i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), tap(i))}>
-        {t.k >= 0 ? <img src={IMG[t.k]} alt="" draggable="false" /> : t.drop ? <img className="clean-duck" src="/game/room/duck.png" alt="" draggable="false" /> : t.cat ? <img className="clean-duck" src="/game/pieces/cat.png" alt="" draggable="false" /> : t.fix === 'bin' ? <><img src="/game/pieces/bin.png" alt="" draggable="false" /><i className="dust-badge" aria-hidden="true">{t.hp}</i></> : null}{s.dust[i] > 1 && <i className="dust-badge" aria-hidden="true">{s.dust[i]}</i>}
+        {t.k >= 0 ? <img src={IMG[t.k]} alt="" draggable="false" decoding="sync" /> : t.drop ? <img className="clean-duck" src="/game/room/duck.png" alt="" draggable="false" /> : t.cat ? <img className="clean-duck" src="/game/pieces/cat.png" alt="" draggable="false" /> : t.fix === 'bin' ? <><img src="/game/pieces/bin.png" alt="" draggable="false" /><i className="dust-badge" aria-hidden="true">{t.hp}</i></> : null}{s.dust[i] > 1 && <i className="dust-badge" aria-hidden="true">{s.dust[i]}</i>}
       </button>)}
     </div>
     <div className="clean-tools">
