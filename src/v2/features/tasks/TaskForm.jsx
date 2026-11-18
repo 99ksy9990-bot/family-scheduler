@@ -16,9 +16,9 @@ export default function TaskForm({ task, state, updateState, today, onClose, onM
   const [category, setCategory] = useState(task?.category || categories[0])
   const [startDate, setStartDate] = useState(task?.startDate || (task ? '' : iso(today)))
   const [dueDate, setDueDate] = useState(task?.dueDate || '')
-  const [time, setTime] = useState(clock(task?.time))
+  const [time, setTime] = useState(task ? clock(task.time) : '09:00')
   const [end, setEnd] = useState(clock(task?.end))
-  const [allDay, setAllDay] = useState(!clock(task?.time))
+  const [allDay, setAllDay] = useState(task ? !clock(task.time) : false) // 새 할 일은 일정처럼 시간 있음으로 시작
   const active = state.profiles.filter((profile) => profile.active !== false)
   const dad = active.find((profile) => roleOf(profile) === 'dad') // 치이카와 캐릭터를 골라도 아빠로
   const initial = task ? task.assignees || [task.assignee || 'family'] : [dad?.id || 'family'] // 새 할 일은 아빠 기본
