@@ -91,6 +91,8 @@ export const childEventsForDate = (date, childSchedules, schedulePeriods, schedu
   const dateValue = iso(date)
   if (holidaysForYear(date.getFullYear()).has(dateValue)) return []
   return childSchedules
+    // fromDate~toDate를 적으면 그 안에서만 (예: 영어 11월 말까지)
+    .filter((schedule) => !(schedule.fromDate && dateValue < schedule.fromDate) && !(schedule.toDate && dateValue > schedule.toDate))
     .filter((schedule) => scheduleInPeriod(schedule, activePeriodForDate(date, schedulePeriods, schedule.member)) && scheduleWeekdays(schedule).includes(date.getDay()))
     .filter((schedule) => !scheduleExceptions.some((exception) => exception.scheduleId === schedule.id && exception.date === dateValue && exception.type === 'skip'))
     .map((schedule) => ({
