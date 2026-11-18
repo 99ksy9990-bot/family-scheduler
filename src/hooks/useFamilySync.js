@@ -39,6 +39,8 @@ export function useFamilySync({ localState, onRemoteState }) {
   const remoteStateRef = useRef('')
   const versionRef = useRef(0)
   const pendingLocalSaveRef = useRef(false)
+  const adoptRemoteRef = useRef(false) // 서버에서 받은 걸 화면에 넣은 직후엔 다시 저장하지 않음 (기기끼리 주고받기 무한 반복 방지)
+  const resaveCountRef = useRef(0)
   const pendingSnapshotRef = useRef(null)
   const inFlightSaveRef = useRef(null)
   const resolvingConflictRef = useRef(null)
@@ -98,7 +100,9 @@ export function useFamilySync({ localState, onRemoteState }) {
       setConflict(null)
       onRemoteState(mergedState)
       setSyncStatus(pendingLocalSaveRef.current ? 'saving' : 'synced')
-      if (pendingLocalSaveRef.current) setSaveRevision((current) => current + 1)
+      // 저장 직후 또 달라졌다고 곧바로 다시 저장하는 건 3번까지만 (서버·앱 모양 차이로 끝없이 도는 것 방지)
+      resaveCountRef.current = pendingLocalSaveRef.current ? resaveCountRef.current + 1 : 0
+      if (pendingLocalSaveRef.current && resaveCountRef.current <= 3) setSaveRevision((current) => current + 1)
       return { ...stored, autoMerged: true }
     }
     setConflict({
@@ -278,6 +282,7 @@ export function useFamilySync({ localState, onRemoteState }) {
           return
         }
         remoteStateRef.current = serialized
+        adoptRemoteRef.current = true
         onRemoteState(changed.state)
         if (changed.updated_by && changed.updated_by !== session?.user?.id) {
           setRemoteChange({ updatedAt: changed.updated_at, updatedBy: changed.updated_by })
@@ -292,6 +297,7 @@ export function useFamilySync({ localState, onRemoteState }) {
   useEffect(() => {
     if (!family?.household?.id || !family.membership.can_edit || conflict || resolvingConflictRef.current) return undefined
     const serialized = stableStringify(localState)
+    if (adoptRemoteRef.current) { adoptRemoteRef.current = false; remoteStateRef.current = serialized }
     if (serialized === remoteStateRef.current) {
       pendingLocalSaveRef.current = false
       pendingSnapshotRef.current = null
