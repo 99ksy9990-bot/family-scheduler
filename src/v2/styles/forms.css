@@ -28,7 +28,7 @@
 .schedule-owners { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; margin: 0; padding: 4px 0; }
 .schedule-owners button { width: 40px; min-height: 44px; padding: 0; border: 0; background: none; border-radius: 50%; }
 .schedule-owners button[aria-pressed='true'] { background: none; }
-.schedule-owners button:not([aria-pressed='true']) img { filter: grayscale(.9); opacity: .6; }
+.schedule-owners button:not([aria-pressed='true']) { opacity: .3; filter: grayscale(1); } /* 안 고른 사람은 확 연하게 */
 .form-disclosure { padding: 0; }
 .form-disclosure + .form-disclosure { border-top: .5px solid var(--sep); }
 .form-disclosure summary { min-height: 50px; list-style: none; display: flex; align-items: center; justify-content: space-between; font-size: 17px; cursor: pointer; }
@@ -106,3 +106,4 @@
 .paste-bar .paste-event { margin-left: 0; }
 .paste-done { flex: none; width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--label-2); display: grid; place-items: center; }
 .repeat-choice { display: grid; gap: 10px; } .repeat-choice button { min-height: 50px; border: 0; border-radius: 12px; background: var(--fill); font-size: 17px; color: var(--tint-label); }
+.form-group > .schedule-title:only-child { border-bottom: 0; box-shadow: none; }
