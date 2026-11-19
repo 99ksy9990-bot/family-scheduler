@@ -49,6 +49,7 @@ export function useFamilySync({ localState, onRemoteState }) {
   const draftRef = useRef(null)
   const inFlightSaveRef = useRef(null)
   const saveTimerRef = useRef(null)
+  const pingRef = useRef(null)
   const wasOfflineRef = useRef(false)
 
   useEffect(() => { localStateRef.current = localState }, [localState])
@@ -301,27 +302,35 @@ export function useFamilySync({ localState, onRemoteState }) {
   useEffect(() => {
     if (!supabase || !family?.household?.id) return undefined
     const householdId = family.household.id
+    // 서버 데이터베이스 변경 감시(postgres_changes)는 서버 CPU를 많이 써서, 저장한 폰이 '바뀌었어요' 신호만 보내고 받은 폰이 새 내용을 가져옴
+    const onChanged = async (changed) => {
+      if (!hasSharedState(changed?.state) || scopeRef.current?.householdId !== householdId
+        || Number(changed.version) <= versionRef.current) return
+      // 저장 요청이 진행 중이면 응답 또는 버전 충돌 조회가 최신 서버 상태를 처리한다.
+      const request = inFlightSaveRef.current
+      if (request) {
+        if (!request.remote || Number(changed.version) > Number(request.remote.version)) request.remote = changed
+      } else {
+        applyStored(changed)
+      }
+      if (changed.updated_by && changed.updated_by !== session?.user?.id) {
+        setRemoteChange({ updatedAt: changed.updated_at, updatedBy: changed.updated_by })
+      }
+    }
+    const fetchLatest = async () => {
+      const { data } = await supabase.from('household_states').select('state, version, updated_at, updated_by').eq('household_id', householdId).single()
+      if (data) onChanged(data)
+    }
     const channel = supabase
-      .channel(`family-state-${householdId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'household_states', filter: `household_id=eq.${householdId}`,
-      }, ({ new: changed }) => {
-        if (!hasSharedState(changed?.state) || scopeRef.current?.householdId !== householdId
-          || Number(changed.version) <= versionRef.current) return
-        // 저장 요청이 진행 중이면 응답 또는 버전 충돌 조회가 최신 서버 상태를 처리한다.
-        const request = inFlightSaveRef.current
-        if (request) {
-          if (!request.remote || Number(changed.version) > Number(request.remote.version)) request.remote = changed
-        } else {
-          applyStored(changed)
-        }
-        if (changed.updated_by && changed.updated_by !== session?.user?.id) {
-          setRemoteChange({ updatedAt: changed.updated_at, updatedBy: changed.updated_by })
-        }
-      })
+      .channel(`family-ping-${householdId}`)
+      .on('broadcast', { event: 'changed' }, ({ payload }) => { if (Number(payload?.version) > versionRef.current) fetchLatest() })
       .subscribe()
+    pingRef.current = (version) => channel.send({ type: 'broadcast', event: 'changed', payload: { version } })
+    // 신호를 놓쳤을 때 대비: 앱을 다시 볼 때 한 번 확인
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchLatest() }
+    document.addEventListener('visibilitychange', onVisible)
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { pingRef.current = null; document.removeEventListener('visibilitychange', onVisible); supabase.removeChannel(channel) }
   }, [applyStored, family?.household?.id, session?.user?.id])
 
   useEffect(() => {
@@ -381,6 +390,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       if (stableStringify(latest) === stableStringify(snapshot)) storeDraft(null)
       else storeDraft({ baseState: snapshot, localState: latest })
       setError('')
+      pingRef.current?.(saved.version)
       applyStored(saved)
       if (request.remote && Number(request.remote.version) > Number(saved.version)) applyStored(request.remote)
       if (request.refresh) loadFamilyContext(session?.user?.id, scope.householdId).catch(markConnectionFailure)
