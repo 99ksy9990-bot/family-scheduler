@@ -25,11 +25,15 @@ const parseSharedState = (serialized) => {
   catch { return null }
 }
 
+const cachedFamilyKey = (userId) => `family-scheduler-last-sync-family:${userId}`
+const draftKey = (userId, householdId) => `family-scheduler-pending-sync:${userId}:${householdId}`
+
 export function useFamilySync({ localState, onRemoteState }) {
   const [session, setSession] = useState(null)
   const [family, setFamily] = useState(null)
   const [syncStatus, setSyncStatus] = useState('local')
   const [error, setError] = useState('')
+  const [draftError, setDraftError] = useState('')
   const [isOnline, setIsOnline] = useState(true)
   const [lastSyncedAt, setLastSyncedAt] = useState(null)
   const [remoteChange, setRemoteChange] = useState(null)
@@ -38,12 +42,12 @@ export function useFamilySync({ localState, onRemoteState }) {
   const localStateRef = useRef(localState)
   const remoteStateRef = useRef('')
   const versionRef = useRef(0)
-  const pendingLocalSaveRef = useRef(false)
   const adoptRemoteRef = useRef(false) // 서버에서 받은 걸 화면에 넣은 직후엔 다시 저장하지 않음 (기기끼리 주고받기 무한 반복 방지)
   const resaveCountRef = useRef(0)
-  const pendingSnapshotRef = useRef(null)
+  const scopeRef = useRef(null)
+  const userRef = useRef(null)
+  const draftRef = useRef(null)
   const inFlightSaveRef = useRef(null)
-  const resolvingConflictRef = useRef(null)
   const saveTimerRef = useRef(null)
   const wasOfflineRef = useRef(false)
 
@@ -65,6 +69,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       wasOfflineRef.current = true
       setIsOnline(false)
     }
+    if (!navigator.onLine) goOffline()
     window.addEventListener('online', goOnline)
     window.addEventListener('offline', goOffline)
     return () => {
@@ -78,43 +83,115 @@ export function useFamilySync({ localState, onRemoteState }) {
     setFamily((current) => current ? { ...current, version: versionRef.current } : current)
   }, [])
 
-  const buildConflict = useCallback(async (householdId, localSnapshot = localStateRef.current) => {
+  const storeDraft = useCallback((draft) => {
+    draftRef.current = draft
+    if (!scopeRef.current) return
+    try {
+      const { key } = scopeRef.current
+      if (draft) localStorage.setItem(key, JSON.stringify(draft))
+      else localStorage.removeItem(key)
+      setDraftError('')
+    } catch {
+      setDraftError('이 기기에 저장 대기 중인 수정을 보관하지 못했어요.')
+    }
+  }, [])
+
+  const applyStored = useCallback((stored, { prefer, retry = false, seed } = {}) => {
+    const scope = scopeRef.current
+    if (!scope || Number(stored.version) < versionRef.current) return
+    window.clearTimeout(saveTimerRef.current)
+    const remote = stored.state || {}
+    const draft = draftRef.current
+    const merged = draft && scope.canEdit
+      ? mergeSharedShiftChanges(draft.baseState, draft.localState, remote, prefer)
+      : seed || remote
+
+    setVersion(stored.version)
+    setLastSyncedAt(stored.updated_at)
+    if (!merged) {
+      if (stableStringify(localStateRef.current) !== stableStringify(draft.localState)) {
+        localStateRef.current = draft.localState
+        onRemoteState(draft.localState)
+      }
+      setConflict({ remoteState: remote, remoteVersion: stored.version, updatedAt: stored.updated_at })
+      setSyncStatus('conflict')
+      return
+    }
+
+    const serialized = stableStringify(remote)
+    const pending = stableStringify(merged) !== serialized
+    remoteStateRef.current = serialized
+    if (scope.canEdit) storeDraft(pending ? { baseState: remote, localState: merged } : null)
+    setConflict(null)
+    adoptRemoteRef.current = !pending
+    localStateRef.current = merged
+    onRemoteState(merged)
+
+    // 저장 직후에도 서버 버전이 앞서면 연속 재저장은 세 번까지만 시도한다.
+    resaveCountRef.current = pending && retry ? resaveCountRef.current + 1 : 0
+    if (resaveCountRef.current > 3) {
+      setSyncStatus('error')
+      setError('다른 기기의 수정이 계속 들어오고 있어요. 잠시 후 다시 시도해 주세요.')
+      return
+    }
+    setSyncStatus(pending ? 'saving' : scope.canEdit ? 'synced' : 'readonly')
+    if (pending) setSaveRevision((current) => current + 1)
+  }, [onRemoteState, setVersion, storeDraft])
+
+  const buildConflict = useCallback(async (scope) => {
     const { data: stored, error: stateError } = await supabase
       .from('household_states')
       .select('state, version, updated_at, updated_by')
-      .eq('household_id', householdId)
+      .eq('household_id', scope.householdId)
       .single()
+    if (scope !== scopeRef.current) return
     if (stateError) throw stateError
     wasOfflineRef.current = false
     setIsOnline(true)
-    const remoteSerialized = stableStringify(stored.state)
-    const latestLocalSnapshot = localStateRef.current || localSnapshot
-    const mergedState = mergeSharedShiftChanges(parseSharedState(remoteStateRef.current), latestLocalSnapshot, stored.state)
-    versionRef.current = stored.version
-    setFamily((current) => current ? { ...current, version: stored.version } : current)
-    if (mergedState) {
-      const mergedSerialized = stableStringify(mergedState)
-      remoteStateRef.current = remoteSerialized
-      pendingLocalSaveRef.current = mergedSerialized !== remoteSerialized
-      pendingSnapshotRef.current = pendingLocalSaveRef.current ? mergedState : null
-      setConflict(null)
-      onRemoteState(mergedState)
-      setSyncStatus(pendingLocalSaveRef.current ? 'saving' : 'synced')
-      // 저장 직후 또 달라졌다고 곧바로 다시 저장하는 건 3번까지만 (서버·앱 모양 차이로 끝없이 도는 것 방지)
-      resaveCountRef.current = pendingLocalSaveRef.current ? resaveCountRef.current + 1 : 0
-      if (pendingLocalSaveRef.current && resaveCountRef.current <= 3) setSaveRevision((current) => current + 1)
-      return { ...stored, autoMerged: true }
+    applyStored(stored, { retry: true })
+  }, [applyStored])
+
+  const openScope = useCallback((userId, membership) => {
+    const householdId = membership.household_id
+    const key = draftKey(userId, householdId)
+    if (scopeRef.current?.key !== key) {
+      scopeRef.current = { key, householdId, canEdit: membership.can_edit }
+      versionRef.current = 0
+      remoteStateRef.current = ''
+      inFlightSaveRef.current = null
+      draftRef.current = null
+      try {
+        const draft = parseSharedState(localStorage.getItem(key))
+        if (draft?.baseState && draft?.localState) draftRef.current = draft
+        setDraftError('')
+      } catch {
+        setDraftError('이 기기에 보관한 수정을 읽지 못했어요.')
+      }
     }
-    setConflict({
-      localState: latestLocalSnapshot,
-      remoteState: stored.state,
-      remoteVersion: stored.version,
-      updatedAt: stored.updated_at,
-      updatedBy: stored.updated_by,
-    })
-    setSyncStatus('conflict')
-    return stored
-  }, [onRemoteState])
+    scopeRef.current.canEdit = membership.can_edit
+  }, [])
+
+  const handleInitialLoadFailure = useCallback((userId, connectionError) => {
+    if (userRef.current !== userId) return
+    markConnectionFailure(connectionError)
+    if (scopeRef.current || !isNetworkError(connectionError)) return
+    try {
+      // 앱에 이미 보관된 가족 일정으로 오프라인 상태에서 다시 시작한다.
+      const cached = parseSharedState(localStorage.getItem(cachedFamilyKey(userId)))
+      if (!cached?.household?.id || !hasSharedState(localStateRef.current)) return
+      openScope(userId, cached.membership)
+      const draft = draftRef.current
+      remoteStateRef.current = stableStringify(draft?.baseState || localStateRef.current)
+      versionRef.current = Number(cached.version)
+      setFamily({ ...cached, members: [], history: [] })
+      if (draft) {
+        localStateRef.current = draft.localState
+        onRemoteState(draft.localState)
+      }
+    } catch {
+      setDraftError('이 기기에 보관한 가족 정보를 읽지 못했어요.')
+    }
+  }, [markConnectionFailure, onRemoteState, openScope])
 
   const loadFamilyContext = useCallback(async (userId, preferredHouseholdId) => {
     if (!supabase || !userId) return null
@@ -128,9 +205,8 @@ export function useFamilySync({ localState, onRemoteState }) {
       .order('joined_at', { ascending: true })
     if (preferredHouseholdId) membershipQuery = membershipQuery.eq('household_id', preferredHouseholdId)
     const { data: memberships, error: membershipError } = await membershipQuery.limit(1)
+    if (userRef.current !== userId) return null
     if (membershipError) throw membershipError
-    wasOfflineRef.current = false
-    setIsOnline(true)
 
     const membership = memberships?.[0]
     if (!membership) {
@@ -150,33 +226,27 @@ export function useFamilySync({ localState, onRemoteState }) {
     if (stateError) throw stateError
     if (historyError) throw historyError
 
-    versionRef.current = stored.version
+    if (userRef.current !== userId) return null
+    openScope(userId, membership)
     const nextFamily = { household, membership, members: members || [], version: stored.version, history: history || [] }
-    setFamily(nextFamily)
-    setLastSyncedAt(stored.updated_at)
-    setConflict(null)
-
-    if (hasSharedState(stored.state)) {
-      const serialized = stableStringify(stored.state)
-      remoteStateRef.current = serialized
-      pendingLocalSaveRef.current = false
-      onRemoteState(stored.state)
-    } else if (membership.can_edit) {
-      const { data: saved, error: saveError } = await supabase.rpc('save_household_state_v2', {
-        target_household_id: membership.household_id,
-        next_state: localStateRef.current,
-        expected_version: stored.version,
-      }).single()
-      if (saveError) throw saveError
-      remoteStateRef.current = stableStringify(saved.state)
-      versionRef.current = saved.version
-      setFamily((current) => current ? { ...current, version: saved.version } : current)
-      setLastSyncedAt(saved.updated_at)
+    try {
+      localStorage.setItem(cachedFamilyKey(userId), JSON.stringify({
+        household: { id: household.id, name: household.name }, membership, version: stored.version,
+      }))
+    } catch { /* 대기 중인 수정 저장 오류는 storeDraft에서 표시한다. */ }
+    wasOfflineRef.current = false
+    setIsOnline(true)
+    setFamily({ ...nextFamily, version: Math.max(versionRef.current, Number(stored.version)) })
+    if (inFlightSaveRef.current || Number(stored.version) < versionRef.current) {
+      if (inFlightSaveRef.current) inFlightSaveRef.current.refresh = true
+      setSyncStatus(inFlightSaveRef.current || draftRef.current ? 'saving' : membership.can_edit ? 'synced' : 'readonly')
+      return nextFamily
     }
 
-    setSyncStatus(membership.can_edit ? 'synced' : 'readonly')
+    const seed = membership.can_edit && !hasSharedState(stored.state) ? localStateRef.current : undefined
+    applyStored(stored, { seed })
     return nextFamily
-  }, [onRemoteState])
+  }, [applyStored, openScope])
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -189,14 +259,26 @@ export function useFamilySync({ localState, onRemoteState }) {
         setSyncStatus('error')
         return
       }
+      userRef.current = data.session?.user?.id || null
       setSession(data.session)
       if (data.session?.user) loadFamilyContext(data.session.user.id).catch((contextError) => {
-        markConnectionFailure(contextError)
+        handleInitialLoadFailure(data.session.user.id, contextError)
       })
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return
+      const userId = nextSession?.user?.id || null
+      if (userId !== userRef.current) {
+        scopeRef.current = null
+        draftRef.current = null
+        inFlightSaveRef.current = null
+        adoptRemoteRef.current = false
+        window.clearTimeout(saveTimerRef.current)
+        setFamily(null)
+        setConflict(null)
+      }
+      userRef.current = userId
       setSession(nextSession)
       if (!nextSession?.user) {
         setFamily(null)
@@ -205,7 +287,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       }
       window.setTimeout(() => {
         loadFamilyContext(nextSession.user.id).catch((contextError) => {
-          markConnectionFailure(contextError)
+          handleInitialLoadFailure(nextSession.user.id, contextError)
         })
       }, 0)
     })
@@ -214,7 +296,7 @@ export function useFamilySync({ localState, onRemoteState }) {
       active = false
       listener.subscription.unsubscribe()
     }
-  }, [loadFamilyContext, markConnectionFailure])
+  }, [handleInitialLoadFailure, loadFamilyContext])
 
   useEffect(() => {
     if (!supabase || !family?.household?.id) return undefined
@@ -224,201 +306,106 @@ export function useFamilySync({ localState, onRemoteState }) {
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'household_states', filter: `household_id=eq.${householdId}`,
       }, ({ new: changed }) => {
-        if (!hasSharedState(changed?.state)) return
-        const serialized = stableStringify(changed.state)
-        const localSerialized = stableStringify(localStateRef.current)
-        setVersion(changed.version)
-        setLastSyncedAt(changed.updated_at)
-        const resolution = resolvingConflictRef.current
-        if (resolution && (serialized === resolution.serialized || Number(changed.version) <= resolution.throughVersion)) {
-          remoteStateRef.current = serialized
-          if (serialized === resolution.serialized) {
-            pendingLocalSaveRef.current = false
-            pendingSnapshotRef.current = null
-            resolvingConflictRef.current = null
-            setConflict(null)
-            setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly')
-          }
-          return
+        if (!hasSharedState(changed?.state) || scopeRef.current?.householdId !== householdId
+          || Number(changed.version) <= versionRef.current) return
+        // 저장 요청이 진행 중이면 응답 또는 버전 충돌 조회가 최신 서버 상태를 처리한다.
+        const request = inFlightSaveRef.current
+        if (request) {
+          if (!request.remote || Number(changed.version) > Number(request.remote.version)) request.remote = changed
+        } else {
+          applyStored(changed)
         }
-        const inFlightSave = inFlightSaveRef.current
-        if (inFlightSave && serialized === inFlightSave.serialized) {
-          remoteStateRef.current = serialized
-          pendingLocalSaveRef.current = serialized !== localSerialized
-          pendingSnapshotRef.current = pendingLocalSaveRef.current ? localStateRef.current : null
-          setConflict(null)
-          setSyncStatus(pendingLocalSaveRef.current ? 'saving' : (family.membership.can_edit ? 'synced' : 'readonly'))
-          return
-        }
-        if (serialized === localSerialized) {
-          remoteStateRef.current = serialized
-          pendingLocalSaveRef.current = false
-          pendingSnapshotRef.current = null
-          setConflict(null)
-          setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly')
-          return
-        }
-        if (pendingLocalSaveRef.current) {
-          const mergedState = mergeSharedShiftChanges(parseSharedState(remoteStateRef.current), localStateRef.current, changed.state)
-          if (mergedState) {
-            const mergedSerialized = stableStringify(mergedState)
-            remoteStateRef.current = serialized
-            pendingLocalSaveRef.current = mergedSerialized !== serialized
-            pendingSnapshotRef.current = pendingLocalSaveRef.current ? mergedState : null
-            setConflict(null)
-            onRemoteState(mergedState)
-            setSyncStatus(pendingLocalSaveRef.current ? 'saving' : (family.membership.can_edit ? 'synced' : 'readonly'))
-            if (pendingLocalSaveRef.current && !inFlightSaveRef.current) setSaveRevision((current) => current + 1)
-            return
-          }
-          setConflict({
-            localState: pendingSnapshotRef.current || localStateRef.current,
-            remoteState: changed.state,
-            remoteVersion: changed.version,
-            updatedAt: changed.updated_at,
-            updatedBy: changed.updated_by,
-          })
-          setSyncStatus('conflict')
-          return
-        }
-        remoteStateRef.current = serialized
-        adoptRemoteRef.current = true
-        onRemoteState(changed.state)
         if (changed.updated_by && changed.updated_by !== session?.user?.id) {
           setRemoteChange({ updatedAt: changed.updated_at, updatedBy: changed.updated_by })
         }
-        setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly')
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [family?.household?.id, family?.membership?.can_edit, onRemoteState, session?.user?.id, setVersion])
+  }, [applyStored, family?.household?.id, session?.user?.id])
 
   useEffect(() => {
-    if (!family?.household?.id || !family.membership.can_edit || conflict || resolvingConflictRef.current) return undefined
+    const scope = scopeRef.current
+    if (!scope?.canEdit || scope.householdId !== family?.household?.id || !hasSharedState(localState)) return
     const serialized = stableStringify(localState)
-    if (adoptRemoteRef.current) { adoptRemoteRef.current = false; remoteStateRef.current = serialized }
-    if (serialized === remoteStateRef.current) {
-      pendingLocalSaveRef.current = false
-      pendingSnapshotRef.current = null
-      window.setTimeout(() => setSyncStatus(family.membership.can_edit ? 'synced' : 'readonly'), 0)
-      return undefined
-    }
-    pendingLocalSaveRef.current = true
-    pendingSnapshotRef.current = localState
-
-    if (inFlightSaveRef.current) {
-      setSyncStatus('saving')
-      return undefined
+    if (adoptRemoteRef.current) {
+      adoptRemoteRef.current = false
+      remoteStateRef.current = serialized
+      return
     }
 
-    if (!supabase) {
-      window.setTimeout(() => setSyncStatus('local'), 0)
-      return undefined
+    const draft = draftRef.current
+    if (draft || serialized !== remoteStateRef.current) {
+      const baseState = draft?.baseState || parseSharedState(remoteStateRef.current)
+      if (!baseState) return
+      storeDraft(serialized === stableStringify(baseState) && !inFlightSaveRef.current
+        ? null : { baseState, localState })
+    }
+    if (conflict || inFlightSaveRef.current || resaveCountRef.current > 3) return
+    if (!draftRef.current) {
+      if (draft && isOnline && !wasOfflineRef.current) setSyncStatus('synced')
+      return
+    }
+    if (!isOnline || wasOfflineRef.current) {
+      setSyncStatus('offline')
+      return
     }
 
-    window.clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = window.setTimeout(async () => {
-      setSyncStatus('saving')
-      const expectedVersion = versionRef.current
-      const snapshot = localStateRef.current
-      const request = { serialized: stableStringify(snapshot), expectedVersion }
+    setSyncStatus('saving')
+    const timer = window.setTimeout(async () => {
+      const snapshot = draftRef.current?.localState
+      if (!snapshot || scope !== scopeRef.current) return
+      const request = { snapshot, version: versionRef.current }
       inFlightSaveRef.current = request
       const { data: saved, error: saveError } = await supabase.rpc('save_household_state_v2', {
-        target_household_id: family.household.id,
+        target_household_id: scope.householdId,
         next_state: snapshot,
-        expected_version: expectedVersion,
+        expected_version: request.version,
       }).single()
+      if (inFlightSaveRef.current !== request || scope !== scopeRef.current) return
+      inFlightSaveRef.current = null
       if (saveError) {
-        if (inFlightSaveRef.current === request) inFlightSaveRef.current = null
         if (isConflictError(saveError)) {
-          try { await buildConflict(family.household.id, localStateRef.current) }
+          try { await buildConflict(scope) }
           catch (loadError) { markConnectionFailure(loadError) }
-          return
+        } else {
+          markConnectionFailure(saveError)
         }
-        markConnectionFailure(saveError)
         return
       }
-      if (inFlightSaveRef.current === request) inFlightSaveRef.current = null
-      wasOfflineRef.current = false
-      setIsOnline(true)
-      const savedSerialized = stableStringify(saved.state)
-      remoteStateRef.current = savedSerialized
-      versionRef.current = saved.version
-      pendingLocalSaveRef.current = savedSerialized !== stableStringify(localStateRef.current)
-      pendingSnapshotRef.current = pendingLocalSaveRef.current ? localStateRef.current : null
-      setFamily((current) => current ? { ...current, version: saved.version } : current)
-      setLastSyncedAt(saved.updated_at)
+      if (Number(saved.version) < versionRef.current) {
+        setSaveRevision((current) => current + 1)
+        return
+      }
+      const latest = draftRef.current?.localState || localStateRef.current
+      if (stableStringify(latest) === stableStringify(snapshot)) storeDraft(null)
+      else storeDraft({ baseState: snapshot, localState: latest })
       setError('')
-      setSyncStatus(pendingLocalSaveRef.current ? 'saving' : 'synced')
-      if (pendingLocalSaveRef.current) setSaveRevision((current) => current + 1)
+      applyStored(saved)
+      if (request.remote && Number(request.remote.version) > Number(saved.version)) applyStored(request.remote)
+      if (request.refresh) loadFamilyContext(session?.user?.id, scope.householdId).catch(markConnectionFailure)
     }, 650)
-
-    return () => window.clearTimeout(saveTimerRef.current)
-  }, [buildConflict, conflict, family?.household?.id, family?.membership?.can_edit, localState, markConnectionFailure, saveRevision])
+    saveTimerRef.current = timer
+    return () => window.clearTimeout(timer)
+  }, [applyStored, buildConflict, conflict, family?.household?.id, family?.membership?.can_edit,
+    isOnline, loadFamilyContext, localState, markConnectionFailure, saveRevision, session?.user?.id, storeDraft])
 
   useEffect(() => {
-    if (!isOnline) {
-      if (family && pendingLocalSaveRef.current) window.setTimeout(() => setSyncStatus('offline'), 0)
-      return
-    }
-    if (wasOfflineRef.current && session?.user) {
-      wasOfflineRef.current = false
-      loadFamilyContext(session.user.id).catch(markConnectionFailure)
-      return
-    }
-    if (session?.user && family && pendingLocalSaveRef.current && !conflict) setSyncStatus('saving')
-  }, [conflict, family, isOnline, loadFamilyContext, markConnectionFailure, session?.user])
+    if (!isOnline || !wasOfflineRef.current || !session?.user) return
+    loadFamilyContext(session.user.id, scopeRef.current?.householdId).catch(markConnectionFailure)
+  }, [isOnline, loadFamilyContext, markConnectionFailure, session?.user])
 
-  const acceptRemote = useCallback(() => {
+  const resolveConflict = (prefer) => {
     if (!conflict) return
-    const serialized = stableStringify(conflict.remoteState)
-    resolvingConflictRef.current = { serialized, throughVersion: Number(conflict.remoteVersion || versionRef.current) }
-    remoteStateRef.current = serialized
-    pendingLocalSaveRef.current = false
-    pendingSnapshotRef.current = null
-    setConflict(null)
-    onRemoteState(conflict.remoteState)
-    setLastSyncedAt(conflict.updatedAt)
     setError('')
-    setSyncStatus(family?.membership?.can_edit ? 'synced' : 'readonly')
-    window.setTimeout(() => {
-      if (resolvingConflictRef.current?.serialized === serialized) resolvingConflictRef.current = null
-    }, 0)
-  }, [conflict, family?.membership?.can_edit, onRemoteState])
-
-  const keepLocal = useCallback(async () => {
-    if (!conflict || !family?.household?.id) return
-    const localSnapshot = conflict.localState
-    const serialized = stableStringify(localSnapshot)
-    resolvingConflictRef.current = { serialized, throughVersion: Number(conflict.remoteVersion || versionRef.current) + 1 }
-    setConflict(null)
-    setSyncStatus('saving')
-    const { data: saved, error: saveError } = await supabase.rpc('save_household_state_v2', {
-      target_household_id: family.household.id,
-      next_state: localSnapshot,
-      expected_version: conflict.remoteVersion,
-    }).single()
-    if (saveError) {
-      resolvingConflictRef.current = null
-      if (isConflictError(saveError)) await buildConflict(family.household.id, localSnapshot)
-      else markConnectionFailure(saveError)
-      return
-    }
-    wasOfflineRef.current = false
-    setIsOnline(true)
-    remoteStateRef.current = stableStringify(saved.state)
-    versionRef.current = saved.version
-    pendingLocalSaveRef.current = false
-    pendingSnapshotRef.current = null
-    resolvingConflictRef.current = null
-    onRemoteState(saved.state)
-    setFamily((current) => current ? { ...current, version: saved.version } : current)
-    setLastSyncedAt(saved.updated_at)
-    setConflict(null)
-    setError('')
-    setSyncStatus('synced')
-  }, [buildConflict, conflict, family, markConnectionFailure, onRemoteState])
+    applyStored({
+      state: conflict.remoteState,
+      version: conflict.remoteVersion,
+      updated_at: conflict.updatedAt,
+    }, { prefer })
+  }
+  const acceptRemote = () => resolveConflict('remote')
+  const keepLocal = () => resolveConflict('local')
 
   const signIn = async (email, password) => {
     setError('')
@@ -466,7 +453,7 @@ export function useFamilySync({ localState, onRemoteState }) {
   }
 
   return {
-    enabled: supabaseEnabled, session, family, syncStatus, error, isOnline, lastSyncedAt, remoteChange, conflict,
+    enabled: supabaseEnabled, session, family, syncStatus, error: draftError || error, isOnline, lastSyncedAt, remoteChange, conflict,
     signIn, signUp, signOut, createFamily, joinFamily, joinWithCode, updatePermission, restoreVersion, acceptRemote, keepLocal,
     dismissRemoteChange: () => setRemoteChange(null),
     refresh: () => session?.user ? loadFamilyContext(session.user.id, family?.household?.id) : null,

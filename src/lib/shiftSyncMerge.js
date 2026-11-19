@@ -1,111 +1,90 @@
 const stableStringify = (value) => JSON.stringify(value, (_key, nestedValue) => {
   if (!nestedValue || typeof nestedValue !== 'object' || Array.isArray(nestedValue)) return nestedValue
-  return Object.keys(nestedValue).sort().reduce((ordered, key) => {
-    ordered[key] = nestedValue[key]
-    return ordered
-  }, {})
+  return Object.fromEntries(Object.keys(nestedValue).sort().map((key) => [key, nestedValue[key]]))
 })
 
 const sameValue = (first, second) => stableStringify(first) === stableStringify(second)
-const shiftKey = (shift) => shift && `${shift.member || ''}-${shift.date || ''}`
+const CONFLICT = Symbol('conflict')
 
-const latestShiftMap = (shifts) => {
+const mergeValue = (base, local, remote, prefer) => {
+  if (sameValue(local, remote) || sameValue(remote, base)) return local
+  if (sameValue(local, base)) return remote
+  if (prefer === 'local') return local
+  if (prefer === 'remote') return remote
+  return CONFLICT
+}
+
+const mergeEntries = (base, local, remote, merge) => {
   const result = new Map()
-  if (!Array.isArray(shifts)) return result
-  shifts.forEach((shift) => {
-    const key = shiftKey(shift)
-    if (key && key !== '-') result.set(key, shift)
-  })
+  for (const key of new Set([...remote.keys(), ...local.keys()])) {
+    const value = merge(base.get(key), local.get(key), remote.get(key))
+    if (value === CONFLICT) return CONFLICT
+    if (value !== undefined) result.set(key, value)
+  }
   return result
 }
 
-const mergeShifts = (baseShifts, localShifts, remoteShifts) => {
-  const base = latestShiftMap(baseShifts)
-  const local = latestShiftMap(localShifts)
-  const remote = latestShiftMap(remoteShifts)
-  const keys = [...new Set([...base.keys(), ...local.keys(), ...remote.keys()])]
-  const merged = []
-
-  for (const key of keys) {
-    const baseShift = base.get(key)
-    const localShift = local.get(key)
-    const remoteShift = remote.get(key)
-    let nextShift
-
-    if (sameValue(localShift, remoteShift)) nextShift = localShift
-    else if (sameValue(localShift, baseShift)) nextShift = remoteShift
-    else if (sameValue(remoteShift, baseShift)) nextShift = localShift
-    else return null
-
-    if (nextShift) merged.push(nextShift)
+// 연차·반차는 한 사람 안에서도 날짜마다 별도 항목이다.
+const mergeProfile = (base, local, remote, prefer) => {
+  const combined = mergeValue(base, local, remote)
+  if (combined !== CONFLICT) return combined
+  const withoutLeaves = (profile) => profile && {
+    ...profile, regularWork: profile.regularWork && { ...profile.regularWork, leaves: undefined },
   }
-
-  return merged
+  if (!local || !remote || !sameValue(withoutLeaves(local), withoutLeaves(remote))) {
+    return mergeValue(base, local, remote, prefer)
+  }
+  const byDay = (profile) => new Map(Object.entries(profile?.regularWork?.leaves || {}))
+  const leaves = mergeEntries(byDay(base), byDay(local), byDay(remote),
+    (b, l, r) => mergeValue(b, l, r, prefer))
+  return leaves === CONFLICT ? CONFLICT : { ...local, regularWork: { ...local.regularWork, leaves: Object.fromEntries(leaves) } }
 }
 
-// 가족 구성원은 사람별로 합침. 같은 사람을 양쪽에서 바꿨으면 연차·반차(leaves)만 합쳐 봄
-const mergeProfiles = (base = [], local = [], remote = []) => {
-  if (![base, local, remote].every(Array.isArray)) return null
-  const byId = (list) => new Map(list.map((p) => [p.id, p]))
-  const b = byId(base), l = byId(local), r = byId(remote)
-  const order = [...new Set([...remote.map((p) => p.id), ...local.map((p) => p.id)])]
-  const out = []
-  for (const id of order) {
-    const bp = b.get(id), lp = l.get(id), rp = r.get(id)
-    let next
-    if (sameValue(lp, rp)) next = lp
-    else if (sameValue(lp, bp)) next = rp
-    else if (sameValue(rp, bp)) next = lp
-    else {
-      const strip = (p) => p && { ...p, regularWork: p.regularWork && { ...p.regularWork, leaves: undefined } }
-      if (!lp || !rp || !sameValue(strip(lp), strip(rp))) return null
-      const bl = bp?.regularWork?.leaves || {}, ll = lp.regularWork?.leaves || {}, rl = rp.regularWork?.leaves || {}
-      const leaves = {}
-      for (const day of new Set([...Object.keys(bl), ...Object.keys(ll), ...Object.keys(rl)])) {
-        const v = ll[day] !== bl[day] ? ll[day] : rl[day] // 이 기기에서 바꾼 날은 이 기기 값, 아니면 서버 값
-        if (v) leaves[day] = v
-      }
-      next = { ...lp, regularWork: { ...lp.regularWork, leaves } }
+const recordId = (record) => record?.id
+const collectionKeys = {
+  events: recordId, tasks: recordId, childSchedules: recordId, schedulePeriods: recordId,
+  anniversaries: recordId, scheduleExceptions: recordId, profiles: recordId,
+  childProfiles: (record) => record?.member,
+  shifts: (record) => record?.member && record?.date && JSON.stringify([record.member, record.date]),
+}
+
+const mergeRecords = (key, base, local, remote, prefer) => {
+  const keyOf = collectionKeys[key]
+  const index = (list) => {
+    if (!Array.isArray(list)) return null
+    const rows = new Map()
+    for (const record of list) {
+      const id = keyOf(record)
+      if (!id || (key !== 'shifts' && rows.has(id))) return null
+      rows.set(id, record)
     }
-    if (next) out.push(next)
+    return rows
   }
-  return out
+  const b = index(base ?? [])
+  const l = index(local)
+  const r = index(remote)
+  if (!b || !l || !r) return mergeValue(base, local, remote, prefer)
+  const merge = key === 'profiles' ? mergeProfile : mergeValue
+  const result = mergeEntries(b, l, r, (before, here, there) => merge(before, here, there, prefer))
+  return result === CONFLICT ? CONFLICT : [...result.values()]
 }
 
-// 놀이 기록 같은 값은 둘 다 바뀌어도 충돌로 막지 않고 이 기기 값을 씀 (일정 저장이 막히지 않게)
+// 놀이·활동 기록의 기존 충돌 처리는 유지한다.
 const LENIENT = new Set(['gameScores', 'cleanProgress', 'activity', 'mergeProgress'])
 
-export function mergeSharedShiftChanges(baseState, localState, remoteState) {
-  if (!baseState || !localState || !remoteState
-    || typeof baseState !== 'object' || typeof localState !== 'object' || typeof remoteState !== 'object') return null
+export function mergeSharedShiftChanges(baseState, localState, remoteState, prefer) {
+  if (![baseState, localState, remoteState].every((state) => state && typeof state === 'object' && !Array.isArray(state))) return null
 
-  const keys = [...new Set([...Object.keys(baseState), ...Object.keys(localState), ...Object.keys(remoteState)])]
-  const mergedState = {}
-
-  for (const key of keys) {
-    if (key === 'shifts') {
-      const shifts = mergeShifts(baseState.shifts, localState.shifts, remoteState.shifts)
-      if (!shifts) return null
-      mergedState.shifts = shifts
-      continue
+  const merged = {}
+  for (const key of new Set([...Object.keys(baseState), ...Object.keys(localState), ...Object.keys(remoteState)])) {
+    const base = baseState[key], local = localState[key], remote = remoteState[key]
+    let value = mergeValue(base, local, remote)
+    if (value === CONFLICT) {
+      if (Object.hasOwn(collectionKeys, key)) value = mergeRecords(key, base, local, remote, prefer)
+      else value = mergeValue(base, local, remote, LENIENT.has(key) ? 'local' : prefer)
     }
-
-    if (key === 'profiles') {
-      const profiles = mergeProfiles(baseState.profiles, localState.profiles, remoteState.profiles)
-      if (!profiles) return null
-      mergedState.profiles = profiles
-      continue
-    }
-
-    const baseValue = baseState[key]
-    const localValue = localState[key]
-    const remoteValue = remoteState[key]
-    if (sameValue(localValue, remoteValue)) mergedState[key] = localValue
-    else if (sameValue(localValue, baseValue)) mergedState[key] = remoteValue
-    else if (sameValue(remoteValue, baseValue)) mergedState[key] = localValue
-    else if (LENIENT.has(key)) mergedState[key] = localValue
-    else return null
+    if (value === CONFLICT) return null
+    if (value !== undefined) merged[key] = value
   }
-
-  return mergedState
+  return merged
 }
