@@ -7,13 +7,13 @@ const tasks = [{ id: 'once', title: '한 번', category: '집안일', done: fals
   { id: 'repeat', title: '반복', category: '긴급', dueDate: '2026-11-04', recurrence: { frequency: 'weekly' }, completedDates: ['2026-11-11'], skippedDates: ['2026-11-18'], zzz: 1 }]
 
 test('분류·반복 회차·완료·예외를 같은 목록 함수로 계산', () => {
-  expect(taskRows(tasks, today).map((row) => row.id)).toEqual(['repeat-2026-11-25', 'once'])
+  expect(taskRows(tasks, today).map((row) => row.id)).toEqual(['repeat-2026-11-04', 'repeat-2026-11-25', 'once']) // 어제 놓친 회차도 남음
   expect(taskRows(tasks, today, '긴급', true).map((row) => row.occurrenceDate)).toEqual(['2026-11-25', '2026-11-11'])
   expect(taskRows(tasks, today, '집안일')).toHaveLength(1)
 })
 
 test('회차 완료는 전체 반복을 완료하지 않고 기존 필드를 보존', () => {
-  const row = taskRows(tasks, today, '긴급')[0]
+  const row = taskRows(tasks, today, '긴급').find((r) => r.occurrenceDate === '2026-11-25')
   const next = toggleTask(tasks, row, today)
   expect(next[1]).toMatchObject({ completedDates: ['2026-11-11', '2026-11-25'], zzz: 1 })
   expect(tasks[1].completedDates).toEqual(['2026-11-11'])

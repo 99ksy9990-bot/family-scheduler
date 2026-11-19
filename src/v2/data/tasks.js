@@ -8,6 +8,13 @@ export function taskRows(tasks, today, category = 'all', showCompleted = false) 
     if (!hasRecurrence(task)) return showCompleted || !task.done ? [{ ...task, sourceTaskId: task.id }] : []
     // 지난 날 끝낸 기록도 (끝낸 일 · 달별 보기)
     const rows = showCompleted ? (task.completedDates || []).filter((key) => key < iso(today)).map((key) => ({ ...task, id: `${task.id}-${key}`, sourceTaskId: task.id, occurrenceDate: key, dueDate: key, done: true })) : []
+    // 놓친 회차: 지난 7일 중 가장 최근 것 하나만 남김 (매일 할 일이 줄줄이 쌓이지 않게)
+    if (!showCompleted && task.dueDate) for (let date = addDays(today, -1); date >= addDays(today, -7); date = addDays(date, -1)) {
+      const key = iso(date)
+      if (key < task.dueDate || !isRecurrenceStart({ ...task, date: task.dueDate }, date)) continue
+      if (!task.completedDates?.includes(key) && !task.skippedDates?.includes(key)) rows.push({ ...task, id: `${task.id}-${key}`, sourceTaskId: task.id, occurrenceDate: key, dueDate: key, done: false })
+      break
+    }
     for (let date = today; date <= monthEnd; date = addDays(date, 1)) {
       const key = iso(date)
       if (!task.dueDate || !isRecurrenceStart({ ...task, date: task.dueDate }, date) || task.skippedDates?.includes(key)) continue

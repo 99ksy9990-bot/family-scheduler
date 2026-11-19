@@ -132,3 +132,14 @@ test('반복 시간표 이 날만 빼기·되돌리기 (scheduleExceptions 형�
   await dialog.getByRole('button', { name: '되돌리기' }).click()
   await expect(dialog.getByRole('list', { name: '오늘의 일정과 할 일', exact: true })).toContainText('아이 시간표')
 })
+
+test('반복 시간표 이 날만 수정 → 그날 한 번짜리 일정으로 바뀜', async ({ page }) => {
+  await seed(page)
+  await page.locator('.house-tile').filter({ hasText: '아이' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: /^아이 시간표/ }).first().click()
+  await dialog.getByRole('button', { name: '이 날만 수정' }).click()
+  await page.clock.runFor(500)
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('family-scheduler-schedule-exceptions-v1') || '[]'))).toEqual([expect.objectContaining({ scheduleId: 'school', date: '2026-11-05', type: 'skip' })])
+  await expect.poll(() => page.evaluate(() => (JSON.parse(localStorage.getItem('family-scheduler-events') || '[]')).filter((e) => e.title === '아이 시간표' && e.date === '2026-11-05' && !e.recurrence).length)).toBe(1)
+})
