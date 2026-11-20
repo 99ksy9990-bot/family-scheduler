@@ -33,8 +33,9 @@ export function toggleTask(tasks, row, today, by = '') {
     if (dates.has(row.occurrenceDate)) dates.delete(row.occurrenceDate)
     else dates.add(row.occurrenceDate)
     const doneBy = { ...(task.doneBy || {}) }; if (dates.has(row.occurrenceDate)) { if (by) doneBy[row.occurrenceDate] = by } else delete doneBy[row.occurrenceDate] // 반복 할 일은 날짜별로 누가 했는지
-    const { doneBy: _old, ...rest } = task
-    return { ...rest, completedDates: [...dates].sort(), ...(Object.keys(doneBy).length && { doneBy }) }
+    const doneAt = { ...(task.doneAt || {}) }; if (dates.has(row.occurrenceDate)) doneAt[row.occurrenceDate] = iso(today); else delete doneAt[row.occurrenceDate] // 실제로 끝낸 날
+    const { doneBy: _old, doneAt: _oldAt, ...rest } = task
+    return { ...rest, completedDates: [...dates].sort(), ...(Object.keys(doneBy).length && { doneBy }), ...(Object.keys(doneAt).length && { doneAt }) }
   })
 }
 

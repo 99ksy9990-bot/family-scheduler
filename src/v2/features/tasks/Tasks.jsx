@@ -57,6 +57,14 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     if (updateState((current) => ({ ...current, tasks: current.tasks.filter((task) => task.id !== source.id) }))) setUndo(source)
   }
   const weekAgo = iso(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7))
+  // 끝낸 일 날짜: 시작일 · 완료일 (같은 날이면 '당일 완료')
+  const doneDates = (row) => {
+    const start = row.occurrenceDate || row.startDate || row.dueDate || ''
+    const end = row.occurrenceDate ? state.tasks.find((t) => t.id === row.sourceTaskId)?.doneAt?.[row.occurrenceDate] || '' : row.completedDate || ''
+    const md = (d) => d.slice(5).replace('-', '/')
+    if (start && end) return start === end ? `${md(start)} · 당일 완료` : `${md(start)} 시작 · ${md(end)} 완료`
+    return start ? `${md(start)} 시작` : end ? `${md(end)} 완료` : ''
+  }
   const doneOn = (row) => row.occurrenceDate || row.completedDate || ''
   // 두 묶음: 남은 일(날짜 있는 것 먼저, 없는 것 아래), 끝낸 일(7일 안, 오래된 건 검색으로)
   const months = Array.from({ length: 12 }, (_, i) => iso(new Date(today.getFullYear(), today.getMonth() - i, 1)).slice(0, 7)) // 최근 12달
@@ -64,9 +72,8 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
     ['할 일', rows.filter((row) => !row.done).sort((x, y) => (x.dueDate || '9') .localeCompare(y.dueDate || '9'))],
     ['끝낸 일', rows.filter((row) => row.done && (month ? doneOn(row).startsWith(month) : q || doneOn(row) >= weekAgo)).sort((x, y) => doneOn(y).localeCompare(doneOn(x)))],
   ]
-  // 오늘 진행: 남은 일 + 오늘 끝낸 일
-  const todayIso = iso(today)
-  const doneToday = rows.filter((row) => row.done && doneOn(row) === todayIso).length
+  // 진행 막대는 아래 두 목록 개수와 똑같이 셈
+  const doneToday = groups[1][1].length
   const openCount = groups[0][1].length
   const total = openCount + doneToday
   const active = state.profiles.filter((profile) => profile.active !== false)
@@ -74,7 +81,7 @@ export default function Tasks({ editCategories, setEditCategories, onAdd, state,
   const renderRow = (row) => <li className="todo-row" key={row.id}>
         {row.done && doerOf(row) && doerOf(row).id !== 'family' ? <span className="todo-cat todo-who"><CharacterAvatar profile={doerOf(row)} size={36} expression="done" /></span> : <img className="todo-cat" src={`/icons/kind/${catIcon(row.category)}.png`} alt="" width={30} height={30} />}
         <label className="round-check"><input type="checkbox" aria-label={`${row.title} 완료`} checked={row.done} disabled={!canEdit} onChange={() => toggle(row)} /><span aria-hidden="true">{row.done && <Check size={16} />}</span></label>
-        <button className="todo-body" onClick={() => { setSelected(row); setNoteText(noteOf(row)); setCelebrating(null); setNoteRow(null) }}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? [row.category, row.completedDate && row.completedDate !== iso(today) ? row.completedDate.slice(5).replace('-', '/') : '', noteOf(row) && `“${noteOf(row)}”`].filter(Boolean).join(' · ') : [[shortDate(row.occurrenceDate || row.startDate || row.dueDate), row.time].filter(Boolean).join(' '), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
+        <button className="todo-body" onClick={() => { setSelected(row); setNoteText(noteOf(row)); setCelebrating(null); setNoteRow(null) }}><strong className={row.done ? 'task-done' : row.dueDate && row.dueDate < iso(today) ? 'task-late' : ''}>{row.title}</strong><small>{row.done ? [doneDates(row), row.category, noteOf(row) && `“${noteOf(row)}”`].filter(Boolean).join(' · ') : [[shortDate(row.occurrenceDate || row.startDate || row.dueDate), row.time].filter(Boolean).join(' '), row.category, row.occurrenceDate ? '반복' : ''].filter(Boolean).join(' · ')}</small></button>
         {!row.done && profilesFor(row).length > 1 && <span className="todo-members">{profilesFor(row).map((profile) => <CharacterAvatar key={profile.id} profile={profile} size={view === 1 ? 40 : 28} expression={row.done ? 'done' : 'basic'} />)}</span>}
       </li>
   return <section className="home-tasks" aria-label="할 일 목록">

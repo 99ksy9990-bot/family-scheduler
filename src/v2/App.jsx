@@ -1,3 +1,4 @@
+import { taskRows } from './data/tasks'
 import CharacterAvatar from './components/CharacterAvatar'
 import { getMe, setMe } from './data/me'
 import { markWhere } from './data/crashlog'
@@ -75,7 +76,7 @@ function Workspace({ scheduler }) {
   const pickedDate = (calendarDate || iso(today)).slice(0, 7) === monthKey ? calendarDate : iso(today).slice(0, 7) === monthKey ? iso(today) : `${monthKey}-01`
   const move = (direction) => setCursor((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1))
   const profiles = state?.profiles || []
-  const openTasks = (state?.tasks || []).filter((t) => !t.done && !t.recurrence && (!t.dueDate || t.dueDate <= iso(today))).length // 오늘까지 남은 할 일 (반복 제외)
+  const openTasks = taskRows(state?.tasks || [], today).filter((row) => !row.done).length // 할 일 목록과 같은 개수
   const title = tab === 'calendar' ? `${cursor.getMonth() + 1}월` : tabs.find(([id]) => id === tab)[1]
   const subtitle = tab === 'today' ? formatLongDate(today) : tab === 'calendar' ? `${cursor.getFullYear()}년` : tab === 'play' ? `오늘 ${todayPlays(state?.gameScores, today)}판` : tab === 'tasks' ? `남은 할 일 ${openTasks}개` : `${profiles.filter((profile) => profile.active !== false).length}명`
   // 가족 폰 첫 실행: 이 폰이 누구 폰인지 한 번 물음 (연결된 폰만, '나중에'면 다시 안 물음)
