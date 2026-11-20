@@ -76,3 +76,10 @@ test('가족 전체 병원 할 일은 모두를 아픈 얼굴로 만들지 않�
   const task = { title: '병원 예약', assignees: ['family'], done: false }
   expect(moodFor({ id: 'p' }, houseStatus({ id: 'p' }, [], [task], day, now), { tasks: [task], now })).not.toBe('sick')
 })
+
+test('미래 진료 할 일은 그날 전까지 아픈 얼굴 아님', () => {
+  const now = new Date('2026-11-10T10:00:00')
+  const later = { title: '진료', assignees: ['p'], startDate: '2026-11-20', done: false }
+  expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [later], now })).not.toBe('sick')
+  expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [later], now: new Date('2026-11-20T09:00:00') })).toBe('sick')
+})
