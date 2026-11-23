@@ -87,5 +87,6 @@ test('미래 진료 할 일은 그날 전까지 아픈 얼굴 아님', () => {
 test('여러 병원 이름도 아픈 얼굴', () => {
   const now = new Date('2026-11-10T10:00:00')
   for (const title of ['연두 소아과', '안과 검사', '이비인후과', '정형외과 물리치료']) expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [{ title, assignees: ['p'], dueDate: '2026-11-10' }], now })).toBe('sick')
+  expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [{ title: '국회의원 선거', assignees: ['p'], dueDate: '2026-11-10' }], now })).not.toBe('sick')
   expect(moodFor({ id: 'p' }, { expression: 'basic' }, { tasks: [{ title: '분리수거', assignees: ['p'], dueDate: '2026-11-10' }], now })).not.toBe('sick')
 })
