@@ -9,7 +9,7 @@ export const rowsForMember = (rows, id) => rows.filter((row) => {
   return ids.includes(id) || ids.includes('family')
 })
 
-const SICK_WORD = /병원|치과|검진|진료|한의원|예방접종/
+const SICK_WORD = /병원|의원|치과|검진|진료|예방접종|접종|소아과|내과|외과|안과|이비인후과|피부과|산부인과|비뇨기과|정형외과|재활|물리치료|한방|약국|건강검진|응급실/
 // 오늘 병원 일정이 있거나, 오늘 날짜인 안 끝낸 병원 할 일이 있는지
 const hospitalToday = (profile, own, tasks, key) => own.some((row) => SICK_WORD.test(row.title || '')) || tasks.some((t) => !t.done && (t.assignees || [t.assignee]).some((id) => id === profile.id) /* 가족 전체 할 일은 모두를 아프게 하지 않음 */ && (t.startDate || t.dueDate) === key /* 진료 날만 (날짜 없거나 미래면 아니게) */ && SICK_WORD.test(t.title || ''))
 
