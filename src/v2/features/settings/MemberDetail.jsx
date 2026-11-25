@@ -10,6 +10,7 @@ import CharacterAvatar, { CHARACTERS, MINI, READY, roleOf } from '../../componen
 import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import { clock } from '../../data/schedule'
 import Family from './Family'
+import GrowthChart from '../../components/GrowthChart'
 import { RegularWorkEditor, ShiftMonthEditor, LeaveMonthEditor } from './WorkEditors'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -104,9 +105,9 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
       {shifts.slice(0, 5).map((s) => { const t = types.find((x) => x.id === s.shift); return row(s.date, icon(Briefcase, 'work'), md(s.date), t ? `${t.code} ${t.id === 'off' ? '' : `${clock(t.start)}–${clock(t.end)}`}` : s.shift, () => canEdit && setEdit({ section: 'month', title: '교대 근무표' })) })}
     </GroupedList></section>}
 
-    <section><h3 className="house-section-title">키·몸무게</h3><GroupedList label="키·몸무게">
+    <section><h3 className="house-section-title">키·몸무게</h3>{growth.length > 0 && <GrowthChart records={growth} />}<GroupedList label="키·몸무게">
       {growth.slice(0, showAllGrowth ? undefined : 5).map((g, i) => { const prev = growth[i + 1]; const diff = prev && g.height && prev.height ? Math.round((g.height - prev.height) * 10) / 10 : null
-        return <GroupedRow key={g.date} icon={icon(Ruler, 'green')} title={[g.height && `${g.height}cm`, g.weight && `${g.weight}kg`].filter(Boolean).join(' · ')} subtitle={[dot(g.date), diff ? `지난번보다 ${diff > 0 ? '+' : ''}${diff}cm` : ''].filter(Boolean).join(' · ')} value={canEdit && <button type="button" className="growth-del" aria-label={`${dot(g.date)} 기록 지우기`} onClick={() => setGrowth(growth.filter((x) => x.date !== g.date))}><X size={16} /></button>} /> })}
+        return <GroupedRow key={g.date} icon={icon(Ruler, 'green')} title={[g.height && `${g.height}cm`, g.weight && `${g.weight}kg`].filter(Boolean).join(' · ')} subtitle={[dot(g.date), diff ? `지난번보다 ${diff > 0 ? '+' : ''}${diff}cm` : ''].filter(Boolean).join(' · ')} value={canEdit && <button type="button" className="growth-del" aria-label={`${dot(g.date)} 기록 지우기`} onClick={() => window.confirm(`${dot(g.date)} 기록을 지울까요?`) && setGrowth(growth.filter((x) => x.date !== g.date))}><X size={16} /></button>} /> })}
       {growth.length > 5 && <GroupedRow key="growth-more" className="past-toggle" title={showAllGrowth ? '접기' : `지난 기록 ${growth.length - 5}개 더 보기`} onClick={() => setShowAllGrowth((v) => !v)} />}
       {addingGrowth ? <li className="grouped-row"><form className="growth-form" onSubmit={(e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget)); const height = Number(f.height) || undefined, weight = Number(f.weight) || undefined; if (!f.date || (!height && !weight)) return; setGrowth([{ date: f.date, height, weight }, ...growth.filter((x) => x.date !== f.date)]); setAddingGrowth(false) }}>
         <label>날짜<input name="date" type="date" defaultValue={todayKey} required /></label>

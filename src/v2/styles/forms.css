@@ -114,3 +114,9 @@
 .growth-form input { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; padding: 10px 8px; border: 0; border-radius: 10px; background: var(--fill) !important; color: var(--label); text-align: center; }
 .growth-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
 .growth-del { border: 0; background: none; color: var(--label-2); padding: 6px; }
+.growth-chart { background: var(--card); border-radius: 16px; padding: 12px 12px 6px; margin-bottom: 12px; }
+.growth-chart svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+.growth-chart .quiet { margin: 12px 4px 8px; font-size: 14px; }
+.growth-label { font-size: 12px; fill: var(--label-2); }
+.growth-label.strong { fill: var(--label); font-weight: 700; }
+.growth-axis { font-size: 11px; fill: var(--label-2); }
