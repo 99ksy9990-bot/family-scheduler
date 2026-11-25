@@ -107,3 +107,10 @@
 .paste-done { flex: none; width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--label-2); display: grid; place-items: center; }
 .repeat-choice { display: grid; gap: 10px; } .repeat-choice button { min-height: 50px; border: 0; border-radius: 12px; background: var(--fill); font-size: 17px; color: var(--tint-label); }
 .form-group > .schedule-title:only-child { border-bottom: 0; box-shadow: none; }
+
+/* 키·몸무게 기록 */
+.growth-form { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; width: 100%; padding: 10px 0; }
+.growth-form label { display: grid; gap: 4px; font-size: 13px; color: var(--label-2); min-width: 0; }
+.growth-form input { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; padding: 10px 8px; border: 0; border-radius: 10px; background: var(--fill) !important; color: var(--label); text-align: center; }
+.growth-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.growth-del { border: 0; background: none; color: var(--label-2); padding: 6px; }

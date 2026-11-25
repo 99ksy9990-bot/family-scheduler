@@ -3,7 +3,7 @@ import { periodName, periodParts } from '../../data/periods'
 import { iso } from '../../../lib/dates'
 import { scheduleInPeriod, seasonOf } from '../../../lib/schedule'
 import { useState } from 'react'
-import { Briefcase, CalendarDays, ChevronRight, GraduationCap, Plus } from 'lucide-react'
+import { Briefcase, CalendarDays, ChevronRight, GraduationCap, Plus, Ruler, X } from 'lucide-react'
 import { MEMBER_COLORS } from '../../../lib/colors'
 import { DEFAULT_SHIFT_TYPES } from '../../../lib/legacyState'
 import CharacterAvatar, { CHARACTERS, MINI, READY, roleOf } from '../../components/CharacterAvatar'
@@ -25,6 +25,8 @@ const crumbs = (items) => <nav className="crumbs" aria-label="위치">{items.map
 export default function MemberDetail({ profile, state, updateState, canEdit, onBack }) {
   const [showPast, setShowPast] = useState(false) // 지난 학기는 접어 둠
   const [edit, setEdit] = useState(null) // { section, record, title }
+  const [addingGrowth, setAddingGrowth] = useState(false)
+  const [showAllGrowth, setShowAllGrowth] = useState(false)
   const works = state.workSettings.workerIds?.includes(profile.id)
   const mode = profile.regularWork ? 'regular' : works ? 'shift' : null
   // 근무가 있으면 근무만, 학교·수업이 있으면 학교만, 둘 다 없으면 둘 다 보여 고르게
@@ -50,6 +52,9 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   const types = state.workSettings.shiftTypes?.length ? state.workSettings.shiftTypes : DEFAULT_SHIFT_TYPES
   const set = (patch) => updateState((current) => ({ ...current, profiles: current.profiles.map((item) => item.id === profile.id ? { ...item, ...patch } : item) }))
   const usedColors = state.profiles.filter((p) => p.id !== profile.id && p.active !== false).map((p) => p.color)
+  // 키·몸무게 기록은 구성원 프로필에 날짜별로 (최근 먼저)
+  const growth = [...(profile.growth || [])].sort((a, b) => b.date.localeCompare(a.date))
+  const setGrowth = (list) => set({ growth: list })
   const open = (section, title, record = {}) => canEdit && setEdit({ section, title, record: { member: profile.id, ...record } })
 
   if (edit) return <div className="member-page">
@@ -98,6 +103,18 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
     {works && shifts.length > 0 && <section><h3 className="house-section-title">최근 근무</h3><GroupedList label="최근 근무">
       {shifts.slice(0, 5).map((s) => { const t = types.find((x) => x.id === s.shift); return row(s.date, icon(Briefcase, 'work'), md(s.date), t ? `${t.code} ${t.id === 'off' ? '' : `${clock(t.start)}–${clock(t.end)}`}` : s.shift, () => canEdit && setEdit({ section: 'month', title: '교대 근무표' })) })}
     </GroupedList></section>}
+
+    <section><h3 className="house-section-title">키·몸무게</h3><GroupedList label="키·몸무게">
+      {growth.slice(0, showAllGrowth ? undefined : 5).map((g, i) => { const prev = growth[i + 1]; const diff = prev && g.height && prev.height ? Math.round((g.height - prev.height) * 10) / 10 : null
+        return <GroupedRow key={g.date} icon={icon(Ruler, 'green')} title={[g.height && `${g.height}cm`, g.weight && `${g.weight}kg`].filter(Boolean).join(' · ')} subtitle={[dot(g.date), diff ? `지난번보다 ${diff > 0 ? '+' : ''}${diff}cm` : ''].filter(Boolean).join(' · ')} value={canEdit && <button type="button" className="growth-del" aria-label={`${dot(g.date)} 기록 지우기`} onClick={() => setGrowth(growth.filter((x) => x.date !== g.date))}><X size={16} /></button>} /> })}
+      {growth.length > 5 && <GroupedRow key="growth-more" className="past-toggle" title={showAllGrowth ? '접기' : `지난 기록 ${growth.length - 5}개 더 보기`} onClick={() => setShowAllGrowth((v) => !v)} />}
+      {addingGrowth ? <li className="grouped-row"><form className="growth-form" onSubmit={(e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget)); const height = Number(f.height) || undefined, weight = Number(f.weight) || undefined; if (!f.date || (!height && !weight)) return; setGrowth([{ date: f.date, height, weight }, ...growth.filter((x) => x.date !== f.date)]); setAddingGrowth(false) }}>
+        <label>날짜<input name="date" type="date" defaultValue={todayKey} required /></label>
+        <label>키(cm)<input name="height" type="number" inputMode="decimal" step="0.1" min="30" max="250" defaultValue={growth[0]?.height || ''} /></label>
+        <label>몸무게(kg)<input name="weight" type="number" inputMode="decimal" step="0.1" min="1" max="250" defaultValue={growth[0]?.weight || ''} /></label>
+        <div className="growth-actions"><button type="button" onClick={() => setAddingGrowth(false)}>취소</button><button className="primary-button">저장</button></div>
+      </form></li> : canEdit && addRow('growth-add', '키·몸무게 기록', () => setAddingGrowth(true))}
+    </GroupedList></section>
 
     <section><h3 className="house-section-title">모습</h3><GroupedList label="모습">
       <GroupedRow title="캐릭터" value={<span className="member-pick" role="group" aria-label="캐릭터">{CHARACTERS.slice(0, 4).map((id) => <button key={id} aria-pressed={profile.characterId === id} aria-label={id} disabled={!canEdit} onClick={() => set({ characterId: id })}><CharacterAvatar profile={{ characterId: id }} size={36} /></button>)}</span>} />
