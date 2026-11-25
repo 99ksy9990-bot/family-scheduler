@@ -9,7 +9,7 @@ const moodOf = (row) => {
   if (row.title === '휴무' || /^휴무/.test(row.title || '') || kind === 'holiday') return 'rest'
   if (kind === 'shift' || /근무|출근|회의|출장/.test(row.title || '')) return 'busy'
   if (kind === '학교' || kind === '학원') return 'study'
-  if (/병원|(?<!국회)의원|치과|검진|진료|예방접종|접종|소아과|내과|외과|안과|이비인후과|피부과|산부인과|비뇨기과|정형외과|재활|물리치료|한방|약국|건강검진|응급실/.test(row.title || '')) return 'sick'
+  if (/병원|(?<!국회)의원|치과|검진|진료|예방접종|접종|소아과|내과|외과|안과|이비인후과|피부과|산부인과|비뇨기과|정형외과|재활|물리치료|한방|건강검진|응급실/.test(row.title || '')) return 'sick'
   if (row.anniversary && !/제사|기일/.test(row.anniversaryKind || '')) return 'party' // 생일·기념일 축하
   return undefined
 }
