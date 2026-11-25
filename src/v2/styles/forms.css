@@ -120,3 +120,11 @@
 .growth-label { font-size: 12px; fill: var(--label-2); }
 .growth-label.strong { fill: var(--label); font-weight: 700; }
 .growth-axis { font-size: 11px; fill: var(--label-2); }
+.growth-median { stroke: var(--label-3, #aaa); }
+.growth-legend { display: flex; align-items: center; gap: 6px; margin: 8px 4px 0; font-size: 12px; color: var(--label-2); }
+.growth-legend i { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid var(--accent, #0a84ff); }
+.growth-legend i.avg { margin-left: 8px; border-top: 1.5px dashed var(--label-3, #aaa); }
+.growth-peer { margin: -4px 4px 12px; font-size: 14px; color: var(--label-2); word-break: keep-all; }
+.growth-sex { margin: 0; } .growth-sex button { min-height: 32px; min-width: 44px; }
+.growth-peer span { display: block; }
+.member-page .grouped-list + .grouped-list { margin-top: 12px; }
