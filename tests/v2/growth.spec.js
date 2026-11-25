@@ -35,3 +35,10 @@ test('또래 비교는 공식 성장도표 50백분위와 백분위 위치를 �
   expect(compareToPeers('height', 'M', '2023-01-01', '2026-01-01', 96.5)).toMatchObject({ median: 96.5, top: 50 })
   expect(compareToPeers('height', 'M', '1990-01-01', '2026-01-01', 175)).toBeNull() // 어른은 비교 안 함
 })
+
+test('기념일 생일(양력·음력)에서 생년월일을 가져옴', async () => {
+  const { birthFromAnniversary } = await import('../../src/v2/data/growth.js')
+  expect(birthFromAnniversary({ baseYear: 2019, month: 3, day: 1, calendarType: 'solar' })).toBe('2019-03-01')
+  expect(birthFromAnniversary({ baseYear: 2019, month: 1, day: 1, calendarType: 'lunar' })).toBe('2019-02-05') // 2019 설날
+  expect(birthFromAnniversary({ month: 3, day: 1 })).toBe('') // 태어난 해가 없으면 못 가져옴
+})

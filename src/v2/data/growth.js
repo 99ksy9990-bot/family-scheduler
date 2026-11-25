@@ -1,4 +1,5 @@
 import REF from './growthRef.json' with { type: 'json' }
+import KoreanLunarCalendar from 'korean-lunar-calendar'
 
 // 질병관리청·대한소아청소년과학회 2017 소아청소년 성장도표 (연령별 신장·체중 백분위수, 0~227개월)
 // REF[kind][sex][개월] = 3·10·25·50·75·90·97 백분위 값
@@ -22,3 +23,14 @@ export function compareToPeers(kind, sex, birthDate, date, value) {
 }
 
 export const medianAt = (kind, sex, birthDate, date) => REF[kind]?.[sex]?.[ageMonths(birthDate, date)]?.[3] ?? null
+
+// 기념일의 생일(태어난 해가 있는 것)에서 양력 생년월일 'YYYY-MM-DD'. 음력이면 양력으로 바꿈
+export function birthFromAnniversary(a) {
+  if (!a?.baseYear || !a.month || !a.day) return ''
+  const pad = (n) => String(n).padStart(2, '0')
+  if (a.calendarType !== 'lunar') return `${a.baseYear}-${pad(a.month)}-${pad(a.day)}`
+  const cal = new KoreanLunarCalendar()
+  if (!cal.setLunarDate(Number(a.baseYear), Number(a.month), Number(a.day), Boolean(a.leapMonth))) return ''
+  const { year, month, day } = cal.getSolarCalendar()
+  return `${year}-${pad(month)}-${pad(day)}`
+}

@@ -11,7 +11,7 @@ import { GroupedList, GroupedRow } from '../../components/GroupedList'
 import { clock } from '../../data/schedule'
 import Family from './Family'
 import GrowthChart from '../../components/GrowthChart'
-import { compareToPeers, medianAt } from '../../data/growth'
+import { birthFromAnniversary, compareToPeers, medianAt } from '../../data/growth'
 import { RegularWorkEditor, ShiftMonthEditor, LeaveMonthEditor } from './WorkEditors'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -58,9 +58,11 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
   const growth = [...(profile.growth || [])].sort((a, b) => b.date.localeCompare(a.date))
   const setGrowth = (list) => set({ growth: list })
   // 최근 기록을 2017 성장도표 또래(같은 나이·성별)와 비교. 만 19세가 되면 비교 안 함
-  const peerReady = Boolean(profile.birthDate && profile.sex)
+  const birthAnniv = (state.anniversaries || []).find((a) => a.kind === '생일' && a.baseYear && (a.members?.includes(profile.id) || a.member === profile.id || a.name === profile.name))
+  const birthDate = profile.birthDate || birthFromAnniversary(birthAnniv) // 직접 넣은 생일이 먼저, 없으면 기념일 생일에서
+  const peerReady = Boolean(birthDate && profile.sex)
   const latestOf = (k) => growth.find((g) => g[k])
-  const peer = !peerReady ? [] : [['height', '키', 'cm'], ['weight', '몸무게', 'kg']].map(([k, label, unit]) => { const g = latestOf(k); const c = g && compareToPeers(k, profile.sex, profile.birthDate, g.date, g[k]); return c && `${label} ${g[k]}${unit} · 또래 평균 ${c.median}${unit} · ${c.top <= 3 ? '상위 3% 이내' : c.top >= 97 ? '하위 3% 이내' : `상위 ${c.top}%`}` }).filter(Boolean)
+  const peer = !peerReady ? [] : [['height', '키', 'cm'], ['weight', '몸무게', 'kg']].map(([k, label, unit]) => { const g = latestOf(k); const c = g && compareToPeers(k, profile.sex, birthDate, g.date, g[k]); return c && `${label} ${g[k]}${unit} · 또래 평균 ${c.median}${unit} · ${c.top <= 3 ? '상위 3% 이내' : c.top >= 97 ? '하위 3% 이내' : `상위 ${c.top}%`}` }).filter(Boolean)
   const open = (section, title, record = {}) => canEdit && setEdit({ section, title, record: { member: profile.id, ...record } })
 
   if (edit) return <div className="member-page">
@@ -110,10 +112,10 @@ export default function MemberDetail({ profile, state, updateState, canEdit, onB
       {shifts.slice(0, 5).map((s) => { const t = types.find((x) => x.id === s.shift); return row(s.date, icon(Briefcase, 'work'), md(s.date), t ? `${t.code} ${t.id === 'off' ? '' : `${clock(t.start)}–${clock(t.end)}`}` : s.shift, () => canEdit && setEdit({ section: 'month', title: '교대 근무표' })) })}
     </GroupedList></section>}
 
-    <section><h3 className="house-section-title">키·몸무게</h3>{growth.length > 0 && <GrowthChart records={growth} median={peerReady ? (kind, date) => medianAt(kind, profile.sex, profile.birthDate, date) : null} />}
+    <section><h3 className="house-section-title">키·몸무게</h3>{growth.length > 0 && <GrowthChart records={growth} median={peerReady ? (kind, date) => medianAt(kind, profile.sex, birthDate, date) : null} />}
       {peer.length > 0 && <p className="growth-peer">{peer.map((line) => <span key={line}>{line}</span>)}</p>}
       {profile.type === 'child' && <GroupedList label="또래 비교 정보">
-        <GroupedRow title="생일" subtitle={peerReady ? '' : '생일·성별을 넣으면 또래와 비교해요'} value={<input className="member-name" type="date" aria-label="생일" defaultValue={profile.birthDate || ''} disabled={!canEdit} onChange={(e) => e.target.value && set({ birthDate: e.target.value })} />} />
+        <GroupedRow title="생일" subtitle={!profile.birthDate && birthDate ? '기념일 생일에서 가져왔어요' : peerReady ? '' : '생일·성별을 넣으면 또래와 비교해요'} value={<input className="member-name" type="date" aria-label="생일" key={birthDate} defaultValue={birthDate} disabled={!canEdit} onChange={(e) => e.target.value && set({ birthDate: e.target.value })} />} />
         <GroupedRow title="성별" value={<span className="ui-segments growth-sex" role="group" aria-label="성별">{[['M', '남'], ['F', '여']].map(([id, label]) => <button key={id} type="button" aria-pressed={profile.sex === id} disabled={!canEdit} onClick={() => set({ sex: id })}>{label}</button>)}</span>} />
       </GroupedList>}
       <GroupedList label="키·몸무게">
