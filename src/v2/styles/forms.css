@@ -109,10 +109,12 @@
 .form-group > .schedule-title:only-child { border-bottom: 0; box-shadow: none; }
 
 /* 키·몸무게 기록 */
-.growth-form { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; width: 100%; padding: 10px 0; }
-.growth-form label { display: grid; gap: 4px; font-size: 13px; color: var(--label-2); min-width: 0; }
-.growth-form input { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; padding: 10px 8px; border: 0; border-radius: 10px; background: var(--fill) !important; color: var(--label); text-align: center; }
-.growth-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.growth-form { display: grid; width: 100%; padding: 4px 0; }
+.growth-form label { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; font-size: 17px; color: var(--label); border-bottom: 1px solid var(--separator); }
+.growth-form input { width: 9em; box-sizing: border-box; font: inherit; font-size: 17px; padding: 8px 0; border: 0; background: none !important; color: var(--label); text-align: right; }
+.growth-form input::-webkit-date-and-time-value, .member-name[type='date']::-webkit-date-and-time-value { text-align: right; }
+.member-name[type='date'] { text-align: right; }
+.growth-actions { padding-top: 10px; display: flex; justify-content: flex-end; gap: 8px; }
 .growth-del { border: 0; background: none; color: var(--label-2); padding: 6px; }
 .growth-chart { background: var(--card); border-radius: 16px; padding: 12px 12px 6px; margin-bottom: 12px; }
 .growth-chart svg { display: block; width: 100%; height: auto; margin-top: 8px; }
