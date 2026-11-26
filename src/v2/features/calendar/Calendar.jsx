@@ -56,7 +56,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
     const count = Math.ceil((first.getDay() + new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate()) / 7) * 7
     return Array.from({ length: count }, (_, index) => addDays(start, index))
   }, [cursor])
-  // 생일·기념일 이름을 날짜 칸에 (사용자 요청 2026-11-26)
+  // 생일·기념일 날은 날짜 숫자를 분홍 동그라미로, 오늘과 겹쳐도 기념일 색 (사용자 요청 2026-11-26)
   const annivs = useMemo(() => {
     const map = new Map()
     const years = new Set(days.map((d) => d.getFullYear()))
@@ -97,7 +97,7 @@ export default function Calendar({ today, state, loading, error, onRetry, cursor
         {days.map((date) => {
           const key = iso(date)
           const holiday = holidaysForYear(date.getFullYear()).get(key)
-          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}${annivs.has(key) ? ` ${annivs.get(key).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span><span className="shift-row">{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => (['day', 'evening', 'night'].includes(l.id) ? <img key={l.member} className="shift-pic" src={`/icons/shift/${l.id}.png`} alt={l.text} width={18} height={18} /> : <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>))}</span>{annivs.has(key) && <span className="anniv-label">{annivs.get(key)[0]}{annivs.get(key).length > 1 ? ` +${annivs.get(key).length - 1}` : ''}</span>}</button>
+          return <button key={key} className={`calendar-day${date.getMonth() !== cursor.getMonth() ? ' outside' : ''}${holiday ? ' holiday-day' : ''}${date.getDay() === 0 ? ' sunday' : ''}`} data-today={key === iso(today)} data-anniv={annivs.has(key) || undefined} aria-current={key === iso(today) ? 'date' : undefined} aria-pressed={key === iso(selected)} aria-label={`${key}${holiday ? ` ${holiday.map((item) => item.name).join(' ')}` : ''}${annivs.has(key) ? ` ${annivs.get(key).join(' ')}` : ''}`} onClick={() => { onSelectDate(key); requestAnimationFrame(() => document.getElementById('selected-heading')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })) }}><span className="day-number">{date.getDate()}</span><span className="shift-row">{(shiftLabels.get(key) || []).filter((l) => !hidden.includes(l.member)).map((l) => (['day', 'evening', 'night'].includes(l.id) ? <img key={l.member} className="shift-pic" src={`/icons/shift/${l.id}.png`} alt={l.text} width={18} height={18} /> : <span key={l.member} className="shift-label" data-shift={l.id}>{l.text}</span>))}</span></button>
         })}
       </div></DataState>
     </section>

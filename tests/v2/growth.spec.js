@@ -62,11 +62,14 @@ test('기념일 이름이 달력 날짜 칸에 보임', async ({ page }) => {
     localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify([
       { id: 'a1', name: '아빠 생일', kind: '생일', calendarType: 'lunar', month: 9, day: 25, baseYear: 1985 },
       { id: 'a2', name: '결혼기념일', kind: '기념일', calendarType: 'solar', month: 11, day: 21, baseYear: 2015 },
+      { id: 'a3', name: '할머니 생신', kind: '생일', calendarType: 'solar', month: 11, day: 5 },
     ]))
   })
   await page.reload()
   await page.locator('.bottom-nav').getByRole('button', { name: '달력', exact: true }).click()
-  await expect(page.getByRole('button', { name: /^2026-11-21 결혼기념일/ }).locator('.anniv-label')).toHaveText('결혼기념일')
+  await expect(page.getByRole('button', { name: /^2026-11-21 결혼기념일/ })).toHaveAttribute('data-anniv', 'true')
+  await expect(page.locator('.anniv-label')).toHaveCount(0) // 이름은 칸에 안 넣음
+  await expect(page.getByRole('button', { name: /^2026-11-05 할머니 생신/ })).toHaveAttribute('data-anniv', 'true') // 오늘과 겹쳐도 기념일 색
   await expect(page.getByRole('button', { name: /^2026-11-04 아빠 생일/ })).toBeVisible() // 음력 9/25 → 양력 11/4
   if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '-anniv.png' })
 })

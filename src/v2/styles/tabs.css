@@ -181,5 +181,5 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .crown-list li { display: flex; justify-content: space-between; align-items: center; min-height: 40px; border-bottom: .5px solid var(--sep); }
 .crown-list li:last-child { border-bottom: 0; }
 .crown-who { display: inline-flex; align-items: center; gap: 8px; } .crown-who small, .crown-list > li > small { color: var(--label-2); }
-.calendar-day .anniv-label { display: block; max-width: 100%; margin: 2px auto 0; padding: 0 3px; border-radius: 5px; font-size: 10px; font-weight: 600; line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #fde4ec; color: #b4235a; }
-@media (prefers-color-scheme: dark) { .calendar-day .anniv-label { background: #4a2032; color: #ff9ec0; } }
+.month-grid .calendar-day[data-anniv='true'] .day-number { background: #fde4ec; color: #b4235a; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .month-grid .calendar-day[data-anniv='true'] .day-number { background: #4a2032; color: #ff9ec0; } }
