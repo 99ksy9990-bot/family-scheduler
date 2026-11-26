@@ -55,3 +55,18 @@ test('연차 입력 달력에 오늘 동그라미 표시', async ({ page }) => {
   await expect(page.locator('.shift-cell[data-today="true"]')).toHaveAttribute('aria-label', /^11월 5일/)
   if (process.env.SHOT) { await page.locator('.shift-grid').scrollIntoViewIfNeeded(); await page.screenshot({ path: process.env.SHOT + '-leave.png' }) }
 })
+
+test('기념일 이름이 달력 날짜 칸에 보임', async ({ page }) => {
+  await page.clock.runFor(500)
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-anniversaries-v1', JSON.stringify([
+      { id: 'a1', name: '아빠 생일', kind: '생일', calendarType: 'lunar', month: 9, day: 25, baseYear: 1985 },
+      { id: 'a2', name: '결혼기념일', kind: '기념일', calendarType: 'solar', month: 11, day: 21, baseYear: 2015 },
+    ]))
+  })
+  await page.reload()
+  await page.locator('.bottom-nav').getByRole('button', { name: '달력', exact: true }).click()
+  await expect(page.getByRole('button', { name: /^2026-11-21 결혼기념일/ }).locator('.anniv-label')).toHaveText('결혼기념일')
+  await expect(page.getByRole('button', { name: /^2026-11-04 아빠 생일/ })).toBeVisible() // 음력 9/25 → 양력 11/4
+  if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '-anniv.png' })
+})
