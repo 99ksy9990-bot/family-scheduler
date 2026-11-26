@@ -42,3 +42,16 @@ test('기념일 생일(양력·음력)에서 생년월일을 가져옴', async (
   expect(birthFromAnniversary({ baseYear: 2019, month: 1, day: 1, calendarType: 'lunar' })).toBe('2019-02-05') // 2019 설날
   expect(birthFromAnniversary({ month: 3, day: 1 })).toBe('') // 태어난 해가 없으면 못 가져옴
 })
+
+test('연차 입력 달력에 오늘 동그라미 표시', async ({ page }) => {
+  await page.clock.runFor(500)
+  await page.evaluate(() => {
+    localStorage.setItem('family-scheduler-profiles-v1', JSON.stringify([{ id: 'd', name: '아빠', type: 'adult', characterId: 'dad', regularWork: { weekdays: [1, 2, 3, 4, 5], start: '08:00', end: '17:00', skipHolidays: true, leaves: { '2026-11-12': 'full' } } }]))
+  })
+  await page.reload()
+  await page.locator('.bottom-nav').getByRole('button', { name: '가족', exact: true }).click()
+  await page.getByRole('list', { name: '구성원', exact: true }).getByRole('button', { name: /^아빠/ }).click()
+  await page.getByRole('button', { name: /연차·반차/ }).click()
+  await expect(page.locator('.shift-cell[data-today="true"]')).toHaveAttribute('aria-label', /^11월 5일/)
+  if (process.env.SHOT) { await page.locator('.shift-grid').scrollIntoViewIfNeeded(); await page.screenshot({ path: process.env.SHOT + '-leave.png' }) }
+})

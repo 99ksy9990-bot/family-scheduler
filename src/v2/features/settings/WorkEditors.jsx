@@ -59,7 +59,7 @@ export function ShiftMonthEditor({ profile, state, updateState, canEdit }) {
     <MonthHead month={month} onChange={setMonth} />
     <div className="shift-grid" onTouchStart={swipeStart} onTouchEnd={swipeEnd}>
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
-      {cells.map((d) => { const key = iso(d); const s = mine.get(key); return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={s || ''} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${s ? code(s) : '비어 있음'}`} aria-current={key === cursor ? 'date' : undefined} onClick={() => setCursor(key)}><span>{d.getDate()}</span><b>{s ? code(s) : ''}</b></button> })}
+      {cells.map((d) => { const key = iso(d); const s = mine.get(key); return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={s || ''} data-today={key === iso(new Date()) || undefined} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${s ? code(s) : '비어 있음'}`} aria-current={key === cursor ? 'date' : undefined} onClick={() => setCursor(key)}><span>{d.getDate()}</span><b>{s ? code(s) : ''}</b></button> })}
     </div>
     <p className="quiet shift-hint"><b>{Number(cursor.slice(5, 7))}월 {Number(cursor.slice(8))}일</b> 근무를 누르세요. 넣으면 다음 날로 넘어가요. 날짜를 눌러 고칠 날을 고를 수 있어요.{mine.get(cursor) && <> <button type="button" className="text-button" onClick={() => put(null)}>이 날 지우기</button></>}{undo.length > 0 && <> <button type="button" className="text-button" onClick={back}>되돌리기</button></>}</p>
     <div className="shift-brush shift-brush-dock" role="group" aria-label="근무 종류">{types.map((t) => <button type="button" key={t.id} data-shift={t.id} disabled={!canEdit} onClick={() => put(t.id)}><b>{t.id === 'off' ? 'OFF' : t.code}</b><small>{t.id === 'off' ? '휴무' : t.start}</small></button>)}</div>
@@ -91,7 +91,7 @@ export function LeaveMonthEditor({ profile, canEdit, onSave }) {
     <MonthHead month={month} onChange={setMonth} />
     <div className="shift-grid" onTouchStart={swipeStart} onTouchEnd={swipeEnd}>
       {DAYS.map((d) => <span key={d} className="shift-wd">{d}</span>)}
-      {cells.map((d) => { const key = iso(d); const l = LEAVES[leaves[key]]; return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={l ? 'off' : ''} data-leave={leaves[key] || undefined} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${l ? l.label : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{l ? l.code : ''}</b></button> })}
+      {cells.map((d) => { const key = iso(d); const l = LEAVES[leaves[key]]; return <button type="button" key={key} className={`shift-cell${d.getMonth() !== month.getMonth() ? ' other' : ''}${d.getDay() === 0 || holidays.has(key) ? ' sun' : ''}`} data-shift={l ? 'off' : ''} data-leave={leaves[key] || undefined} data-today={key === iso(new Date()) || undefined} aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 ${l ? l.label : '비어 있음'}`} onClick={() => paint(d)}><span>{d.getDate()}</span><b>{l ? l.code : ''}</b></button> })}
     </div>
   </div>
 }
